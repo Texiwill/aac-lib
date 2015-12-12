@@ -10,11 +10,19 @@ Tools Include:
  leakages
 
  A hook script to verify what is about to be committed.
-	-- Looks for IPV4 Addresses
-	-- Looks for Domain Names (user@domain)
-	-- Looks for Passwords (hashes)
-	-- Looks for API Keys (hashes)
-	-- Looks for PII such as SSN, CC#, some DL#, etc.
+	- Looks for IPV4 Addresses
+	- Looks for Domain Names (user@domain)
+	- Looks for Passwords (hashes)
+	- Looks for API Keys (hashes)
+	- Looks for PII 
+
+ Look for the following spefic PII
+	- SSN 
+	- CC# (Visa, Mastercard, American Express, AMEX, Diners Club, Discover, JCB)
+	- US Passport
+	- US Passport Cards
+	- US Phone 
+	- Indiana DL#
 
  Called by "git commit" with no arguments.  The hook should
  exit with non-zero status after issuing an appropriate message if
