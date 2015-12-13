@@ -7,7 +7,12 @@ Tools Include:
 
 ### Description
 Git Pre-Commit script to check for API Keys, PII, and various other
-leakages
+leakages and deny the commit if source files contain anything untoward.
+This tool is the result of my [Foray into Jenkins, Docker, Git, and
+Photon](http://www.astroarch.com/?s=foray) with testing using Ixia. In
+addition, to checking the files for API Keys, etc. if anything is found,
+the script will log the leakge to syslog to be picked up by a SIEM or
+some other monitoring tool.
 
 A hook script to verify what is about to be committed:
 
