@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2015 AstroArch Consulting, Inc. All rights reserved
+# Copyright (c) 2015,2016 AstroArch Consulting, Inc. All rights reserved
 #
 #
 # A hook script to verify what is about to be committed.
