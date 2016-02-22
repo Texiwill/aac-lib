@@ -3,6 +3,9 @@ AAC Library of Tools
 
 Tools Include:
 
+- <a href=#iso-library-tool>ISO Library Tool isolib.sh</a>
+- <a href=#git-pre-commit>GIT Pre-Commit</a>
+
 ## ISO Library Tool
 
 ### Description
