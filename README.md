@@ -25,6 +25,14 @@ Other options include:
 - --help - to get help
 - --device <device> - device to use to burn disc
 
+### Dependencies
+To properly burn blu-ray discs on Linux you need to use the
+official Joerg Schilling Cdrecord-ProDVD-ProBD-Clone v3 binary from
+http://cdrtools.sourceforge.net/private/cdrecord.html
+
+No other version burns blu-ray's properly. You end up with coasters
+without Joerg Schilling's version.
+
 ### Installation
 Place in /usr/local/bin, $HOME/bin, or anywhere within your path. The
 tool does use sudo, so sudo access for mounting and unmounting loopback
