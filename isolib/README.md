@@ -4,6 +4,7 @@ AAC Library of Tools
 Other Tools Include:
 
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/hooks>GIT Pre-Commit</a>
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/erk>ERK Stack Installer</a>
 
 ## ISO Library Tool
 

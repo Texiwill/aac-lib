@@ -25,3 +25,10 @@ Photon](http://www.astroarch.com/?s=foray) with testing using Ixia. In
 addition, to checking the files for API Keys, etc. if anything is found,
 the script will log the leakge to syslog to be picked up by a SIEM or
 some other monitoring tool.
+
+## ERK (Elasticsearch-Rsyslog-Kibana) Stack Installer
+
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/erk>ERK Installer</a>
+
+### Description
+A bash script to automatically install an Elasticsearch-Rsyslog-Kibana stack. Rsyslog replaces Logstash and allows direct forwarding of syslog messages to Elasticsearch for processing.
