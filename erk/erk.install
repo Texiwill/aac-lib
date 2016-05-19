@@ -37,7 +37,7 @@ gpgcheck=1
 gpgkey=https://packages.elastic.co/GPG-KEY-elasticsearch
 enabled=1
 EOF
-yum install elasticsearch kibana
+yum -y install java elasticsearch kibana
 
 echo "Install ElasticSearch for RSYSLOG"
 yum -y install rsyslog-elasticsearch
