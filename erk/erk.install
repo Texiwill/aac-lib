@@ -318,3 +318,6 @@ systemctl restart systemd-journald.service
 systemctl restart elasticsearch.service
 systemctl restart kibana
 #service kibana start
+
+echo "Sending first message"
+logger "My First Message!"

@@ -23,11 +23,14 @@ pulled the latest sources, and worked seamlessly with rsyslog.
 ### Installation
 Run the script using SUDO as root access is required. This allows Kibana to be wide open on your network. So first thing is to ensure proper firewall settings to limit access.
 
+If the files exist, currently just erk.install.nginx, it takes the erk.install.filename as a possible way to secure Kibana/ES. So, we currently have a way to frontend ERK with an Nginx proxy to add simple authentication.
+
 ### Todo
 
-- There is still security to add such as SSL Certificates + Credentials via Nginx
+- Add support for ES Shield
 - Add Grafana support
+- Fix selinux support (currently Kibana is not available with selinux enforcing when front-ended by Nginx, it is an httpd_t issue.
 
 ### Support
-Email elh at astroarch dot com for assistance or if you want to check
+Email elh at astroarch dot com for assistance or if you want to add
 for more items.
