@@ -259,12 +259,56 @@ bootstrap.mlockall: true
 # action.destructive_requires_name: true
 EOF
 
+y=`ls ${0}.* | awk -F\. '{print $4}'`
+n=`ls ${0}.* | wc -l`
+x=""
+if [ $n != 1 ]
+then
+	echo -n "Enter one of the following security options for ES:"
+	echo $y
+	echo $y |grep X >& /dev/null
+	while [ $? != 0 ]
+	do
+		read x
+		echo $y |grep $y >& /dev/null
+	done
+else
+	x=$y
+fi
+source ./${0}.${x}
+
 echo "Setup Firewall Policy to allow SYSLOG incoming and Kibana Access"
-firewall-cmd --permanent --add-port=9301/tcp # needed by Prelert, etc.
-firewall-cmd --permanent --add-port=5601/tcp
-firewall-cmd --permanent --add-port=514/tcp
-firewall-cmd --permanent --add-port=514/udp
-firewall-cmd --reload
+systemctl status firewalld | grep ": active" >& /dev/null
+if [ $? != 1 ]
+then
+	if [ $nginx != 1 ]
+	then
+		firewall-cmd --permanent --add-port=5601/tcp
+	else
+		firewall-cmd --permanent --add-port=443/tcp
+	fi
+	firewall-cmd --permanent --add-port=514/tcp
+	firewall-cmd --permanent --add-port=514/udp
+	firewall-cmd --reload
+fi
+systemctl status iptables | grep ": active" >& /dev/null
+if [ $? != 1 ]
+then
+	if [ $nginx != 1 ]
+	then
+		sed '/-A INPUT -j REJECT/i\
+-A INPUT -m state --state NEW -m tcp p -tcp --dport 5601 -j ACCEPT\n\
+-A INPUT -m state --state NEW -m tcp p -tcp --dport 514 -j ACCEPT\n\
+-A INPUT -m state --state NEW -m udp p -udp --dport 514 -j ACCEPT' /etc/sysconfig/iptables > /tmp/iptables
+	else
+		sed '/-A INPUT -j REJECT/i\
+-A INPUT -m state --state NEW -m tcp p -tcp --dport 443 -j ACCEPT\n\
+-A INPUT -m state --state NEW -m tcp p -tcp --dport 514 -j ACCEPT\n\
+-A INPUT -m state --state NEW -m udp p -udp --dport 514 -j ACCEPT' /etc/sysconfig/iptables > /tmp/iptables
+	fi
+	mv /tmp/iptables /etc/sysconfig
+
+fi
 
 echo "Restart the Daemons"
 systemctl daemon-reload
