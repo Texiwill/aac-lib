@@ -16,12 +16,20 @@ echo "Install RSYSLOG Repo and update to latest RSYSLOG"
 yum -y install wget ntp
 
 wget http://rpms.adiscon.com/rsyslogall.repo
-rm /etc/rsyslog.d/*.conf
+
+echo "	Move old rsyslog configurations"
+mkdir /etc/rsyslog.d/olde
+mv /etc/rsyslog.d/*.conf /etc/rsyslog.d/olde
 mv rsyslogall.repo /etc/yum.repos.d
 yum -y update rsyslog
 
-echo "Test rsyslogd configuration"
+echo "	Test rsyslogd configuration"
 rsyslogd -N1
+
+echo "	Update rsyslog sysconfig"
+grep -v SYSLOGD_OPTIONS /etc/sysconfig/rsyslog > /tmp/rsyslog
+echo 'SYSLOGD_OPTIONS="-d"' >> /tmp/rsyslog
+mv /tmp/rsyslog /etc/sysconfig 
 
 echo "Install ElasticSearch/Kibana Repo and update to latest"
 # now for elasticsearch
@@ -57,7 +65,7 @@ then
 module(load=\"imjournal\")
 $IMUXSockRateLimitInterval 0
 $IMJournalRatelimitInterval 0" < /etc/rsyslog.conf > /tmp/rsyslog.conf
-	mv /tmp/rsyslog.conf /etc/rsyslog.cong
+	mv /tmp/rsyslog.conf /etc/rsyslog.conf
 fi
 
 echo "Disable RateLimit for Journald for RSYSLOG imjournal"
@@ -321,14 +329,18 @@ fi
 
 restorecon -r /etc/rsyslog.d
 
+echo "nohup rsyslogd -dn >& /dev/null &" >> /etc/rc.d/rc.local
+
 echo "Restart the Daemons"
 sysctl -p
 systemctl daemon-reload
+systemctl disable rsyslog.service
 systemctl enable elasticsearch.service
 systemctl enable kibana.service
 systemctl restart systemd-journald.service
 systemctl restart elasticsearch.service
-systemctl restart kibana
+systemctl restart kibana.service
+sh -x /etc/rc.d/rc.local
 #service kibana start
 
 echo "Sending first message"

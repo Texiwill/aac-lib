@@ -30,12 +30,15 @@ If the files exist, currently just erk.install.nginx, it takes the erk.install.f
 - Add support for ES Shield
 - Add Grafana support
 - Determine why TCP 514 cannot receive syslog messages
+- Determine why we have to start rsyslog outside of systemctl
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+- changed rsyslogd from starting w/systemctl as it does not always work
+  with ES
 
 - fixed SELinux for the Nginx frontend to Kibana
 
