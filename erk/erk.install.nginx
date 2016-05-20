@@ -10,7 +10,7 @@
 nginx=1
 
 echo "Setup Nginx Proxy"
-yum -y install nginx httpd-tools
+yum -y install nginx httpd-tools policycoreutils-python
 
 if [ ! -e /etc/nginx/ssl/cert.pem ]
 then
@@ -76,7 +76,9 @@ echo "server.host: localhost" >> /opt/kibana/config/kibana.yml
 
 echo "Fix SELINUX for NGINX"
 restorecon -r /etc/nginx
-echo "Sometimes need to setenforce 0 -- need to find what needs httpd_t setting"
+semanage port -a -t http_port_t -p tcp 9200
+semanage port -a -t http_port_t -p tcp 5601
+chcon -R -t httpd_sys_content_t  /opt/kibana/{src,node}
 
 echo "Start the Daemons - Kibana will be restarted in parent script"
 systemctl daemon-reload

@@ -13,11 +13,15 @@
 ###
 
 echo "Install RSYSLOG Repo and update to latest RSYSLOG"
-yum -y install wget
+yum -y install wget ntp
 
 wget http://rpms.adiscon.com/rsyslogall.repo
+rm /etc/rsyslog.d/*.conf
 mv rsyslogall.repo /etc/yum.repos.d
 yum -y update rsyslog
+
+echo "Test rsyslogd configuration"
+rsyslogd -N1
 
 echo "Install ElasticSearch/Kibana Repo and update to latest"
 # now for elasticsearch
@@ -127,6 +131,11 @@ action(type="omelasticsearch"
         action.resumeretrycount="-1"  # retry indefinitely if ES is unreachable
         errorfile="/var/log/omelasticsearch.log"
         )
+EOF
+
+cat >> /etc/sysctl.conf << EOF
+net.ipv4.conf.all.rp_filter = 0
+net.ipv4.conf.default.rp_filter = 0
 EOF
 
 #
@@ -310,7 +319,10 @@ then
 
 fi
 
+restorecon -r /etc/rsyslog.d
+
 echo "Restart the Daemons"
+sysctl -p
 systemctl daemon-reload
 systemctl enable elasticsearch.service
 systemctl enable kibana.service
