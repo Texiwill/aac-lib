@@ -29,8 +29,14 @@ If the files exist, currently just erk.install.nginx, it takes the erk.install.f
 
 - Add support for ES Shield
 - Add Grafana support
-- Fix selinux support (currently Kibana is not available with selinux enforcing when front-ended by Nginx, it is an httpd_t issue.
+- Determine why TCP 514 cannot receive syslog messages
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.
+
+### Changelog
+
+- fixed SELinux for the Nginx frontend to Kibana
+
+- Added initial Nginx Support
