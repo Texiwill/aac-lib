@@ -26,11 +26,6 @@ yum -y update rsyslog
 echo "	Test rsyslogd configuration"
 rsyslogd -N1
 
-echo "	Update rsyslog sysconfig"
-grep -v SYSLOGD_OPTIONS /etc/sysconfig/rsyslog > /tmp/rsyslog
-echo 'SYSLOGD_OPTIONS="-d"' >> /tmp/rsyslog
-mv /tmp/rsyslog /etc/sysconfig 
-
 echo "Install ElasticSearch/Kibana Repo and update to latest"
 # now for elasticsearch
 rpm --import https://packages.elastic.co/GPG-KEY-elasticsearch
@@ -329,19 +324,15 @@ fi
 
 restorecon -r /etc/rsyslog.d
 
-echo "nohup rsyslogd -dn >& /dev/null &" >> /etc/rc.d/rc.local
-
 echo "Restart the Daemons"
 sysctl -p
 systemctl daemon-reload
-systemctl disable rsyslog.service
 systemctl enable elasticsearch.service
 systemctl enable kibana.service
 systemctl restart systemd-journald.service
+systemctl restart rsyslog.service
 systemctl restart elasticsearch.service
 systemctl restart kibana.service
-sh -x /etc/rc.d/rc.local
-#service kibana start
 
 echo "Sending first message"
 logger "My First Message!"
