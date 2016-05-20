@@ -322,7 +322,9 @@ then
 
 fi
 
+echo "Now to fix SELinux for Rsyslog + ES"
 restorecon -r /etc/rsyslog.d
+semanage port -a -t syslogd_port_t -p tcp 9200
 
 echo "Restart the Daemons"
 sysctl -p
