@@ -10,20 +10,28 @@ Other Tools Include:
 
 ### Description
 A bash script to automatically install an Elasticsearch-Rsyslog-Kibana
-stack. Rsyslog replaces Logstash and allows direct forwarding of syslog
-messages to Elasticsearch for other processing. I forward my LogInsight
-logs to ERK for use with ElasticSearch.
+stack on CentOS/RHEL 7. Rsyslog replaces Logstash and allows direct
+forwarding of syslog messages to Elasticsearch for other processing. I
+forward my VMware vRealize LogInsight logs to ERK for use with ElasticSearch.
 
 Why did I create this script? Nothing I found on the web was as automated,
-pulled the latest sources, and worked seamlessly with rsyslog.
+pulled the latest sources, and worked seamlessly with rsyslog, SELinux,
+and either iptables & FirewallD.
 
 > Reference: 
 > 	http://www.havensys.net/making-a-free-log-server/
 
 ### Installation
-Run the script using SUDO as root access is required. This allows Kibana to be wide open on your network. So first thing is to ensure proper firewall settings to limit access.
+Run the script using SUDO as root access is required.  The script installs
+the latest Rsyslog, Elasticsearch, Kibana, but also adjusts SELinux and
+either FirewallD or Iptables as well.
 
-If the files exist, currently just erk.install.nginx, it takes the erk.install.filename as a possible way to secure Kibana/ES. So, we currently have a way to frontend ERK with an Nginx proxy to add simple authentication.
+	# sudo ./erk.install
+
+If the erk.install.filename files exist, they provide additioanl
+mechanisms to secure Kibana/ES. erk.install will either present a list
+of these mechanims or if only one exists, run it. Currently there is a
+way to frontend ERK with an Nginx proxy to add simple authentication.
 
 ### Todo
 
@@ -40,4 +48,4 @@ for more items.
 
 - fixed SELinux for the Nginx frontend to Kibana
 
-- Added initial Nginx Support
+- Added initial Nginx Support and Iptables as well as FirewallD
