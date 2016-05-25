@@ -32,3 +32,11 @@ some other monitoring tool.
 
 ### Description
 A bash script to automatically install an Elasticsearch-Rsyslog-Kibana stack. Rsyslog replaces Logstash and allows direct forwarding of syslog messages to Elasticsearch for processing.
+
+## TOCENTOS
+
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/tocentos>Convert from RHEL to CentOS</a>
+
+### Description
+A set of scripts to convert from a RHEL 6/7 install to a CentOS 6/7 install.
+
