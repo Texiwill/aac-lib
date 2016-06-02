@@ -45,3 +45,8 @@ devices is required.
 Email elh at astroarch dot com for assistance or if you want to check
 for more items.
 
+### ChangeLog
+
+1.0.1 - Added support for .enc (encrypted files) which are already compressed and support to output the version # as part of the --help argument.
+
+1.0.0 - Initial Release
