@@ -61,6 +61,7 @@ yum -y remove subscription-manager
 rpm -Uvh --force *.rpm
 
 ### Clean up yum one more time and then upgrade
+rpm -e redhat-release-server-6Server # just to be sure
 yum clean all
 yum -y upgrade
 

@@ -6,22 +6,16 @@ Other Tools Include:
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/isolib>ISO Library Tool isolib.sh</a>
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/hooks>Git Pre-Commit Hook</a>
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/erk>Elasticsearch-Rsyslog-Kibana Stack Install</a>
-- <a href=https://github.com/Texiwill/aac-lib/tree/master/vli>LogInsight Content Packs</a>
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/tocentos>Convert RHEL to CentOS</a>
 
-## tocentos
-Set of scripts to convert from RHEL 6 or 7 to CentOS 6 or 7.
+## vli
+Set of content packs for VMware LogInsight
 
 ### Description
-Convert an install from RHEL to Centos
-
-> Reference: 
->	https://www.pickysysadmin.ca/2014/07/15/how-to-convert-rhel-6-x-to-centos-6-x/
+A Security Content pack that works with VCNS, vSphere, and vCenter to extract firewall and user information. Know who logged in and how often.
 
 ### Installation
-To Run:
-	./tocentos.sh
-	
-tocentos.sh will pick the proper script based on the version of RHEL in use.
+Import into LogInsight
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add

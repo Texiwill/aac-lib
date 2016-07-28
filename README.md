@@ -40,3 +40,10 @@ A bash script to automatically install an Elasticsearch-Rsyslog-Kibana stack. Rs
 ### Description
 A set of scripts to convert from a RHEL 6/7 install to a CentOS 6/7 install.
 
+## VLI
+
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/vli>VMware LogInsight Content Pak</a>
+
+### Description
+A set of content paks for VMware Log Insight
+

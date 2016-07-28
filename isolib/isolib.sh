@@ -233,6 +233,8 @@ then
 		#	exit
 		#fi
 
+		sudo rmdir /mnt/$fn
+
 		echo "Now Rerun --rebuild for this disc with $2"
 		echo "	then rerun --compile for this disc with $2"
 		echo "	then rerun --create for next disc with $2"

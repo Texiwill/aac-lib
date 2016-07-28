@@ -5,6 +5,8 @@ Other Tools Include:
 
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/isolib>ISO Library Tool isolib.sh</a>
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/erk>ERK Stack Installer</a>
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/vli>LogInsight Content Packs</a>
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/tocentos>Convert RHEL to CentOS</a>
 
 ## Git Pre-Commit
 
