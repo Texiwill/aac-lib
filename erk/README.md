@@ -46,6 +46,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+- fixed EPEL detection and security installer detection
+
 - fixed SELinux for Rsyslog talking to ES
 
 - fixed SELinux for the Nginx frontend to Kibana

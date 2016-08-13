@@ -144,7 +144,7 @@ EOF
 #
 ## Do we need EPEL
 echo "Install Python-PIP for Curator"
-rpm -qa |grep epel >> /dev/null
+rpm -qa |grep " epel-release " >> /dev/null
 if [ $? != 0 ]
 then
 	wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
@@ -271,10 +271,11 @@ bootstrap.mlockall: true
 # action.destructive_requires_name: true
 EOF
 
-y=`ls ${0}.* | awk -F\. '{print $4}'`
-n=`ls ${0}.* | wc -l`
+l=`basename $0`
+y=`ls ${l}.* | awk -F\. '{print $3}'`
+n=`ls ${l}.* | wc -l`
 x=""
-if [ $n != 1 ]
+if [ $n -gt 1 ]
 then
 	echo -n "Enter one of the following security options for ES:"
 	echo $y
@@ -284,10 +285,14 @@ then
 		read x
 		echo $y |grep $y >& /dev/null
 	done
-else
+elif [ $n == 1 ]
+then
 	x=$y
 fi
-source ./${0}.${x}
+if [ $n == 0 ]
+then
+	source ./${l}.${x}
+fi
 
 echo "Setup Firewall Policy to allow SYSLOG incoming and Kibana Access"
 systemctl status firewalld | grep ": active" >& /dev/null
