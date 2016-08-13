@@ -1,20 +1,5 @@
 #!/bin/bash
-#
-# Copyright (c) 2016 AstroArch Consulting, Inc. All rights reserved
-#
-# A script to aid in the creation of a DVD/Blu Ray ISO Library for 
-# storage in a safe, offsite, etc.
-#
-# To burn blu-ray discs from Linux you will need to rebuild CDRTOOLS
-# from http://cdrtools.sourceforge.net/private/cdrecord.html as the one
-# distributed with normal Linux distributions is seriously out of date
-# due to licensing concerns.
-#
-# Reference: http://allgood38.io/burn-bluray-data-disks-on-linux-minimize-coasters.html
-# Version: 1.0.1
-#
 
-version=1.0.1
 device=/dev/sr0
 if [ X"$1" = X"--device" ]
 then
@@ -62,8 +47,8 @@ then
 		rm /tmp/iso$$ /tmp/riso$$
 		LC_ALL=C; export LC_ALL
 		echo "Uncompressed/Bad Format List:"
-		find . -type f -print | egrep -iv '\.7z|\.zip|\.gz|\.bz|\.tgz|\.rar|\.lnk|\.Z|\.enc|repo$|,'
-		find . -type f -print | grep -P "[\x80-\xFF]"
+		find . -type f -print | egrep -iv '\.7z|\.zip|\.gz|\.bz|\.tgz|\.rar|\.lnk$|\.Z|\.enc|repo$|,'
+		find . -type f -print | grep -P "[\x80-\xFF]" |egrep -v "®|™"
 	fi
 fi
 
@@ -209,6 +194,7 @@ then
 		done
 
 		### Unmount & Burn the Bluray
+		sudo rmdir /mnt/ISO_Library*
 		sudo umount /mnt/$fn
 
 		### Need to use Joerg Schilling's version
@@ -233,8 +219,6 @@ then
 		#	exit
 		#fi
 
-		sudo rmdir /mnt/$fn
-
 		echo "Now Rerun --rebuild for this disc with $2"
 		echo "	then rerun --compile for this disc with $2"
 		echo "	then rerun --create for next disc with $2"
@@ -243,7 +227,6 @@ fi
 
 if [ X"$1" = X"--help" ]
 then
-	echo "$0 version: $version"
 	echo "Usage: $0 [--device <devname>] [--rebuild|--compile <src directory>|--prepare <src directory>|--create <src directory>|--help]"
 	echo "use --rebuild to rebuild from Discs"
 	echo "Best to use --prepare then --compile then --create"
