@@ -57,6 +57,7 @@ rm -rf /usr/share/doc/redhat-release /usr/share/redhat-release
 ### Remove Subscription Manager if using it
 subscription-manager clean
 yum -y remove subscription-manager
+yum-config-manager --disable rhel-7-server-rpms
 
 ### Force install the CentOS RPMs we downloaded
 rpm -Uvh --force *.rpm
