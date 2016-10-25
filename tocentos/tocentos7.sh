@@ -13,8 +13,8 @@ then
 	exit
 fi
 
-### Setup Constants
-rel=`awk -F'release' '{print $2}' /etc/redhat-release  | awk '{print $1}'`
+### Setup Constants - need major release not minor
+rel=`awk -F'release' '{print $2}' /etc/redhat-release  | awk '{print $1}' | awk -F. '{print $1}'`
 arch=`uname -i`
 
 ### Setup Directories
