@@ -41,54 +41,54 @@ for x in `/usr/bin/git diff-index --cached HEAD|/usr/bin/awk '{print $NF}'`
 do
 	# check for IP Addresses in files
 
-	/bin/grep -Eo "$regex4" $x >& /dev/null
+	/bin/grep -Eo "$regex4" "$x" >& /dev/null
 	if [ $? = 0 ]
 	then
 		if [ $icount = 0 ]
 		then
 			ifile="$x"
 		else
-			ifile="$ifile $x"	
+			ifile="$ifile \"$x\""	
 		fi
 		let icount=$icount+1
 	fi
 
 	# check for user@domain
-	/bin/grep -Eo "[[:alnum:]]+\@[[:alnum:]]+" $x >& /dev/null
+	/bin/grep -Eo "[[:alnum:]]+\@[[:alnum:]]+" "$x" >& /dev/null
 	if [ $? = 0 ]
 	then
 		if [ $dcount = 0 ]
 		then
 			dfile="$x"
 		else
-			dfile="$dfile $x"	
+			dfile="$dfile \"$x\""	
 		fi
 		let dcount=$dcount+1
 	fi
 
 	# Hashes
-	/bin/egrep -oE '(^|[^a-fA-F0-9])[a-fA-F0-9]{32}([^a-fA-F0-9]|$)' $x | /bin/egrep -o '[a-fA-F0-9]{32}' >& /dev/null
+	/bin/egrep -oE '(^|[^a-fA-F0-9])[a-fA-F0-9]{32}([^a-fA-F0-9]|$)' "$x" | /bin/egrep -o '[a-fA-F0-9]{32}' >& /dev/null
 	if [ $? = 0 ]
 	then
 		if [ $hcount = 0 ]
 		then
 			hfile="$x"
 		else
-			hfile="$hfile $x"	
+			hfile="$hfile \"$x\""	
 		fi
 		let hcount=$hcount+1
 	fi
 
 	for y in $hashchecks
 	do
-		/bin/egrep -o "$y" $x >& /dev/null
+		/bin/egrep -o "$y" "$x" >& /dev/null
 		if [ $? = 0 ]
 		then
 			if [ $hcount = 0 ]
 			then
 				hfile="$x"
 			else
-				hfile="$hfile $x"	
+				hfile="$hfile \"$x\""	
 			fi
 			let hcount=$hcount+1
 		fi
@@ -96,14 +96,14 @@ do
 
 	for y in $pii
 	do
-		/bin/egrep -o "$y" $x >& /dev/null
+		/bin/egrep -o "$y" "$x" >& /dev/null
 		if [ $? = 0 ]
 		then
 			if [ $pcount = 0 ]
 			then
 				pfile="$x"
 			else
-				pfile="$pfile $x"	
+				pfile="$pfile \"$x\""	
 			fi
 			let pcount=$pcount+1
 		fi
