@@ -1,12 +1,7 @@
 # aac-lib
 AAC Library of Tools
 
-Other Tools Include:
-
-- <a href=https://github.com/Texiwill/aac-lib/tree/master/isolib>ISO Library Tool isolib.sh</a>
-- <a href=https://github.com/Texiwill/aac-lib/tree/master/hooks>Git Pre-Commit Hook</a>
-- <a href=https://github.com/Texiwill/aac-lib/tree/master/erk>Elasticsearch-Rsyslog-Kibana Stack Install</a>
-- <a href=https://github.com/Texiwill/aac-lib/tree/master/vli>LogInsight Content Packs</a>
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/>List of Tools</a>
 
 ## tocentos
 Set of scripts to convert from RHEL 6 or 7 to CentOS 6 or 7.

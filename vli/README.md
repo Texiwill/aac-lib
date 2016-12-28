@@ -1,12 +1,7 @@
 # aac-lib
 AAC Library of Tools
 
-Other Tools Include:
-
-- <a href=https://github.com/Texiwill/aac-lib/tree/master/isolib>ISO Library Tool isolib.sh</a>
-- <a href=https://github.com/Texiwill/aac-lib/tree/master/hooks>Git Pre-Commit Hook</a>
-- <a href=https://github.com/Texiwill/aac-lib/tree/master/erk>Elasticsearch-Rsyslog-Kibana Stack Install</a>
-- <a href=https://github.com/Texiwill/aac-lib/tree/master/tocentos>Convert RHEL to CentOS</a>
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/>List of Tools</a>
 
 ## vli
 Set of content packs for VMware LogInsight
