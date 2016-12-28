@@ -47,3 +47,9 @@ A set of scripts to convert from a RHEL 6/7 install to a CentOS 6/7 install.
 ### Description
 A set of content paks for VMware Log Insight
 
+## HTML5
+
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/html5>Auto update HTML5 vCenter/vSphere Client</a>
+
+### Description
+A simple script to get the latest vSphere/vCenter HTML5 Client and install if necessary.
