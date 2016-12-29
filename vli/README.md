@@ -7,7 +7,10 @@ AAC Library of Tools
 Set of content packs for VMware LogInsight
 
 ### Description
-A Security Content pack that works with VCNS, vSphere, and vCenter to extract firewall and user information. Know who logged in and how often.
+A Security Content pack that works with Edge Firewalls, vSphere, and vCenter to extract firewall and user information. Know who logged in and how often.
+
+- v1.0 Works with vShield Manager (Texiwill Security.vlcp)
+- v2.0 Works with NSX Manager (Texiwill Security v2.0.vlcp)
 
 ### Installation
 Import into LogInsight
