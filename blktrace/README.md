@@ -33,7 +33,7 @@ list
 
 ### Todo
 
-- Add options for # of seconds to run and output file
+
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
