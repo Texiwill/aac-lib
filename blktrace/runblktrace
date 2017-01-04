@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 AstroArch Consulting, Inc. All rights reserved
+#
+# Run blktrace/blkparse against filesystems by specifying directories
+#
+###
+
+#Options
+# Seconds to run
+seconds=3600
+
+if [ X"$1" == X"" ]
+then
+	echo "Run blktrace/blkparse against filesystems/devices by specifying directories"
+	echo "$0 directory [directory ...]"
+	exit
+fi
+
+# Do not change below this line
+# Extract args
+c=1
+for x in $*
+do
+	d=`echo $x | /usr/bin/awk -F/ '{print $2}'`
+	if [ X"$d" != X"dev" ]
+	then
+		f[$c]=`/usr/bin/df $x |/usr/bin/grep -v Filesystem|/usr/bin/awk '{print $1}'`
+	else
+		f[$c]=$x
+	fi
+	let c+=1
+done
+dd=$$
+mkdir /tmp/blk.$dd
+cd /tmp/blk.$dd
+
+# Now run the command
+sudo /usr/bin/blktrace -w $seconds ${f[*]}
+
+# Now parse the output
+/usr/bin/blkparse -b *.blktrace.* -f "%M.%m,%c,%s,%T.%t,%p,%a,%d,%C\n" -o blktrace${dd}.csv
+
+echo "Output in /tmp/blk.${dd}/blktrace${dd}.csv"
+
+

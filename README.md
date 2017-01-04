@@ -53,3 +53,13 @@ A set of content paks for VMware Log Insight
 
 ### Description
 A simple script to get the latest vSphere/vCenter HTML5 Client and install if necessary.
+
+## BLKTRACE
+
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/blktrace>Run blktrace on Linux for The Other Other Operation benchmark input</a>
+
+### Description
+A bash script to automatically run blktrace/blkparse based on references
+directories. Directories are converted to filesystems which are used
+instead of devices. The arguments accept devices as well as needed and
+if you know what you are doing.
