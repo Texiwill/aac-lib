@@ -10,11 +10,30 @@
 # Seconds to run
 seconds=3600
 
+help () 
+{
+	echo "Run blktrace/blkparse against filesystems/devices by specifying directories"
+	echo "$0 [-h]|[-w seconds] directory [directory [...]]"
+	exit
+}
+
 if [ X"$1" == X"" ]
 then
-	echo "Run blktrace/blkparse against filesystems/devices by specifying directories"
-	echo "$0 directory [directory ...]"
-	exit
+	help
+fi
+if [ X"$1" == X"-h" ]
+then
+	help
+fi
+if [ X"$1" == X"-w" ]
+then
+	if [ X"$2" != X"" ]
+	then
+		seconds=$2
+		shift;shift
+	else
+		help
+	fi
 fi
 
 # Do not change below this line

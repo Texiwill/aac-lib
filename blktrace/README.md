@@ -16,7 +16,20 @@ The goal is to provide input for <a href=https://www.theotherotherop.org>The Oth
 ### Installation
 Run the script using 
 
-	$ ./runblktrace directory [directory [...]]
+	$ ./runblktrace [-h]|[-w seconds] directory [directory [...]]"
+
+or to see help
+
+	$ ./runblktrace -h
+	-or-
+	$ ./runblktrace
+
+or to specify runtime in seconds, the default is 3600 or 1 hour. The
+position of this argument is important, it must be before the directory
+list
+
+	$ ./runblktrace -w 4800 directory [directory [...]]
+
 
 ### Todo
 
