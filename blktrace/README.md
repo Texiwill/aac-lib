@@ -11,7 +11,7 @@ directories. Directories are converted to filesystems which are used
 instead of devices. The arguments accept devices as well as needed and
 if you know what you are doing.
 
-The goal is to provide input for <a href=https://www.theotherotherop.org>The Other Other Operation storage benchmark</a>.
+The goal is to provide input for <a href=http://www.theotherotherop.org>The Other Other Operation storage benchmark</a>.
 
 ### Installation
 Run the script using 
