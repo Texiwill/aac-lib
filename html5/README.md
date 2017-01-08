@@ -16,3 +16,6 @@ This simple script looks for the latest HTML5 Client for vCenter, downloads it, 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.
+
+### Changelog
+- 1.1 Added header, added /tmp/bsx download file location/protection
