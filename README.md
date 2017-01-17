@@ -63,3 +63,16 @@ A bash script to automatically run blktrace/blkparse based on references
 directories. Directories are converted to filesystems which are used
 instead of devices. The arguments accept devices as well as needed and
 if you know what you are doing.
+
+## OWNCLOUD
+
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/owncloud>Upgrade Scripts for Owncloud with and without selinux</a>
+
+### Description
+A bash script to automatically upgrade and reset file and directory
+permssions after an upgrade via YUM or RPM. Included is also
+the script to update selinux settings for files and directories.
+
+These scripts are useful to automate the database upgrade after owncloud
+is updated. Nearly all these script lines are within the owncloud
+documentationI added a few I need for Centos 7 with selinux enabled.
