@@ -1,4 +1,15 @@
 #!/bin/bash
+#
+#
+# Upgrade and reset Owncloud permissions
+#
+# Target: CentOS/RHEL 7
+#
+###
+# Most of this came from:
+# https://doc.owncloud.org/server/9.0/admin_manual/installation/installation_wizard.html
+###
+
 
 ocpath='/var/www/html/owncloud'
 ocdpath='/opt/owncloud/oc_data'

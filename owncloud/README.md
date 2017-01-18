@@ -10,6 +10,10 @@ These are a set of scripts I use when updating owncloud via yum. You
 run these scripts after the upgrade. owncloud.sh upgrades the database
 and permissions. se-owncloud.sh fixes selinux if you are using it.
 
+References: 
+- https://doc.owncloud.org/server/9.0/admin_manual/installation/installation_wizard.html
+- https://doc.owncloud.org/server/9.0/admin_manual/installation/selinux_configuration.html
+
 ### Installation
 Run the script using SUDO as root access is required.  
 
@@ -25,3 +29,5 @@ for more items.
 
 ### Changelog
 - added config.php to se-owncloud.sh
+
+- added recursive to restorecon for directories, etc.
