@@ -22,4 +22,7 @@ for more items.
 
 ### Changelog
 
+- v3.0 updated to not just tag vpxuser for the vmw_user,hostname dashboard
+
 - v3.0 adds better 'general' event dashboards for firewall and user events only.0
+
