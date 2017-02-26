@@ -1,0 +1,57 @@
+#
+# Findings from testing
+1 noimport-vSphere_Replication_Server
+#
+## Specific deployment option
+normal deployment-VMware_Virtual_SAN_Witness_Appliance
+medium deployment-VMware_vRealize_Network_Insight_Platform
+medium deployment-VMware_vRealize_Network_Insight_Proxy
+#
+## for govc-import.sh
+1 remap-vSphere_Web_Client_Appliance
+1 remap-vSphere_Management_Assistant
+1 remap-vSphere_Replication_Appliance
+#
+## Where to break pre-check lookups
+ip break-vSphere_Management_Assistant
+vswitch break-VMware_Virtual_SAN_Witness_Appliance
+#
+# general import settings
+192.168.1.1 gw-global
+192.168.1.2 dns-global
+255.255.255.0 netmask-global
+vSwitch0 vswitch-global
+VMAdmin network-global
+internal.astroarch.com domain-global
+192.168.1.3 ntp-global
+true ssh-global
+false ceip-global
+192.168.1.4 syslog-global
+PASSWORD password-global
+#
+# Per OVA/OVF settings
+192.168.1.5 ip-Harbor
+192.168.1.6 ip-NSX_Manager
+192.168.1.7 ip-vSphere_Web_Client_Appliance
+vco.example.com hostname-VMware_vRealize_Orchestrator_Appliance
+vra.example.com hostname-VMware_vRealize_Appliance
+vrb.example.com hostname-vRealize_Business_for_Cloud
+#
+# Virtual SAN Withness Specific, specify any network with a VM, 
+# ovftool cannot target something without a VM on it. Govc works fine
+vSwitch0 vswitch2-VMware_Virtual_SAN_Witness_Appliance
+VMAdmin network2-VMware_Virtual_SAN_Witness_Appliance
+#
+# Required if you wish to disable CEIP
+False itfm_telemetry_enabled-vRealize_Business_for_Cloud
+False ceip-NSX_Manager
+False forceIpv6-vRealize_Operations_Manager_Appliance
+False ceip-VMware_vRealize_Orchestrator_Appliance
+#
+# VIC Specific
+true permit_root_login-Harbor
+ldap_auth auth_mode-Harbor
+ldap://ldap.example.com ldap_url-Harbor
+CN=Users,DC=EXAMPLE,DC=com ldap_basedn-Harbor
+sAMAccountName ldap_uid-Harbor
+smtp.example.com email_server-Harbor

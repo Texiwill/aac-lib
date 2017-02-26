@@ -47,6 +47,14 @@ A set of scripts to convert from a RHEL 6/7 install to a CentOS 6/7 install.
 ### Description
 A set of content paks for VMware Log Insight
 
+## IMPORT
+
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/import>GOVC/OVFTOOL Import of a Directory of OVA/OVFs</a>
+
+### Description
+A set of scripts to import OVA/OVFs into vCenter/vSphere en masse using
+a configuration file of simple key value pairs.
+
 ## HTML5
 
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/html5>Auto update HTML5 vCenter/vSphere Client</a>
