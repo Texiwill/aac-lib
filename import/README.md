@@ -170,5 +170,6 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+1.1 changed forceIpv6 to be just ipv6 in lookup with a directive to look up the exact keyvalue pair. 
 
 1.0 first release

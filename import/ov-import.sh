@@ -266,7 +266,7 @@ do
 		dofind=0
 		yy=`awk -vs1="$xx" 'BEGIN{ print tolower(s1)}'`
 		case $yy in 
-			forceipv6)
+			*ipv6*)
 				dofind=1
 				;;
 			*ceip*)
