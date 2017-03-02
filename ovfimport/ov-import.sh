@@ -177,6 +177,14 @@ do
 		echo "INFO: As requested, will not import $y."
 		continue
 	fi
+	
+	# check for allExtraConfig needed by Nested
+	allExtraConfig=""
+	z=`grep -i allextraconfig-${y} $defaults|awk '{print $1}'`
+	if [ Z"$z" = Z"1" ]
+	then
+		allExtraConfig="--allowAllExtraConfig --X:enableHiddenProperties"
+	fi
 
 	# count the network segments required
 	networkl=`awk '/Networks:/{A=1}/Name:/{if (A==1) { print $0 }}/Virtual Machines/{exit}' a.txt|awk -F: '{print $2}'|sed 's/^ *//;s/ *$//'|sed 's/ /%20/g'`
@@ -233,7 +241,7 @@ do
 	#	as does vm.name
 	#	as does not specifying IP info
 	log="/tmp/ovftool-$$.log"
-	prop="--X:logFile=$log --X:logLevel=trivia --acceptAllEulas --allowExtraConfig --datastore=\"$GOVC_DATASTORE\" --diskMode=thin --noSSLVerify"
+	prop="--X:logFile=$log --X:logLevel=trivia --acceptAllEulas --allowExtraConfig --datastore=\"$GOVC_DATASTORE\" --diskMode=thin --noSSLVerify $allExtraConfig"
 	c=1
 	for n in $networkl
 	do

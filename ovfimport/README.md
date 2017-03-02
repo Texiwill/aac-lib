@@ -147,6 +147,10 @@ Products and the results are as expected, working:
 	- VMware vRealize Network Insight (VRNI) [OV]
 	- VMware Cloud Volumes formerly VMware App Volumes [OV]
 	- VMware vSphere Replication Server (VR) [OV]
+	- VMware Big Data Extensions (BDE) [OV]
+
+And these unofficial OVA/OVFs:
+	- <a href="http://www.virtuallyghetto.com/2016/11/esxi-6-5-virtual-appliance-is-now-available.html">William Lam's Nested ESXi Appliance</a> [OV]
 
 And the following Third Party Products:
 
@@ -158,8 +162,8 @@ And the following Third Party Products:
 	Turbonomic formerly VMTurbo Ops Manager [OV]
 	Solarwinds Virtualization Manager [OV]
 
-Unknown at this time:
-	VMware Big Data Extensions (BDE)
+Do not use on the following:
+	End User Computing Access Point (it is better to use apdeploy)
 
 ### Installation
 Get a copy of govc or ovftool, then place the script anywhere
@@ -170,6 +174,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+1.2 updates to support Nested ESXi Appliance with the need for the --allowAllExtraConfig option to ovftool
+
 1.1 changed forceIpv6 to be just ipv6 in lookup with a directive to look up the exact keyvalue pair. 
 
 1.0 first release

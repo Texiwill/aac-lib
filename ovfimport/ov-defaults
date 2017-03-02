@@ -55,3 +55,8 @@ ldap://ldap.example.com ldap_url-Harbor
 CN=Users,DC=EXAMPLE,DC=com ldap_basedn-Harbor
 sAMAccountName ldap_uid-Harbor
 smtp.example.com email_server-Harbor
+
+#
+# William Lam's Nested ESXi Appliance Specific
+# http://www.virtuallyghetto.com/2016/11/esxi-6-5-virtual-appliance-is-now-available.html
+1 allextraconfig-Nested_ESXi_Appliance
