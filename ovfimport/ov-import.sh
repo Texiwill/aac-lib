@@ -62,11 +62,21 @@ fi
 ovftool=`which ovftool`
 if [ $? != 0 ]
 then
-	echo "We need ovftool somewhere in your path or /usr/local/bin"
+	echo "ERROR: We need ovftool somewhere in your path or /usr/local/bin"
 	if [ $precheck -eq 0 ]
 	then
 		exit
 	fi
+fi
+fuseiso=`which fuseiso`
+if [ $? != 0 ]
+then
+	echo "INFO: We need fuseiso somewhere in your path for ISO images"
+fi
+fusermount=`which fusermount`
+if [ $? != 0 ]
+then
+	echo "INFO: We need fusermount somewhere in your path for ISO images"
 fi
 
 defdir=`dirname $0`
@@ -106,37 +116,68 @@ fi
 
 # if we specified single file and it exists then do not unzip
 dounzip=1
+domount=0
+dovcsa=0
 if [ Z"$ovaovf" != Z"" ]
 then
+	# specific files do not unzip
 	dounzip=0
-	if [ ! -e $ovaovf ]
+	# Filetype
+	yy=`awk -vs1="$ovaovf" 'BEGIN{ print tolower(s1)}'`
+	echo $yy | fgrep ".iso" >& /dev/null
+	if [ $? -eq 0 ]
 	then
-		dounzip=1
+		domount=1
+	fi
+	echo $yy | fgrep ".zip" >& /dev/null
+	if [ $? -eq 0 ]
+	then
+		dounzip=2
+	fi
+	echo $yy | fgrep "vmware-vcsa" >& /dev/null
+	if [ $? -eq 0 ]
+	then
+		dovcsa=1
 	fi
 fi
 
 # handle zip files
 zipdir=0
-zfiles=""
+ifiles=t.$$
 if [ $dounzip -eq 1 ]
 then
 	for z in `ls *.zip 2>/dev/null`
 	do
-		zipdir=1
 		zfiles="$zfiles `unzip -l $z |egrep -v 'Name|----' |awk '{print $4}' | egrep -v '^$'`"
 		unzip $z
 	done
 fi
-	
-if [ Z"$ovaovf" = Z"" ]
+if [ $dounzip -eq 2 ]
 then
-	ovaovf=`ls *.ova *.ovf 2> /dev/null | grep -v new.ovf`
+	zipdir=1
+	mkdir $ifiles
+	cd $ifiles
+	unzip ../$ovaovf
+fi
+if [ $domount -eq 1 ]
+then
+	mkdir $ifiles
+	$fuseiso -p $ovaovf $ifiles
+	if [ $dovcsa -eq 1 ]
+	then
+		zipdir=2
+		xfiles=x.$$
+		mkdir $xfiles
+		cd $xfiles
+		tar -xf ../$ifiles/vcsa/vmware-vcsa
+	else
+		cd $zfiles
+	fi
 fi
 
-# Handle ova/ov files
-for x in $ovaovf
+# Handle ova/ovf files
+for x in `ls *.ova *.ovf 2> /dev/null | grep -v new.ovf`
 do
-
 	tmpdir=0
 	# extract name of ova/ovf by file
 	y=`echo ${x} | sed 's/[\.-][0-9].*$//'|sed 's/\.[a-Z].*$//'`
@@ -241,7 +282,7 @@ do
 	#	as does vm.name
 	#	as does not specifying IP info
 	log="/tmp/ovftool-$$.log"
-	prop="--X:logFile=$log --X:logLevel=trivia --acceptAllEulas --allowExtraConfig --datastore=\"$GOVC_DATASTORE\" --diskMode=thin --noSSLVerify $allExtraConfig"
+	prop="--X:logFile=$log --X:injectOvfEnv --X:logLevel=trivia --acceptAllEulas --allowExtraConfig --datastore=\"$GOVC_DATASTORE\" --diskMode=thin --noSSLVerify $allExtraConfig"
 	c=1
 	for n in $networkl
 	do
@@ -274,6 +315,9 @@ do
 		dofind=0
 		yy=`awk -vs1="$xx" 'BEGIN{ print tolower(s1)}'`
 		case $yy in 
+			guestinfo.cis*)
+				continue
+				;;
 			*ipv6*)
 				dofind=1
 				;;
@@ -428,12 +472,18 @@ done
 
 if [ $nocleanup -eq 0 ]
 then
+	if [ $zipdir -gt 0 ]
+	then
+		# we are down in the files!
+		cd ..
+		if [ $zipdir -eq 2 ]
+		then
+			fusermount -u $ifiles
+		fi
+	fi
 	if [ $dryrun -eq 0 ]
 	then
 		rm *.a.txt a.txt 2>/dev/null
+		rm -rf $ifiles $xfiles
 	fi
-fi
-if [ $zipdir -eq 1 ]
-then
-	rm $zfiles
 fi

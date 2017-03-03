@@ -148,6 +148,7 @@ Products and the results are as expected, working:
 	- VMware Cloud Volumes formerly VMware App Volumes [OV]
 	- VMware vSphere Replication Server (VR) [OV]
 	- VMware Big Data Extensions (BDE) [OV]
+	- VMware vCenter Server Appliance (VCSA) [OV]
 
 And these unofficial OVA/OVFs:
 	- <a href="http://www.virtuallyghetto.com/2016/11/esxi-6-5-virtual-appliance-is-now-available.html">William Lam's Nested ESXi Appliance</a> [OV]
@@ -174,6 +175,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+1.3 Support for ISO images such as VCSA plus change how we handle ZIP files. Specify the ZIP file or ISO on the command line and they are extracted into separate directories. They are not handled if just in the directory.
+
 1.2 updates to support Nested ESXi Appliance with the need for the --allowAllExtraConfig option to ovftool
 
 1.1 changed forceIpv6 to be just ipv6 in lookup with a directive to look up the exact keyvalue pair. 
