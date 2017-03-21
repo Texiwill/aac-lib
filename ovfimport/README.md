@@ -175,6 +175,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+1.6 Added License
+
 1.5 Fixed import of specific images. Added support to import based on specified keynames for importing more than one of the same OVA or OVF. (useful for importing nested ESXi labs)
 
 1.4 Fixed support for Nested ESXi Appliance, it was missing some properties
