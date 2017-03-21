@@ -175,6 +175,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+1.4 Fixed support for Nested ESXi Appliance, it was missing some properties
+
 1.3 Support for ISO images such as VCSA plus change how we handle ZIP files. Specify the ZIP file or ISO on the command line and they are extracted into separate directories. They are not handled if just in the directory.
 
 1.2 updates to support Nested ESXi Appliance with the need for the --allowAllExtraConfig option to ovftool

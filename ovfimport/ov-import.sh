@@ -275,7 +275,7 @@ do
 	# Now we process the spec and replace with elements as needed
 	# lets get the spec and do something interesting with it
 	#vaminame=`awk '/^Virtual Machines:/{A=1}/Name:/{if (A==1) { print $0;exit}}' a.txt|awk -F: '{print $2}'|sed 's/^ *//;s/ *$//'`
-	properties=`awk '/Properties:/{A=1}/ClassId:/{class=$0}/Key:/{key=$0}/InstanceId/{if (A==1) { split(key,k,":");split(class,c,":");split($0,i,"Id");printf "%s.%s.%s\n",c[2],k[2],i[2];class="";A=2;}}/Category:/{if (A==1) {split(key,k,":");split(class,c,":");printf "%s.%s\n",c[2],k[2];} else {A=1;}}/Deployment Options/{exit}' a.txt | sed 's/ *//g'|sed 's/^\.//'`
+	properties=`awk '/Properties:/{A=1}/ClassId:/{class=$0}/Key:/{key=$0;n=split(key,k,":");nkey=k[2];for(i=3;i<=n;i++) { nkey=sprintf("%s:%s",nkey,k[n]); }}/InstanceId/{if (A==1) { split(class,c,":");split($0,i,"Id");printf "%s.%s.%s\n",c[2],nkey,i[2];class="";A=2;}}/Category:|Label:/{if (A==1) {split(class,c,":");printf "%s.%s\n",c[2],nkey;} else {A=1;}}/Deployment Options/{exit}' a.txt | sed 's/ *//g'|sed 's/^\.//'`
 	vservice=`awk '/^VService Dependency:/{A=1}/ID:/{id=$0}/Name:/{if (A==1) { split($0,k,":");split(id,i,":");printf "%s:%s\n",i[2],k[2];exit}}' a.txt|awk -F: '{print $2}'|sed 's/ *//g'|sed 's/^\.//'`
 
 	#	namely 'deployment' often leads to errors
@@ -289,7 +289,7 @@ do
 		if [ $c -gt 1 ]
 		then
 			vet="network${c}"
-			z=`grep -i ${vet}-${y} $defaults|awk '{print $1}'`
+			z=`grep -i ${vet}-${y} $defaults|awk '{print $1}'|sed 's/%20/ /g'`
 			#eval ${vet}=$z
 			if [ Z"$z" = Z"" ]
 			then
