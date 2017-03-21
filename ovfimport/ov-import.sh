@@ -21,6 +21,10 @@ do
 		-n|--nocleanup)
 			nocleanup=1
 			;;
+		-y|--name)
+			yz=$2; 
+			shift;
+			;;
 		-h|--help)
 			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [ova/ovf file]"
 			echo "	--dryrun implies --nocleanup"
@@ -158,6 +162,7 @@ then
 	mkdir $ifiles
 	cd $ifiles
 	unzip ../$ovaovf
+	ovaovf="";
 fi
 if [ $domount -eq 1 ]
 then
@@ -170,13 +175,14 @@ then
 		mkdir $xfiles
 		cd $xfiles
 		tar -xf ../$ifiles/vcsa/vmware-vcsa
+		ovaovf="";
 	else
 		cd $zfiles
 	fi
 fi
 
 # Handle ova/ovf files
-for x in `ls *.ova *.ovf 2> /dev/null | grep -v new.ovf`
+for x in `if [ Z"$ovaovf" != Z"" ]; then if [ -e "$ovaovf" ]; then ls $ovaovf; fi; else ls *.ova *.ovf 2>/dev/null; fi`
 do
 	tmpdir=0
 	# extract name of ova/ovf by file
@@ -195,14 +201,18 @@ do
 	$ovftool --hideEula $x > a.txt
 
 	# determine the OVA Name
-	name=`grep ^Name: a.txt|awk -F: '{print $2}'|sed 's/^ *//;s/ *$//'`
-	if [ Z"$name" = Z"" ]
+	if [ Z"$yz" = Z"" ]
 	then
-		name=$y
+		name=`grep ^Name: a.txt|awk -F: '{print $2}'|sed 's/^ *//;s/ *$//'`
+		if [ Z"$name" = Z"" ]
+		then
+			name=$y
+		fi
+	else
+		name=$yz
 	fi
 	name=`echo $name|sed 's/_/ /g'|sed 's/(.*)//'|sed 's/\s*$//g'`
 
-	echo -e "Working on $name\n\tfrom file $x"
 
 	# fallback to OVA/OVF name if necessary
 	# but we really want the software name
@@ -211,8 +221,20 @@ do
 		y=`echo $name|sed 's/ /_/g'`
 	fi
 
+	# override name from key/value pairs
+	# override y as well
+	yy=`grep -i "override-name-${y}$" $defaults|awk '{print $1}'`
+	if [ Z"$yy" != Z"" ]
+	then
+		echo -e "Using Override Name $yy"
+		name=`echo $yy|sed 's/_/ /g'`
+		y=$yy
+	fi
+
+	echo -e "Working on $name\n\tfrom file $x"
+
 	# Check to see if we can import
-	z=`grep -i noimport-${y} $defaults|awk '{print $1}'`
+	z=`grep -i "noimport-${y}$" $defaults|awk '{print $1}'`
 	if [ Z"$z" != Z"" ]
 	then
 		echo "INFO: As requested, will not import $y."
@@ -221,7 +243,7 @@ do
 	
 	# check for allExtraConfig needed by Nested
 	allExtraConfig=""
-	z=`grep -i allextraconfig-${y} $defaults|awk '{print $1}'`
+	z=`grep -i "allextraconfig-${y}$" $defaults|awk '{print $1}'`
 	if [ Z"$z" = Z"1" ]
 	then
 		allExtraConfig="--allowAllExtraConfig --X:enableHiddenProperties"
@@ -234,7 +256,7 @@ do
 
 	# determine where to stop the pre-check loop
 	dobreak=""
-	z=`grep -i break-${y} $defaults|awk '{print $1}'`
+	z=`grep -i "break-${y}$" $defaults|awk '{print $1}'`
 	if [ Z"$z" != Z"" ]
 	then
 		dobreak=$z
@@ -244,7 +266,7 @@ do
 	missing=""
 	for xx in domain network vswitch ntp ssh ip netmask dns gw hostname ceip searchpath syslog
 	do
-		z=`grep -i ${xx}-${y} $defaults|awk '{print $1}'`
+		z=`grep -i "${xx}-${y}$" $defaults|awk '{print $1}'`
 		eval ${xx}=$z
 		if [ Z"$z" = Z"" ]
 		then
@@ -266,7 +288,7 @@ do
 			do
 				
 				vet=${nn}${n}
-				z=`grep -i ${vet}-${y} $defaults|awk '{print $1}'`
+				z=`grep -i "${vet}-${y}$" $defaults|awk '{print $1}'`
 				eval ${vet}=$z
 			done
 		done
@@ -275,7 +297,7 @@ do
 	# Now we process the spec and replace with elements as needed
 	# lets get the spec and do something interesting with it
 	#vaminame=`awk '/^Virtual Machines:/{A=1}/Name:/{if (A==1) { print $0;exit}}' a.txt|awk -F: '{print $2}'|sed 's/^ *//;s/ *$//'`
-	properties=`awk '/Properties:/{A=1}/ClassId:/{class=$0}/Key:/{key=$0;n=split(key,k,":");nkey=k[2];for(i=3;i<=n;i++) { nkey=sprintf("%s:%s",nkey,k[n]); }}/InstanceId/{if (A==1) { split(class,c,":");split($0,i,"Id");printf "%s.%s.%s\n",c[2],nkey,i[2];class="";A=2;}}/Category:|Label:/{if (A==1) {split(class,c,":");printf "%s.%s\n",c[2],nkey;} else {A=1;}}/Deployment Options/{exit}' a.txt | sed 's/ *//g'|sed 's/^\.//'`
+	properties=`awk '/Properties:/{A=1}/ClassId:/{class=$0}/Key:/{key=$0;n=split(key,k,":");nkey=k[2];for(i=3;i<=n;i++) { nkey=sprintf("%s:%s",nkey,k[n]); }}/InstanceId/{if (A==1) { split(class,c,":");split($0,id,"Id");printf "%s.%s.%s\n",c[2],nkey,id[2];class="";A=2;}}/Label:/{if (A==1) {split(class,c,":");printf "%s.%s\n",c[2],nkey;} else {A=1;}}/Deployment Options/{exit}' a.txt | sed 's/ *//g'|sed 's/^\.//'`
 	vservice=`awk '/^VService Dependency:/{A=1}/ID:/{id=$0}/Name:/{if (A==1) { split($0,k,":");split(id,i,":");printf "%s:%s\n",i[2],k[2];exit}}' a.txt|awk -F: '{print $2}'|sed 's/ *//g'|sed 's/^\.//'`
 
 	#	namely 'deployment' often leads to errors
@@ -289,7 +311,7 @@ do
 		if [ $c -gt 1 ]
 		then
 			vet="network${c}"
-			z=`grep -i ${vet}-${y} $defaults|awk '{print $1}'|sed 's/%20/ /g'`
+			z=`grep -i "${vet}-${y}$" $defaults|awk '{print $1}'|sed 's/%20/ /g'`
 			#eval ${vet}=$z
 			if [ Z"$z" = Z"" ]
 			then
@@ -301,7 +323,7 @@ do
 		fi
 		((c+=1))
 	done
-	z=`grep -i deployment-${y} $defaults|awk '{print $1}'`
+	z=`grep -i "deployment-${y}$" $defaults|awk '{print $1}'`
 	if [ Z"$z" != Z"" ]
 	then
 		prop="$prop --deploymentOption=$z"
@@ -363,6 +385,9 @@ do
 			*passwd*)
 				getpass=1
 				;;
+			*rootpw*)
+				getpass=1
+				;;
 			*pwd*)
 				getpass=1
 				;;
@@ -372,7 +397,7 @@ do
 		esac
 		if [ $dofind -eq 1 ]
 		then
-			z=`grep -i ${xx}-${y} $defaults|awk '{print $1}'`
+			z=`grep -i "${xx}-${y}$" $defaults|awk '{print $1}'`
 			if [ Z"$z" != Z"" ]
 			then
 				jg=$z
@@ -391,7 +416,7 @@ do
 		pass=""
 		if [ $getpass -eq 1 ]
 		then
-			pass=`grep -i password-${y} $defaults|awk '{print $1}'`
+			pass=`grep -i "password-${y}$" $defaults|awk '{print $1}'`
 			if [ Z"$pass" = Z"" ]
 			then
 				if [ Z"$gpassword" != "" ]
@@ -431,7 +456,7 @@ do
 	#fi
 	if [ Z"$vservice" != Z"" ]
 	then
-		#z=`grep -i extension-${y} $defaults|awk '{print $1}'`
+		#z=`grep -i "extension-${y}$" $defaults|awk '{print $1}'`
 		#if [ Z"$z" = Z"" ]
 		#then
 		#	missing="$missing\textension-${y}\n"
@@ -446,6 +471,12 @@ do
 		echo ""
 	fi
 	#eprop=`echo "--name=\"$name\" $prop"|sed 's/%20/ /g'|sed 's/(/\\\\(/'|sed 's/)/\\\\)/'`
+	target=$GOVC_RESOURCE_POLL
+	tgt=`grep -i "target-${y}$" $defaults|awk '{print $1}'`
+	if [ Z"$tgt" != Z"" ]
+	then
+		target=$tgt
+	fi
 	eprop=`echo "--name=\"$name\" $prop"|sed 's/%20/ /g'`
 	if [ $precheck -eq 0 ]
 	then
@@ -453,12 +484,12 @@ do
 		then
 			if [ $dryrun -eq 0 ]
 			then
-				eprop="$eprop $x vi://$GOVC_USERNAME:$GOVC_PASSWORD@$GOVC_URL$GOVC_RESOURCE_POOL"
+				eprop="$eprop $x vi://$GOVC_USERNAME:$GOVC_PASSWORD@$GOVC_URL$target"
 			else
-				eprop="$eprop $x vi://USERNAME:PASSWORD@$GOVC_URL$GOVC_RESOURCE_POOL"
+				eprop="$eprop $x vi://USERNAME:PASSWORD@$GOVC_URL$target"
 			fi
 		else
-			eprop="$eprop $x vi://$GOVC_URL$GOVC_RESOURCE_POOL"
+			eprop="$eprop $x vi://$GOVC_URL$target"
 		fi
 		if [ $dryrun -eq 0 ]
 		then

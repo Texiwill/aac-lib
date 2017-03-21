@@ -59,4 +59,28 @@ smtp.example.com email_server-Harbor
 #
 # William Lam's Nested ESXi Appliance Specific
 # http://www.virtuallyghetto.com/2016/11/esxi-6-5-virtual-appliance-is-now-available.html
-1 allextraconfig-Nested_ESXi_Appliance
+A_Nested_ESXi_Appliance override-name-Nested_ESXi_Appliance
+vpgA network-A_Nested_ESXi_Appliance
+1 allextraconfig-A_Nested_ESXi_Appliance
+vs6-a.example.com guestinfo.hostname-A_Nested_ESXi_Appliance
+192.168.1.190 guestinfo.ipaddress-A_Nested_ESXi_Appliance
+192.168.1.1 guestinfo.dns-A_Nested_ESXi_Appliance
+192.168.1.1 guestinfo.gateway-A_Nested_ESXi_Appliance
+192.168.1.1 guestinfo.syslog-A_Nested_ESXi_Appliance
+192.168.1.1 guestinfo.ntp-A_Nested_ESXi_Appliance
+example.com guestinfo.domain-A_Nested_ESXi_Appliance
+True guestinfo.createvmfs-A_Nested_ESXi_Appliance
+Datacenter/host/Cluster/Resources target-A_Nested_ESXi_Appliance
+
+# 2nd
+vpgA network-B_Nested_ESXi_Appliance
+1 allextraconfig-B_Nested_ESXi_Appliance
+vs6-b.example.com guestinfo.hostname-B_Nested_ESXi_Appliance
+192.168.1.191 guestinfo.ipaddress-B_Nested_ESXi_Appliance
+192.168.1.1 guestinfo.dns-B_Nested_ESXi_Appliance
+192.168.1.1 guestinfo.gateway-B_Nested_ESXi_Appliance
+192.168.1.1 guestinfo.syslog-B_Nested_ESXi_Appliance
+192.168.1.1 guestinfo.ntp-B_Nested_ESXi_Appliance
+example.com guestinfo.domain-B_Nested_ESXi_Appliance
+True guestinfo.createvmfs-B_Nested_ESXi_Appliance
+Datacenter/host/Cluster/Resources target-B_Nested_ESXi_Appliance

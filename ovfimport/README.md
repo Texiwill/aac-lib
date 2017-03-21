@@ -102,24 +102,23 @@ govc-import.sh [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]]
 
 or
 
-ov-import.sh [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [ova/ovf to import]
+ov-import.sh [-y|--name Key-Name-to-use] [-p|--precheck] [-d|--dryrun] [-n|--nocleanup] [-h|--help] [ova/ovf to import]
+
+	-y|--name specifies the name part of the Key to use within the .ov-defaults file
+	-p|--precheck prechecks the OVA or OVF for missing options
+	-d|--dryrun runs all but the final import. This will create a file named filename.a.txt which contains the final import command
+	-n|--nocleanup is implied by --dryrun. The *.a.txt files are kept around as are any unpacked ZIP or mounted ISO images
+	-h|--help displays the help
+	ova/ovf/ZIP/iso to import is the last argument, allowing to specify a specfic file instead of all OVAs, OVFs, and ZIP files within the current directory. This is the only way to import from an ISO image.
 
 General usage is really a three step process:
 	- move the OVAs/OVFs into a single directrory
-	- Precheck for settings using: [g]ov[c]-import.sh --precheck
+	- Precheck for settings using: ov-import.sh --dryrun
 	- Fix any missing items or use defaults if available
-	- Import the OVAs/OVFs using: [g]ov[c]-import.sh
+	- Import the OVAs/OVFs using: ov-import.sh
 
-Govc: The --dryrun will do everything but the final import, which is a good
-way to look at the created json files or the modified OVF files. Some
-tools have malformed OVF files according to govc, so they need to be
-modified directly. The script does this by creating a new.ovf and using
-that for import after taking the corrective actions.  So far the
-ones we have found are for the vSphere Web Client and the Management
-Assistant. You mark those in the ov-defaults file using the remap keyword
-as seen in the example file.
 
-Ovftool: The --dryrun will do everything but the final import, which is
+The --dryrun will do everything but the final import, which is
 a good way to look at the created ovfname.a.txt files. The a.txt files
 contain useful information about defaults that are needed as well as
 the actual ovftool command to be run, but was not.
@@ -169,12 +168,15 @@ Do not use on the following:
 ### Installation
 Get a copy of govc or ovftool, then place the script anywhere
 convenient. Then create a .ov-defaults and .govc file as appropriate.
+Govc-import is really on hold now until govc also improves.
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+1.5 Fixed import of specific images. Added support to import based on specified keynames for importing more than one of the same OVA or OVF. (useful for importing nested ESXi labs)
+
 1.4 Fixed support for Nested ESXi Appliance, it was missing some properties
 
 1.3 Support for ISO images such as VCSA plus change how we handle ZIP files. Specify the ZIP file or ISO on the command line and they are extracted into separate directories. They are not handled if just in the directory.
