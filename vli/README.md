@@ -4,7 +4,7 @@ AAC Library of Tools
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/>List of Tools</a>
 
 ## vli
-Set of content packs for VMware LogInsight
+Security Operations Content Pack for VMware vRealize Log Insight
 
 ### Description
 
@@ -23,13 +23,13 @@ hardening guide from VMware.
 The content pack has evolved into a multi-purpose Security Operations
 Center with the following dashboards:
 
- - Login and Actions Dashboard is used to visualize user activity within vSphere and alert upon root or administrator access. This dashboard should always show data in an active vSphere environment.
+ - Activity Dashboard is used to visualize user activity within vSphere and alert upon root or administrator access. This dashboard should always show data in an active vSphere environment.
+  - Login/Logout API Invocations Dashboard is used to visualize API invocations by user, user-agent, and quantity. We attempt to line up logins and logouts with the API invocations to gain visibility into what is happening on vSphere. We also look at CLI calls direct to hosts.
  - Firewall Events Dashboard is used to visualize firewall events by host, source of data, and packet actions. This dashboard will only show data if Internal Segmentation Edge firewalls are in use.
   - VM Configuration Changes Dashboard is used to visualize changes to your virtual machines as they happen. If this dashboard shows no data, that is a good thing.
   - VMRC/MKS Events Dashboard is used to visualize and alert upon actions that use the VMware Remote Console to a VM whether started within vCenter clients or direct host interaction. If this dashboard shows no data, that is a good thing.
   - Datastore Browser Events Dashboard is used to visualize and alert upon activity surrounding the datastore browser within vCenter and upon each host. If this dashboard shows no data, that is a good thing.
   - Permissions Dashboard is used to visualize and alert upon changes and additions to the vCenter permissions associated role based access control. If this dashboard shows no data, that is a good thing.
-  - API Invocations Dashboard is used to visualize API invocations by user, user-agent, and quantity. We also look at CLI calls direct to hosts.
 
 Compatibility:
  - VMware vSphere 6.0 or later for Login Events & Actions and Firewall Events Dashboards
@@ -62,6 +62,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+
+- 1.0 RC5 - renamed Login and Activity Dashboard to just Activity with adjust ment to graph titles. Renamed API Invocations dashboard to Login/Logout and API Invocations to line up login and logous with low level vSphere API Invocations. Added visibility into Direct connect activities.
 
 - rename others to beta. v1.0 contains alerts, new dashboards, etc. All
 the bits to be acceptable to VMware.
