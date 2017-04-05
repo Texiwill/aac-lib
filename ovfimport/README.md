@@ -4,9 +4,15 @@ AAC Library of Tools
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/>List of Tools</a>
 
 ## import
-2 scripts to use govc or ovftool to import a directory full of ova and
-ovf files. The ovftool will automatically unpack .zip files containing
-OVFs and its files as well as take a single OVA/OVF as an argument.
+This script uses ovftool (originally govc) to import OVA/OVFs into VMware
+vSphere providing the following benefits:
+
+	- Import a directory of OVA/OVFs, including those in a .zip file
+	- Uses a key/value configuration file for storing settings, 
+	- the ability to specify the name of the keys for a run. To allow import of different instances of the same OVA/OVF
+	- Aids in deploying by listing possible settings not already covered by the key/value configuration file
+
+ov-import.sh will automatically unpack .zip files containing OVFs and its files as well as take a single OVA/OVF as an argument.
 
 While this work started with the govc-import.sh it soon transitioned to
 the ov-import.sh as ovftool handles all the OVA/OVFs generally used. Govc
@@ -16,7 +22,7 @@ provided for those wishing to use it.
 
 The why of this script is to aid in disaster recovery and creation of
 new environments easily. Put all the OVAs/OVFs in one place and let the
-tool do the work after some minor configuration. This tool does not import vCenter as that is handled by many other scripts.
+tool do the work after some minor configuration. 
 
 These tools read all the options for an OVA/OVF and allows settings to
 be specified for all of them as necessary.
@@ -42,7 +48,7 @@ export GOVC_RESOURCE_POOL='/Datacenter/host/Cluster/Resources'
 export GOVC_DATACENTER=DatacenterName
 
 We also read the $HOME/.ov-defaults, ./.ov-defaults, or the
-.ov-defaults stored with the govc-import.sh script file for specific
+.ov-defaults stored with the ov-import.sh script file for specific
 configuration options for the OVAs/OVFs to import.
 
 Here is a sample .ov-defaults. These defaults represent some
@@ -175,6 +181,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+1.7 Updated README
+
 1.6 Added License
 
 1.5 Fixed import of specific images. Added support to import based on specified keynames for importing more than one of the same OVA or OVF. (useful for importing nested ESXi labs)
