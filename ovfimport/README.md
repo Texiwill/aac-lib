@@ -7,10 +7,10 @@ AAC Library of Tools
 This script uses ovftool (originally govc) to import OVA/OVFs into VMware
 vSphere providing the following benefits:
 
-	- Import a directory of OVA/OVFs, including those in a .zip file
-	- Uses a key/value configuration file for storing settings, 
-	- the ability to specify the name of the keys for a run. To allow import of different instances of the same OVA/OVF
-	- Aids in deploying by listing possible settings not already covered by the key/value configuration file
+	* Import a directory of OVA/OVFs, including those in a .zip file
+	* Uses a key/value configuration file for storing settings, 
+	* the ability to specify the name of the keys for a run. To allow import of different instances of the same OVA/OVF
+	* Aids in deploying by listing possible settings not already covered by the key/value configuration file
 
 ov-import.sh will automatically unpack .zip files containing OVFs and its files as well as take a single OVA/OVF as an argument.
 
@@ -69,39 +69,39 @@ not handle vServices but the ovftool script does. See below for those
 OVA/OVF tested.
 
 The following is from the included ov-defaults file:
-	#
-	# Findings from testing
-	1 noimport-vSphere_Replication_AddOn_OVF10
-	#
-	## Specific deployment option
-	normal deployment-VMware-VirtualSAN-Witness
-	#
-	## for govc-import.sh
-	1 remap-h5ngcVA
-	1 remap-vMA
-	1 remap-vSphere_Replication_OVF10
-	#
-	## Where to break pre-check lookups
-	ip break-vMA
-	vswitch break-VMware-VirtualSAN-Witness
-	#
-	# general import settings
-	192.168.1.1 gw-global
-	192.168.1.2 dns-global
-	255.255.255.0 netmask-global
-	vSwitch0 vswitch-global
-	VMNetwork network-global
-	example.com domain-global
-	false ssh-global
-	false ceip-global
-	#
-	# Per OVA/OVF settings
-	PASSWORD password-VMware-VirtualSAN-Witness
-	PASSWORD password-VMware-Support-Assistant-Appliance
-	PASSWORD password-vSphere_Replication_OVF10
-	PASSWORD password-VMware-vRO-Appliance
-	vro.example.com hostname-VMware-vRO-Appliance
-	vra.example.com hostname-VMware-vR-Appliance
+	- #
+	- # Findings from testing
+	- 1 noimport-vSphere_Replication_AddOn_OVF10
+	- #
+	- ## Specific deployment option
+	- normal deployment-VMware-VirtualSAN-Witness
+	- #
+	- ## for govc-import.sh
+	- 1 remap-h5ngcVA
+	- 1 remap-vMA
+	- 1 remap-vSphere_Replication_OVF10
+	- #
+	- ## Where to break pre-check lookups
+	- ip break-vMA
+	- vswitch break-VMware-VirtualSAN-Witness
+	- #
+	- # general import settings
+	- 192.168.1.1 gw-global
+	- 192.168.1.2 dns-global
+	- 255.255.255.0 netmask-global
+	- vSwitch0 vswitch-global
+	- VMNetwork network-global
+	- example.com domain-global
+	- false ssh-global
+	- false ceip-global
+	- #
+	- # Per OVA/OVF settings
+	- PASSWORD password-VMware-VirtualSAN-Witness
+	- PASSWORD password-VMware-Support-Assistant-Appliance
+	- PASSWORD password-vSphere_Replication_OVF10
+	- PASSWORD password-VMware-vRO-Appliance
+	- vro.example.com hostname-VMware-vRO-Appliance
+	- vra.example.com hostname-VMware-vR-Appliance
 
 Usage follows:
 govc-import.sh [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]]
@@ -118,10 +118,10 @@ ov-import.sh [-y|--name Key-Name-to-use] [-p|--precheck] [-d|--dryrun] [-n|--noc
 	ova/ovf/ZIP/iso to import is the last argument, allowing to specify a specfic file instead of all OVAs, OVFs, and ZIP files within the current directory. This is the only way to import from an ISO image.
 
 General usage is really a three step process:
-	- move the OVAs/OVFs into a single directrory
-	- Precheck for settings using: ov-import.sh --dryrun
-	- Fix any missing items or use defaults if available
-	- Import the OVAs/OVFs using: ov-import.sh
+	* move the OVAs/OVFs into a single directrory
+	* Precheck for settings using: ov-import.sh --dryrun
+	* Fix any missing items or use defaults if available
+	* Import the OVAs/OVFs using: ov-import.sh
 
 
 The --dryrun will do everything but the final import, which is
@@ -135,41 +135,41 @@ We have tested these scripts ([GOVC,OV]) against the following VMware
 Products and the results are as expected, working:
 
 	These products work in both scripts:
-	- VMware Virtual SAN Witness Appliance [GOVC|OV]
-	- VMware vSphere Web Client (h5ngcVA) [GOVC|OV]
-	- VMware vSphere Management Assistant (VMA) [GOVC|OV]
-	- VMware vSphere Data Protection (VDP) [GOVC|OV]
-	- VMware vRealize Orchestrator (VROVA) [GOVC|OV]
-	- VMware vRealize Appliance (VRA) [GOVC|OV]
+	* VMware Virtual SAN Witness Appliance [GOVC|OV]
+	* VMware vSphere Web Client (h5ngcVA) [GOVC|OV]
+	* VMware vSphere Management Assistant (VMA) [GOVC|OV]
+	* VMware vSphere Data Protection (VDP) [GOVC|OV]
+	* VMware vRealize Orchestrator (VROVA) [GOVC|OV]
+	* VMware vRealize Appliance (VRA) [GOVC|OV]
 
 	These products work only with ov-import.sh:
-	- VMware vRealize Business for Cloud (VRBC) [OV]
-	- VMware vRealize Infrastructure Navigator (VIN) [OV]
-	- VMware vRealize Log Insight (VRLI) [OV]
-	- VMware vRealize Operations Manager (VROPS) [OV]
-	- VMware NSX Manager (NSXV) [OV]
-	- VMware Integrated Containers/Harbor (VIC) [OV]
-	- VMware vRealize Network Insight (VRNI) [OV]
-	- VMware Cloud Volumes formerly VMware App Volumes [OV]
-	- VMware vSphere Replication Server (VR) [OV]
-	- VMware Big Data Extensions (BDE) [OV]
-	- VMware vCenter Server Appliance (VCSA) [OV]
+	* VMware vRealize Business for Cloud (VRBC) [OV]
+	* VMware vRealize Infrastructure Navigator (VIN) [OV]
+	* VMware vRealize Log Insight (VRLI) [OV]
+	* VMware vRealize Operations Manager (VROPS) [OV]
+	* VMware NSX Manager (NSXV) [OV]
+	* VMware Integrated Containers/Harbor (VIC) [OV]
+	* VMware vRealize Network Insight (VRNI) [OV]
+	* VMware Cloud Volumes formerly VMware App Volumes [OV]
+	* VMware vSphere Replication Server (VR) [OV]
+	* VMware Big Data Extensions (BDE) [OV]
+	* VMware vCenter Server Appliance (VCSA) [OV]
 
 And these unofficial OVA/OVFs:
-	- <a href="http://www.virtuallyghetto.com/2016/11/esxi-6-5-virtual-appliance-is-now-available.html">William Lam's Nested ESXi Appliance</a> [OV]
+	* <a href="http://www.virtuallyghetto.com/2016/11/esxi-6-5-virtual-appliance-is-now-available.html">William Lam's Nested ESXi Appliance</a> [OV]
 
 And the following Third Party Products:
 
-	DoubleCloud VSearch [GOVC|OV]
-	IxiaDeveloper [OV]
-	Runecast Analyzer [OV]
-	SIOS iQ [OV]
-	Unitrends Enterprise Backup [OV]
-	Turbonomic formerly VMTurbo Ops Manager [OV]
-	Solarwinds Virtualization Manager [OV]
+	* DoubleCloud VSearch [GOVC|OV]
+	* IxiaDeveloper [OV]
+	* Runecast Analyzer [OV]
+	* SIOS iQ [OV]
+	* Unitrends Enterprise Backup [OV]
+	* Turbonomic formerly VMTurbo Ops Manager [OV]
+	* Solarwinds Virtualization Manager [OV]
 
 Do not use on the following:
-	End User Computing Access Point (it is better to use apdeploy)
+	* End User Computing Access Point (it is better to use <a href=https://communities.vmware.com/docs/DOC-30835>apdeploy</a>)
 
 ### Installation
 Get a copy of govc or ovftool, then place the script anywhere
