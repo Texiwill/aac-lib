@@ -72,39 +72,39 @@ OVA/OVF tested.
 
 The following is from the included ov-defaults file:
 ```
-	#
-	# Findings from testing
-	1 noimport-vSphere_Replication_AddOn_OVF10
-	#
-	## Specific deployment option
-	normal deployment-VMware-VirtualSAN-Witness
-	#
-	## for govc-import.sh
-	1 remap-h5ngcVA
-	1 remap-vMA
-	1 remap-vSphere_Replication_OVF10
-	#
-	## Where to break pre-check lookups
-	ip break-vMA
-	vswitch break-VMware-VirtualSAN-Witness
-	#
-	# general import settings
-	192.168.1.1 gw-global
-	192.168.1.2 dns-global
-	255.255.255.0 netmask-global
-	vSwitch0 vswitch-global
-	VMNetwork network-global
-	example.com domain-global
-	false ssh-global
-	false ceip-global
-	#
-	# Per OVA/OVF settings
-	PASSWORD password-VMware-VirtualSAN-Witness
-	PASSWORD password-VMware-Support-Assistant-Appliance
-	PASSWORD password-vSphere_Replication_OVF10
-	PASSWORD password-VMware-vRO-Appliance
-	vro.example.com hostname-VMware-vRO-Appliance
-	vra.example.com hostname-VMware-vR-Appliance
+#
+# Findings from testing
+1 noimport-vSphere_Replication_AddOn_OVF10
+#
+## Specific deployment option
+normal deployment-VMware-VirtualSAN-Witness
+#
+## for govc-import.sh
+1 remap-h5ngcVA
+1 remap-vMA
+1 remap-vSphere_Replication_OVF10
+#
+## Where to break pre-check lookups
+ip break-vMA
+vswitch break-VMware-VirtualSAN-Witness
+#
+# general import settings
+192.168.1.1 gw-global
+192.168.1.2 dns-global
+255.255.255.0 netmask-global
+vSwitch0 vswitch-global
+VMNetwork network-global
+example.com domain-global
+false ssh-global
+false ceip-global
+#
+# Per OVA/OVF settings
+PASSWORD password-VMware-VirtualSAN-Witness
+PASSWORD password-VMware-Support-Assistant-Appliance
+PASSWORD password-vSphere_Replication_OVF10
+PASSWORD password-VMware-vRO-Appliance
+vro.example.com hostname-VMware-vRO-Appliance
+vra.example.com hostname-VMware-vR-Appliance
 ```
 
 Usage follows:
@@ -122,11 +122,10 @@ ov-import.sh [-y|--name Key-Name-to-use] [-p|--precheck] [-d|--dryrun] [-n|--noc
 	ova/ovf/ZIP/iso to import is the last argument, allowing to specify a specfic file instead of all OVAs, OVFs, and ZIP files within the current directory. This is the only way to import from an ISO image.
 
 General usage is really a three step process:
-	* move the OVAs/OVFs into a single directrory
-	* Precheck for settings using: ov-import.sh --dryrun
-	* Fix any missing items or use defaults if available
-	* Import the OVAs/OVFs using: ov-import.sh
-
+* move the OVAs/OVFs into a single directrory
+* Precheck for settings using: ov-import.sh --dryrun
+* Fix any missing items or use defaults if available
+* Import the OVAs/OVFs using: ov-import.sh
 
 The --dryrun will do everything but the final import, which is
 a good way to look at the created ovfname.a.txt files. The a.txt files
