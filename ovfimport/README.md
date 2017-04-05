@@ -139,36 +139,36 @@ We have tested these scripts ([GOVC,OV]) against the following VMware
 Products and the results are as expected, working:
 
 * These products work in both scripts:
-..* VMware Virtual SAN Witness Appliance [GOVC|OV]
-..* VMware vSphere Web Client (h5ngcVA) [GOVC|OV]
-..* VMware vSphere Management Assistant (VMA) [GOVC|OV]
-..* VMware vSphere Data Protection (VDP) [GOVC|OV]
-..* VMware vRealize Orchestrator (VROVA) [GOVC|OV]
-..* VMware vRealize Appliance (VRA) [GOVC|OV]
+  * VMware Virtual SAN Witness Appliance [GOVC|OV]
+  * VMware vSphere Web Client (h5ngcVA) [GOVC|OV]
+  * VMware vSphere Management Assistant (VMA) [GOVC|OV]
+  * VMware vSphere Data Protection (VDP) [GOVC|OV]
+  * VMware vRealize Orchestrator (VROVA) [GOVC|OV]
+  * VMware vRealize Appliance (VRA) [GOVC|OV]
 * These products work only with ov-import.sh:
-..* VMware vRealize Business for Cloud (VRBC) [OV]
-..* VMware vRealize Infrastructure Navigator (VIN) [OV]
-..* VMware vRealize Log Insight (VRLI) [OV]
-..* VMware vRealize Operations Manager (VROPS) [OV]
-..* VMware NSX Manager (NSXV) [OV]
-..* VMware Integrated Containers/Harbor (VIC) [OV]
-..* VMware vRealize Network Insight (VRNI) [OV]
-..* VMware Cloud Volumes formerly VMware App Volumes [OV]
-..* VMware vSphere Replication Server (VR) [OV]
-..* VMware Big Data Extensions (BDE) [OV]
-..* VMware vCenter Server Appliance (VCSA) [OV]
+  * VMware vRealize Business for Cloud (VRBC) [OV]
+  * VMware vRealize Infrastructure Navigator (VIN) [OV]
+  * VMware vRealize Log Insight (VRLI) [OV]
+  * VMware vRealize Operations Manager (VROPS) [OV]
+  * VMware NSX Manager (NSXV) [OV]
+  * VMware Integrated Containers/Harbor (VIC) [OV]
+  * VMware vRealize Network Insight (VRNI) [OV]
+  * VMware Cloud Volumes formerly VMware App Volumes [OV]
+  * VMware vSphere Replication Server (VR) [OV]
+  * VMware Big Data Extensions (BDE) [OV]
+  * VMware vCenter Server Appliance (VCSA) [OV]
 * And these unofficial OVA/OVFs:
-..* <a href="http://www.virtuallyghetto.com/2016/11/esxi-6-5-virtual-appliance-is-now-available.html">William Lam's Nested ESXi Appliance</a> [OV]
+  * <a href="http://www.virtuallyghetto.com/2016/11/esxi-6-5-virtual-appliance-is-now-available.html">William Lam's Nested ESXi Appliance</a> [OV]
 * And the following Third Party Products:
-..* DoubleCloud VSearch [GOVC|OV]
-..* IxiaDeveloper [OV]
-..* Runecast Analyzer [OV]
-..* SIOS iQ [OV]
-..* Unitrends Enterprise Backup [OV]
-..* Turbonomic formerly VMTurbo Ops Manager [OV]
-..* Solarwinds Virtualization Manager [OV]
+  * DoubleCloud VSearch [GOVC|OV]
+  * IxiaDeveloper [OV]
+  * Runecast Analyzer [OV]
+  * SIOS iQ [OV]
+  * Unitrends Enterprise Backup [OV]
+  * Turbonomic formerly VMTurbo Ops Manager [OV]
+  * Solarwinds Virtualization Manager [OV]
 * Do not use on the following:
-..* End User Computing Access Point (it is better to use <a href=https://communities.vmware.com/docs/DOC-30835>apdeploy</a>)
+  * End User Computing Access Point (it is better to use <a href=https://communities.vmware.com/docs/DOC-30835>apdeploy</a>)
 
 ### Installation
 Get a copy of govc or ovftool, then place the script anywhere
