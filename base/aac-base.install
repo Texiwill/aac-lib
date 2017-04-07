@@ -1,0 +1,184 @@
+#!/bin/bash
+#
+# Copyright (c) 2016,2017 AstroArch Consulting, Inc. All rights reserved
+#
+#
+#
+# Create a Base Install
+#
+# Target: CentOS/RHEL 7
+#
+###
+
+function menu() {
+	all_done=0;
+	while [ $all_done != 1 ]
+	do
+		select choice in `ls ${prog}.*` Exit
+		do
+			if [ $choice = "Exit" ]
+			then
+				all_done=1
+			else
+				echo -n "Running "
+				echo $choice | awk -F\. '{print $4}'
+				menu_pd=`pwd`
+				. ./$choice
+				cd $menu_pd
+			fi
+			break
+		done
+	done
+}
+
+function startsrv() {
+	if [ $VERSION_ID -gt 6 ]
+	then
+		systemctl status $1 | grep running > /dev/null
+		if [ $? != 0 ]
+		then
+			systemctl restart $1
+			systemctl enable $1
+		fi
+	else
+		service $1 status | grep running > /dev/null
+		if [ $? != 0 ]
+		then
+			service $1 restart
+			chkconfig $1 on
+		fi
+	fi
+}
+
+function tz() {
+	echo "Checking Timezone settings"
+	echo $RPMLIST | grep wget > /dev/null
+	if [ $? != 0 ]
+	then
+		echo "Install/update wget & ntp"
+		yum -q makecache fast
+		yum -q -y install wget ntp
+		yum -q -y update wget ntp
+	fi
+	settz=0
+	ls -al /etc/localtime |grep "$TZ" > /dev/null
+	if [ $? != 0 ]
+	then
+		echo "Setting up TZ"
+		settz=1
+	fi
+	if [ $VERSION_ID -gt 6 ]
+	then
+		if [ $settz -eq 1 ]
+		then
+			timedatectl set-timezone $TZ
+		fi
+	else
+		if [ $settz -eq 1 ]
+		then
+			(cd /etc; rm localtime; ln -s /usr/share/zoneinfo/$TZ localtime)
+		fi
+	fi
+	startsrv ntpd
+}
+
+function epel() {
+	echo "Checking for EPEL repository"
+	echo $RPMLIST |grep epel-release-${VERSION_ID} > /dev/null
+	if [ $? != 0 ]
+	then
+		echo "Installing EPEL repository"
+		wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION_ID}.noarch.rpm
+		rpm -ivh epel-release-latest-${VERSION_ID}.noarch.rpm
+	fi
+}
+
+function selinux() {
+	#
+	# only install if needed
+	echo "Checking for SELinux Policy RPMS"
+	echo $RPMLIST | grep policycoreutils-python > /dev/null
+	if [ $? != 0 ]
+	then
+		echo "Installing SELinux Policy RPMS"
+		yum -q -y install policycoreutils-python setroubleshoot-server
+		yum -q -y update policycoreutils-python setroubleshoot-server
+	fi
+	echo "If SELinux issues pop up use the following to debug:"
+	echo "	sealert -a /var/log/audit/audit.log"
+}
+
+function fixselinux() {
+	echo "Reset SELinux after installs"
+	restorecon -R -v /dev
+	if [ -e /etc/puppet ]
+	then
+		restorecon -R -v /etc/puppet
+		restorecon -R -v /var/lib/puppet
+	fi
+}
+
+function usage() {
+	echo "Usage: $prog [--install|-i installer] [--help|-h] [timezone]"
+	echo "	Default timezone $TZ"
+	echo "	Available installers are:"
+	for x in `ls ${prog}.*`
+	do
+		echo -n "		"
+		echo $x | awk -F\. '{print $4}'
+	done
+	exit
+}
+
+prog=$0
+installer=""
+TZ='America/Chicago'
+case "$1" in 
+	--install|-i)
+		installer=$2
+		shift
+		;;
+	--help|-h) 
+		usage
+		;;
+	*) 
+		TZ=$1
+		;;
+esac
+
+###
+# Get the RHEL/CentOS Version
+###
+
+if [ -f /etc/os-release ]
+then
+	. /etc/os-release
+else
+	if [ -f /etc/centos-release ]
+	then
+		VERSION_ID=`awk '{print $3}' /etc/centos-release | awk -F. '{print $1}'`
+		export VERSION_ID
+	elif [ -f /etc/redhat-release ]
+	then
+		VERSION_ID=`awk '{print $7}' /etc/redhat-release | awk -F. '{print $1}'`
+		export VERSION_ID
+	fi
+fi
+DNAME=`hostname -d`
+RPMLIST=`rpm -qa`
+
+###
+# Now do the base install
+###
+tz
+epel
+selinux
+
+if [ Z"$installer" != Z"" ]
+then
+	. ./${0}.$installer
+else
+	menu
+fi
+
+fixselinux

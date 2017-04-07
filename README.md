@@ -14,6 +14,17 @@ to much larger projects.
 
 Tools (in no particular order) Include:
 
+## BASE
+
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/base>Base Installer</a>
+
+### Description
+The base is a small collection of scripts to get specific tools
+installed. I like all my systems to be similar so one script installs
+necessary components then puppet-agent, another installs PowerCLI
+w/PowerNSX on Linux, another installs DNSCrypt, and I am working on
+translating my Puppet environment to something generic for use by others.
+
 ## Git Pre-Commit
 
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/hooks>GIT Pre-Commit</a>
@@ -49,10 +60,10 @@ within the family of products.
 
 ## VLI
 
-- <a href=https://github.com/Texiwill/aac-lib/tree/master/vli>Texiwill's Security</a> VMware vRealize Log Insight Content Pack
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/vli>Security Operations Center</a> VMware vRealize Log Insight Content Pack
 
 ### Description
-A set of security operations dashboards VMware vRealize Log Insight.
+A set of vSphere Security Operations dashboards for VMware vRealize Log Insight.
 
 ## OVFIMPORT
 
@@ -62,7 +73,7 @@ A set of security operations dashboards VMware vRealize Log Insight.
 A set of scripts to import OVA/OVFs into vCenter/vSphere en masse using
 a configuration file of simple key value pairs. There are two scripts,
 the govc script is incomplete. I found too much missing, so wrote and
-expanded the same script using ovftool.
+expanded the same script using ovftool directly.
 
 ## HTML5
 
@@ -88,11 +99,11 @@ if you know what you are doing.
 ### Description
 A bash script to automatically upgrade and reset file and directory
 permssions after an upgrade via YUM or RPM. Included is also
-the script to update selinux settings for files and directories.
+the script to update SElinux settings for files and directories.
 
 These scripts are useful to automate the database upgrade after owncloud
 is updated. Nearly all these script lines are within the owncloud
-documentationI added a few I need for Centos 7 with selinux enabled.
+documentation. I added a few I need for Centos 7 with SElinux enabled.
 
 ## ISO Library Tool
 
