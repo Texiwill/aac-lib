@@ -20,10 +20,11 @@ The problem is that some one offs work better installed via
 scripts. Configuring the puppet server for example is one such.
 
 ### Installation
-Run the script using SUDO as root access is required.  The script installs
-the latest 4.0 puppet agent and the possibility of powercli, dnscrypt,
-and puppet-server as well as any required puppet modules when the 'puppet'
-option is selected.
+Run the script using SUDO as root access is required.  The scripts can install
+the latest 4.0 puppet agent, powercli, dnscrypt, and fpm. Puppet-server
+configurations are also coming. The standard install will load the proper
+timezone, EPEL repository, and SELinux policy RPMs automatically. The
+rest is up to you. Here is how it looks.
 
 	# sudo ./aac-base.install
 	Checking Timezone settings
@@ -51,6 +52,7 @@ The usage of the script is:
 
 ### Todo
 Build out Puppet 4.0 framework for my virtualized environment.
+Create a REPO for build/install later
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
