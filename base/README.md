@@ -8,7 +8,7 @@ AAC Library of Tools
 ### Description
 A bash script to automatically install all the requirements to use Puppet
 as the configuration manager for CentOS/RHEL installations as well
-as other one off installations such as PowerCLI w/PowerNSX, DNSCrypt,
+as other one off installations such as PowerCLI w/PowerNSX, DNSCrypt, fpm,
 and Puppet Server.
 
 Why did I create these scripts?  To help keep my configuration up to date
@@ -31,8 +31,8 @@ option is selected.
 	Checking for SELinux Policy RPMS
 	If SELinux issues pop up use the following to debug:
 		sealert -a /var/log/audit/audit.log
-	1) aac-base.install.dnscrypt	5) Exit
-	2) aac-base.install.powercli	
+	1) aac-base.install.dnscrypt	5) aac-base.install.fpm
+	2) aac-base.install.powercli	6) Exit
 	3) aac-base.install.puppetbase
 	#? 
 

@@ -51,4 +51,3 @@ function puppetbase() {
 	startsrv puppet
 }
 
-puppetbase

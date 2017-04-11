@@ -20,10 +20,11 @@ function menu() {
 			then
 				all_done=1
 			else
-				echo -n "Running "
-				echo $choice | awk -F\. '{print $4}'
+				installer=`echo $choice | awk -F\. '{print $4}'`
+				echo "Running $installer"
 				menu_pd=`pwd`
 				. ./$choice
+				$installer
 				cd $menu_pd
 			fi
 			break
@@ -119,6 +120,7 @@ function fixselinux() {
 }
 
 function usage() {
+	# echo "Usage: $prog [--install|-i installer] [--createrepo|-c] [--help|-h] [timezone]"
 	echo "Usage: $prog [--install|-i installer] [--help|-h] [timezone]"
 	echo "	Default timezone $TZ"
 	echo "	Available installers are:"
@@ -132,12 +134,17 @@ function usage() {
 
 prog=$0
 installer=""
+CREATEREPO=0
 TZ='America/Chicago'
 case "$1" in 
 	--install|-i)
 		installer=$2
 		shift
 		;;
+	#--createrepo|-c)
+	#	CREATEREPO=1
+	#	shift
+	#	;;
 	--help|-h) 
 		usage
 		;;
@@ -174,11 +181,29 @@ tz
 epel
 selinux
 
+###
+# Do we Create the Repo
+###
+if [ $CREATEREPO -eq 1 ]
+then
+	. ./${0}.fpm
+	createrepo
+	fpm
+fi
+
+###
+# Run the specific installer or use the menu
+###
 if [ Z"$installer" != Z"" ]
 then
 	. ./${0}.$installer
+	$installer
 else
 	menu
 fi
+
+###
+# General Cleanup
+###
 
 fixselinux

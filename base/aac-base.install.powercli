@@ -9,7 +9,8 @@
 ###
 
 function powercli() {
-	DEVEL="rpm-build redhat-rpm-config gcc cpp glibc-devel glibc-headers kernel-headers mpfr libmpc bzip2 automake openssl-devel"
+	INSTALL="unzip zip"
+	DEVEL="rpm-build redhat-rpm-config gcc cpp glibc-devel glibc-headers kernel-headers mpfr libmpc bzip2 automake openssl-devel autoconf dwz elfutils keyutils-libs-devel krb5-devel libcom_err-devel libkadm5 libselinux-devel libsepol-devel libverto-devel m4 patch pcre-devel perl-Data-Dumper perl-Test-Harness perl-Thread-Queue perl-srpm-macros zlib-devel groff libidn-devel libssh2-devel nss-devel openldap-devel stunnel perl-Digest-MD5 valgrind"
 	basedir='https://github.com'
 
 	# Centos7 version
@@ -42,17 +43,27 @@ function powercli() {
 		rpm -ivh `basename $CURL`
 
 		# modify the spec
-		pushd ~/rpmbuild/SPECS
-		sed 's/libssh2 \\/libssh2/' curl.spec | sed 's/--without-ssl --with-nss//' t.curl.spec
+		cd ~/rpmbuild/SPECS
+		sed 's/libssh2 \\/libssh2/' curl.spec | sed 's/--without-ssl --with-nss//' > t.curl.spec
 	
 		# Install DEVS
-		yum -y install $DEVEL
+		yum -y install $INSTALL $DEVEL
 
 		# Build Curl with modified spec
 		rpmbuild -ba t.curl.spec
 
-		# Override Curl and install all but debug info
-		rpm --force -Uvh `ls ~/rpmbuild/RPMS/x86_64 |grep -v debuginfo`
+
+		###
+		# Add to REPO, do not install
+		###
+		if [ $CREATEREPO -eq 1 ]
+		then
+			# save in repo
+			createrepo `ls ~/rpmbuild/RPMS/x86_64|sed 's%^%~/rpmbuild/RPMS/x86_64/%'`
+		else
+			# Override Curl and install all but debug info
+			rpm --force -Uvh `ls ~/rpmbuild/RPMS/x86_64|grep -v debuginfo|sed 's%^%~/rpmbuild/RPMS/x86_64/%'`
+		fi
 
 		# Remove DEVS
 		rm -rf ~/rpmbuild
@@ -63,7 +74,7 @@ function powercli() {
 		then
 			mv ~/rpmbuild.orig ~/rpmbuild
 		fi
-		popd
+		cd $PDIR
 	fi	
 
 	echo "Checking for Latest Powershell"
@@ -72,30 +83,38 @@ function powercli() {
 	
 	# Do we really need to get it
 	rpm=`basename $rpmdir`
+	file=`echo ${basedir}${rpmdir} | sed 's/ //g'`
 	
-	# slower but gets the line we need, not just a 'check'
-	inst=`rpm -qa|grep -i powershell`
-	if [ "${inst}.rpm" != "$rpm" ]
+	if [ $CREATEREPO -eq 1 ]
 	then
-		file=`echo ${basedir}${rpmdir} | sed 's/ //g'`
-		echo -e "Downloading $rpm from\n $file"
-		wget $file
-
-		# Not installed with this version either update or install
-		yumcmd="update"
-		yummsg="Updating $rpm"
-		if [ Z"$inst" = Z"" ]
+		if [ `checkrepo $rpm` -eq 0 ]
 		then
-			yumcmd="install"
-			yummsg="Installing $rpm"
+			wget $file
+			createrepo $rpm
 		fi
-		echo $yummsg
-		yum $yumcmd -y $rpm
 	else
-		# nothing needed, log and go on
-		echo "$rpm already installed."
+		# slower but gets the line we need, not just a 'check'
+		inst=`rpm -qa|grep -i powershell`
+		if [ "${inst}.rpm" != "$rpm" ]
+		then
+			echo -e "Downloading $rpm from\n $file"
+			wget $file
+
+			# Not installed with this version either update or install
+			yumcmd="update"
+			yummsg="Updating $rpm"
+			if [ Z"$inst" = Z"" ]
+			then
+				yumcmd="install"
+				yummsg="Installing $rpm"
+			fi
+			echo $yummsg
+			yum $yumcmd -y $rpm
+		else
+			# nothing needed, log and go on
+			echo "$rpm already installed."
+		fi
 	fi
-	
 	
 	# now get the latest PowerNSX
 	if [ ! -e /usr/local/share/powershell/Modules/PowerNSX/PowerNSX.psm1 ]
@@ -130,8 +149,14 @@ function powercli() {
 		powershell -Command 'Update-PowerNSX -branch master'
 	fi
 
+	if [ $CREATEREPO -eq 1 ]
+	then
+		ver=`grep ModuleVersion /usr/local/share/powershell/Modules/PowerNSX/PowerNSX.psd1 | awk -F\' '{print $2}'`
+		fpm -s dir -t rpm -n powercli -v $ver /usr/local/share/powershell /etc/profile.d/powershell.*
+		createrepo powercli-${ver}-*.x86-64.rpm
+	fi
+
 	cd $menu_pd
 	rm -rf $PDIR
 }
 
-powercli

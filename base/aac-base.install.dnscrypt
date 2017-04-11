@@ -131,7 +131,7 @@ while read line; do
   doeval=1
 
   if [ "x${COUNTRY}" != "x" ]; then
-    ip=$(echo "$line" | gawk -vFPAT='[^,]*|"[^"]*"' '{print $11}'|awk '{n=split($0,v,":"); print n; if (n > 1) { print v[1] } else { print $0 }}')
+    ip=$(echo "$line" | gawk -vFPAT='[^,]*|"[^"]*"' '{print $11}'|awk '{n=split($0,v,":"); if (n > 1) { print v[1] } else { print $0 }}')
     /usr/bin/geoiplookup $ip |egrep $COUNTRY >& /dev/null
     if [ $? -eq 0 ]; then
 	doeval=1
@@ -225,7 +225,13 @@ EOF
 		echo "nameserver 172.0.0.1" > /etc/resolv.conf
 	fi
 
+	if [ $CREATEREPO -eq 1 ]
+	then
+		ver=`/usr/local/sbin/dnscrypt-proxy --version |head -1 |awk '{print $2}'`
+		fpm -s dir -t rpm -n dnscrypt-proxy -v $ver /usr/local/share/dnscrypt-proxy /usr/local/share/doc/dnscrypt-proxy /usr/local/sbin/dnscrypt-proxy /usr/local/bin/*resolvers*.sh /etc/cron.daily/dnscrypt-proxy.cron /etc/rc.d/rc.local
+		createrepo powercli-${ver}-*.x86-64.rpm
+	fi
+
 	echo "DNSCrypt Proxy Host setup completed"
 }
 
-dnscrypt
