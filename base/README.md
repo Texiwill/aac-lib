@@ -50,6 +50,27 @@ The usage of the script is:
 
 	sudo ./aac-base.install [--install|-i installer] [--help|-h] [timezone]
 
+### Installers
+
+#### Base
+Installs the base AAC setup. This is mostly setting timezones and ensuring wget and other useful tools are available.
+
+#### dnscrypt
+Installs and compiles DNScrypt. After install, the compilers, and other
+tools are removed. This configure dnsmasq and dnscrypt to make a DNS
+server. It is up to you to set firewall rules to route all port 53 items
+to this DNS Crypt server.
+
+In addition, it installs a script that changes the DNS crypt server used
+daily based on some basic rules. Such as Country, Style, etc.
+
+#### powercli
+Installs Powershell, VMware PowerCLI, and VMware PowerNSX onto any RPM
+based Linux distribution.
+
+#### puppetbase
+Installs the Puppet 4.x agents for use with a Puppet Server.
+
 ### Todo
 Build out Puppet 4.0 framework for my virtualized environment.
 Create a REPO for build/install later

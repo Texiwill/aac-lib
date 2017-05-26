@@ -68,6 +68,7 @@ function dnscrypt() {
 	if [ ! -e /etc/dnsmasq.d/02-dnscrypt.conf ]
 	then
 		echo "server=127.0.0.2#5553" > /etc/dnsmasq.d/02-dnscrypt.conf
+		echo "cache-size=3000" >> /etc/dnsmasq.d/02-dnscrypt.conf
 	fi
 	
 	#
@@ -179,6 +180,10 @@ cd /usr/local/share/dnscrypt-proxy
 # extract CA/US with no logging
 /usr/local/bin/resolvers-check.sh
 
+# clean up stray 'Netherlands from my CA/US checking. This is optional
+grep -v 'Netherlands' dnscrypt-online-resolvers.csv > t
+mv t dnscrypt-online-resolvers.csv
+
 # now restart
 pkill dnscrypt-proxy
 /usr/local/sbin/dnscrypt-proxy /usr/local/etc/dnscrypt-proxy.conf
@@ -205,6 +210,22 @@ EOF
 		firewall-cmd --reload
 	fi
 
+	# Change Resolv.conf
+	grep "nameserver 127.0.0.1" /etc/resolv.conf > /dev/null
+	if [ $? != 0 ]
+	then
+		echo "nameserver 172.0.0.1" > /etc/resolv.conf
+	fi
+
+	# change dnsmasq.service
+	grep "--dns-forward-max" /usr/lib/systemd/system/dnsmasq.service
+	if [ $? != 0 ]
+	then
+		awk '/-k/{k=1;printf "%s --dns-forward-max=1024\n",$0;} k==0{print $0;} {k=0};' /usr/lib/systemd/system/dnsmasq.service > /tmp/dnsmasq.service
+		cp /tmp/dnsmasq.service /usr/lib/systemd/system/dnsmasq.service
+		systemctl daemon-reload
+	fi
+
 	# Does not seem to be any selinux setup required
 	semanage port -a -t dns_port_t -p tcp 5553
 	semanage port -a -t dnssec_port_t -p tcp 5553
@@ -218,18 +239,11 @@ EOF
 		/etc/cron.daily/dnscrypt.cron
 	fi
 
-	# Change Resolv.conf
-	grep "nameserver 127.0.0.1" /etc/resolv.conf > /dev/null
-	if [ $? != 0 ]
-	then
-		echo "nameserver 172.0.0.1" > /etc/resolv.conf
-	fi
 
 	if [ $CREATEREPO -eq 1 ]
 	then
 		ver=`/usr/local/sbin/dnscrypt-proxy --version |head -1 |awk '{print $2}'`
 		fpm -s dir -t rpm -n dnscrypt-proxy -v $ver /usr/local/share/dnscrypt-proxy /usr/local/share/doc/dnscrypt-proxy /usr/local/sbin/dnscrypt-proxy /usr/local/bin/*resolvers*.sh /etc/cron.daily/dnscrypt-proxy.cron /etc/rc.d/rc.local
-		createrepo powercli-${ver}-*.x86-64.rpm
 	fi
 
 	echo "DNSCrypt Proxy Host setup completed"
