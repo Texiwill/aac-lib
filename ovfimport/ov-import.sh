@@ -28,13 +28,13 @@ do
 			;;
 		-h|--help)
 			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [-z name ] [ova/ovf file]"
-			echo "  -z specifies alternative name to use for lookups in $HOME/.ov-imports"
+			echo "  -z specifies alternative name to use for lookups in $HOME/.ov-defaults"
 			echo "  --dryrun implies --nocleanup"
 			exit;
 			;;
 		-*)
 			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [-z name] [ova/ovf file]"
-			echo "  -z specifies alternative name to use for lookups in $HOME/.ov-imports"
+			echo "  -z specifies alternative name to use for lookups in $HOME/.ov-defaults"
 			echo "  --dryrun implies --nocleanup"
 			exit;
 			;;
