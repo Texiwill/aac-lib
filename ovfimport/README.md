@@ -179,6 +179,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+1.8 Updated for latest VCSA
+
 1.7 Updated README
 
 1.6 Added License

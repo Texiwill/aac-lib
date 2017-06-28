@@ -2,17 +2,7 @@
 #
 # Copyright (c) 2017 AstroArch Consulting, Inc. All rights reserved
 #
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# Version 1.8
 
 precheck=0
 dryrun=0
@@ -37,13 +27,15 @@ do
 			shift;
 			;;
 		-h|--help)
-			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [ova/ovf file]"
-			echo "	--dryrun implies --nocleanup"
+			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [-z name ] [ova/ovf file]"
+			echo "  -z specifies alternative name to use for lookups in $HOME/.ov-imports"
+			echo "  --dryrun implies --nocleanup"
 			exit;
 			;;
 		-*)
-			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [ova/ovf file]"
-			echo "	--dryrun implies --nocleanup"
+			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [-z name] [ova/ovf file]"
+			echo "  -z specifies alternative name to use for lookups in $HOME/.ov-imports"
+			echo "  --dryrun implies --nocleanup"
 			exit;
 			;;
 		*)
@@ -114,9 +106,9 @@ then
 fi
 
 missing="";
-for x in domain netmask dns gw network vswitch ntp ceip syslog password
+for x in domain netmask dns gw network vswitch ntp ceip syslog password ssh
 do
-	z=`grep -i ${x}-global $defaults|awk '{print $1}'`
+	z=`grep -i " ${x}-global" $defaults|awk '{print $1}'`
 	eval g${x}=$z
 	if [ Z"$z" = Z"" ]
 	then
@@ -181,16 +173,25 @@ then
 	$fuseiso -p $ovaovf $ifiles
 	if [ $dovcsa -eq 1 ]
 	then
-		zipdir=2
-		xfiles=x.$$
-		mkdir $xfiles
-		cd $xfiles
-		tar -xf ../$ifiles/vcsa/vmware-vcsa
-		ovaovf="";
+		if [ -e $ifiles/vcsa/vmware-vcsa ]
+		then
+			zipdir=2
+			xfiles=x.$$
+			mkdir $xfiles
+			cd $xfiles
+			tar -xf ../$ifiles/vcsa/vmware-vcsa
+			ovaovf=""
+		fi
+		if [ -e $ifiles/vcsa/*.ova ]
+		then
+			zipdir=3
+			ovaovf=`ls $ifiles/vcsa/*.ova`
+		fi
 	else
 		cd $zfiles
 	fi
 fi
+echo $ovaovf
 
 # Handle ova/ovf files
 for x in `if [ Z"$ovaovf" != Z"" ]; then if [ -e "$ovaovf" ]; then ls $ovaovf; fi; else ls *.ova *.ovf 2>/dev/null; fi`
@@ -234,7 +235,7 @@ do
 
 	# override name from key/value pairs
 	# override y as well
-	yy=`grep -i "override-name-${y}$" $defaults|awk '{print $1}'`
+	yy=`grep -i " override-name-${y}$" $defaults|awk '{print $1}'`
 	if [ Z"$yy" != Z"" ]
 	then
 		echo -e "Using Override Name $yy"
@@ -245,7 +246,7 @@ do
 	echo -e "Working on $name\n\tfrom file $x"
 
 	# Check to see if we can import
-	z=`grep -i "noimport-${y}$" $defaults|awk '{print $1}'`
+	z=`grep -i " noimport-${y}$" $defaults|awk '{print $1}'`
 	if [ Z"$z" != Z"" ]
 	then
 		echo "INFO: As requested, will not import $y."
@@ -254,7 +255,7 @@ do
 	
 	# check for allExtraConfig needed by Nested
 	allExtraConfig=""
-	z=`grep -i "allextraconfig-${y}$" $defaults|awk '{print $1}'`
+	z=`grep -i " allextraconfig-${y}$" $defaults|awk '{print $1}'`
 	if [ Z"$z" = Z"1" ]
 	then
 		allExtraConfig="--allowAllExtraConfig --X:enableHiddenProperties"
@@ -267,7 +268,7 @@ do
 
 	# determine where to stop the pre-check loop
 	dobreak=""
-	z=`grep -i "break-${y}$" $defaults|awk '{print $1}'`
+	z=`grep -i " break-${y}$" $defaults|awk '{print $1}'`
 	if [ Z"$z" != Z"" ]
 	then
 		dobreak=$z
@@ -277,7 +278,7 @@ do
 	missing=""
 	for xx in domain network vswitch ntp ssh ip netmask dns gw hostname ceip searchpath syslog
 	do
-		z=`grep -i "${xx}-${y}$" $defaults|awk '{print $1}'`
+		z=`grep -i " ${xx}-${y}$" $defaults|awk '{print $1}'`
 		eval ${xx}=$z
 		if [ Z"$z" = Z"" ]
 		then
@@ -299,7 +300,7 @@ do
 			do
 				
 				vet=${nn}${n}
-				z=`grep -i "${vet}-${y}$" $defaults|awk '{print $1}'`
+				z=`grep -i " ${vet}-${y}$" $defaults|awk '{print $1}'`
 				eval ${vet}=$z
 			done
 		done
@@ -308,6 +309,11 @@ do
 	# Now we process the spec and replace with elements as needed
 	# lets get the spec and do something interesting with it
 	#vaminame=`awk '/^Virtual Machines:/{A=1}/Name:/{if (A==1) { print $0;exit}}' a.txt|awk -F: '{print $2}'|sed 's/^ *//;s/ *$//'`
+	myfs=" "
+	if [ $dryrun -eq 1 ]
+	then
+		myfs="\n"
+	fi
 	properties=`awk '/Properties:/{A=1}/ClassId:/{class=$0}/Key:/{key=$0;n=split(key,k,":");nkey=k[2];for(i=3;i<=n;i++) { nkey=sprintf("%s:%s",nkey,k[n]); }}/InstanceId/{if (A==1) { split(class,c,":");split($0,id,"Id");printf "%s.%s.%s\n",c[2],nkey,id[2];class="";A=2;}}/Label:/{if (A==1) {split(class,c,":");printf "%s.%s\n",c[2],nkey;} else {A=1;}}/Deployment Options/{exit}' a.txt | sed 's/ *//g'|sed 's/^\.//'`
 	vservice=`awk '/^VService Dependency:/{A=1}/ID:/{id=$0}/Name:/{if (A==1) { split($0,k,":");split(id,i,":");printf "%s:%s\n",i[2],k[2];exit}}' a.txt|awk -F: '{print $2}'|sed 's/ *//g'|sed 's/^\.//'`
 
@@ -322,22 +328,22 @@ do
 		if [ $c -gt 1 ]
 		then
 			vet="network${c}"
-			z=`grep -i "${vet}-${y}$" $defaults|awk '{print $1}'|sed 's/%20/ /g'`
+			z=`grep -i " ${vet}-${y}$" $defaults|awk '{print $1}'|sed 's/%20/ /g'`
 			#eval ${vet}=$z
 			if [ Z"$z" = Z"" ]
 			then
 				missing="$missing\t${vet}-${y}\n"
 			fi
-			prop="$prop --net:\"$n\"=\"$z\"";
+			prop="$prop${myfs}--net:\"$n\"=\"$z\"";
 		else 
-			prop="$prop --net:\"$n\"=\"$network\"";
+			prop="$prop${myfs}--net:\"$n\"=\"$network\"";
 		fi
 		((c+=1))
 	done
-	z=`grep -i "deployment-${y}$" $defaults|awk '{print $1}'`
+	z=`grep -i " deployment-${y}$" $defaults|awk '{print $1}'`
 	if [ Z"$z" != Z"" ]
 	then
-		prop="$prop --deploymentOption=$z"
+		prop="$prop${myfs}--deploymentOption=$z"
 	fi
 	for xx in $properties
 	do
@@ -348,9 +354,6 @@ do
 		dofind=0
 		yy=`awk -vs1="$xx" 'BEGIN{ print tolower(s1)}'`
 		case $yy in 
-			guestinfo.cis*)
-				continue
-				;;
 			*ipv6*)
 				dofind=1
 				;;
@@ -406,14 +409,12 @@ do
 				dofind=1
 				;;
 		esac
+		z=`grep -i " ${xx}-${y}$" $defaults|awk '{print $1}'`
 		if [ $dofind -eq 1 ]
 		then
-			z=`grep -i "${xx}-${y}$" $defaults|awk '{print $1}'`
 			if [ Z"$z" != Z"" ]
 			then
 				jg=$z
-			else
-				missing="$missing\tmissing ${xx}-${y}\n"
 			fi
 		fi
 
@@ -427,7 +428,7 @@ do
 		pass=""
 		if [ $getpass -eq 1 ]
 		then
-			pass=`grep -i "password-${y}$" $defaults|awk '{print $1}'`
+			pass=`grep -i " password-${y}$" $defaults|awk '{print $1}'`
 			if [ Z"$pass" = Z"" ]
 			then
 				if [ Z"$gpassword" != "" ]
@@ -457,11 +458,28 @@ do
 			fi
 			jg="'$shared'"
 		fi
+
+		if [ Z"$z" = Z"-" ]
+		then
+			# if value for key is - then do not set
+			jg=""
+			missing="$missing\tNot Using ${xx}-${y}\n"
+		elif [ Z"$z" != Z"" ]
+		then
+			# if value for key is set then override
+			jg=$z
+			missing="$missing\tOverride w/Specific ${xx}-${y}\n"
+		else
+			if [ Z"$jg" = Z"" ]
+			then
+				missing="$missing\tMissing ${xx}-${y}\n"
+			fi
+		fi
 		
 		# for the '--prop' chain
 		if [ Z"$jg" != Z"" ]
 		then
-			prop="$prop --prop:'${xx}${hg}'='$jg'"
+			prop="$prop${myfs}--prop:'${xx}${hg}'='$jg'"
 		fi
 	done
 	#fi
@@ -472,7 +490,7 @@ do
 		#then
 		#	missing="$missing\textension-${y}\n"
 		#fi
-		prop="$prop --vService:installation=com.vmware.vim.vsm:extension_vservice"
+		prop="$prop${myfs}--vService:installation=com.vmware.vim.vsm:extension_vservice"
 	fi
 	if [ Z"$missing" != Z"" ]
 	then
@@ -482,13 +500,13 @@ do
 		echo ""
 	fi
 	#eprop=`echo "--name=\"$name\" $prop"|sed 's/%20/ /g'|sed 's/(/\\\\(/'|sed 's/)/\\\\)/'`
-	target=$GOVC_RESOURCE_POLL
-	tgt=`grep -i "target-${y}$" $defaults|awk '{print $1}'`
+	target=$GOVC_RESOURCE_POOL
+	tgt=`grep -i " target-${y}$" $defaults|awk '{print $1}'`
 	if [ Z"$tgt" != Z"" ]
 	then
 		target=$tgt
 	fi
-	eprop=`echo "--name=\"$name\" $prop"|sed 's/%20/ /g'`
+	eprop=`echo "--name=\"$name\"${myfs}$prop"|sed 's/%20/ /g'`
 	if [ $precheck -eq 0 ]
 	then
 		if [ -Z"$GOVC_USERNAME" != Z"" ]
@@ -497,7 +515,7 @@ do
 			then
 				eprop="$eprop $x vi://$GOVC_USERNAME:$GOVC_PASSWORD@$GOVC_URL$target"
 			else
-				eprop="$eprop $x vi://USERNAME:PASSWORD@$GOVC_URL$target"
+				eprop="$eprop${myfs}$x${myfs}vi://USERNAME:PASSWORD@$GOVC_URL$target"
 			fi
 		else
 			eprop="$eprop $x vi://$GOVC_URL$target"
@@ -507,7 +525,8 @@ do
 			eval $ovftool $eprop
 		else
 			cp a.txt ${x}.a.txt
-			echo "$ovftool $eprop" >> ${x}.a.txt
+			echo -e "$ovftool $eprop" >> ${x}.a.txt
+			echo -e "$ovftool $eprop"
 		fi
 	fi
 done
@@ -517,8 +536,11 @@ then
 	if [ $zipdir -gt 0 ]
 	then
 		# we are down in the files!
-		cd ..
 		if [ $zipdir -eq 2 ]
+		then
+			cd ..
+		fi
+		if [ $zipdir -gt 1 ]
 		then
 			fusermount -u $ifiles
 		fi
