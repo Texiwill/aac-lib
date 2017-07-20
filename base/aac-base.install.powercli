@@ -81,7 +81,7 @@ function powercli() {
 
 	echo "Checking for Latest Powershell"
 	# Get the latest name
-	rpmdir=`curl -sL $basedir/PowerShell/PowerShell/releases/latest|grep el7.x86_64.rpm | grep href | awk -F= '{print $2}' |awk '{print $1}'|sed 's/"//g'|sed 's/\n//g'`
+	rpmdir=`curl -sL $basedir/PowerShell/PowerShell/releases/|grep alpha|grep x86_64.rpm | grep href | awk -F= '{print $2}' |awk '{print $1}'|sed 's/"//g'|sed 's/\n//g'|head -1`
 	
 	# Do we really need to get it
 	rpm=`basename $rpmdir`
