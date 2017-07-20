@@ -80,3 +80,4 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.1 Improved Powershell install to use the latest files

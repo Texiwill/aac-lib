@@ -6,6 +6,8 @@
 #
 # Target: CentOS/RHEL 6/7
 #
+# Version 1.1
+#
 ###
 
 function powercli() {
@@ -79,7 +81,7 @@ function powercli() {
 
 	echo "Checking for Latest Powershell"
 	# Get the latest name
-	rpmdir=`curl -sL $basedir/PowerShell/PowerShell/releases/latest|grep centos |awk -F= '{print $2}' |awk '{print $1}'|sed 's/"//g'|sed 's/\n//g'`
+	rpmdir=`curl -sL $basedir/PowerShell/PowerShell/releases/latest|grep el7.x86_64.rpm | grep href | awk -F= '{print $2}' |awk '{print $1}'|sed 's/"//g'|sed 's/\n//g'`
 	
 	# Do we really need to get it
 	rpm=`basename $rpmdir`
@@ -132,8 +134,23 @@ function powercli() {
 		pcli=`curl -sk https://labs.vmware.com/flings/powercli-core | grep zip | awk -F= '{print $4}'|awk -F\" '{print $2}'`
 		wget $pcli
 		unzip PowerCLI_Core.zip
-		(cd /usr/local/share/powershell/Modules; unzip /tmp/powershell/PowerCLI.ViCore.zip)
-		(cd /usr/local/share/powershell/Modules; unzip /tmp/powershell/PowerCLI.Vds.zip)
+		(cd /usr/local/share/powershell/Modules; unzip $PDIR/PowerCLI.ViCore.zip)
+		(cd /usr/local/share/powershell/Modules; unzip $PDIR/PowerCLI.Vds.zip)
+		cat << EOF > /usr/local/share/powershell/Start-PowerCLI.ps1
+\$a = get-psreadlineoption | select ErrorBackgroundColor
+\$clear = \$a.ErrorBackgroundColor
+\$black= 'black'
+if (\$clear -eq 'black') { \$black='white' }
+
+'command','number','operator','member','parameter','string','type','variable','keyword' |
+foreach { set-psreadlineoption \$_ \$black \$clear }
+EOF
+		cat $PDIR/Start-PowerCLI.ps1 |sed 's/yellow/\$black/g' >> /usr/local/share/powershell/Start-PowerCLI.ps1
+		cat << EOF > /usr/local/bin/powercli
+#!/bin/sh
+powershell -NoExit -Command /usr/local/share/powershell/Start-PowerCLI.ps1
+EOF
+		chmod 755 /usr/local/bin/powercli
 	
 		echo "Setting Profile for Powershell"
 		# Set profile.d for PS containing PSModulePath
