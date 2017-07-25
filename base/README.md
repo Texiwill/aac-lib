@@ -8,13 +8,16 @@ AAC Library of Tools
 ### Description
 A bash script to automatically install all the requirements to use Puppet
 as the configuration manager for CentOS/RHEL installations as well
-as other one off installations such as PowerCLI w/PowerNSX, DNSCrypt, fpm,
-and Puppet Server.
+as other one off installations such as PowerCLI w/PowerNSX, ovftool,
+DNSCrypt, fpm, and Puppet Server.
 
 Why did I create these scripts?  To help keep my configuration up to date
 across Linux and to install specific items like PowerCLI and
 DNSCrypt. While the scripts are pretty generic they are targeted for
-CentOS/RHEL 6 or 7 builds.
+CentOS/RHEL 6 or 7 builds. In addition, since VMware is no longer working
+on the vSphere Management Appliance, I have created one to
+replace/improve, that includes PowerCLI, PowerNSX, vCLI, and ovftool.
+
 
 The problem is that some one offs work better installed via
 scripts. Configuring the puppet server for example is one such.
