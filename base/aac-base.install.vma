@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 AstroArch Consulting, Inc. All rights reserved
+#
+# Install a vSphere Management Appliance
+#
+# Target: CentOS/RHEL 7
+#
+# Version 1.0
+#
+###
+
+####
+# We need to have powercli and vcli for a vMA
+####
+. aac-base.install.powercli
+. aac-base.install.vcli
+
+function vma() {
+	powercli
+	vcli
+}
+

@@ -2,11 +2,11 @@
 #
 # Copyright (c) 2017 AstroArch Consulting, Inc. All rights reserved
 #
-# Install PowerCLI (rebuild CURL as necessary)
+# Install vSphere CLI
 #
 # Target: CentOS/RHEL 6/7
 #
-# Version 1.1
+# Version 1.0
 #
 ###
 

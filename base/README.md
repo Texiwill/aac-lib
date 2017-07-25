@@ -68,6 +68,15 @@ daily based on some basic rules. Such as Country, Style, etc.
 Installs Powershell, VMware PowerCLI, and VMware PowerNSX onto any RPM
 based Linux distribution.
 
+#### vcli
+Installs vSphere CLI if the .tar.gz file exists in the directory with
+the aac-base installers.
+
+#### vma
+Installs both the powercli and vcli to create a vSphere Management
+Appliance. The same requirements exist for vSphere CLI as it calls the
+same script.
+
 #### puppetbase
 Installs the Puppet 4.x agents for use with a Puppet Server.
 
