@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 AstroArch Consulting, Inc. All rights reserved
+#
+# Install vSphere CLI
+#
+# Target: CentOS/RHEL 6/7
+#
+# Version 1.0
+#
+###
+
+function ovftool() {
+	INSTALL=""
+	DEVEL=""
+
+	# Find way to download direct
+	
+	# Check for .tar.gz
+	if [ -e VMware-ovftool*.x86_64.bundle.gz ]
+	then
+		gunzip VMware-ovftool*.x86_64.bundle.gz
+		chmod +x *.bundle
+	fi
+
+	# uninstall old
+	if [ -e /usr/bin/vmware-uninstall-vSphere-CLI.pl ]
+	then
+		/usr/bin/vmware-uninstall-vSphere-CLI.pl
+	fi
+	
+	# Install RPMS
+	#yum -y install $INSTALL $DEVEL
+
+	# Run installer
+	./VMware-ovftool*.x86_64.bundle --eulas-agreed
+	gzip VMware-ovftool*.x86_64.bundle
+
+	cd $menu_pd
+}
+
