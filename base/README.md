@@ -69,11 +69,15 @@ Installs Powershell, VMware PowerCLI, and VMware PowerNSX onto any RPM
 based Linux distribution.
 
 #### vcli
-Installs vSphere CLI if the .tar.gz file exists in the directory with
-the aac-base installers.
+Installs vSphere CLI if the appropriate .tar.gz file exists in the
+directory with the aac-base installers.
+
+#### ovftool
+Installs ovftool if the appropriate .bundle.gz file exists in the
+directory with the aac-base installers.
 
 #### vma
-Installs both the powercli and vcli to create a vSphere Management
+Installs powercli, ovftool, and vcli to create a vSphere Management
 Appliance. The same requirements exist for vSphere CLI as it calls the
 same script.
 
