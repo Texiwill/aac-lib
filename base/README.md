@@ -96,4 +96,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
-1.1 Improved Powershell install to use the latest files
+1.1-powercli Improved Powershell install to use the latest files
+
+1.1-vcli Added perl-XML-LibXML from CentOS/RHEL Repos over VMware's to
+get rid of Gthr error
