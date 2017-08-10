@@ -11,8 +11,8 @@
 ###
 
 function powercli() {
-	INSTALL="unzip zip"
-	DEVEL="rpm-build redhat-rpm-config gcc cpp glibc-devel glibc-headers kernel-headers mpfr libmpc bzip2 automake openssl-devel autoconf dwz elfutils keyutils-libs-devel krb5-devel libcom_err-devel libkadm5 libselinux-devel libsepol-devel libverto-devel m4 patch pcre-devel perl-Data-Dumper perl-Test-Harness perl-Thread-Queue perl-srpm-macros zlib-devel groff libidn-devel libssh2-devel nss-devel openldap-devel stunnel perl-Digest-MD5 valgrind"
+	INSTALL="unzip zip sshpass"
+	DEVEL="rpm-build redhat-rpm-config gcc cpp glibc-devel glibc-headers kernel-headers mpfr libmpc bzip2 automake openssl-devel autoconf dwz elfutils keyutils-libs-devel krb5-devel libcom_err-devel libkadm5 libselinux-devel libsepol-devel libverto-devel m4 patch pcre-devel perl-Data-Dumper perl-Test-Harness perl-Thread-Queue perl-srpm-macros zlib-devel groff libidn-devel libssh2-devel nss-devel openldap-devel stunnel perl-Digest-MD5 valgrind" 
 	basedir='https://github.com'
 
 	# Centos7 version
@@ -137,10 +137,12 @@ function powercli() {
 		(cd /usr/local/share/powershell/Modules; unzip $PDIR/PowerCLI.ViCore.zip)
 		(cd /usr/local/share/powershell/Modules; unzip $PDIR/PowerCLI.Vds.zip)
 		cat << EOF > /usr/local/share/powershell/Start-PowerCLI.ps1
-\$a = get-psreadlineoption | select ErrorBackgroundColor
-\$clear = \$a.ErrorBackgroundColor
+\$a = (Get-Host).PrivateData
+\$b = get-psreadlineoption | select ErrorBackgroundColor
+\$clear = \$b.ErrorBackgroundColor
 \$black= 'black'
 if (\$clear -eq 'black') { \$black='white' }
+$a.WarningForegroundColor = $black
 
 'command','number','operator','member','parameter','string','type','variable','keyword' |
 foreach { set-psreadlineoption \$_ \$black \$clear }
