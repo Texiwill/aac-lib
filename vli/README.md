@@ -31,6 +31,7 @@ Center with the following dashboards:
 - VMRC/MKS Events Dashboard is used to visualize and alert upon actions that use the VMware Remote Console to a VM whether started within vCenter clients or direct host interaction. If this dashboard shows no data, that is a good thing.
 - Datastore Browser Events Dashboard is used to visualize and alert upon activity surrounding the datastore browser within vCenter and upon each host. If this dashboard shows no data, that is a good thing.
 - Permissions Dashboard is used to visualize and alert upon changes and additions to the vCenter permissions associated role based access control. If this dashboard shows no data, that is a good thing.
+- SecureESX Dashboard is used by the SecureESX Security Content Automation Protocal (SCAP) scanner for vSphere. This scanner is available from AstroArch Consulting, Inc. and features use of the DISA STIG identifiers.
 
 Compatibility:
 - VMware vSphere 6.0 or later for Login Events & Actions and Firewall Events Dashboards
