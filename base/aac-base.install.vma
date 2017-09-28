@@ -16,6 +16,7 @@
 . aac-base.install.powercli
 . aac-base.install.vcli
 . aac-base.install.ovftool
+. aac-base.install.vsm
 
 function vma() {
 	powercli

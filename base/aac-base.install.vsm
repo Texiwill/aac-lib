@@ -1,0 +1,26 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 AstroArch Consulting, Inc. All rights reserved
+#
+# Install Bits for VSM
+#
+# Target: CentOS/RHEL 7
+#
+# Version 1.0
+#
+###
+
+function vsm() {
+	INSTALL="wget python python-urllib3 libxml2 perl-XML-Twig ncurses"
+	DEVEL=""
+
+	# Find way to download direct
+	
+	
+	# Install RPMS
+	yum -y install $INSTALL $DEVEL
+
+
+	cd $menu_pd
+}
+

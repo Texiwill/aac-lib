@@ -11,7 +11,7 @@
 ###
 
 function ovftool() {
-	INSTALL=""
+	INSTALL="fuseiso"
 	DEVEL=""
 
 	# Find way to download direct
@@ -30,7 +30,7 @@ function ovftool() {
 	fi
 	
 	# Install RPMS
-	#yum -y install $INSTALL $DEVEL
+	yum -y install $INSTALL $DEVEL
 
 	# Run installer
 	./VMware-ovftool*.x86_64.bundle --eulas-agreed
