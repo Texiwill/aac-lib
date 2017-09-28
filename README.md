@@ -75,6 +75,13 @@ a configuration file of simple key value pairs. There are two scripts,
 the govc script is incomplete. I found too much missing, so wrote and
 expanded the same script using ovftool directly.
 
+## VSM
+
+- <a href=https://github.com/Texiwill/aac-lib/tree/master/vsm>VSM</a>
+
+###
+A smart VMware Software Manager that runs on RedHat style Linux distributions.
+
 ## HTML5
 
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/html5>Auto update the vSphere HTML5 Fling</a> for the VMware vSphere Web Client Appliance
