@@ -127,4 +127,7 @@ that is the only distribution specific bits in the script.
 
 ### Changelog
 
+0.9.4 - fixed issue where too much was include in the 'smarts'. Main
+Product Downloads were being placed into CustomIso and DriverTools.
+
 0.9.3 - Initial public launch

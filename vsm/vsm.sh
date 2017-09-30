@@ -14,8 +14,9 @@
 # TODO
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
+# - Strip , from dlg_ names
 
-VERSIONID="0.9.3"
+VERSIONID="0.9.4"
 
 # args: stmt error
 function colorecho() {
@@ -53,7 +54,7 @@ function vsmpkgs() {
 				$((l++)) 2> /dev/null
 				e=$((l+1))
 				# ignore VCENTER is a special case
-				a=`ls ${x}[0-9]* | grep -v 'OSS' | sed 's/\.xhtml//' | sed 's/U/0U/' | sort -rn -k1.${l},1.${e} | sort -n | sed 's/0U/U/' | egrep -v 'VCENTER|PLUGIN' | tail -1 | sed 's/dlg_//'`
+				a=`ls ${x}[0-9]* | grep -v 'OSS' | sed 's/\.xhtml//' | sed 's/U/0U/' | sort -rn -k1.${l},1.${e} | sort -n | sed 's/0U/U/' | egrep -v 'VCENTER|PLUGIN|SDK|OSL' | tail -1 | sed 's/dlg_//'`
 				if [ Z"$npkg" = Z"" ]
 				then
 					npkg=$a
@@ -190,13 +191,12 @@ function getvsm() {
 					then
 						colorecho "File Error: $name (disk full, etc.)" 1
 					fi
-					if [ $? -ne 3 ]
-					then
-						colorecho "Error Getting $name" 1
-					fi
 					if [ $? -eq 0 ]
 					then
 						diddownload=1
+					elif [ $? -ne 3 ]
+					then
+						colorecho "Error Getting $name" 1
 					fi
 				else
 					debugecho "DEBUG: No Redirect"
@@ -529,7 +529,7 @@ do
 				# sometimes things exist that are not in asso lists
 				# sometimes they use similar version numbers
 				rchoice=`echo $choice | sed 's/U/*U/'` 
-				for x in `ls dlg*${rchoice}*.xhtml 2>/dev/null | grep -v dlg_${choice}.xhtml | grep -v VCENTER`
+				for x in `ls dlg*${rchoice}_*.xhtml 2>/dev/null | grep -v dlg_${choice}.xhtml | grep -v VCENTER`
 				do
 					y=`echo $x | sed 's/\.xhtml//'`
 					if [ Z"$asso" = Z"" ]
@@ -541,9 +541,9 @@ do
 				done
 	
 				# Now go through asso list and split into parts
-				debugecho "$choice: $asso"
 				for x in $asso
 				do
+					debugecho "$choice: $x"
 					# sometimes files do not exist!
 					if [ -e ${x}.xhtml ]
 					then
@@ -676,6 +676,7 @@ do
 					diddownload=0
 					for o in `echo $oemlist| sed 's/dlg_//g' |sed 's/\.xhtml//g'`
 					do
+						debugecho "DEBUG OEM: $choice: $o"
 						cnt=`xml_grep --html --pretty_print --cond '//*/[@class="depot-content"]' dlg_${o}.xhtml  2>/dev/null |grep display-order | wc -l`
 						x=1
 						while [ $x -le $cnt ]
@@ -700,6 +701,7 @@ do
 					diddownload=0
 					for o in `echo $osslist| sed 's/dlg_//g' |sed 's/\.xhtml//g'`
 					do
+						debugecho "DEBUG OSS: $choice: $o"
 						cnt=`xml_grep --html --pretty_print --cond '//*/[@class="depot-content"]' dlg_${o}.xhtml  2>/dev/null |grep display-order | wc -l`
 						x=1
 						while [ $x -le $cnt ]
@@ -724,6 +726,7 @@ do
 					diddownload=0
 					for o in `echo $dtslist| sed 's/dlg_//g' |sed 's/\.xhtml//g'`
 					do
+						debugecho "DEBUG DTS: $choice: $o"
 						cnt=`xml_grep --html --pretty_print --cond '//*/[@class="depot-content"]' dlg_${o}.xhtml  2>/dev/null |grep display-order | wc -l`
 						x=1
 						while [ $x -le $cnt ]
@@ -758,5 +761,7 @@ do
 			choice=$prevchoice
 			dlg=1
 		fi
+		prevchoice=""
+		asso=""
 	fi
 done
