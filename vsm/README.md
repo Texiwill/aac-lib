@@ -16,6 +16,7 @@ This version was optimized for RedHat style distributions and will need
 a change to work on non-RedHat style distributions. If someone uses
 debian and wants this to work there, get me the dpkg commands needed.
 
+<pre>
    $ ./vsm.sh --help
    ./vsm.sh [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--debug] [--repo repopath] [--save]
 	-d|--dryrun - dryrun, do not download
@@ -113,6 +114,7 @@ debian and wants this to work there, get me the dpkg commands needed.
    4) VC65U1		  9) VRLI_450_VCENTER	  14) Exit
    5) VDP615		 10) BDE_232
    #? 14
+</pre>
 
 ### Installation
 Place in any directory. Requires the following packages:
