@@ -16,7 +16,7 @@
 #	This will be time consuming!
 # - Strip , from dlg_ names
 
-VERSIONID="0.9.4"
+VERSIONID="0.9.5"
 
 # args: stmt error
 function colorecho() {
@@ -47,14 +47,14 @@ function vsmpkgs() {
 		if [ $dolatest -eq 1 ]
 		then
 			npkg=""
-			pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/[0-9].*$//'`
+			pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\).*$/\1/' | sort -u`
 			for x in $pkgs
 			do
 				l=${#x}
 				$((l++)) 2> /dev/null
 				e=$((l+1))
 				# ignore VCENTER is a special case
-				a=`ls ${x}[0-9]* | grep -v 'OSS' | sed 's/\.xhtml//' | sed 's/U/0U/' | sort -rn -k1.${l},1.${e} | sort -n | sed 's/0U/U/' | egrep -v 'VCENTER|PLUGIN|SDK|OSL' | tail -1 | sed 's/dlg_//'`
+				a=`ls ${x}* | grep -v 'OSS' | sed 's/\.xhtml//' | sed 's/U/0U/' | sort -rn -k1.${l},1.${e} | sort -n | sed 's/0U/U/' | egrep -v 'VCENTER|PLUGIN|SDK|OSL' | tail -1 | sed 's/dlg_//'`
 				if [ Z"$npkg" = Z"" ]
 				then
 					npkg=$a

@@ -128,6 +128,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+0.9.5 - fixed latest parsing. It was too broad and did not confine to
+the latest of a specific major version. I.e. 60 vs 65
 
 0.9.4 - fixed issue where too much was include in the 'smarts'. Main
 Product Downloads were being placed into CustomIso and DriverTools.
