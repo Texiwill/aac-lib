@@ -14,9 +14,8 @@
 # TODO
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
-# - Strip , from dlg_ names
 
-VERSIONID="0.9.5"
+VERSIONID="1.0.0"
 
 # args: stmt error
 function colorecho() {
@@ -67,8 +66,9 @@ function vsmpkgs() {
 	fi
 	if [ Z"$pkgs" = Z"" ]
 	then
-		pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/dlg_//' | sed 's/\.xhtml//' `
+		pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/dlg_//' | sed 's/\.xhtml//' | sed 's/,//g' `
 	fi
+	debugecho "DEBUG: $pkgs"
 }
 
 function menu() {
@@ -79,14 +79,15 @@ function menu() {
 	then
 		all=$1
 		file=$2
-		if [ Z"$2" = Z"All_Plus_OpenSource" ]
+		if [ Z"$3" = Z"All_Plus_OpenSource" ]
 		then
-			alln=$2
-			file=$3
+			allm=$2
+			alln=$3
+			file=$4
 		fi
 	fi
 	vsmpkgs $file
-	select choice in $all $alln $pkgs Back Exit
+	select choice in $all $allm $alln $pkgs Back Exit
 	do
 		if [ $choice = "Exit" ]
 		then
@@ -124,7 +125,7 @@ function menu2() {
 			fi
 		fi
 	done
-	select choice in All $all $npkg $2 $3 $4 Back Exit
+	select choice in All Minimum_Required $all $npkg $2 $3 $4 Back Exit
 	do
 		if [ $choice = "Exit" ]
 		then
@@ -215,7 +216,7 @@ function version() {
 }
 
 function usage() {
-	echo "$0 [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--debug] [--repo repopath] [--save]"
+	echo "$0 [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--debug] [--repo repopath] [--save]"
 	#echo "	-d|--dlg - download specific package by name"
 	echo "	-d|--dryrun - dryrun, do not download"
 	echo "	-f|--force - force download of packages"
@@ -230,10 +231,17 @@ function usage() {
 	echo "	-u|--username - specify username"
 	echo "	-v|--vsmdir path - set VSM directory"
 	echo "	-V|--version - version number"
+	echo "	--dts - include DriversTools in All-style downloads"
+	echo "	--nodts - do not include DriversTools in All-style downloads"
+	echo "	--oss - include OpenSource in All-style downloads"
+	echo "	--nooss - do not include OpenSource in All-style downloads"
+	echo "	--oem - include CustomIso in All-style downloads"
+	echo "	--nooem - do not include CustomIso in All-style downloads"
 	echo "	--debug - debug mode"
 	echo "	--repo path - specify path of repo"
 	echo "	--save - save defaults to \$HOME/.vsmrc"
 	echo ""
+	echo "	All-style downloads include: All, All_No_OpenSource, Minimum_Required"
 	echo "	Requires packages:"
 	echo "	wget python python-urllib3 libxml2 perl-XML-Twig ncurses"
 	exit;
@@ -278,6 +286,9 @@ nostore=0
 doexit=0
 dryrun=0
 dosave=0
+mydts=-1
+myoss=-1
+myoem=-1
 repo="/tmp/vsm"
 cdir="/tmp/vsm"
 dlg=""
@@ -347,6 +358,24 @@ do
 			;;
 		--debug)
 			dodebug=1
+			;;
+		--dts)
+			mydts=1
+			;;
+		--oem)
+			myoem=1
+			;;
+		--oss)
+			myoss=1
+			;;
+		--nodts)
+			mydts=0
+			;;
+		--nooem)
+			myoem=0
+			;;
+		--nooss)
+			myoss=0
 			;;
 		-V|--version)
 			version
@@ -473,13 +502,14 @@ do
 	then
 		all="All"
 		alln="All_Plus_OpenSource"
+		allm="Minimum_Required"
 		dlg=2
 		if [ Z"$prevchoice" = Z"" ]
 		then
 			prevchoice=$choice
 		fi
 	fi
-	menu $all $alln ${choice}.xhtml
+	menu $all $allm $alln ${choice}.xhtml
 	if [ $choice != "Back" ]
 	then
 		if [ $dlg -eq 0 ]
@@ -502,11 +532,15 @@ do
 			# if ALL then cycle through dlg in prevchoice
 			#   set 'choices' array, then cycle through all $choices
 			#   ensure 'selected' is in $choices so does this once
-			if [ $choice = "All" ] || [ $choice = "All_Plus_OpenSource" ]
+			if [ $choice = "All" ] || [ $choice = "All_Plus_OpenSource" ] || [ $choice = "Minimum_Required" ]
 			then
 				vsmpkgs ${prevchoice}.xhtml
 				choices=$pkgs
 				doall=1
+				if [ $choice = "Minimum_Required" ]
+				then
+					doall=3
+				fi
 				if [ $choice = "All_Plus_OpenSource" ]
 				then
 					doall=2
@@ -588,6 +622,7 @@ do
 				dooss=0
 				dodts=0
 				dodat=0
+				myall=0
 				currchoice=$choice;
 	
 				# do not show if ALL, choice set above!
@@ -601,12 +636,18 @@ do
 						dooem=1
 						dodts=1
 						dodat=1
+						myall=1
+						;;
+					"Minimum_Required")
+						dodat=1
+						myall=1
 						;;
 					"All_Plus_OpenSource")
 						dooss=1
 						dooem=1
 						dodts=1
 						dodat=1
+						myall=1
 						;;
 					"CustomIso")
 						dooem=1
@@ -623,6 +664,7 @@ do
 				esac
 				if [ $doall -eq 1 ]
 				then
+					dooss=0
 					dooem=1
 					dodts=1
 					dodat=1
@@ -633,6 +675,28 @@ do
 					dooem=1
 					dodts=1
 					dodat=1
+				fi
+				if [ $doall -eq 3 ]
+				then
+					dooss=0
+					dooem=0
+					dodts=0
+					dodat=1
+				fi
+				if [ $doall -ne 0 ] || [ $myall -eq 1 ]
+				then
+					if [ $myoem -ne -1 ]
+					then
+						dooem=$myoem
+					fi
+					if [ $myoss -ne -1 ]
+					then
+						dooss=$myoss
+					fi
+					if [ $mydts -ne -1 ]
+					then
+						dodts=$mydts
+					fi
 				fi
 	
 				# do the regular including All/All_Plus_OpenSource
@@ -646,7 +710,7 @@ do
 	
 						# only do the selected
 						doit=1
-						if [ $choice != "All" ] && [ $choice != 'All_Plus_OpenSource' ]
+						if [ $doall -eq 0 ]
 						then
 							p=`echo $data | xml_grep --text_only '//*/a' 2>/dev/null `
 							if [ Z"$p" = Z"$x" ]
@@ -673,6 +737,7 @@ do
 				# these are via $asso
 				if [ $dooem -eq 1 ] && [ Z"$oem" != Z"" ]
 				then
+					debugecho "DEBUG: DOOEM"
 					diddownload=0
 					for o in `echo $oemlist| sed 's/dlg_//g' |sed 's/\.xhtml//g'`
 					do
@@ -698,6 +763,7 @@ do
 				fi
 				if [ $dooss -eq 1 ] && [ Z"$oss" != Z"" ]
 				then
+					debugecho "DEBUG: DOOSS"
 					diddownload=0
 					for o in `echo $osslist| sed 's/dlg_//g' |sed 's/\.xhtml//g'`
 					do
@@ -723,6 +789,7 @@ do
 				fi
 				if [ $dodts -eq 1 ] && [ Z"$dts" != Z"" ]
 				then
+					debugecho "DEBUG: DODTS"
 					diddownload=0
 					for o in `echo $dtslist| sed 's/dlg_//g' |sed 's/\.xhtml//g'`
 					do

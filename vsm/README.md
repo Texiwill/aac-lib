@@ -18,7 +18,7 @@ debian and wants this to work there, get me the dpkg commands needed.
 
 <pre>
    $ ./vsm.sh --help
-   ./vsm.sh [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--debug] [--repo repopath] [--save]
+   ./vsm.sh [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--debug] [--repo repopath] [--save]
 	-d|--dryrun - dryrun, do not download
 	-f|--force - force download of packages
 	-e|--exit - reset and exit
@@ -32,13 +32,23 @@ debian and wants this to work there, get me the dpkg commands needed.
 	-u|--username - specify username
 	-v|--vsmdir path - set VSM directory
 	-V|--version - version number
+	--dts - include DriversTools in All-style downloads
+	--nodts - do not include DriversTools in All-style downloads
+	--oss - include OpenSource in All-style downloads
+	--nooss - do not include OpenSource in All-style downloads
+	--oem - include CustomIso in All-style downloads
+	--nooem - do not include CustomIso in All-style downloads
 	--debug - debug mode
 	--repo path - specify path of repo
 	--save - save defaults to $HOME/.vsmrc
 
+	All-style downloads include: All, All_No_OpenSource, Minimum_Required
+	Requires packages:
+	wget python python-urllib3 libxml2 perl-XML-Twig ncurses
+
    $ ./vsm.sh
    <span style="color:purple">Using the following options:</span>
-   	Version:	0.9.3
+   	Version:	1.0.0
    	VSM XML Dir:	/tmp/vsm
    	Repo Dir:	/mnt/rainbow/iso/vmware/depot/content
    	Dryrun:		0
@@ -128,6 +138,11 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+1.0.0 - added Minimum_Required menu item, do only download the base files
+and not OpenSource, DriversTools, or CustomIso. Also added the
+--dts|--nodts, --oem|--nooem, --oss|--nooss to set what to download when
+any of the 'All' styles are selected.
+
 0.9.5 - fixed latest parsing. It was too broad and did not confine to
 the latest of a specific major version. I.e. 60 vs 65
 
