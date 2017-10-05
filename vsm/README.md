@@ -138,6 +138,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+1.0.1 - fixed 'Back' menu item when actual packages are shown
+
 1.0.0 - added Minimum_Required menu item, do only download the base files
 and not OpenSource, DriversTools, or CustomIso. Also added the
 --dts|--nodts, --oem|--nooem, --oss|--nooss to set what to download when

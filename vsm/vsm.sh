@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="1.0.0"
+VERSIONID="1.0.1"
 
 # args: stmt error
 function colorecho() {
@@ -498,6 +498,7 @@ while [ $dlg -ne 2 ]
 do
 	all=""
 	alln=""
+	allm=""
 	if [ $dlg -eq 1 ]
 	then
 		all="All"
