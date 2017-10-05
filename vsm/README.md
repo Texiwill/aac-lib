@@ -18,7 +18,8 @@ debian and wants this to work there, get me the dpkg commands needed.
 
 <pre>
    $ ./vsm.sh --help
-   ./vsm.sh [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--debug] [--repo repopath] [--save]
+   ./vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--debug] [--repo repopath] [--save]
+	--dlg - download specific package by name or part of a name
 	-d|--dryrun - dryrun, do not download
 	-f|--force - force download of packages
 	-e|--exit - reset and exit
@@ -45,6 +46,9 @@ debian and wants this to work there, get me the dpkg commands needed.
 	All-style downloads include: All, All_No_OpenSource, Minimum_Required
 	Requires packages:
 	wget python python-urllib3 libxml2 perl-XML-Twig ncurses
+
+	To Download the latest Perl CLI use (to escape the wild cards):
+	./vsm.sh --dlg CLI\.\*\\.x86_64.tar.gz
 
    $ ./vsm.sh
    <span style="color:purple">Using the following options:</span>
@@ -138,6 +142,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+1.5.0 - added ability to download specific file by name or part of a name
+
 1.1.0 - fixed 'Back' to actually send you back just 1 level at all times
 by creating a path variable that gets updated for every menu call and
 Back used

@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="1.1.0"
+VERSIONID="1.5.0"
 
 # args: stmt error
 function colorecho() {
@@ -232,8 +232,8 @@ function version() {
 }
 
 function usage() {
-	echo "$0 [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--debug] [--repo repopath] [--save]"
-	#echo "	-d|--dlg - download specific package by name"
+	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--debug] [--repo repopath] [--save]"
+	echo "	--dlg - download specific package by name or part of name"
 	echo "	-d|--dryrun - dryrun, do not download"
 	echo "	-f|--force - force download of packages"
 	echo "	-e|--exit - reset and exit"
@@ -260,6 +260,9 @@ function usage() {
 	echo "	All-style downloads include: All, All_No_OpenSource, Minimum_Required"
 	echo "	Requires packages:"
 	echo "	wget python python-urllib3 libxml2 perl-XML-Twig ncurses"
+	echo ""
+	echo "To Download the latest Perl CLI use (to escape the wild cards):"
+	echo "./vsm.sh --dlg CLI\.\*\\.x86_64.tar.gz"
 	exit;
 }
 
@@ -307,7 +310,7 @@ myoss=-1
 myoem=-1
 repo="/tmp/vsm"
 cdir="/tmp/vsm"
-dlg=""
+mydlg=""
 RED=`tput setaf 1`
 PURPLE=`tput setaf 125`
 NC=`tput sgr0`
@@ -362,7 +365,7 @@ do
 			shift
 			;;
 		--dlg)
-			dlg=$2
+			mydlg=$2
 			shift
 			;;
 		-v|--vsmdir)
@@ -503,17 +506,66 @@ then
 	fi
 fi
 
+# Present the list
+cd depot.vmware.com/PROD/channel
+
 # start of history
 mlist=0
 mchoice="root"
-
-# Present the list
-cd depot.vmware.com/PROD/channel
 choice="root"
 prevchoice=""
 achoice=""
 dlg=0
 pkgs=""
+
+if [ Z"$mydlg" != Z"" ]
+then
+	debugecho "DEBUG: $mydlg"
+	# Find the file
+	file=`egrep -il "$mydlg" *.xhtml | sort -V | tail -1 | sed 's/.xhtml//'`
+	if [ Z"$file" = Z"" ]
+	then
+		colorecho "No file found!" 1
+		exit
+	fi
+
+	# Find the product
+	dlge=`grep -l $file *.xhtml | grep -v $file | sort -V | tail -1 | sed 's/.xhtml//'`
+	d=`echo $dlge | sed 's/dlg//'`
+	debugecho "DEBUG: $dlge $d"
+	
+	if [ Z"$dlge" != Z"$d" ]
+	then
+		prevchoice=`grep -l $d *.xhtml | grep -v $d | sort -V | tail -1 | sed 's/.xhtml//'`
+		debugecho "DEBUG: $prevchoice"
+	else 
+		prevchoice=`echo $dlge|sed 's/dlg_//'`
+	fi
+	currchoice=`echo $file|sed 's/dlg_//'`
+	debugecho "DEBUG: $mydlg found in $prevchoice -> $currchoice"
+	# now we prepare to get the file
+	prod=`xml_grep --html --text_only '*[@title="prod"]' ${prevchoice}.xhtml 2>/dev/null`
+	eprod=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $prod 2>/dev/null`
+	prod=$eprod
+	vers=`xml_grep --html --text_only '*[@title="version"]' ${prevchoice}.xhtml 2>/dev/null`
+	cnt=`xml_grep --html --pretty_print --cond '//*/[@class="depot-content"]' dlg_${currchoice}.xhtml 2>/dev/null  |grep display-order | wc -l`
+	x=1
+	while [ $x -le $cnt ]
+	do
+		data=`xmllint --html --xpath "//*/li[@class=\"depot-content\"][$x]" dlg_${currchoice}.xhtml 2>/dev/null`
+		name=`echo $data|xml_grep --html --text_only '//*/a' 2>/dev/null`
+		d=`echo $name | sed "s/$mydlg//i"`
+		if [ Z"$d" != Z"$name" ]
+		then
+			# get the file
+			debugecho "DEBUG: get $name"
+			getvsm $currchoice "base"
+		fi
+		let x=$x+1
+	done
+	exit
+fi
+
 while [ $dlg -ne 2 ]
 do
 	all=""
@@ -838,18 +890,15 @@ do
 						colorecho "All $currchoice $dts already downloaded!"
 					fi
 				fi
-				if [ $choice = "Back" ]
-				then
-					mchoice=`dirname $mchoice`
-					debugecho "DEBUG: $mchoice"
-					choice=`basename $mchoice`
-				fi
 				
 				dlg=1
 				diddownload=0
 				#choice=$prevchoice
 			done
 			echo ""
+			mchoice=`dirname $mchoice`
+			debugecho "DEBUG: $mchoice"
+			choice=`basename $mchoice`
 		fi
 	else
 		# go back 2 entries as previous is current
