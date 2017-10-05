@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="1.0.1"
+VERSIONID="1.1.0"
 
 # args: stmt error
 function colorecho() {
@@ -74,6 +74,7 @@ function vsmpkgs() {
 function menu() {
 	all=""
 	alln=""
+	allm=""
 	file=$1
 	if [ Z"$1" = Z"All" ]
 	then
@@ -86,8 +87,13 @@ function menu() {
 			file=$4
 		fi
 	fi
+	back="Back"
+	if [ Z"$choice" = Z"root" ]
+	then
+		back=""
+	fi
 	vsmpkgs $file
-	select choice in $all $allm $alln $pkgs Back Exit
+	select choice in $all $allm $alln $pkgs $back Exit
 	do
 		if [ $choice = "Exit" ]
 		then
@@ -95,6 +101,11 @@ function menu() {
 		fi
 		break
 	done
+	if [ $choice != "Back" ]
+	then
+		mchoice="$mchoice/$choice"
+		debugecho "DEBUG: $mchoice"
+	fi
 }
 
 function menu2() {
@@ -133,6 +144,11 @@ function menu2() {
 		fi
 		break
 	done
+	if [ $choice != "Back" ]
+	then
+		mchoice="$mchoice/$choice"
+		debugecho "DEBUG: $mchoice"
+	fi
 }
 
 function getvsm() {
@@ -487,6 +503,10 @@ then
 	fi
 fi
 
+# start of history
+mlist=0
+mchoice="root"
+
 # Present the list
 cd depot.vmware.com/PROD/channel
 choice="root"
@@ -506,11 +526,13 @@ do
 		allm="Minimum_Required"
 		dlg=2
 		if [ Z"$prevchoice" = Z"" ]
-		then
-			prevchoice=$choice
-		fi
+                then
+                        prevchoice=$choice
+                fi
 	fi
 	menu $all $allm $alln ${choice}.xhtml
+
+
 	if [ $choice != "Back" ]
 	then
 		if [ $dlg -eq 0 ]
@@ -658,6 +680,8 @@ do
 						;;
 					"DriversTools")
 						dodts=1
+						;;
+					"Back")
 						;;
 					*)
 						dodat=1
@@ -814,20 +838,30 @@ do
 						colorecho "All $currchoice $dts already downloaded!"
 					fi
 				fi
+				if [ $choice = "Back" ]
+				then
+					mchoice=`dirname $mchoice`
+					debugecho "DEBUG: $mchoice"
+					choice=`basename $mchoice`
+				fi
 				
 				dlg=1
 				diddownload=0
-				choice=$prevchoice
+				#choice=$prevchoice
 			done
 			echo ""
 		fi
 	else
-		choice="root"
+		# go back 2 entries as previous is current
+		mchoice=`dirname $mchoice`
+		debugecho "DEBUG: $mchoice"
+		choice=`basename $mchoice`
+
 		dlg=0
 		if [ $dlg -eq 2 ] 
 		then
-			choice=$prevchoice
 			dlg=1
+			#choice=$prevchoice
 		fi
 		prevchoice=""
 		asso=""

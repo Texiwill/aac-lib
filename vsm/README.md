@@ -138,6 +138,10 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+1.1.0 - fixed 'Back' to actually send you back just 1 level at all times
+by creating a path variable that gets updated for every menu call and
+Back used
+
 1.0.1 - fixed 'Back' menu item when actual packages are shown
 
 1.0.0 - added Minimum_Required menu item, do only download the base files
