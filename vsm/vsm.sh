@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="1.6.0"
+VERSIONID="1.6.1"
 
 # args: stmt error
 function colorecho() {
@@ -85,8 +85,6 @@ function menu() {
 	all=""
 	alln=""
 	allm=""
-	mark=""
-	back="Back"
 	file=$1
 	if [ Z"$1" = Z"All" ]
 	then
@@ -100,6 +98,7 @@ function menu() {
 			file=$4
 		fi
 	fi
+	back="Back"
 	if [ Z"$choice" = Z"root" ]
 	then
 		back=""
@@ -302,13 +301,13 @@ function checkdep() {
 
 
 # check dependencies
+docolor=1
 needdep=0
 checkdep wget
 checkdep python
 checkdep python-urllib3
 checkdep libxml2
 checkdep perl-XML-Twig
-checkdep perl-XML-XPath
 checkdep ncurses
 
 if [ $needdep -eq 1 ]
@@ -322,7 +321,6 @@ fi
 dodebug=0
 diddownload=0
 doforce=0
-docolor=1
 dolatest=0
 doreset=0
 nostore=0

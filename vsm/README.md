@@ -142,6 +142,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+1.6.1 - moved variable and removed check for perl-XML-XPath as it is no
+longer required.
+
 1.6.0 - cleaned up code pulling unique items into one loop not 3
 separate loops. Fixed Mark to only appear in one spot.
 
