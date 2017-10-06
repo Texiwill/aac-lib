@@ -72,17 +72,17 @@ Installs Powershell, VMware PowerCLI, and VMware PowerNSX onto any RPM
 based Linux distribution.
 
 #### vcli
-Installs vSphere CLI if the appropriate .tar.gz file exists in the
-directory with the aac-base installers.
+Installs vSphere CLI using vsm to download the latest file.
 
 #### ovftool
-Installs ovftool if the appropriate .bundle.gz file exists in the
-directory with the aac-base installers.
+Installs ovftool using vsm to download the latest file.
 
 #### vma
-Installs powercli, ovftool, and vcli to create a vSphere Management
-Appliance. The same requirements exist for vSphere CLI as it calls the
-same script.
+Installs vsm, powercli, ovftool, and vcli to create a vSphere Management
+Appliance. 
+
+#### vsm
+Install a port of VMware's Software Manager to Linux.
 
 #### puppetbase
 Installs the Puppet 4.x agents for use with a Puppet Server.
@@ -96,6 +96,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.2-vcli, vsm, ovftool, vma. Added VSM installer, but updated vma to install vsm and vcli and ovftool to call vsm
+
 1.1-powercli Improved Powershell install to use the latest files
 
 1.1-vcli Added perl-XML-LibXML from CentOS/RHEL Repos over VMware's to
