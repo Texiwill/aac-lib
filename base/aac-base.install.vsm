@@ -15,11 +15,11 @@ function vsm() {
 	DEVEL=""
 
 	# Find way to download direct
-	
+	wget https://github.com/Texiwill/aac-lib/blob/master/vsm/vsm.sh
+	mv vsm.sh /usr/local/bin
 	
 	# Install RPMS
 	yum -y install $INSTALL $DEVEL
-
 
 	cd $menu_pd
 }

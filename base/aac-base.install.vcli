@@ -9,17 +9,20 @@
 # Version 1.1
 #
 ###
+. aac-base.install.vsm
 
 function vcli() {
+	vsm
+
 	INSTALL="openssl-devel perl-Archive-Zip perl-Class-Data-Inheritable perl-Class-MethodMaker perl-Compress-Raw-Zlib perl-Compress-Zlib perl-Convert-ASN1 perl-Crypt-OpenSSL-RSA perl-Crypt-SSLeay perl-Crypt-X509 perl-Data-Dump perl-Data-Dumper perl-HTML-Parser perl-IO-Compress perl-IO-Compress perl-URI uuid-perl perl-XML-NamespaceSupport perl-XML-LibXML"
 	DEVEL=""
 
-	# Find way to download direct
-	
+	file=`/usr/local/bin/vsm.sh --dlg CLI\.\*\.x86_64.tar.gz | grep Local | awk -F: '{print $2}'`
+
 	# Check for .tar.gz
-	if [ -e VMware-vSphere-CLI*.x86_64.tar.gz ]
+	if [ Z"$file" != Z""] && [ -e $file ]
 	then
-		tar -xzf VMware-vSphere-CLI*.x86_64.tar.gz
+		tar -xzf $file
 		PDIR=vmware-vsphere-cli-distrib
 	fi
 

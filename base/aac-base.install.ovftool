@@ -9,17 +9,19 @@
 # Version 1.0
 #
 ###
-
+. aac-base.install.vsm
 function ovftool() {
+	vsm
+
 	INSTALL="fuseiso"
 	DEVEL=""
 
 	# Find way to download direct
+	file=`/usr/local/bin/vsm.sh --dlg ovftool\.\*.x86_64.bundle | grep Local | awk -F: '{print $2}'`
 	
 	# Check for .tar.gz
-	if [ -e VMware-ovftool*.x86_64.bundle.gz ]
+	if [ Z"$file" != Z""] && [ -e $file ]
 	then
-		gunzip VMware-ovftool*.x86_64.bundle.gz
 		chmod +x *.bundle
 	fi
 
@@ -34,7 +36,6 @@ function ovftool() {
 
 	# Run installer
 	./VMware-ovftool*.x86_64.bundle --eulas-agreed
-	gzip VMware-ovftool*.x86_64.bundle
 
 	cd $menu_pd
 }
