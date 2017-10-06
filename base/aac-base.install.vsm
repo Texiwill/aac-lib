@@ -15,7 +15,7 @@ function vsm() {
 	DEVEL=""
 
 	# Find way to download direct
-	wget https://github.com/Texiwill/aac-lib/blob/master/vsm/vsm.sh
+	wget https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
 	mv vsm.sh /usr/local/bin
 	
 	# Install RPMS
