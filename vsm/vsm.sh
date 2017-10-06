@@ -528,6 +528,7 @@ then
 		colorecho "No file found!" 1
 		exit
 	fi
+	debugecho "DEBUG: $file"
 
 	# Find the product
 	dlge=`grep -l $file *.xhtml | grep -v $file | sort -V | tail -1 | sed 's/.xhtml//'`
@@ -555,10 +556,12 @@ then
 		data=`xmllint --html --xpath "//*/li[@class=\"depot-content\"][$x]" dlg_${currchoice}.xhtml 2>/dev/null`
 		name=`echo $data|xml_grep --html --text_only '//*/a' 2>/dev/null`
 		d=`echo $name | sed "s/$mydlg//i"`
+		debugecho "DEBUG: $name $d"
 		if [ Z"$d" != Z"$name" ]
 		then
 			# get the file
 			debugecho "DEBUG: get $name"
+			echo "Local:$repo/dlg_$currchoice/$name"
 			getvsm $currchoice "base"
 		fi
 		let x=$x+1
