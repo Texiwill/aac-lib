@@ -142,6 +142,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+1.6.0 - cleaned up code pulling unique items into one loop not 3
+separate loops. Fixed Mark to only appear in one spot.
+
 1.5.0 - added ability to download specific file by name or part of a
 name and fixed major bug on associated products list where resultant
 list was malformed

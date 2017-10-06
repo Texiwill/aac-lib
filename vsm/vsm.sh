@@ -85,6 +85,8 @@ function menu() {
 	all=""
 	alln=""
 	allm=""
+	mark=""
+	back="Back"
 	file=$1
 	if [ Z"$1" = Z"All" ]
 	then
@@ -98,7 +100,6 @@ function menu() {
 			file=$4
 		fi
 	fi
-	back="Back"
 	if [ Z"$choice" = Z"root" ]
 	then
 		back=""
