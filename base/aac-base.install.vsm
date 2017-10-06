@@ -17,6 +17,7 @@ function vsm() {
 	# Find way to download direct
 	wget https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
 	mv vsm.sh /usr/local/bin
+	chmod +x /usr/local/bin/vsm.sh
 	
 	# Install RPMS
 	yum -y install $INSTALL $DEVEL
