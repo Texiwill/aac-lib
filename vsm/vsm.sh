@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="1.5.0"
+VERSIONID="1.6.0"
 
 # args: stmt error
 function colorecho() {
@@ -71,6 +71,16 @@ function vsmpkgs() {
 	debugecho "DEBUG: $pkgs"
 }
 
+function save_vsmrc() {
+	echo "favorite='$favorite'" > $HOME/.vsmrc
+	if [ $dosave -eq 1 ]
+	then
+		colorecho "Saving Repo Directory and VSM Directory"
+		echo "repo='$repo'" >> $HOME/.vsmrc
+		echo "cdir='$cdir'" >> $HOME/.vsmrc
+	fi
+}
+
 function menu() {
 	all=""
 	alln=""
@@ -80,6 +90,7 @@ function menu() {
 	then
 		all=$1
 		file=$2
+		mark="Mark"
 		if [ Z"$3" = Z"All_Plus_OpenSource" ]
 		then
 			allm=$2
@@ -93,13 +104,20 @@ function menu() {
 		back=""
 	fi
 	vsmpkgs $file
-	select choice in $all $allm $alln $pkgs $back Exit
+	select choice in $all $allm $alln $pkgs $mark $back Exit
 	do
 		if [ $choice = "Exit" ]
 		then
 			exit
 		fi
-		break
+		if [ $choice = "Mark" ]
+		then
+			favorite=$prevchoice
+			colorecho "Favorite: $favorite"
+			save_vsmrc
+		else
+			break
+		fi
 	done
 	if [ $choice != "Back" ]
 	then
@@ -255,7 +273,7 @@ function usage() {
 	echo "	--nooem - do not include CustomIso in All-style downloads"
 	echo "	--debug - debug mode"
 	echo "	--repo path - specify path of repo"
-	echo "	--save - save defaults to \$HOME/.vsmrc"
+	echo "	--save - save settings to \$HOME/.vsmrc, favorite always saved on Mark"
 	echo ""
 	echo "	All-style downloads include: All, All_No_OpenSource, Minimum_Required"
 	echo "	Requires packages:"
@@ -263,6 +281,11 @@ function usage() {
 	echo ""
 	echo "To Download the latest Perl CLI use (to escape the wild cards):"
 	echo "./vsm.sh --dlg CLI\.\*\\.x86_64.tar.gz"
+	echo ""
+	echo "Use of the Mark option, marks the current product suite as the" 
+	echo "favorite. There is only 1 favorite slot available. Favorites"
+	echo "can be downloaded without traversing the menus."
+
 	exit;
 }
 
@@ -308,6 +331,7 @@ dosave=0
 mydts=-1
 myoss=-1
 myoem=-1
+myfav=0
 repo="/tmp/vsm"
 cdir="/tmp/vsm"
 mydlg=""
@@ -321,6 +345,11 @@ NB=`tput rmso`
 if [ -e $HOME/.vsmrc ]
 then
 	. $HOME/.vsmrc
+	# if we already use .vsmrc then continue to do so
+	if [ Z"$repo" != Z"" ]
+	then
+		dosave=1
+	fi
 fi
 
 while [[ $# -gt 0 ]]
@@ -396,6 +425,12 @@ do
 		--nooss)
 			myoss=0
 			;;
+		--favorite)
+			if [ Z"$favorite" != Z"" ]
+			then
+				myfav=1
+			fi
+			;;
 		-V|--version)
 			version
 			;;
@@ -461,12 +496,7 @@ else
 fi
 
 # save a copy of the .vsmrc and continue
-if [ $dosave -eq 1 ]
-then
-	colorecho "Saving Repo Directory and VSM Directory"
-	echo "repo='$repo'" > $HOME/.vsmrc
-	echo "cdir='$cdir'" >> $HOME/.vsmrc
-fi
+save_vsmrc
 
 # Get Data for VSM
 echo ""
@@ -585,7 +615,15 @@ do
                         prevchoice=$choice
                 fi
 	fi
-	menu $all $allm $alln ${choice}.xhtml
+	if [ $myfav -eq 0 ]
+	then
+		menu $all $allm $alln ${choice}.xhtml
+	else
+		# setup auto-download of favorite
+		prevchoice=$favorite
+		choice="All"
+		dlg=2
+	fi
 
 
 	if [ $choice != "Back" ]
@@ -636,7 +674,7 @@ do
 				osslist=""
 				dtslist=""
 				debugecho "DEBUG: Working on $choice"
-				asso=`xml_grep --html --text_only '*[@title="associated-channels"]' dlg_${choice}.xhtml  2>/dev/null| sed 's/,//'`
+				asso=`xml_grep --html --text_only '*[@title="associated-channels"]' dlg_${choice}.xhtml  2>/dev/null| sed 's/,//g'`
 
 				# sometimes things exist that are not in asso lists
 				# sometimes they use similar version numbers
@@ -815,90 +853,50 @@ do
 	
 				# Now handle OpenSource, CustomIso, DriversTools
 				# these are via $asso
-				if [ $dooem -eq 1 ] && [ Z"$oem" != Z"" ]
-				then
-					debugecho "DEBUG: DOOEM"
-					diddownload=0
-					for o in `echo $oemlist| sed 's/dlg_//g' |sed 's/\.xhtml//g'`
-					do
-						debugecho "DEBUG OEM: $choice: $o"
-						cnt=`xml_grep --html --pretty_print --cond '//*/[@class="depot-content"]' dlg_${o}.xhtml  2>/dev/null |grep display-order | wc -l`
-						x=1
-						while [ $x -le $cnt ]
-						do
-							data=`xmllint --html --xpath "//*/li[@class=\"depot-content\"][$x]" dlg_${o}.xhtml`
-		
-							# only do the selected
-							getvsm $currchoice $oem
-							# out to dev null seems to be required
-							$((x++)) 2> /dev/null
-						done
-					done
-					if [ $diddownload -eq 1 ]
+				for x in oem dts oss
+				do
+					y="do${x}"
+					l="${x}list"
+					eval dom=\$$y
+					eval om=\$${x}
+					eval omlist=\$${l}
+					if [ $dom -eq 1 ] && [ Z"$om" != Z"" ]
 					then
-						colorecho "Downloads to $repo/dlg_$currchoice/$oem"
-					else
-						colorecho "All $currchoice $oem already downloaded!"
-					fi
-				fi
-				if [ $dooss -eq 1 ] && [ Z"$oss" != Z"" ]
-				then
-					debugecho "DEBUG: DOOSS"
-					diddownload=0
-					for o in `echo $osslist| sed 's/dlg_//g' |sed 's/\.xhtml//g'`
-					do
-						debugecho "DEBUG OSS: $choice: $o"
-						cnt=`xml_grep --html --pretty_print --cond '//*/[@class="depot-content"]' dlg_${o}.xhtml  2>/dev/null |grep display-order | wc -l`
-						x=1
-						while [ $x -le $cnt ]
+						debugecho "DEBUG: $y"
+						diddownload=0
+						for o in `echo $omlist| sed 's/dlg_//g' |sed 's/\.xhtml//g'`
 						do
-							data=`xmllint --html --xpath "//*/li[@class=\"depot-content\"][$x]" dlg_${o}.xhtml`
-		
-							# only do the selected
-							getvsm $currchoice $oss
-							# out to dev null seems to be required
-							$((x++)) 2> /dev/null
+							debugecho "DEBUG $y: $choice: $o"
+							cnt=`xml_grep --html --pretty_print --cond '//*/[@class="depot-content"]' dlg_${o}.xhtml  2>/dev/null |grep display-order | wc -l`
+							x=1
+							while [ $x -le $cnt ]
+							do
+								data=`xmllint --html --xpath "//*/li[@class=\"depot-content\"][$x]" dlg_${o}.xhtml`
+			
+								# only do the selected
+								getvsm $currchoice $om
+								# out to dev null seems to be required
+								let x=$x+1
+							done
 						done
-					done
-					if [ $diddownload -eq 1 ]
-					then
-						colorecho "Downloads to $repo/dlg_$currchoice/$oss"
-					else
-						colorecho "All $currchoice $oss already downloaded!"
+						if [ $diddownload -eq 1 ]
+						then
+							colorecho "Downloads to $repo/dlg_$currchoice/$om"
+						else
+							colorecho "All $currchoice $om already downloaded!"
+						fi
 					fi
-				fi
-				if [ $dodts -eq 1 ] && [ Z"$dts" != Z"" ]
-				then
-					debugecho "DEBUG: DODTS"
-					diddownload=0
-					for o in `echo $dtslist| sed 's/dlg_//g' |sed 's/\.xhtml//g'`
-					do
-						debugecho "DEBUG DTS: $choice: $o"
-						cnt=`xml_grep --html --pretty_print --cond '//*/[@class="depot-content"]' dlg_${o}.xhtml  2>/dev/null |grep display-order | wc -l`
-						x=1
-						while [ $x -le $cnt ]
-						do
-							data=`xmllint --html --xpath "//*/li[@class=\"depot-content\"][$x]" dlg_${o}.xhtml`
-		
-							# only do the selected
-							getvsm $currchoice $dts
-							# out to dev null seems to be required
-							$((x++)) 2> /dev/null
-						done
-					done
-					if [ $diddownload -eq 1 ]
-					then
-						colorecho "Downloads to $repo/dlg_$currchoice/$dts"
-					else
-						colorecho "All $currchoice $dts already downloaded!"
-					fi
-				fi
+				done
 				
 				dlg=1
 				diddownload=0
 				#choice=$prevchoice
 			done
 			echo ""
+			if [ $myfav -eq 1 ]
+			then
+				exit
+			fi
 			mchoice=`dirname $mchoice`
 			debugecho "DEBUG: $mchoice"
 			choice=`basename $mchoice`

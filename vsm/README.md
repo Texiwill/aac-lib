@@ -142,7 +142,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
-1.5.0 - added ability to download specific file by name or part of a name
+1.5.0 - added ability to download specific file by name or part of a
+name and fixed major bug on associated products list where resultant
+list was malformed
 
 1.1.0 - fixed 'Back' to actually send you back just 1 level at all times
 by creating a path variable that gets updated for every menu call and
