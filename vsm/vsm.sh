@@ -387,7 +387,7 @@ do
 			password=$2
 			shift
 			;;
-		-n|--nostore)
+		-ns|--nostore)
 			nostore=1
 			;;
 		-d|--dryrun)
