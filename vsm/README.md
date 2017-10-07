@@ -32,15 +32,23 @@ debian and wants this to work there, get me the dpkg commands needed.
 	-r|--reset - reset repos
 	-u|--username - specify username
 	-v|--vsmdir path - set VSM directory
+	                   saved to configuration file
 	-V|--version - version number
 	--dts - include DriversTools in All-style downloads
+	        saved to configuration file
 	--nodts - do not include DriversTools in All-style downloads
+	          saved to configuration file
 	--oss - include OpenSource in All-style downloads
+	        saved to configuration file
 	--nooss - do not include OpenSource in All-style downloads
+	          saved to configuration file
 	--oem - include CustomIso in All-style downloads
+	        saved to configuration file
 	--nooem - do not include CustomIso in All-style downloads
+	          saved to configuration file
 	--debug - debug mode
 	--repo path - specify path of repo
+	              saved to configuration file
 	--save - save defaults to $HOME/.vsmrc
 
 	All-style downloads include: All, All_No_OpenSource, Minimum_Required
@@ -142,6 +150,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+1.6.5 - added --nooem|--oem, --nodts|--dts, --nooss|--oss to the .vsmrc
+configuration file when options are saved
+
 1.6.1 - moved variable and removed check for perl-XML-XPath as it is no
 longer required.
 

@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="1.6.1"
+VERSIONID="1.6.5"
 
 # args: stmt error
 function colorecho() {
@@ -72,12 +72,15 @@ function vsmpkgs() {
 }
 
 function save_vsmrc() {
+	colorecho "Saving to $HOME/.vsmrc"
 	echo "favorite='$favorite'" > $HOME/.vsmrc
 	if [ $dosave -eq 1 ]
 	then
-		colorecho "Saving Repo Directory and VSM Directory"
 		echo "repo='$repo'" >> $HOME/.vsmrc
 		echo "cdir='$cdir'" >> $HOME/.vsmrc
+		echo "myoem=$myoem" >> $HOME/.vsmrc
+		echo "mydts=$mydts" >> $HOME/.vsmrc
+		echo "myoss=$myoss" >> $HOME/.vsmrc
 	fi
 }
 

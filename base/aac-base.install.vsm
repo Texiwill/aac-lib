@@ -20,7 +20,11 @@ function vsm() {
 	chmod +x /usr/local/bin/vsm.sh
 	
 	# Install RPMS
-	yum -y install $INSTALL $DEVEL
+	echo $RPMLIST | grep perl-XML-Twig > /dev/null
+	if [ $? != 0 ]
+	then
+		yum -y install $INSTALL $DEVEL
+	fi
 
 	cd $menu_pd
 }
