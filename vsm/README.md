@@ -18,7 +18,7 @@ debian and wants this to work there, get me the dpkg commands needed.
 
 <pre>
    $ ./vsm.sh --help
-   ./vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--debug] [--repo repopath] [--save]
+   ./vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]
 	--dlg - download specific package by name or part of a name
 	-d|--dryrun - dryrun, do not download
 	-f|--force - force download of packages
@@ -34,6 +34,7 @@ debian and wants this to work there, get me the dpkg commands needed.
 	-v|--vsmdir path - set VSM directory
 	                   saved to configuration file
 	-V|--version - version number
+	-y - do not ask to continue
 	--dts - include DriversTools in All-style downloads
 	        saved to configuration file
 	--nodts - do not include DriversTools in All-style downloads

@@ -253,7 +253,7 @@ function version() {
 }
 
 function usage() {
-	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--debug] [--repo repopath] [--save]"
+	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
 	echo "	--dlg - download specific package by name or part of name"
 	echo "	-d|--dryrun - dryrun, do not download"
 	echo "	-f|--force - force download of packages"
@@ -268,6 +268,7 @@ function usage() {
 	echo "	-u|--username - specify username"
 	echo "	-v|--vsmdir path - set VSM directory"
 	echo "	-V|--version - version number"
+	echo "	-y - do not ask to continue"
 	echo "	--dts - include DriversTools in All-style downloads"
 	echo "	--nodts - do not include DriversTools in All-style downloads"
 	echo "	--oss - include OpenSource in All-style downloads"
@@ -333,6 +334,7 @@ dosave=0
 mydts=-1
 myoss=-1
 myoem=-1
+myyes=0
 myfav=0
 repo="/tmp/vsm"
 cdir="/tmp/vsm"
@@ -373,6 +375,9 @@ do
 		-e|--exit)
 			doreset=1
 			doexit=1
+			;;
+		-y)
+			myyes=1
 			;;
 		-u|--username)
 			username=$2
@@ -501,12 +506,15 @@ fi
 save_vsmrc
 
 # Get Data for VSM
-echo ""
-echo "Continue with VSM (Y/n)?"
-read c
-if [ Z"$c" = Z"n" ] || [ Z"$c" = Z"N" ]
+if [ $myyes -eq 0 ]
 then
-	exit
+	echo ""
+	echo "Continue with VSM (Y/n)?"
+	read c
+	if [ Z"$c" = Z"n" ] || [ Z"$c" = Z"N" ]
+	then
+		exit
+	fi
 fi
 
 # Cleanup old data if any
