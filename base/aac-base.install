@@ -53,14 +53,14 @@ function startsrv() {
 
 function tz() {
 	echo "Checking Timezone settings"
-	#echo $RPMLIST | grep wget > /dev/null
-	#if [ $? != 0 ]
-	#then
+	echo $RPMLIST | grep ntp- > /dev/null
+	if [ $? != 0 ]
+	then
 		echo "Install/update wget & ntp"
 		yum -q makecache fast
 		yum -q -y install wget ntp
 		yum -q -y update wget ntp
-	#fi
+	fi
 	settz=0
 	ls -al /etc/localtime |grep "$TZ" > /dev/null
 	if [ $? != 0 ]
