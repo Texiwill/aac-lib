@@ -132,6 +132,7 @@ function usage() {
 	exit
 }
 
+update=0
 prog=$0
 installer=""
 CREATEREPO=0
@@ -145,6 +146,9 @@ case "$1" in
 	#	CREATEREPO=1
 	#	shift
 	#	;;
+	--update|-u)
+		update=1
+		;;
 	--help|-h) 
 		usage
 		;;
@@ -180,6 +184,21 @@ RPMLIST=`rpm -qa`
 tz
 epel
 selinux
+
+###
+# Update aac-base bits
+###
+if [ $update -eq 1 ]
+then
+	files=`wget -O - https://github.com/Texiwill/aac-lib/blob/master/base |grep aac-base.install | grep span | awk -F\> '{print $3}' |sed 's#</a##g'`
+	for x in $files
+	do
+		wget -O $x https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/$x
+	done
+	echo "Update Done"
+	. ./aac-base.install
+fi
+
 
 ###
 # Do we Create the Repo

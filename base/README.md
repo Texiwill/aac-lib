@@ -51,7 +51,8 @@ scripts as well. Such as:
 
 The usage of the script is:
 
-	sudo ./aac-base.install [--install|-i installer] [--help|-h] [timezone]
+	sudo ./aac-base.install [--update|-u] [--install|-i installer] [--help|-h] [timezone]
+	--update|-u - update the script(s), then reload
 
 ### Installers
 
@@ -96,6 +97,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.4 update function added
+
 1.3 updates to ensure -i option works with further includes for VSM
 
 1.2-vcli, vsm, ovftool, vma. Added VSM installer, but updated vma to install vsm and vcli and ovftool to call vsm
