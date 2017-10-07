@@ -9,7 +9,7 @@
 # Version 1.0
 #
 ###
-. aac-base.install.vsm
+. ./aac-base.install.vsm
 function ovftool() {
 	vsm
 
@@ -17,19 +17,18 @@ function ovftool() {
 	DEVEL=""
 
 	# Find way to download direct
-	file=`/usr/local/bin/vsm.sh --dlg ovftool\.\*.x86_64.bundle | grep Local | awk -F: '{print $2}'`
+	t=/tmp/d$$
+	/usr/local/bin/vsm.sh --dlg ovftool\.\*.x86_64.bundle | tee $t
+	file=`grep Local $t | awk -F: '{print $2}'`
+	rm -f $t
 	
 	# Check for .tar.gz
-	if [ Z"$file" != Z""] && [ -e $file ]
+	if [ Z"$file" != Z"" ] && [ -e $file ]
 	then
 		chmod +x *.bundle
 	fi
 
 	# uninstall old
-	if [ -e /usr/bin/vmware-uninstall-vSphere-CLI.pl ]
-	then
-		/usr/bin/vmware-uninstall-vSphere-CLI.pl
-	fi
 	
 	# Install RPMS
 	yum -y install $INSTALL $DEVEL

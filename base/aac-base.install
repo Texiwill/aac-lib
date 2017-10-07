@@ -205,5 +205,8 @@ fi
 ###
 # General Cleanup
 ###
-
+if [ -e /tmp/vsm ]
+then
+	rm -rf /tmp/vsm
+fi
 fixselinux

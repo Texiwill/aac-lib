@@ -13,10 +13,10 @@
 ####
 # We need to have powercli and vcli for a vMA
 ####
-. aac-base.install.powercli
-. aac-base.install.vcli
-. aac-base.install.ovftool
-. aac-base.install.vsm
+. ./aac-base.install.powercli
+. ./aac-base.install.vcli
+. ./aac-base.install.ovftool
+. ./aac-base.install.vsm
 
 function vma() {
 	powercli

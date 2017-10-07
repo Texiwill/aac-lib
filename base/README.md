@@ -96,6 +96,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.3 updates to ensure -i option works with further includes for VSM
+
 1.2-vcli, vsm, ovftool, vma. Added VSM installer, but updated vma to install vsm and vcli and ovftool to call vsm
 
 1.1-powercli Improved Powershell install to use the latest files
