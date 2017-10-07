@@ -196,6 +196,7 @@ then
 		wget -O $x https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/$x
 	done
 	echo "Update Done"
+	update=0
 	. ./aac-base.install
 fi
 
