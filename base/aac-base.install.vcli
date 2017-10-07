@@ -18,7 +18,7 @@ function vcli() {
 	DEVEL=""
 
 	t=/tmp/d$$
-	/usr/local/bin/vsm.sh -y --ns --dlg CLI\.\*\.x86_64.tar.gz | tee $t
+	/usr/local/bin/vsm.sh -y -ns --dlg CLI\.\*\.x86_64.tar.gz | tee $t
 	file=`grep Local $t | awk -F: '{print $2}'`
 	rm -rf $t
 
