@@ -19,6 +19,7 @@
 . ./aac-base.install.vsm
 
 function vma() {
+	vsm
 	powercli
 	vcli
 	ovftool
