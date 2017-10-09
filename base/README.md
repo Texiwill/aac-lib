@@ -97,6 +97,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.5 update to ovftool installer to include ov-import.sh
+
 1.4 update function added
 
 1.3 updates to ensure -i option works with further includes for VSM

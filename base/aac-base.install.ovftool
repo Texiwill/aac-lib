@@ -13,6 +13,14 @@
 function ovftool() {
 	vsm
 
+	# Download ov-import tool
+	wget https://raw.githubusercontent.com/Texiwill/aac-lib/master/ovfimport/ov-import.sh
+	wget https://raw.githubusercontent.com/Texiwill/aac-lib/master/ovfimport/ov-defaults
+	mv ov-import.sh /usr/local/bin
+	mv ov-defaults $HOME/.ov-defaults
+
+	chmod +x /usr/local/bin/ov-import.sh
+
 	INSTALL="fuseiso"
 	DEVEL=""
 
@@ -35,6 +43,9 @@ function ovftool() {
 
 	# Run installer
 	./VMware-ovftool*.x86_64.bundle --eulas-agreed
+
+	echo "Do not forget to create your $HOME/.govc"
+	echo "Please visit https://github.com/Texiwill/aac-lib/tree/master/ovfimport for ov-import assistance"
 
 	cd $menu_pd
 }
