@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="1.6.6"
+VERSIONID="1.6.7"
 
 # args: stmt error
 function colorecho() {
@@ -482,12 +482,12 @@ if [ ! -e .credstore ]
 then
 	if [ Z"$username" = Z"" ]
 	then
-		echo -n "Enter Username: "
+		echo -n "Enter My VMware Username: "
 		read username
 	fi
 	if [ Z"$password" = Z"" ]
 	then
-		echo -n "Enter Password: "
+		echo -n "Enter My VMware Password: "
 		read -s password
 	fi
 

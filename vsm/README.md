@@ -166,6 +166,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+1.6.7 - Prompts for creds specific My VMware now
+
 1.6.6 - fixed single file download and readme
 
 1.6.5 - added --nooem|--oem, --nodts|--dts, --nooss|--oss to the .vsmrc
