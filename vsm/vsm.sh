@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="1.6.5"
+VERSIONID="1.6.6"
 
 # args: stmt error
 function colorecho() {
@@ -253,10 +253,11 @@ function version() {
 }
 
 function usage() {
-	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
+	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
 	echo "	--dlg - download specific package by name or part of name"
 	echo "	-d|--dryrun - dryrun, do not download"
 	echo "	-f|--force - force download of packages"
+	echo "	--favorite - download suite marked as favorite"
 	echo "	-e|--exit - reset and exit"
 	echo "	-h|--help - this help"
 	echo "	-l|--latest - substitute latest for each package instead of listed"
@@ -674,7 +675,7 @@ do
 			else
 				choices=$choice
 			fi
-
+			
 			for choice in $choices
 			do
 				oem=""
@@ -749,6 +750,7 @@ do
 				dodts=0
 				dodat=0
 				myall=0
+				mychoice=""
 				currchoice=$choice;
 	
 				# do not show if ALL, choice set above!
@@ -787,6 +789,7 @@ do
 					"Back")
 						;;
 					*)
+						mychoice=$choice
 						dodat=1
 						;;
 				esac
@@ -837,14 +840,18 @@ do
 						data=`xmllint --html --xpath "//*/li[@class=\"depot-content\"][$x]" dlg_${currchoice}.xhtml 2>/dev/null`
 	
 						# only do the selected
-						doit=1
+						doit=0
 						if [ $doall -eq 0 ]
 						then
 							p=`echo $data | xml_grep --text_only '//*/a' 2>/dev/null `
-							if [ Z"$p" = Z"$x" ]
+							if [ Z"$p" = Z"$mychoice" ]
 							then
-								doit=0
+								# got it so strip
+								mchoice=`dirname $mchoice`
+								doit=1
 							fi
+						else
+							doit=1
 						fi
 						if [ $doit -eq 1 ]
 						then

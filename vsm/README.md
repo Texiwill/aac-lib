@@ -18,10 +18,17 @@ debian and wants this to work there, get me the dpkg commands needed.
 
 <pre>
    $ ./vsm.sh --help
-   ./vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]
+   ./vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit]
+   [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor]
+   [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password
+   password] [-r|--reset] [-u|--username username] 
+   [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] 
+   [--save]
+
 	--dlg - download specific package by name or part of a name
 	-d|--dryrun - dryrun, do not download
 	-f|--force - force download of packages
+        --favorite - Download suite marked as favorite
 	-e|--exit - reset and exit
 	-h|--help - this help
 	-l|--latest - substitute latest for each package instead of listed
@@ -58,6 +65,10 @@ debian and wants this to work there, get me the dpkg commands needed.
 
 	To Download the latest Perl CLI use (to escape the wild cards):
 	./vsm.sh --dlg CLI\.\*\\.x86_64.tar.gz
+
+        Use of the Mark option, marks the current product suite as the
+        favorite. There is only 1 favorite slot available. Favorites
+        can be downloaded without traversing the menus.
 
    $ ./vsm.sh
    <span style="color:purple">Using the following options:</span>
@@ -106,37 +117,41 @@ debian and wants this to work there, get me the dpkg commands needed.
    7) Back
    8) Exit
    #? 3
-   1) All			  6) VIC120		  11) VR651
-   2) All_Plus_OpenSource	  7) NSXV_633		  12) VROPS_661
-   3) ESXI65U1		  8) VROVA_730		  13) Back
-   4) VC65U1		  9) VRLI_450_VCENTER	  14) Exit
-   5) VDP615		 10) BDE_232
-   #? 3
-    1) All
-    2) All_Plus_OpenSource
-    3) VMware-VMvisor-Installer-6.5.0.update01-5969303.x86_64.iso
-    4) update-from-esxi6.5-6.5_update01.zip
-    5) VMware-ESXi-6.5U1-RollupISO.iso
-    6) <span sytle="background: black; color:white">ESXi6.5U1-RollupISO-README.pdf</span>
-    7) OpenSource
-    8) CustomIso
-    9) Back
-   10) Exit
-   #? 6
-   Saving to: ‘ESXi6.5U1-RollupISO-README.pdf’
-   
-   100%[======================================>] 747,087     2.43MB/s   in 0.3s   
-   
-   2017-09-14 08:03:59 (2.43 MB/s) - ‘ESXi6.5U1-RollupISO-README.pdf’ saved [747087/747087]
-   
+   1) All		   7) VROVA_730		  13) VR65
+   2) Minimum_Required	   8) VRLI_450_VCENTER	  14) Mark
+   3) All_Plus_OpenSource  9) BDE_232		  15) Back
+   4) NSXV_632		  10) VDP614		  16) Exit
+   5) VC650E		  11) ESXI650D
+   6) VROPS_660		  12) VIC110
+   #? 11
+   1) All
+   2) Minimum_Required
+   3) All_Plus_OpenSource
+   4) VMware-VMvisor-Installer-201704001-5310538.x86_64.iso
+   5) ESXi650-201704001.zip
+   6) OpenSource
+   7) CustomIso
+   8) DriversTools
+   9) Back
+  10) Exit
+   #? 4
+   Saving to: ‘VMware-VMvisor-Installer-201704001-5310538.x86_64.iso’
+
+   100%[======================================>] 347,172,864 7.70MB/s   in 45s  
+
+   2017-10-11 08:04:21 (7.43 MB/s) - ‘VMware-VMvisor-Installer-201704001-5310538.x86_64.iso’ saved [347172864/347172864]
+
    <span style="color:purple">Downloads to /mnt/rainbow/iso/vmware/depot/content/dlg_ESXI65U1</span>
    
-   1) All			  6) VIC120		  11) VR651
-   2) All_Plus_OpenSource	  7) NSXV_633		  12) VROPS_661
-   3) ESXI65U1		  8) VROVA_730		  13) Back
-   4) VC65U1		  9) VRLI_450_VCENTER	  14) Exit
-   5) VDP615		 10) BDE_232
-   #? 14
+   1) All		   7) VROVA_730		  13) VR65
+   2) Minimum_Required	   8) VRLI_450_VCENTER	  14) Mark
+   3) All_Plus_OpenSource  9) BDE_232		  15) Back
+   4) NSXV_632		  10) VDP614		  16) Exit
+   5) VC650E		  11) ESXI650D
+   6) VROPS_660		  12) VIC110
+   #? 13
+   <span style="color:purple">Favorite: Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Enterprise_Plus
+   Saving to /home/elh/.vsmrc</span>
 </pre>
 
 ### Installation
@@ -151,6 +166,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+1.6.6 - fixed single file download and readme
+
 1.6.5 - added --nooem|--oem, --nodts|--dts, --nooss|--oss to the .vsmrc
 configuration file when options are saved
 
