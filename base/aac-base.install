@@ -129,7 +129,9 @@ function fixselinux() {
 
 function usage() {
 	# echo "Usage: $prog [--install|-i installer] [--createrepo|-c] [--help|-h] [timezone]"
-	echo "Usage: $prog [--install|-i installer] [--help|-h] [timezone]"
+	echo "Usage: $prog [--install|-i installer] [-u] [--help|-h] [timezone]"
+	echo "	-u => Update"
+	echo "	-i => Install
 	echo "	Default timezone $TZ"
 	echo "	Available installers are:"
 	for x in `ls ${prog}.*`
