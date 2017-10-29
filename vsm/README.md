@@ -16,6 +16,21 @@ This version was optimized for RedHat style distributions and will need
 a change to work on non-RedHat style distributions. If someone uses
 debian and wants this to work there, get me the dpkg commands needed.
 
+To install use the following script:
+<pre>
+	which wget >& /dev/null
+	if [ $? -eq 1 ]
+	then
+    		sudo yum -y install wget
+	fi
+	
+	wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
+	chmod +x aac-base.install
+	./aac-base.install -u
+	sudo ./aac-base.install -i vsm
+</pre>
+
+Here is an example run and help:
 <pre>
    $ ./vsm.sh --help
    ./vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit]
