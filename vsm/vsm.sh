@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="1.6.7"
+VERSIONID="1.6.8"
 
 # args: stmt error
 function colorecho() {
@@ -106,7 +106,10 @@ function menu() {
 	then
 		back=""
 	fi
-	vsmpkgs $file
+	if [ $domenu2 -eq 0 ]
+	then
+		vsmpkgs $file
+	fi
 	select choice in $all $allm $alln $pkgs $mark $back Exit
 	do
 		if [ $choice = "Exit" ]
@@ -119,7 +122,20 @@ function menu() {
 			colorecho "Favorite: $favorite"
 			save_vsmrc
 		else
-			break
+			#echo $choice
+			#tdir="${cdir}/depot.vmware.com/PROD/channel/"
+			#ls ${tdir}/${choice}.xhtml 2>/dev/null
+			#if [ $? -ne 0 ]
+			#then
+			#	ls ${tdir}/dlg_${choice}.xhtml 2>/dev/null
+			#	if [ $? -eq 0 ]
+			#	then
+			#		choice="dlg_${choice}"
+			#		break
+			#	fi
+			#else
+				break
+			#fi
 		fi
 	done
 	if [ $choice != "Back" ]
@@ -335,6 +351,7 @@ dosave=0
 mydts=-1
 myoss=-1
 myoem=-1
+domenu2=0
 myyes=0
 myfav=0
 repo="/tmp/vsm"
@@ -754,8 +771,10 @@ do
 				currchoice=$choice;
 	
 				# do not show if ALL, choice set above!
+				domenu2=0
 				if [ $doall -eq 0 ]
 				then
+					domenu2=1
 					menu2 dlg_${choice}.xhtml $oss $oem $dts
 				fi
 	
@@ -787,6 +806,7 @@ do
 						dodts=1
 						;;
 					"Back")
+						domenu2=0
 						;;
 					*)
 						mychoice=$choice
@@ -917,12 +937,17 @@ do
 			mchoice=`dirname $mchoice`
 			debugecho "DEBUG: $mchoice"
 			choice=`basename $mchoice`
+			if [ $domenu2 -eq 1 ]
+			then
+				choice="dlg_${choice}"
+			fi
 		fi
 	else
 		# go back 2 entries as previous is current
 		mchoice=`dirname $mchoice`
 		debugecho "DEBUG: $mchoice"
 		choice=`basename $mchoice`
+		domenu2=0
 
 		dlg=0
 		if [ $dlg -eq 2 ] 

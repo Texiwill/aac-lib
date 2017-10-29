@@ -166,6 +166,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+1.6.8 - Fixed issue where individual file download resulted in bad
+menu display
+
 1.6.7 - Prompts for creds specific My VMware now
 
 1.6.6 - fixed single file download and readme
