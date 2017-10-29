@@ -9,6 +9,7 @@
 # Target: CentOS/RHEL 7
 #
 ###
+VERSION="1.6"
 
 function menu() {
 	all_done=0;
@@ -129,9 +130,10 @@ function fixselinux() {
 
 function usage() {
 	# echo "Usage: $prog [--install|-i installer] [--createrepo|-c] [--help|-h] [timezone]"
-	echo "Usage: $prog [--install|-i installer] [-u] [--help|-h] [timezone]"
+	echo "Usage: $prog [--install|-i installer] [-u] [-v|--version] [--help|-h] [timezone]"
 	echo "	-u => Update"
-	echo "	-i => Install
+	echo "	-i => Install"
+	echo "  -v => version"
 	echo "	Default timezone $TZ"
 	echo "	Available installers are:"
 	for x in `ls ${prog}.*`
@@ -158,6 +160,10 @@ case "$1" in
 	#	;;
 	--update|-u)
 		update=1
+		;;
+	--version|-v)
+		echo "$0 version $VERSION"
+		exit
 		;;
 	--help|-h) 
 		usage
