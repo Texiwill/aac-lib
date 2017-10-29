@@ -540,6 +540,11 @@ TS=`grep vmware cookies.txt |awk '{print $5}'`
 #echo $JS
 echo ".vmware.com	TRUE	/	TRUE	$TS	JSESSIONID	$JS" >> cookies.txt
 
+if [ ! -e ${cdir}/depot.vmware.com ]
+then
+	doreset=1
+fi
+
 if [ $doreset -eq 1 ]
 then
 	debugecho "DEBUG: Reset Request"

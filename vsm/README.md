@@ -181,6 +181,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+1.7.0 - Fixed an intialization problem. Required --reset|-r to initialize
+
 1.6.9 - Fixed issue where download was not happening for All when
 individual files are listed.
 
