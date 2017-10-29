@@ -54,6 +54,22 @@ The usage of the script is:
 	sudo ./aac-base.install [--update|-u] [--install|-i installer] [--help|-h] [timezone]
 	--update|-u - update the script(s), then reload
 
+Use the following script, which requires sudo, to get everything to run
+these installers:
+
+<pre>
+which wget >& /dev/null
+if [ $? -eq 1 ]
+then
+    sudo yum -y install wget
+fi
+
+wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
+chmod +x aac-base.install
+./aac-base.install -u
+sudo ./aac-base.install
+</pre>
+
 ### Installers
 
 #### Base
