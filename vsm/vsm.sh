@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="1.6.8"
+VERSIONID="1.6.9"
 
 # args: stmt error
 function colorecho() {
@@ -122,20 +122,7 @@ function menu() {
 			colorecho "Favorite: $favorite"
 			save_vsmrc
 		else
-			#echo $choice
-			#tdir="${cdir}/depot.vmware.com/PROD/channel/"
-			#ls ${tdir}/${choice}.xhtml 2>/dev/null
-			#if [ $? -ne 0 ]
-			#then
-			#	ls ${tdir}/dlg_${choice}.xhtml 2>/dev/null
-			#	if [ $? -eq 0 ]
-			#	then
-			#		choice="dlg_${choice}"
-			#		break
-			#	fi
-			#else
-				break
-			#fi
+			break
 		fi
 	done
 	if [ $choice != "Back" ]
@@ -776,6 +763,11 @@ do
 				then
 					domenu2=1
 					menu2 dlg_${choice}.xhtml $oss $oem $dts
+					# menu2 requires doall be set
+					if [ Z"$choice" = Z"All" ]
+					then
+						doall=1
+					fi
 				fi
 	
 				case $choice in
@@ -858,7 +850,6 @@ do
 					while [ $x -le $cnt ]
 					do
 						data=`xmllint --html --xpath "//*/li[@class=\"depot-content\"][$x]" dlg_${currchoice}.xhtml 2>/dev/null`
-	
 						# only do the selected
 						doit=0
 						if [ $doall -eq 0 ]
@@ -947,9 +938,15 @@ do
 		mchoice=`dirname $mchoice`
 		debugecho "DEBUG: $mchoice"
 		choice=`basename $mchoice`
-		domenu2=0
+		if [ $domenu2 -eq 1 ]
+		then
+			domenu2=0
+			doall=0
+			dlg=1
+		else
+			dlg=0
+		fi
 
-		dlg=0
 		if [ $dlg -eq 2 ] 
 		then
 			dlg=1

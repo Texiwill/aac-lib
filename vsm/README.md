@@ -166,6 +166,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+1.6.9 - Fixed issue where download was not happening for All when
+individual files are listed.
+
 1.6.8 - Fixed issue where individual file download resulted in bad
 menu display
 
