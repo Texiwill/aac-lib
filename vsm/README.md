@@ -173,6 +173,24 @@ Here is an example run and help:
 Place in any directory. Requires the following packages:
 	wget python python-urllib3 libxml2 perl-XML-Twig ncurses
 
+### Update
+To keep vsm and your repository updated to the latest release/downloads
+you can add the following lines to your local cronjob. This tells the
+system to update the installer, then update vsm, then run vsm with your
+currently marked favorite. Note 'user' is your username. 
+
+Caveat: This approach only works if you use the aac-lib/base installers to
+install vsm. If you did not then just use the last line.
+
+Be sure to mark a release as your favorite! If you do not, this does
+not work. The 'Mark' menu item does this.
+
+<pre>
+	/home/user/aac-base.install -u
+	/home/user/aac-base.install -i vsm
+	/usr/local/bin/vsm.sh -y -r -l --favorite
+</pre>
+
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.
