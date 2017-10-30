@@ -4,6 +4,10 @@
 #
 # DNSCrypt Proxy for CentOS/RHEL 7 using DNSMasq
 
+function dnscrypt_version() {
+	echo "1.0.0"
+}
+
 function dnscrypt() {
 	echo "Installing or Updating DNS-Crypt"
 

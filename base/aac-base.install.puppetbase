@@ -8,6 +8,10 @@
 #
 ###
 
+function puppetbase_version() {
+	echo "2.0.0"
+}
+
 function puppetbase() {
 	echo "Checking for Puppet Labs Repo 4.0"
 	echo $RPMLIST |grep puppetlabs-release > /dev/null

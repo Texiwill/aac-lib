@@ -9,7 +9,19 @@
 # Target: CentOS/RHEL 7
 #
 ###
-VERSION="1.6"
+VERSION="1.6.1"
+
+function version() {
+	echo "$0 version is $VERSION"
+	for x in `ls ${prog}.*`
+	do
+		. ./$x
+		y=`echo $x | awk -F\. '{print $4}'`
+		echo -n "	"
+		echo -n "$y version "
+		eval ${y}_version
+	done
+}
 
 function menu() {
 	all_done=0;
@@ -162,7 +174,7 @@ case "$1" in
 		update=1
 		;;
 	--version|-v)
-		echo "$0 version $VERSION"
+		version
 		exit
 		;;
 	--help|-h) 

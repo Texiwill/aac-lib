@@ -11,6 +11,10 @@
 ###
 . ./aac-base.install.vsm
 
+function vcli_version() {
+	echo "1.5.0"
+}
+
 function vcli() {
 	vsm
 

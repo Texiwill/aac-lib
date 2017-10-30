@@ -9,6 +9,9 @@
 # Version 1.1
 #
 ###
+function powercli_version() {
+	echo "1.5.0"
+}
 
 function powercli() {
 	INSTALL="unzip zip sshpass"

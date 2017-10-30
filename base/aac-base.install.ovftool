@@ -10,6 +10,10 @@
 #
 ###
 . ./aac-base.install.vsm
+function ovftool_version() {
+	echo "1.0.0"
+}
+
 function ovftool() {
 	vsm
 

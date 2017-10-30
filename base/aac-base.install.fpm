@@ -4,6 +4,10 @@
 #
 # install or update fpm for package management
 
+function fpm_version() {
+	echo "1.0.0"
+}
+
 function fpm() {
 	echo "Installing or Updating FPM"
 

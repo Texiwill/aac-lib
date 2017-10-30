@@ -113,6 +113,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.6.1 added versions for all sub installers
+
 1.6 fixed a missing end quote
 
 1.5 update to ovftool installer to include ov-import.sh
