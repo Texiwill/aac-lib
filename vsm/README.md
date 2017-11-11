@@ -202,6 +202,7 @@ that is the only distribution specific bits in the script.
 
 ### Changelog
 2.0.0 - Added ability to get missing suite information from VMware's website
+        Fixed the ability to select menu options using wrong input
 
 1.7.0 - Fixed an intialization problem. Required --reset|-r to initialize
 
