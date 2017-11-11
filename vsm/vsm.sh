@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="2.0.0"
+VERSIONID="2.0.1"
 
 # args: stmt error
 function colorecho() {
@@ -258,11 +258,15 @@ function menu() {
 	alln=""
 	allm=""
 	file=$1
+	mark=""
 	if [ Z"$1" = Z"All" ]
 	then
 		all=$1
 		file=$2
-		mark="Mark"
+		if [ $myinnervm -eq 0 ]
+		then
+			mark="Mark"
+		fi
 		if [ Z"$3" = Z"All_Plus_OpenSource" ]
 		then
 			allm=$2
