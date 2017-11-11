@@ -34,7 +34,7 @@ Here is an example run and help:
 <pre>
    $ ./vsm.sh --help
    ./vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit]
-   [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor]
+   [-h|--help] [-l|--latest] [-m|--myvmware] [-ns|--nostore] [-nc|--nocolor]
    [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password
    password] [-r|--reset] [-u|--username username] 
    [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] 
@@ -48,6 +48,8 @@ Here is an example run and help:
 	-h|--help - this help
 	-l|--latest - substitute latest for each package instead of listed
 		Only really useful for latest distribution at moment
+	-m|--myvmware - get missing suite information from VMware's website
+		Cannot mark this suite information as a favorite
 	-ns|--nostore - do not store credential data and remove if exists
 	-nc|--nocolor - do not output with color
 	-p|--password - specify password
@@ -199,6 +201,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+2.0.0 - Added ability to get missing suite information from VMware's website
+
 1.7.0 - Fixed an intialization problem. Required --reset|-r to initialize
 
 1.6.9 - Fixed issue where download was not happening for All when

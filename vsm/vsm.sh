@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="1.7.0"
+VERSIONID="2.0.0"
 
 # args: stmt error
 function colorecho() {
@@ -38,6 +38,186 @@ function debugecho() {
 	fi
 }
 
+function addpath() {
+	mchoice="$mchoice/$choice"
+
+	# need to strip first strings from 'Choice' So split on / and remove
+	mychoice=`echo "$choice" | tr '[:upper:]' '[:lower:]'`
+	for x in `echo $myvmware | sed 's#/# #g'`
+	do
+		mychoice=`echo $mychoice | sed "s/${x}_//"`
+	done
+	myvmware="$myvmware/$mychoice"
+	debugecho "DEBUG: MyV: $myvmware"
+	debugecho "DEBUG: MC: $mchoice"
+}
+
+function getpath() {
+	mchoice=`dirname $mchoice`
+	myvmware=`dirname $myvmware`
+	debugecho "DEBUG: $mchoice"
+}
+
+function getchoice() {
+	choice=`basename $mchoice`
+}
+
+
+function findmissing() {
+	tpkg=`echo $pkgs | tr '[:upper:]' '[:lower:]'`
+	for x in `echo $myvmware | sed 's#/# #g'`
+	do
+		tpkg=`echo $tpkg | sed "s/${x}_//g"`
+	done
+	spkg=`echo $tpkg | awk '{print $1}'`
+	domyvm=`echo ${myvmware}/${spkg} | awk -F/ '{print NF}'`
+	if [ $domyvm -eq 4 ]
+	then
+		pmiss=`echo $tpkg | sed 's/ /|/g'`
+		missname=`echo $myvmware | sed 's#/#_#g'`
+		if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ]
+		then
+			wget -O - ${myvmware_root}${myvmware}/$spkg > ${rcdir}/${missname}.xhtml
+		fi
+		tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g"|egrep -v $pmiss`
+
+		# missing pkg entries
+		if [ Z"$tver" != Z"" ]
+		then
+			mc=`basename $mchoice`
+			debugecho "DEBUG: Missing from $mc is $tver"
+			for x in $tver
+			do
+				pkgs="$pkgs ${mc}_$x"
+			done
+			pkgs=`echo $pkgs | tr ' ' '\n' | sort -rV`
+			missing=`echo $tver | sed 's/ /|/g'`
+		fi
+	fi
+}
+
+function getoutervmware() {
+	debugecho "DEBUG: $myvmware $choice $missing"
+	echo $choice | egrep -v $missing
+	if [ $? -eq 1 ]
+	then
+		spkg=`echo $choice | awk -F_ '{print $NF}'`
+		missname=`echo ${myvmware} | sed 's/\//_/g'`
+		if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ]
+		then
+			wget -O - ${myvmware_root}${myvmware} > ${rcdir}/${missname}.xhtml
+		fi
+		mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]//g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $9}'`
+		debugecho "DEBUG: $myvmware Missing Versions $mversions"
+		f=`basename $mchoice`
+		for x in $mversions
+		do
+			pkgs="$pkgs ${f}_$x"
+		done
+	fi
+}
+
+function getinnervmware() {
+	# need to set $dlg here
+	echo "IV: $choice"
+	wh=`echo $choice | awk -F_ '{print $NF}'`
+	what="midProductColumn\">$wh"
+	wend=`echo $mversions | sed "s/.*$wh//"|awk '{print $2}'`
+	if [ Z"$wend" = Z"" ]
+	then
+		wend="section"
+	fi
+	mv=`echo $mversions | sed 's/ /|/g'`
+	if [ $dolatest -eq 1 ]
+	then
+		# finds what is on filesystem there now including latest
+		pkgs=`egrep "downloadGroup|$mv" $rcdir/${missname}.xhtml | awk "/$what/,/$wend/"| egrep -v "$wh|buttoncol" |awk -F= '{print $3}'|awk -F\& '{print $1}'|sed 's/^/dlg_/'|sed 's/-/_/g'|sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\).*$/\1/' | sort -u`
+		vsmnpkgs
+	else
+		# lists what should be there ignoring filesystem
+		pkgs=`egrep "downloadGroup|$mv" $rcdir/${missname}.xhtml | awk "/$what/,/$wend/"| egrep -v "$wh|buttoncol" |awk -F= '{print $3}'|awk -F\& '{print $1}'|sed 's/-/_/g'| sort -u`
+		vsmnpkgs 1
+	fi
+	dlg=1
+	myinnervm=1
+	vers=`grep selected $rcdir/${missname}.xhtml | awk -F\> '{print $2}'|awk -F\< '{print $1}'`
+	prod=`grep '<title>' $rcdir/${missname}.xhtml | awk -F\> '{print $2}'|awk -F\< '{print $1}' | sed 's/Download //'`
+	debugecho "DEBUG: $myvmware $vers $prod"
+}
+
+function getvmware() {
+	if [ $domyvmware -eq 1 ]
+	then
+		debugecho "DEBUG: FM: ${missing} ${mversions}"
+		if [ Z"$missing" = Z"" ]
+		then
+			myinnervm=0
+			# Get missing suite versons
+			debugecho "DEBUG: do FM"
+			findmissing
+		else
+			if [ Z"$mversions" = Z"" ]
+			then
+				myinnervm=0
+				# Get versions of suites
+				debugecho "DEBUG: do OV"
+				getoutervmware
+			else
+				# associate packages
+				debugecho "DEBUG: do IV"
+				getinnervmware
+			fi
+		fi
+	fi
+}
+function backvmware() {
+	if [ $domyvmware -eq 1 ]
+	then
+		mversions=""
+		if [ $dlg -ne 2 ]
+		then
+			missing=""
+		fi
+	fi
+}
+
+function vsmnpkgs() {
+	dim=0
+	if [ Z"$1" != Z"" ]
+	then
+		dim=$1
+	fi
+	npkg=""
+	for x in $pkgs
+	do
+		l=${#x}
+		$((l++)) 2> /dev/null
+		e=$((l+1))
+		# ignore VCENTER is a special case
+		if [ $dim -eq 0 ]
+		then
+			# find latest
+			a=`ls ${x}* 2>/dev/null| grep -v 'OSS' | sed 's/\.xhtml//' | sed 's/U/0U/' | sort -rn -k1.${l},1.${e} | sort -n | sed 's/0U/U/' | egrep -v 'VCENTER|PLUGIN|SDK|OSL' | tail -1 | sed 's/dlg_//'`
+		else
+			# find available
+			ls dlg_${x}.xhtml >& /dev/null
+			if [ $? -eq 0 ]
+			then
+				a=$x
+			else
+				a="${GRAY}${x}${NC}"
+			fi
+		fi
+		if [ Z"$npkg" = Z"" ]
+		then
+			npkg=$a
+		else
+			npkg="${npkg} ${a}"
+		fi
+	done
+	pkgs=$npkg
+}
+
 function vsmpkgs() {
 	file=$1
 	pkgs=""
@@ -45,28 +225,17 @@ function vsmpkgs() {
 	then
 		if [ $dolatest -eq 1 ]
 		then
-			npkg=""
 			pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\).*$/\1/' | sort -u`
-			for x in $pkgs
-			do
-				l=${#x}
-				$((l++)) 2> /dev/null
-				e=$((l+1))
-				# ignore VCENTER is a special case
-				a=`ls ${x}* | grep -v 'OSS' | sed 's/\.xhtml//' | sed 's/U/0U/' | sort -rn -k1.${l},1.${e} | sort -n | sed 's/0U/U/' | egrep -v 'VCENTER|PLUGIN|SDK|OSL' | tail -1 | sed 's/dlg_//'`
-				if [ Z"$npkg" = Z"" ]
-				then
-					npkg=$a
-				else
-					npkg="${npkg} ${a}"
-				fi
-			done
-			pkgs=$npkg
+			vsmnpkgs
 		fi
 	fi
 	if [ Z"$pkgs" = Z"" ]
 	then
-		pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/dlg_//' | sed 's/\.xhtml//' | sed 's/,//g' `
+		if [ -e $file ]
+		then
+			pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/dlg_//' | sed 's/\.xhtml//' | sed 's/,//g' `
+		fi
+		getvmware 
 	fi
 	debugecho "DEBUG: $pkgs"
 }
@@ -106,29 +275,53 @@ function menu() {
 	then
 		back=""
 	fi
+	debugecho "MENU: $file $domenu2 $dlg"
 	if [ $domenu2 -eq 0 ]
 	then
 		vsmpkgs $file
+		# need to recreate dlg=1 here due to myvmware
+		if [ $domyvmware -eq 1 ] && [ $dlg -eq 1 ]
+		then
+			all="All"
+			alln="All_Plus_OpenSource"
+			allm="Minimum_Required"
+			dlg=2
+			if [ Z"$prevchoice" = Z"" ]
+                	then
+                        	prevchoice=$choice
+                	fi
+		fi
 	fi
 	select choice in $all $allm $alln $pkgs $mark $back Exit
 	do
-		if [ $choice = "Exit" ]
+		if [ Z"$choice" != Z"" ]
 		then
-			exit
-		fi
-		if [ $choice = "Mark" ]
-		then
-			favorite=$prevchoice
-			colorecho "Favorite: $favorite"
-			save_vsmrc
+			echo $choice | fgrep '[' >& /dev/null
+			if [ $? -eq 0 ]
+			then
+				echo -n "Please select a NON-GRAY item:"
+				continue
+			fi
+
+			if [ $choice = "Exit" ]
+			then
+				exit
+			fi
+			if [ $choice = "Mark" ]
+			then
+				favorite=$prevchoice
+				colorecho "Favorite: $favorite"
+				save_vsmrc
+			else
+				break
+			fi
 		else
-			break
+			echo -n "Please enter a valid numeric number:"
 		fi
 	done
 	if [ $choice != "Back" ]
 	then
-		mchoice="$mchoice/$choice"
-		debugecho "DEBUG: $mchoice"
+		addpath
 	fi
 }
 
@@ -162,16 +355,20 @@ function menu2() {
 	done
 	select choice in All Minimum_Required $all $npkg $2 $3 $4 Back Exit
 	do
-		if [ $choice = "Exit" ]
+		if [ Z"$choice" != Z"" ]
 		then
-			exit
+			if [ $choice = "Exit" ]
+			then
+				exit
+			fi
+			break
+		else
+			echo -n "Please enter a valid numeric number:"
 		fi
-		break
 	done
 	if [ $choice != "Back" ]
 	then
-		mchoice="$mchoice/$choice"
-		debugecho "DEBUG: $mchoice"
+		addpath
 	fi
 }
 
@@ -256,7 +453,7 @@ function version() {
 }
 
 function usage() {
-	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
+	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
 	echo "	--dlg - download specific package by name or part of name"
 	echo "	-d|--dryrun - dryrun, do not download"
 	echo "	-f|--force - force download of packages"
@@ -265,6 +462,7 @@ function usage() {
 	echo "	-h|--help - this help"
 	echo "	-l|--latest - substitute latest for each package instead of listed"
 	echo "		Only really useful for latest distribution at moment"
+	echo "	-m|--myvmware - get missing suite information from VMware's website"
 	echo "	-ns|--nostore - do not store credential data and remove if exists"
 	echo "	-nc|--nocolor - do not output with color"
 	echo "	-p|--password - specify password"
@@ -339,16 +537,24 @@ mydts=-1
 myoss=-1
 myoem=-1
 domenu2=0
+domyvmware=0
 myyes=0
 myfav=0
+myinnervm=0
 repo="/tmp/vsm"
 cdir="/tmp/vsm"
 mydlg=""
+# Used by myvmware
+missing=""
+missname=""
+mversions=""
+# onscreen colors
 RED=`tput setaf 1`
 PURPLE=`tput setaf 125`
 NC=`tput sgr0`
 BOLD=`tput smso`
 NB=`tput rmso`
+GRAY=`tput setaf 245`
 
 # import values from .vsmrc
 if [ -e $HOME/.vsmrc ]
@@ -437,6 +643,9 @@ do
 		--nooss)
 			myoss=0
 			;;
+		-m|--myvmware)
+			domyvmware=1
+			;;
 		--favorite)
 			if [ Z"$favorite" != Z"" ]
 			then
@@ -474,6 +683,7 @@ if [ ! -e $cdir ]
 then
 	mkdir -p $cdir
 fi
+rcdir="${cdir}/depot.vmware.com/PROD/channel"
 cd $cdir
 
 # if we say to no store then remove!
@@ -562,6 +772,8 @@ cd depot.vmware.com/PROD/channel
 # start of history
 mlist=0
 mchoice="root"
+myvmware_root="https://my.vmware.com/web/vmware/info/slug"
+myvmware=""
 choice="root"
 prevchoice=""
 achoice=""
@@ -648,9 +860,10 @@ do
 
 	if [ $choice != "Back" ]
 	then
+
 		if [ $dlg -eq 0 ]
 		then
-			grep dlg_ ${choice}.xhtml > /dev/null
+			grep dlg_ ${choice}.xhtml >& /dev/null
 			if [ $? -eq 0 ]
 			then
 				dlg=1
@@ -660,17 +873,23 @@ do
 		if [ $dlg -eq 2 ]
 		then
 			doall=0
-			prod=`xml_grep --html --text_only '*[@title="prod"]' ${prevchoice}.xhtml 2>/dev/null`
+			if [ $myinnervm -eq 0 ]
+			then
+				prod=`xml_grep --html --text_only '*[@title="prod"]' ${prevchoice}.xhtml 2>/dev/null`
+				vers=`xml_grep --html --text_only '*[@title="version"]' ${prevchoice}.xhtml 2>/dev/null`
+			fi
 			eprod=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $prod`
 			prod=$eprod
-			vers=`xml_grep --html --text_only '*[@title="version"]' ${prevchoice}.xhtml 2>/dev/null`
 
 			# if ALL then cycle through dlg in prevchoice
 			#   set 'choices' array, then cycle through all $choices
 			#   ensure 'selected' is in $choices so does this once
 			if [ $choice = "All" ] || [ $choice = "All_Plus_OpenSource" ] || [ $choice = "Minimum_Required" ]
 			then
-				vsmpkgs ${prevchoice}.xhtml
+				if [ $myinnervm -eq 0 ]
+				then
+					vsmpkgs ${prevchoice}.xhtml
+				fi
 				choices=$pkgs
 				doall=1
 				if [ $choice = "Minimum_Required" ]
@@ -687,6 +906,12 @@ do
 			
 			for choice in $choices
 			do
+				echo $choice | fgrep "[" >& /dev/null
+				if [ $? -eq 0 ]
+				then
+					debugecho "DEBUG: Bypass $choice"
+					continue
+				fi
 				oem=""
 				dt=""
 				oss=""
@@ -863,7 +1088,7 @@ do
 							if [ Z"$p" = Z"$mychoice" ]
 							then
 								# got it so strip
-								mchoice=`dirname $mchoice`
+								getpath
 								doit=1
 							fi
 						else
@@ -930,9 +1155,8 @@ do
 			then
 				exit
 			fi
-			mchoice=`dirname $mchoice`
-			debugecho "DEBUG: $mchoice"
-			choice=`basename $mchoice`
+			getpath
+			getchoice
 			if [ $domenu2 -eq 1 ]
 			then
 				choice="dlg_${choice}"
@@ -940,9 +1164,9 @@ do
 		fi
 	else
 		# go back 2 entries as previous is current
-		mchoice=`dirname $mchoice`
-		debugecho "DEBUG: $mchoice"
-		choice=`basename $mchoice`
+		backvmware
+		getpath
+		getchoice
 		if [ $domenu2 -eq 1 ]
 		then
 			domenu2=0
