@@ -174,7 +174,7 @@ Place in any directory. Requires the following packages:
 
 ### Update
 To keep vsm and your repository updated to the latest release/downloads
-you can add the following lines to your local cronjob. This tells the
+you can add the following lines to your local cron. This tells the
 system to update the installer, then update vsm, then run vsm with your
 currently marked favorite. Note 'user' is your username. 
 
@@ -184,11 +184,17 @@ install vsm. If you did not then just use the last line.
 Be sure to mark a release as your favorite! If you do not, this does
 not work. The 'Mark' menu item does this.
 
-<pre>
-	/home/user/aac-base.install -u
-	/home/user/aac-base.install -i vsm
-	/usr/local/bin/vsm.sh -y -r -l --favorite
-</pre>
+I added these lines to a script within /etc/cron.daily:
+```
+cd /home/user
+/home/user/aac-base.install -u
+/home/user/aac-base.install -i vsm
+```
+
+This line you would add using the command `crontab -e`:
+```
+0 6 * * * /usr/local/bin/vsm.sh -y -r -l --favorite
+```
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
