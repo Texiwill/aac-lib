@@ -11,7 +11,7 @@
 ###
 
 function vsm_version() {
-	echo "1.5.0"
+	echo "1.5.1"
 }
 
 function vsm() {
@@ -19,6 +19,10 @@ function vsm() {
 	DEVEL=""
 
 	# Find way to download direct
+	if [ -e vsm.sh ]
+	then
+		rm -f vsm.sh
+	fi
 	wget https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
 	mv vsm.sh /usr/local/bin
 	chmod +x /usr/local/bin/vsm.sh
