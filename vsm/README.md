@@ -32,15 +32,14 @@ sudo ./aac-base.install -i vsm
 ```
 
 Here is an example run and help:
-<pre>
-   $ ./vsm.sh --help
-   ./vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit]
-   [-h|--help] [-l|--latest] [-m|--myvmware] [-ns|--nostore] [-nc|--nocolor]
-   [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password
-   password] [-r|--reset] [-u|--username username] 
-   [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] 
-   [--save]
-
+```
+$ ./vsm.sh --help
+./vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit]
+[-h|--help] [-l|--latest] [-m|--myvmware] [-ns|--nostore] [-nc|--nocolor]
+[--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password
+password] [-r|--reset] [-u|--username username] 
+[-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] 
+[--save]
 	--dlg - download specific package by name or part of a name
 	-d|--dryrun - dryrun, do not download
 	-f|--force - force download of packages
@@ -88,8 +87,8 @@ Here is an example run and help:
         favorite. There is only 1 favorite slot available. Favorites
         can be downloaded without traversing the menus.
 
-   $ ./vsm.sh
-   <span style="color:purple">Using the following options:</span>
+$ ./vsm.sh
+<span style="color:purple">Using the following options:</span>
    	Version:	1.0.0
    	VSM XML Dir:	/tmp/vsm
    	Repo Dir:	/mnt/rainbow/iso/vmware/depot/content
@@ -99,78 +98,75 @@ Here is an example run and help:
    	Get Latest:	0
    	Use credstore:	1
    
-   Continue with VSM (Y/n)?
+Continue with VSM (Y/n)?
    
-   Saving to: ‘index.html.1’
+Saving to: ‘index.html.1’
    
-   100%[======================================>] 455,010     1.87MB/s   in 0.2s   
+100%[======================================>] 455,010     1.87MB/s   in 0.2s   
    
-   2017-09-14 08:03:49 (1.87 MB/s) - ‘index.html.1’ saved [455010/455010]
+2017-09-14 08:03:49 (1.87 MB/s) - ‘index.html.1’ saved [455010/455010]
    
-   1) Datacenter_Cloud_Infrastructure
-   2) Infrastructure_Operations_Management
-   3) Back
-   4) Exit
-   #? 1
-   1) Datacenter_Cloud_Infrastructure_VMware_Software_Manager
-   2) Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite
-   3) Datacenter_Cloud_Infrastructure_VMware_vSphere
-   4) Datacenter_Cloud_Infrastructure_VMware_vSphere_with_Operations_Management
-   5) Back
-   6) Exit
-   #? 3
-   1) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5
-   2) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_0
-   3) Datacenter_Cloud_Infrastructure_VMware_vSphere_5_5
-   4) Datacenter_Cloud_Infrastructure_VMware_vSphere_5_1
-   5) Back
-   6) Exit
-   #? 1
-   1) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Desktop
-   2) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Enterprise
-   3) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Enterprise_Plus
-   4) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Essentials
-   5) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Essentials_Plus
-   6) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Standard
-   7) Back
-   8) Exit
-   #? 3
-   1) All		   7) VROVA_730		  13) VR65
-   2) Minimum_Required	   8) VRLI_450_VCENTER	  14) Mark
-   3) All_Plus_OpenSource  9) BDE_232		  15) Back
-   4) NSXV_632		  10) VDP614		  16) Exit
-   5) VC650E		  11) ESXI650D
-   6) VROPS_660		  12) VIC110
-   #? 11
-   1) All
-   2) Minimum_Required
-   3) All_Plus_OpenSource
-   4) VMware-VMvisor-Installer-201704001-5310538.x86_64.iso
-   5) ESXi650-201704001.zip
-   6) OpenSource
-   7) CustomIso
-   8) DriversTools
-   9) Back
-  10) Exit
-   #? 4
-   Saving to: ‘VMware-VMvisor-Installer-201704001-5310538.x86_64.iso’
-
+1) Datacenter_Cloud_Infrastructure
+2) Infrastructure_Operations_Management
+4) Exit
+#? 1
+1) Datacenter_Cloud_Infrastructure_VMware_Software_Manager
+2) Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite
+3) Datacenter_Cloud_Infrastructure_VMware_vSphere
+4) Datacenter_Cloud_Infrastructure_VMware_vSphere_with_Operations_Management
+5) Back
+6) Exit
+#? 3
+1) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5
+2) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_0
+3) Datacenter_Cloud_Infrastructure_VMware_vSphere_5_5
+4) Datacenter_Cloud_Infrastructure_VMware_vSphere_5_1
+5) Back
+6) Exit
+#? 1
+1) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Desktop
+2) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Enterprise
+3) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Enterprise_Plus
+4) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Essentials
+5) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Essentials_Plus
+6) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Standard
+7) Back
+8) Exit
+#? 3
+1) All		   7) VROVA_730		  13) VR65
+2) Minimum_Required	   8) VRLI_450_VCENTER	  14) Mark
+3) All_Plus_OpenSource  9) BDE_232		  15) Back
+4) NSXV_632		  10) VDP614		  16) Exit
+5) VC650E		  11) ESXI650D
+6) VROPS_660		  12) VIC110
+#? 11
+1) All
+2) Minimum_Required
+3) All_Plus_OpenSource
+4) VMware-VMvisor-Installer-201704001-5310538.x86_64.iso
+5) ESXi650-201704001.zip
+6) OpenSource
+7) CustomIso
+8) DriversTools
+9) Back
+10) Exit
+#? 4
+Saving to: ‘VMware-VMvisor-Installer-201704001-5310538.x86_64.iso’
    100%[======================================>] 347,172,864 7.70MB/s   in 45s  
 
-   2017-10-11 08:04:21 (7.43 MB/s) - ‘VMware-VMvisor-Installer-201704001-5310538.x86_64.iso’ saved [347172864/347172864]
-
-   <span style="color:purple">Downloads to /mnt/rainbow/iso/vmware/depot/content/dlg_ESXI65U1</span>
+2017-10-11 08:04:21 (7.43 MB/s) - ‘VMware-VMvisor-Installer-201704001-5310538.x86_64.iso’ saved [347172864/347172864]
+<span style="color:purple">Downloads to /mnt/rainbow/iso/vmware/depot/content/dlg_ESXI65U1</span>
    
-   1) All		   7) VROVA_730		  13) VR65
-   2) Minimum_Required	   8) VRLI_450_VCENTER	  14) Mark
-   3) All_Plus_OpenSource  9) BDE_232		  15) Back
-   4) NSXV_632		  10) VDP614		  16) Exit
-   5) VC650E		  11) ESXI650D
-   6) VROPS_660		  12) VIC110
-   #? 13
-   <span style="color:purple">Favorite: Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Enterprise_Plus
-   Saving to /home/elh/.vsmrc</span>
-</pre>
+1) All		   7) VROVA_730		  13) VR65
+2) Minimum_Required	   8) VRLI_450_VCENTER	  14) Mark
+3) All_Plus_OpenSource  9) BDE_232		  15) Back
+4) NSXV_632		  10) VDP614		  16) Exit
+5) VC650E		  11) ESXI650D
+6) VROPS_660		  12) VIC110
+#? 14
+<span style="color:purple">Favorite: Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Enterprise_Plus
+Saving to /home/elh/.vsmrc</span>
+```
 
 ### Installation
 Place in any directory. Requires the following packages:
