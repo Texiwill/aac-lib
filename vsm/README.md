@@ -184,14 +184,14 @@ install vsm. If you did not then just use the last line.
 Be sure to mark a release as your favorite! If you do not, this does
 not work. The 'Mark' menu item does this.
 
-I added these lines to a script within /etc/cron.daily:
+I added these lines to a script within /etc/cron.daily (which usually runs at 3AM):
 ```
 cd /home/user
 /home/user/aac-base.install -u
 /home/user/aac-base.install -i vsm
 ```
 
-This line you would add using the command `crontab -e`:
+The following line starts VSM download at 6AM. You would add using the command `crontab -e`:
 ```
 0 6 * * * /usr/local/bin/vsm.sh -y -r -l --favorite
 ```
