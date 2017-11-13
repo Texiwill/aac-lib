@@ -204,6 +204,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+2.0.2 - Fixed bug with single file selection
+
 2.0.1 - Fixed bug where you were able to mark missing suites
 
 2.0.0 - Added ability to get missing suite information from VMware's website

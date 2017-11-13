@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="2.0.1"
+VERSIONID="2.0.2"
 
 # args: stmt error
 function colorecho() {
@@ -119,7 +119,7 @@ function getoutervmware() {
 
 function getinnervmware() {
 	# need to set $dlg here
-	echo "IV: $choice"
+	debugecho "IV: $choice"
 	wh=`echo $choice | awk -F_ '{print $NF}'`
 	what="midProductColumn\">$wh"
 	wend=`echo $mversions | sed "s/.*$wh//"|awk '{print $2}'`
@@ -361,6 +361,11 @@ function menu2() {
 	do
 		if [ Z"$choice" != Z"" ]
 		then
+			echo $choice | fgrep '[' >& /dev/null
+			if [ $? -eq 0 ]
+			then
+				choice=`echo $choice | awk -F '{print $2}' | awk -Fm '{print $2}'`
+			fi
 			if [ $choice = "Exit" ]
 			then
 				exit
