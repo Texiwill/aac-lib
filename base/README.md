@@ -113,6 +113,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.5.1 VCLI: Added perl-Socket6 to required packages
+
 1.5.1 VSM: removed vsm.sh if it exists in directory from which installer was run
 
 1.6.1 added versions for all sub installers

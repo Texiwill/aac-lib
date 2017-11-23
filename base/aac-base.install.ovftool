@@ -30,7 +30,7 @@ function ovftool() {
 
 	# Find way to download direct
 	t=/tmp/d$$
-	/usr/local/bin/vsm.sh -y -ns --dlg ovftool\.\*.x86_64.bundle | tee $t
+	/usr/local/bin/vsm.sh -y -f -ns --dlg ovftool\.\*.x86_64.bundle | tee $t
 	file=`grep Local $t | awk -F: '{print $2}'`
 	rm -f $t
 	
