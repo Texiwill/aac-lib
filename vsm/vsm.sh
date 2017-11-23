@@ -660,7 +660,7 @@ function usage() {
 	echo "	-u|--username - specify username"
 	echo "	-v|--vsmdir path - set VSM directory"
 	echo "	-V|--version - version number"
-	echo "	-W - get what is missing from all suites (wildcard)"
+	echo "	-W - get what is missing from all suites"
 	echo "	-y - do not ask to continue"
 	echo "	--dts - include DriversTools in All-style downloads"
 	echo "	--nodts - do not include DriversTools in All-style downloads"
@@ -987,6 +987,35 @@ then
 	choice="All"
 	if [ $dodlg -eq 2 ]
 	then
+		#if [ $myyes -eq 0 ]
+		#then
+			echo ""
+			cat << EOF
+
+-W downloads everything! It will take a very, very long time
+Are you sure you wish to do this?
+
+EOF
+			echo "Continue with VSM (Y/n)?"
+			read c
+			if [ Z"$c" != Z"Y" ] || [ Z"$c" != Z"y" ]
+			then
+				exit
+			fi
+			echo ""
+			cat << EOF
+
+-W downloads everything! It will take a very, very long time
+Are you REALLY sure you wish to do this?
+
+EOF
+			echo "Continue with VSM (Y/n)?"
+			read c
+			if [ Z"$c" != Z"Y" ] || [ Z"$c" != Z"y" ]
+			then
+				exit
+			fi
+		#fi
 		# find all files
 		debugecho "DEBUG: mydlg => All of them"
 		files="dlg_*"

@@ -204,6 +204,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+2.5.1 - Protection for -W option
+
 2.5.0 - Code reorganization and addition of -W option as a wildcard option
 
 2.0.2 - Fixed bug with single file selection
