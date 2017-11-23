@@ -12,7 +12,7 @@
 . ./aac-base.install.vsm
 
 function vcli_version() {
-	echo "1.5.1"
+	echo "1.5.2"
 }
 
 function vcli() {
