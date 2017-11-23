@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="2.5.0"
+VERSIONID="2.5.1"
 
 # args: stmt error
 function colorecho() {
