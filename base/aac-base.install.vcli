@@ -12,17 +12,18 @@
 . ./aac-base.install.vsm
 
 function vcli_version() {
-	echo "1.5.0"
+	echo "1.5.1"
 }
 
 function vcli() {
 	vsm
 
-	INSTALL="openssl-devel perl-Archive-Zip perl-Class-Data-Inheritable perl-Class-MethodMaker perl-Compress-Raw-Zlib perl-Compress-Zlib perl-Convert-ASN1 perl-Crypt-OpenSSL-RSA perl-Crypt-SSLeay perl-Crypt-X509 perl-Data-Dump perl-Data-Dumper perl-HTML-Parser perl-IO-Compress perl-IO-Compress perl-URI uuid-perl perl-XML-NamespaceSupport perl-XML-LibXML"
+	INSTALL="openssl-devel perl-Archive-Zip perl-Class-Data-Inheritable perl-Class-MethodMaker perl-Compress-Raw-Zlib perl-Compress-Zlib perl-Convert-ASN1 perl-Crypt-OpenSSL-RSA perl-Crypt-SSLeay perl-Crypt-X509 perl-Data-Dump perl-Data-Dumper perl-HTML-Parser perl-IO-Compress perl-IO-Compress perl-URI uuid-perl perl-XML-NamespaceSupport perl-XML-LibXML perl-Socket6"
 	DEVEL=""
 
 	t=/tmp/d$$
-	/usr/local/bin/vsm.sh -y -ns --dlg CLI\.\*\.x86_64.tar.gz | tee $t
+	# added force so we always know where it is
+	/usr/local/bin/vsm.sh -y -ns -f --dlg CLI\.\*\.x86_64.tar.gz | tee $t
 	file=`grep Local $t | awk -F: '{print $2}'`
 	rm -rf $t
 
