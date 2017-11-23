@@ -37,9 +37,8 @@ $ ./vsm.sh --help
 ./vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit]
 [-h|--help] [-l|--latest] [-m|--myvmware] [-ns|--nostore] [-nc|--nocolor]
 [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password
-password] [-r|--reset] [-u|--username username] 
-[-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] 
-[--save]
+password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] 
+[-W] [-V|--version] [-y] [--debug] [--repo repopath] [--save]
 	--dlg - download specific package by name or part of a name
 	-d|--dryrun - dryrun, do not download
 	-f|--force - force download of packages
@@ -58,6 +57,7 @@ password] [-r|--reset] [-u|--username username]
 	-v|--vsmdir path - set VSM directory
 	                   saved to configuration file
 	-V|--version - version number
+	-W - Get what is missing from all suites (wildcard)
 	-y - do not ask to continue
 	--dts - include DriversTools in All-style downloads
 	        saved to configuration file
@@ -204,6 +204,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+2.5.0 - Code reorganization and addition of -W option as a wildcard option
+
 2.0.2 - Fixed bug with single file selection
 
 2.0.1 - Fixed bug where you were able to mark missing suites
