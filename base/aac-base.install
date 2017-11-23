@@ -9,7 +9,7 @@
 # Target: CentOS/RHEL 7
 #
 ###
-VERSION="1.6.2"
+VERSION="1.6.3"
 
 function version() {
 	echo "$0 version is $VERSION"
@@ -162,33 +162,39 @@ prog=$0
 installer=""
 CREATEREPO=0
 TZ='America/Chicago'
-case "$1" in 
-	--install|-i)
-		installer=$2
-		shift
-		;;
-	--home|-h)
-		myhome=$2
-		shift
-		;;
-	#--createrepo|-c)
-	#	CREATEREPO=1
-	#	shift
-	#	;;
-	--update|-u)
-		update=1
-		;;
-	--version|-v)
-		version
-		exit
-		;;
-	--help|-h) 
-		usage
-		;;
-	*) 
-		TZ=$1
-		;;
-esac
+while [[ $# -gt 0 ]]
+do
+	key="$1"
+	case "$key" in 
+		-i|--install)
+			installer=$2
+			shift
+			;;
+		--home)
+			myhome=$2
+			shift
+			;;
+		#--createrepo|-c)
+		#	CREATEREPO=1
+		#	shift
+		#	;;
+		-u|--update)
+			update=1
+			;;
+		--version|-v)
+			version
+			exit
+			;;
+		--help|-h) 
+			usage
+			;;
+		*) 
+			TZ=$1
+			;;
+	esac
+	shift
+done
+echo $myhome
 
 ###
 # Get the RHEL/CentOS Version
