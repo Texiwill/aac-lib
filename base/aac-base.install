@@ -9,7 +9,7 @@
 # Target: CentOS/RHEL 7
 #
 ###
-VERSION="1.6.1"
+VERSION="1.6.2"
 
 function version() {
 	echo "$0 version is $VERSION"
@@ -156,6 +156,7 @@ function usage() {
 	exit
 }
 
+myhome=$HOME
 update=0
 prog=$0
 installer=""
@@ -164,6 +165,10 @@ TZ='America/Chicago'
 case "$1" in 
 	--install|-i)
 		installer=$2
+		shift
+		;;
+	--home|-h)
+		myhome=$2
 		shift
 		;;
 	#--createrepo|-c)
