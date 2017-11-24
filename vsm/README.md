@@ -87,6 +87,10 @@ password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory]
        favorite. There is only 1 favorite slot available. Favorites
        can be downloaded without traversing the menus.
 
+       Use of the -W option will result in the need for human interaction.
+       This option will require at least 1.5TB of disk space and several
+       hours to complete. It is not designed for normal use!
+
 $ ./vsm.sh
 <span style="color:purple">Using the following options:</span>
    	Version:	1.0.0
