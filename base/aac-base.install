@@ -186,7 +186,20 @@ do
 	esac
 	shift
 done
-echo $myhome
+
+###
+# Update aac-base bits
+###
+if [ $update -eq 1 ]
+then
+	files=`wget -O - https://github.com/Texiwill/aac-lib/blob/master/base |grep aac-base.install | grep span | awk -F\> '{print $3}' |sed 's#</a##g'`
+	for x in $files
+	do
+		wget -O $x https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/$x
+	done
+	echo "Update Done - Exiting"
+	exit
+fi
 
 ###
 # Get the RHEL/CentOS Version
@@ -215,21 +228,6 @@ RPMLIST=`rpm -qa`
 tz
 epel
 selinux
-
-###
-# Update aac-base bits
-###
-if [ $update -eq 1 ]
-then
-	files=`wget -O - https://github.com/Texiwill/aac-lib/blob/master/base |grep aac-base.install | grep span | awk -F\> '{print $3}' |sed 's#</a##g'`
-	for x in $files
-	do
-		wget -O $x https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/$x
-	done
-	echo "Update Done - Exiting"
-	exit
-fi
-
 
 ###
 # Do we Create the Repo

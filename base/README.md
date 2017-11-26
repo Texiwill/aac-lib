@@ -113,6 +113,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.6.4 moved update to not require root
+
 1.6.3 fixed startsrv to always restart
 
 1.6.2 added -h|--home option
