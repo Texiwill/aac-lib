@@ -9,7 +9,7 @@
 # Target: CentOS/RHEL 7
 #
 ###
-VERSION="1.6.3"
+VERSION="1.6.4"
 
 function version() {
 	echo "$0 version is $VERSION"
@@ -48,19 +48,11 @@ function menu() {
 function startsrv() {
 	if [ $VERSION_ID -gt 6 ]
 	then
-		systemctl status $1 | grep running > /dev/null
-		if [ $? != 0 ]
-		then
-			systemctl restart $1
-			systemctl enable $1
-		fi
+		systemctl enable $1 >& /dev/null
+		systemctl restart $1
 	else
-		service $1 status | grep running > /dev/null
-		if [ $? != 0 ]
-		then
-			service $1 restart
-			chkconfig $1 on
-		fi
+		service $1 restart
+		chkconfig $1 on
 	fi
 }
 
