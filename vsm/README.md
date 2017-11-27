@@ -208,6 +208,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+2.5.2 - Fix to --dlg for single file downloads. Local was missing
+
 2.5.1 - Protection for -W option
 
 2.5.0 - Code reorganization and addition of -W option as a wildcard option

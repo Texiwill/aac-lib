@@ -15,7 +15,7 @@
 # - Highlight CustomIso, OpenSource, DriversTools is something missing
 #	This will be time consuming!
 
-VERSIONID="2.5.1"
+VERSIONID="2.5.2"
 
 # args: stmt error
 function colorecho() {
@@ -1300,6 +1300,10 @@ do
 						fi
 						if [ $doit -eq 1 ]
 						then
+							if [ $dodlg -eq 1 ]
+							then
+								echo "Local:$repo/dlg_$currchoice/$name"
+							fi
 							getvsm $currchoice "base"
 						fi
 						# out to dev null seems to be required
@@ -1362,6 +1366,10 @@ do
 								then
 									# only do the selected
 									xignore=0
+									if [ $dodlg -eq 1 ]
+									then
+										echo "Local:$repo/dlg_$currchoice/$om/$name"
+									fi
 									getvsm $currchoice $om
 									# out to dev null seems to be required
 								fi
