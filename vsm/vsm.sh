@@ -930,7 +930,7 @@ then
 fi
 
 # Cleanup old data if any
-rm cookies.txt index.html.* 2>/dev/null
+rm -f cookies.txt index.html.* 2>/dev/null
 
 if [ ! -e depot.vmware.com/PROD/channel/root.xhtml ]
 then
