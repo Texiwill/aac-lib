@@ -23,7 +23,7 @@ function vcli() {
 
 	t=/tmp/d$$
 	# added force so we always know where it is
-	/usr/local/bin/vsm.sh -y -ns -f --dlg CLI\.\*\.x86_64.tar.gz | tee $t
+	/usr/local/bin/vsm.sh -y -f -ns --dlg CLI\.\*\.x86_64.tar.gz | tee $t
 	file=`grep Local $t | awk -F: '{print $2}'`
 	rm -rf $t
 
