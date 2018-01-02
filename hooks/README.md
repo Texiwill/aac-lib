@@ -44,3 +44,6 @@ If you already have a repository, place within repository/.git/hooks
 ### Support
 Email elh at astroarch dot com for assistance or if you want to check
 for more items.
+
+### ChangeLog
+1.1 Added support for MacOS
