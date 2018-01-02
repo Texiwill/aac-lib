@@ -28,6 +28,12 @@ then
 	echo "This Hook Script depends on egrep being installed"
 	exit 2
 fi
+logger=`which logger`
+if [ $? -ne 0 ]
+then
+	echo "This Hook Script depends on logger being installed"
+	exit 2
+fi
 
 # First Check for IP
 regex4='([0-9]{1,3}[\.]){3}[0-9]{1,3}'
@@ -131,7 +137,7 @@ then
 		echo "	$x"
 	done
 	echo ""
-	/bin/logger "$USER attempted to commit with IP included: $ifile"
+	${logger} "$USER attempted to commit with IP included: $ifile"
 	doexit=1
 fi
 if [ $dcount -gt 0 ]
@@ -143,7 +149,7 @@ then
 		echo "	$x"
 	done
 	echo ""
-	/bin/logger "$USER attempted to commit with Domain Users included: $dfile"
+	${logger} "$USER attempted to commit with Domain Users included: $dfile"
 	doexit=1
 fi
 if [ $hcount -gt 0 ]
@@ -155,7 +161,7 @@ then
 		echo "	$x"
 	done
 	echo ""
-	/bin/logger "$USER attempted to commit with Hashes included: $hfile"
+	${logger} "$USER attempted to commit with Hashes included: $hfile"
 	doexit=1
 fi
 if [ $pcount -gt 0 ]
@@ -167,7 +173,7 @@ then
 		echo "	$x"
 	done
 	echo ""
-	/bin/logger "$USER attempted to commit with PII included: $pfile"
+	${logger} "$USER attempted to commit with PII included: $pfile"
 	doexit=1
 fi
 if [ $doexit -gt 0 ]
