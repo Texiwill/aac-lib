@@ -51,7 +51,7 @@ for x in `/usr/bin/git diff-index --cached HEAD|/usr/bin/awk '{print $NF}'`
 do
 	# check for IP Addresses in files
 
-	/bin/grep -Eo "$regex4" "$x" >& /dev/null
+	${egrep} -o "$regex4" "$x" >& /dev/null
 	if [ $? = 0 ]
 	then
 		if [ $icount = 0 ]
@@ -64,7 +64,7 @@ do
 	fi
 
 	# check for user@domain
-	/bin/grep -Eo "[[:alnum:]]+\@[[:alnum:]]+" "$x" >& /dev/null
+	${egrep} -o "[[:alnum:]]+\@[[:alnum:]]+" "$x" >& /dev/null
 	if [ $? = 0 ]
 	then
 		if [ $dcount = 0 ]
