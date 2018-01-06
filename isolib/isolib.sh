@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Copyright (c) AstroArch Consulting, Inc.  2016-2018
+# All rights reserved
 
 device=/dev/sr0
 if [ X"$1" = X"--device" ]

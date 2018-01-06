@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2017 AstroArch Consulting, Inc. All rights reserved
+# Copyright (c) 2017-2018 AstroArch Consulting, Inc. All rights reserved
 #
 # A Linux version of VMware Software Manager (VSM) with some added intelligence
 # the intelligence is around what to download and picking up things

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2016,2017 AstroArch Consulting, Inc. All rights reserved
+# Copyright (c) 2016-2018 AstroArch Consulting, Inc. All rights reserved
 #
 # Auto download and update vCenter/vSphere HTML5 Client
 #

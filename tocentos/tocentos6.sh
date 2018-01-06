@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2015 AstroArch Consulting, Inc. All rights reserved
+# Copyright (c) 2015-2018 AstroArch Consulting, Inc. All rights reserved
 #
 # Convert an install from RHEL 6 to Centos 6
 #

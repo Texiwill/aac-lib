@@ -1,5 +1,6 @@
 #!/bin/sh
 #
+# Copyright (c) 2016-2018 AstroArch Consulting, Inc. All rights reserved
 # Create an ERK - ElasticStack Rsyslog Kibana Stack - nginx installer
 #
 # Target: CentOS/RHEL 7

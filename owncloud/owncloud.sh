@@ -1,5 +1,7 @@
 #!/bin/bash
 #
+# Copyright (c) AstroArch Consulting, Inc.  2017,2018
+# All rights reserved
 #
 # Upgrade and reset Owncloud permissions
 #
