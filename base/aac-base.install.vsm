@@ -11,7 +11,7 @@
 ###
 
 function vsm_version() {
-	echo "1.5.1"
+	echo "1.6.0"
 }
 
 function vsm() {
