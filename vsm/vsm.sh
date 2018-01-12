@@ -9,7 +9,7 @@
 # created yet
 #
 # Requires:
-# wget python python-urllib3 libxml2 perl-XML-Twig ncurses
+# wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 # vim:set softtabstop=4 shiftwidth=4 tabstop=4: 
 VERSIONID="3.0.0"
@@ -269,6 +269,11 @@ function getouterrndir() {
 		Workstation*)
 			rndll='download3.vmware.com'
 			rndir='wkst/file'
+			;;
+		VIDM_ONPREM*)
+			rndll='download2.vmware.com'
+			rntmp=`echo $lchoice | sed 's/[0-9]//g'`
+			rndir="${rntmp}${pver}"
 			;;
 		*)
 			echo $lchoice | grep VCENTER >& /dev/null
@@ -876,7 +881,7 @@ function usage() {
 	echo ""
 	echo "	All-style downloads include: All, All_No_OpenSource, Minimum_Required"
 	echo "	Requires packages:"
-	echo "	wget python python-urllib3 libxml2 perl-XML-Twig ncurses"
+	echo "	wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc"
 	echo ""
 	echo "To Download the latest Perl CLI use (to escape the wild cards):"
 	echo "./vsm.sh --dlg CLI\.\*\\.x86_64.tar.gz"
@@ -908,6 +913,7 @@ checkdep python-urllib3
 checkdep libxml2
 checkdep perl-XML-Twig
 checkdep ncurses
+checkdep bc
 
 if [ $needdep -eq 1 ]
 then
