@@ -344,6 +344,25 @@ function getinnerrndir() {
 			debugecho "DEBUG: rndir => $rndir"
 		fi
 		case "$dnlike" in
+			VIDM*)
+				case "$name" in
+					clients*)
+						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/'`
+						rndir="VIDM_ONPREM_${rntmp}"
+						;;
+					VMware-Identity-*-Desktop-*)
+						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/'`
+						rndir="VIDM_ONPREM_${rntmp}"
+						;;
+					euc-unified-access-*-3.0.0*)
+						rndir="view"
+						;;
+					euc-unified-access-*)
+						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/' | sed 's/\.//'`
+						rndir="UAG_${rntmp}"
+						;;
+				esac
+				;;	
 			VROPS*)	
 				m="${dnlike//[^[:digit:]]/}"
 				rndir="vrops${m}"
