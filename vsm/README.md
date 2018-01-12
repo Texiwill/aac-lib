@@ -47,7 +47,7 @@ password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory]
 	-h|--help - this help
 	-l|--latest - substitute latest for each package instead of listed
 		Only really useful for latest distribution at moment
-	-m|--myvmware - get missing suite information from VMware's website
+	-m|--myvmware - get missing suite and packages from My VMware
 		Cannot mark this suite information as a favorite
 	-ns|--nostore - do not store credential data and remove if exists
 	-nc|--nocolor - do not output with color
@@ -208,6 +208,10 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.0.0 - -m|--myvmware option now works. You can download packages not just 
+	view missing packages! Some things may still need tweaking, however.
+	Email issues to elh at astroarch dot com.
+
 2.5.2 - Fix to --dlg for single file downloads. Local was missing
 
 2.5.1 - Protection for -W option
