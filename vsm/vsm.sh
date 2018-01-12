@@ -571,7 +571,6 @@ function save_vsmrc() {
 }
 
 function stripcolor() {
-	debugecho "SC: $choice"
 	echo $choice | fgrep '[' >& /dev/null
 	if [ $? -eq 0 ]
 	then
