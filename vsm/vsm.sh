@@ -78,7 +78,9 @@ function findmissing() {
 	if [ $domyvm -eq 4 ]
 	then
 		pmiss=`echo $tpkg | sed 's/ /|/g'`
+		myvmware=`echo $myvmware | sed 's#//#/#'`
 		missname=`echo $myvmware | sed 's#/#_#g'`
+		debugecho "DEBUG: $myvmware => $missname"
 		if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ]
 		then
 			wget -O - ${myvmware_root}${myvmware}/$spkg > ${rcdir}/${missname}.xhtml
@@ -869,7 +871,7 @@ function version() {
 }
 
 function usage() {
-	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
+	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
 	echo "	--dlg - download specific package by name or part of name"
 	echo "	-d|--dryrun - dryrun, do not download"
 	echo "	-f|--force - force download of packages"
@@ -879,6 +881,7 @@ function usage() {
 	echo "	-l|--latest - substitute latest for each package instead of listed"
 	echo "		Only really useful for latest distribution at moment"
 	echo "	-m|--myvmware - get missing suite and packages from My VMware"
+	echo "	-mr - reset just the My VMware information"
 	echo "	-ns|--nostore - do not store credential data and remove if exists"
 	echo "	-nc|--nocolor - do not output with color"
 	echo "	-p|--password - specify password"
@@ -1080,6 +1083,9 @@ do
 		-m|--myvmware)
 			domyvmware=1
 			;;
+		-mr)
+			remyvmware=1
+			;;
 		--favorite)
 			if [ Z"$favorite" != Z"" ]
 			then
@@ -1173,6 +1179,12 @@ rm -f cookies.txt index.html.* 2>/dev/null
 if [ ! -e depot.vmware.com/PROD/channel/root.xhtml ]
 then
 	doreset=1
+fi
+
+# Delete all My VMware files! So we can start new
+if [ $remyvmware -eq 1 ]
+then
+	rm -rf ${rcdir}/_*
 fi
 
 debugecho "DEBUG: Auth request"

@@ -35,7 +35,7 @@ Here is an example run and help:
 ```
 $ ./vsm.sh --help
 ./vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit]
-[-h|--help] [-l|--latest] [-m|--myvmware] [-ns|--nostore] [-nc|--nocolor]
+[-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore] [-nc|--nocolor]
 [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password
 password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] 
 [-W] [-V|--version] [-y] [--debug] [--repo repopath] [--save]
@@ -49,6 +49,7 @@ password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory]
 		Only really useful for latest distribution at moment
 	-m|--myvmware - get missing suite and packages from My VMware
 		Cannot mark this suite information as a favorite
+	-mr - reset just My VMware information
 	-ns|--nostore - do not store credential data and remove if exists
 	-nc|--nocolor - do not output with color
 	-p|--password - specify password
@@ -210,9 +211,9 @@ that is the only distribution specific bits in the script.
 ### Changelog
 3.0.0 - -m|--myvmware option now works including the need to install the 'bc'
 	package. You can now download packages from My VMware not just view 
-	missing packages!  Some things may still need tweaking, however. 
-	Email issues and output using the --debug flag to 
-	elh at astroarch dot com.
+	missing packages!  Some things may still need tweaking, however. Also,
+	added the -mr option to reset My VMware information only.  Email 
+	issues and output using the --debug flag to elh at astroarch dot com.
 
 2.5.2 - Fix to --dlg for single file downloads. Local was missing
 
