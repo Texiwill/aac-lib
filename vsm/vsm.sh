@@ -12,7 +12,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 # vim:set softtabstop=4 shiftwidth=4 tabstop=4: 
-VERSIONID="3.0.0"
+VERSIONID="3.0.1"
 
 # args: stmt error
 function colorecho() {
@@ -290,7 +290,7 @@ function getouterrndir() {
 			else
 				likeforlike=`echo $lchoice | sed 's/\([a-Z_]\+[0-9][0-9]\).*$/\1/' | sed 's/[0-9]/[0-9]/g'`
 			fi
-			debugecho "DEBUG: lforl => $likeforlike"
+			debugecho "DEBUG: likeforlike => $likeforlike"
 			if [ $lvcenter -eq 0 ]
 			then
 				like=`ls dlg_${likeforlike}*VCENTER.xhtml 2>/dev/null | grep -v OSS | sort -uV | tail -1`
@@ -402,11 +402,17 @@ function getinnerrndir() {
 	
 		if [ Z"$rndir" = Z"" ]
 		then
-			rndir=`grep "Release Notes" _dlg_${lchoice}.xhtml| cut -d\" -f2| cut -d/ -f6,7`
+			if [ -e _dlg_${lchoice}.xhtml ]
+			then
+				rndir=`grep "Release Notes" _dlg_${lchoice}.xhtml| cut -d\" -f2| cut -d/ -f6,7`
+			fi
 		fi
-		debugecho "DEBUG: like => $like"
-		debugecho "DEBUG: rndll => $rndll" 
-		debugecho "DEBUG: rndir => $rndir"
+		if [ Z"$rndir" != Z"" ]
+		then
+			debugecho "DEBUG: like => $like"
+			debugecho "DEBUG: rndll => $rndll" 
+			debugecho "DEBUG: rndir => $rndir"
+		fi
 	fi
 }
 
@@ -571,6 +577,7 @@ function save_vsmrc() {
 }
 
 function stripcolor() {
+	debugecho "SC: $choice"
 	echo $choice | fgrep '[' >& /dev/null
 	if [ $? -eq 0 ]
 	then
@@ -958,6 +965,7 @@ myoss=-1
 myoem=-1
 domenu2=0
 domyvmware=0
+remyvmware=0
 myyes=0
 myfav=0
 myinnervm=0
