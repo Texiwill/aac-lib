@@ -15,7 +15,7 @@ function vsm_version() {
 }
 
 function vsm() {
-	INSTALL="wget python python-urllib3 libxml2 perl-XML-Twig ncurses"
+	INSTALL="wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc"
 	DEVEL=""
 
 	# Find way to download direct
@@ -28,8 +28,10 @@ function vsm() {
 	chmod +x /usr/local/bin/vsm.sh
 	
 	# Install RPMS
-	echo $RPMLIST | grep perl-XML-Twig > /dev/null
-	if [ $? != 0 ]
+	echo $RPMLIST | egrep "perl-XML-Twig" > /dev/null
+	a=$?
+	echo $RPMLIST | egrep "^bc" > /dev/null
+	if [ $? != 0 ] || [ $a != 0 ]
 	then
 		yum -y install $INSTALL $DEVEL
 	fi
