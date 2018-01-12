@@ -209,6 +209,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.0.1 - fixed a grep error showing up when it should not
+
 3.0.0 - -m|--myvmware option now works including the need to install the 'bc'
 	package. You can now download packages from My VMware not just view 
 	missing packages!  Some things may still need tweaking, however. Also,
