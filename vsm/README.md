@@ -92,6 +92,15 @@ password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory]
        This option will require at least 1.5TB of disk space and several
        hours to complete. It is not designed for normal use!
 
+       Those items that show up in Cyan when the -m|--myvmware option
+       is set are those items only seen with that option. I.e. not part
+       of the standard downloads from VSM. 
+
+       Those items in reverse color (white on black or cyan) are those items
+       not downloaded. For packages and not files, the reverse color only
+       shows up if the directory is not in the repo and is not related to 
+       missing files or new files.
+
 $ ./vsm.sh
 <span style="color:purple">Using the following options:</span>
    	Version:	1.0.0
