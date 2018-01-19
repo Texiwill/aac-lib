@@ -11,8 +11,9 @@
 # Requires:
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
-# vim:set softtabstop=4 shiftwidth=4 tabstop=4: 
-VERSIONID="3.0.1"
+# vim: tabstop=4 shiftwidth=4
+
+VERSIONID="3.1.0"
 
 # args: stmt error
 function colorecho() {
@@ -68,7 +69,23 @@ function getchoice() {
 
 
 function findmissing() {
+	# Fake Suites
+	case "$choice" in
+		Desktop_End_User_Computing_VMware_Horizon)
+			pkgs="Desktop_End_User_Computing_VMware_Horizon_7_4"
+			;;
+		Desktop_End_User_Computing_VMware_Fusion)
+			pkgs="Desktop_End_User_Computing_VMware_Fusion_10_0"
+			;;
+		Desktop_End_User_Computing_VMware_Workstation_Pro)
+			pkgs="Desktop_End_User_Computing_VMware_Workstation_Pro_14_0"
+			;;
+		Desktop_End_User_Computing_VMware_Horizon_Clients)
+			pkgs="Desktop_End_User_Computing_VMware_Horizon_Clients_4_0"
+			;;
+	esac
 	tpkg=`echo $pkgs | tr '[:upper:]' '[:lower:]'`
+	# Fake xhtml
 	for x in `echo $myvmware | sed 's#/# #g'`
 	do
 		tpkg=`echo $tpkg | sed "s/${x}_//g"`
@@ -84,6 +101,11 @@ function findmissing() {
 		if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ]
 		then
 			wget -O - ${myvmware_root}${myvmware}/$spkg > ${rcdir}/${missname}.xhtml
+		fi
+		lv=`grep LINUXVDI ${rcdir}/$missname.xhtml 2> /dev/null`
+		if [ $? -eq 0 ] && [ Z"$linuxvdi" = Z"" ]
+		then
+			linuxvdi=`echo $lv | cut -d= -f 3 | cut -d\& -f 1`
 		fi
 		tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g"|egrep -v $pmiss`
 
@@ -119,7 +141,12 @@ function getoutervmware() {
 		pkgs=""
 		for x in $mversions
 		do
-			pkgs="$pkgs ${f}_$x"
+			echo $x | egrep -iv "_UWP|_Android|_IOS|Windows_Store" >& /dev/null
+			if [ $? -eq 0 ]
+			then
+				#a=`echo ${f}_${x} | sed "s/_\(.\)/_\u\1/g" | sed "s/^\(.\)/\u\1/g"`
+				pkgs="$pkgs ${f}_${x}"
+			fi
 		done
 	#fi
 }
@@ -133,7 +160,7 @@ function getinnervmware() {
 	#debugecho "wh => :$wh:"
 	what="midProductColumn\">$wh"
 	swh=`echo $wh | sed 's/ /_/g'`
-	wend=`echo $mversions | sed "s/.*$swh//"|awk '{print $1}'|sed 's/_/ /g'`
+	wend=`echo $mversions | sed "s/.*$swh //"|awk '{print $1}'|sed 's/_/ /g'`
 	if [ Z"$wend" = Z"" ]
 	then
 		wend="section"
@@ -192,6 +219,7 @@ function backvmware() {
 }
 
 function vmwaremenu2() {
+	debugecho "vmwaremenu2: $domyvmware $choice"
 	if [ $domyvmware -eq 1 ] && [ ! -e ${rcdir}/dlg_${choice}.xhtml ]
 	then
 		pkgs=''
@@ -257,23 +285,115 @@ function getouterrndir() {
 	rndir=''
 	like=''
 	likeforlike=''
+	rndll='download2.vmware.com'
+	v=`echo ${lchoice} | sed 's/[0-9A-Z]\+_\([0-9]\+\).*$/\1/' 2>/dev/null`
+	if [ Z"$v" = Z"$lchoice" ]
+	then
+		v=0
+	fi
+	debugecho "DEBUG: v => $v"
 	case "$lchoice" in
 		VRSLCM*)
 			# special case VIC, VROPS, VC
 			# Note VRSLCM_?? => VRSLCM10
-			rndll='download2.vmware.com'
 			rndir='VRSLCM10'
 			;;
-		Fusion*)
+		LINUXVDI*)
+			if [ $v -ge 740 ]
+			then
+				rntmp=`echo $lchoice | sed 's/LINUXVDI/HZ/g'`
+				rndir="view/${rntmp}"
+			elif [ $v -ge 730 ]
+			then
+				rndir='view/HZ18FQ4'
+			else
+				rndir='view'
+			fi
+			;;
+		CART*|VIEWCLIENT*)
+			rndll='download3.vmware.com'
+			rntmp=`echo $lchoice | cut -d_ -f 1`
+			rndir="view/viewclients/${rntmp}"
+			;;
+		HZNWS*)
+			rndir='HZNWS20'
+			;;
+		VIEWCRT*)
+			#rndll='download3.vmware.com'
+			rndir="view/viewclients"
+			;;
+		VIEWLINUX*)
+			rndir='view'
+			;;
+		VIEW*)
+			if [ $v -ge 740 ]
+			then
+				rntmp=`echo $linuxvdi | sed 's/LINUXVDI/HZ/g'`
+				rndir="view/${rntmp}"
+			elif [ $v -ge 730 ]
+			then
+				rndir="view/HZ18FQ4"
+			elif [ $v -eq 625 ]
+			then
+				rndir="view624"
+			else
+				rndir="view"
+			fi
+			;;
+		HVRO*)
+			rndir='HvCOplugin'
+			;;
+		THIN*)
+			rns=`echo $lchoice | sed 's/THIN_//'`
+			rntmp=`echo $lchoice | sed 's/THIN_//' | sed 's/\([0-9]0[1-9]\).*$/\1/'|sed 's/\([0-9][1-9]\).*$/\1/'`
+			if [ $rns -gt 520 ]
+			then
+				rntmp="${rntmp}/$rns"
+			fi
+			rndir="thin/${rntmp}"
+			;;
+		UEM*)
+			rndir='UEM'
+			;;
+		MIRAGE*)
+			if [ $v -gt 540 ]
+			then
+				rntmp=`echo $lchoice | sed 's/MIRAGE_//'`
+				rndir="mirage/${rntmp}"
+			else
+				rndir="mirage"
+			fi
+			;;
+		AV_*)
+			rndir='AppVolumes'
+			;;
+		V4H*)
+			if [ $v -gt 650 ]
+			then
+				rntmp=`echo $lchoice | sed 's/_GA//g' | tr [:upper:] [:lower:]`
+				rndir="vcops/${rntmp}"
+			else
+				rndir="vcops"
+			fi
+			;;
+		V4PA*)
+			if [ $v -gt 650 ]
+			then
+				rntmp=`echo $lchoice | sed 's/_GA//g' | tr [:upper:] [:lower:]`
+				rndir="v4pa/${rntmp}"
+			else
+				rndir="v4pa"
+			fi
+			;;
+		FUS*)
 			rndll='download3.vmware.com'
 			rndir='fusion/file'
 			;;
-		Workstation*)
+		WKST*)
 			rndll='download3.vmware.com'
 			rndir='wkst/file'
 			;;
 		VIDM_ONPREM*)
-			rndll='download2.vmware.com'
 			rntmp=`echo $lchoice | sed 's/[0-9]//g'`
 			rndir="${rntmp}${pver}"
 			;;
@@ -365,6 +485,36 @@ function getinnerrndir() {
 						;;
 				esac
 				;;	
+			VIEW_62*)
+				case "$name" in
+					VMware-Horizon-View-Extras*|VMware-viewagent-linux*)
+						rndir="view"
+						;;
+				esac
+				;;
+			LINUXVDI*|VIEW*)
+				case "$name" in
+					euc-unified-access-*-3.0.0*)
+						rndir="view"
+						;;
+					euc-unified-access-*)
+						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/' | sed 's/\.//'`
+						rndir="UAG_${rntmp}"
+						;;
+				esac
+				;;
+			V4H*|V4PA*)
+				case "$name" in
+					vRealize[_-]Operations*)
+						m=`echo $name | sed 's/\.//g'|sed 's/.*[_-]\([0-9][0-9][0-9]\).*$/\1/'`
+						if [ $m -eq 601 ]
+						then
+							m=600
+						fi
+						rndir="vrops${m}"
+						;;
+				esac
+				;;
 			VROPS*)	
 				m="${dnlike//[^[:digit:]]/}"
 				rndir="vrops${m}"
@@ -544,23 +694,33 @@ function vsmnpkgs() {
 function vsmpkgs() {
 	file=$1
 	pkgs=""
-	if [ $dlg -gt 0 ]
+	if [ $choice = "Desktop_End_User_Computing" ]
 	then
-		if [ $dolatest -eq 1 ]
+		# need to get this
+		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Workstation_Pro Desktop_End_User_Computing_VMware_Horizon_Clients"
+		##
+		# Fusion is part of Horizon and has an issue
+		#  Desktop_End_User_Computing_VMware_Fusion
+		##
+	else
+		if [ $dlg -gt 0 ]
 		then
-			pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\).*$/\1/' | sort -u`
-			vsmnpkgs
+			if [ $dolatest -eq 1 ]
+			then
+				pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\).*$/\1/' | sort -u`
+				vsmnpkgs
+			fi
+		fi
+		if [ Z"$pkgs" = Z"" ]
+		then
+			if [ -e $file ]
+			then
+				pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/dlg_//' | sed 's/\.xhtml//' | sed 's/,//g' `
+			fi
+			getvmware 
 		fi
 	fi
-	if [ Z"$pkgs" = Z"" ]
-	then
-		if [ -e $file ]
-		then
-			pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/dlg_//' | sed 's/\.xhtml//' | sed 's/,//g' `
-		fi
-		getvmware 
-	fi
-	debugecho "DEBUG: $pkgs"
+	debugecho "DEBUG vsmpkgs: $pkgs"
 }
 
 function save_vsmrc() {
@@ -610,12 +770,17 @@ function menu() {
 	back="Back"
 	if [ Z"$choice" = Z"root" ]
 	then
+		linuxvdi=""
 		back=""
 	fi
 	debugecho "MENU: $file $domenu2 $dlg"
 	if [ $domenu2 -eq 0 ]
 	then
 		vsmpkgs $file
+		if [ Z"$choice" = Z"root" ] && [ $domyvmware -eq 1 ]
+		then
+			pkgs="$pkgs Desktop_End_User_Computing"
+		fi
 		# need to recreate dlg=1 here due to myvmware
 		if [ $domyvmware -eq 1 ] && [ $dlg -eq 1 ]
 		then
@@ -629,7 +794,7 @@ function menu() {
                 	fi
 		fi
 	fi
-	export COLUMNS=$mycolumns
+	export COLUMNS=20
 	select choice in $all $allm $alln $pkgs $mark $back Exit
 	do
 		if [ Z"$choice" != Z"" ]
@@ -637,13 +802,12 @@ function menu() {
 			## needed if we allow
 			stripcolor
 			## this is disallow for now
-			echo $choice | fgrep '[' >& /dev/null
-			if [ $? -eq 0 ]
-			then
-				echo -n "Please select a NON-TEAL item:"
-				continue
-			fi
-
+			#echo $choice | fgrep '[' >& /dev/null
+			#if [ $? -eq 0 ]
+			#then
+			#	echo -n "Please select a NON-TEAL item:"
+			#	continue
+			#fi
 			if [ $choice = "Exit" ]
 			then
 				exit
@@ -668,7 +832,7 @@ function menu() {
 
 function menu2() {
 	all=""
-	echo $1
+	debugecho "MENU2: $1"
 	if [ Z"$2" = Z"OpenSource" ]
 	then
 		all="All_Plus_OpenSource"
@@ -738,26 +902,35 @@ function getvsmparams() {
 		size=`echo $tsize | cut -d ' ' -f 1`
 		units=`echo $tsize | cut -d ' ' -f 2`
 		#debugecho "DEBUG: size => $size ; units => $units"
-		ndata=`echo $data | sed 's/<\/a>/\n/g'| sed 's/<\/span/\n/g'|grep "button primary" | cut -d\" -f 6 | sed 's/amp;//g'| sed 's/[\&\?=]/ /g'`
-		#debugecho "DEBUG: ndata => $ndata"
-		size=`echo "$size *1024"|bc` # KB
-		if [ Z"$units" = Z"MB" ] || [ Z"$units" = Z"GB" ]
-		then # GB
-			size=`echo "$size *1024"|bc`
+		fdata=`echo $data | sed 's/<\/a>/\n/g'| sed 's/<\/span/\n/g'|grep "button primary"`
+		echo $fdata |egrep "CART|viewclients" >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			drparams="CART"
+			href=`echo $fdata | cut -d\" -f 4`
+			durl=''
+		else
+			ndata=`echo $fdata | cut -d\" -f 6 | sed 's/amp;//g'| sed 's/[\&\?=]/ /g'`
+			#debugecho "DEBUG: ndata => $ndata"
+			size=`echo "$size *1024"|bc` # KB
+			if [ Z"$units" = Z"MB" ] || [ Z"$units" = Z"GB" ]
+			then # GB
+				size=`echo "$size *1024"|bc`
+			fi
+			if [ Z"$units" = Z"GB" ]
+			then # GB
+				size=`echo "$size *1000"|bc`
+			fi
+			size=`printf '%d\n' "$size" 2>/dev/null`
+			dlgcode=`echo $ndata | cut -d' ' -f3`
+			downloaduuid=`echo $ndata | cut -d ' ' -f13`
+			dtr="{\"sourcefilesize\":\"$size\",\"dlgcode\":\"$dlgcode\",\"languagecode\":\"en\",\"source\":\"vswa\",\"downloadtype\":\"manual\",\"eula\":\"Y\",\"downloaduuid\":\"$downloaduuid\",\"purchased\":\"Y\",\"dlgtype\":\"Product+Binaries\",\"productversion\":\"$pver\"}"
+			debugecho "DEBUG: drparams => $dtr"
+			drparams=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $dtr`
+			href="https://depot.vmware.com/getAuthUrl"
+			#https://download2.vmware.com/software/vcops/v4h_651/Reports_V4VAdapter-6.5.1-7363818.zip
+			durl="https://${rndll}/software/${rndir}/${fname}"
 		fi
-		if [ Z"$units" = Z"GB" ]
-		then # GB
-			size=`echo "$size *1000"|bc`
-		fi
-		size=`printf '%d\n' "$size" 2>/dev/null`
-		dlgcode=`echo $ndata | cut -d' ' -f3`
-		downloaduuid=`echo $ndata | cut -d ' ' -f13`
-		dtr="{\"sourcefilesize\":\"$size\",\"dlgcode\":\"$dlgcode\",\"languagecode\":\"en\",\"source\":\"vswa\",\"downloadtype\":\"manual\",\"eula\":\"Y\",\"downloaduuid\":\"$downloaduuid\",\"purchased\":\"Y\",\"dlgtype\":\"Product+Binaries\",\"productversion\":\"$pver\"}"
-		debugecho "DEBUG: drparams => $dtr"
-		drparams=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $dtr`
-		href="https://depot.vmware.com/getAuthUrl"
-		#https://download2.vmware.com/software/vcops/v4h_651/Reports_V4VAdapter-6.5.1-7363818.zip
-		durl="https://${rndll}/software/${rndir}/${fname}"
 		debugecho "DEBUG: durl => $durl"
 		#durl=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $sdu`
 	fi
@@ -805,11 +978,21 @@ function getvsm() {
 			#echo "Download $name to `pwd`?"
 			#read c
 			getvsmparams
-			url="$href?params=$drparams&downloadurl=$durl&familyversion=$vers&productfamily=$prod"
+			if [ Z"$drparams" = Z"CART" ]
+			then
+				url=$href
+			else
+				url="$href?params=$drparams&downloadurl=$durl&familyversion=$vers&productfamily=$prod"
+			fi
 			debugecho "DEBUG: url => $url"
 			if [ $dryrun -eq 0 ]
 			then
-				lurl=`wget --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $url 2>&1 | grep Location | awk '{print $2}'`
+				if [ Z"$drparams" = Z"CART" ]
+				then
+					lurl=$url
+				else
+					lurl=`wget --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $url 2>&1 | grep Location | awk '{print $2}'`
+				fi
 				debugecho "DEBUG: lurl => $lurl"
 				echo $lurl|grep -i blocked >& /dev/null
 				if [ $? -ne 0 ]
@@ -1273,6 +1456,7 @@ cd depot.vmware.com/PROD/channel
 mlist=0
 mchoice="root"
 myvmware_root="https://my.vmware.com/web/vmware/info/slug"
+linuxvdi=""
 myvmware=""
 menu2files=""
 choice="root"

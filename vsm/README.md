@@ -218,6 +218,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.1.0 - Added support for VMware Horizon, VMware Horizon Clients, and VMware 
+	Workstation Pro. For now the Fusion download is within VMware Horizon.
+
 3.0.1 - fixed a grep error showing up when it should not
 
 3.0.0 - -m|--myvmware option now works including the need to install the 'bc'
