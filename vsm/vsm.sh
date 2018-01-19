@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.1.0"
+VERSIONID="3.2.0"
 
 # args: stmt error
 function colorecho() {
@@ -161,7 +161,7 @@ function getinnervmware() {
 	what="midProductColumn\">$wh"
 	swh=`echo $wh | sed 's/ /_/g'`
 	wend=`echo $mversions | sed "s/.*$swh //"|awk '{print $1}'|sed 's/_/ /g'`
-	if [ Z"$wend" = Z"" ]
+	if [ Z"$wend" = Z"" ] || [ Z"$wend" = Z"$wh" ]
 	then
 		wend="section"
 	fi

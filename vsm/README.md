@@ -101,6 +101,10 @@ password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory]
        shows up if the directory is not in the repo and is not related to 
        missing files or new files.
 
+       To enable download of VMware Horizon, VMware Horizon Clients, VMware
+       Workstation, and VMware Fusion use the -m option. Else they will not
+       appear.
+
 $ ./vsm.sh
 <span style="color:purple">Using the following options:</span>
    	Version:	1.0.0
@@ -218,6 +222,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.2.0 - Added Support for VMware Fusion download and improved errors when
+	there are network issues.
+
 3.1.0 - Added support for VMware Horizon, VMware Horizon Clients, and VMware 
 	Workstation Pro. For now the Fusion download is within VMware Horizon.
 
