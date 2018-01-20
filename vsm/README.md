@@ -222,6 +222,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.2.1 - Minor fix... Fusion wrong file uploaded!
+
 3.2.0 - Added Support for VMware Fusion download and improved errors when
 	there are network issues.
 

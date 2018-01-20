@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.2.0"
+VERSIONID="3.2.1"
 
 # args: stmt error
 function colorecho() {
@@ -34,6 +34,37 @@ function debugecho() {
 	then
 		echo ${1}
 	fi
+}
+
+function wgeterror() {
+	err=$1
+	debugecho "wget: $err"
+	case "$err" in
+	1) 
+		colorecho "Generic Error Getting $name" 1
+		;;
+	2)
+		colorecho "Parse Error Getting $name" 1
+		;;
+	3)
+		colorecho "File Error: $name (disk full, etc.)" 1
+		;;
+	4)
+		colorecho "Network Error Getting $name" 1
+		;;
+	5)
+		colorecho "SSL Error Getting $name" 1
+		;;
+	6)
+		colorecho "Credential Error Getting $name" 1
+		;;
+	7)
+		colorecho "Protocol Error Getting $name" 1
+		;;
+	8)
+		colorecho "Server Error Getting $name" 1
+		;;
+	esac
 }
 
 function addpath() {
@@ -101,6 +132,7 @@ function findmissing() {
 		if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ]
 		then
 			wget -O - ${myvmware_root}${myvmware}/$spkg > ${rcdir}/${missname}.xhtml
+			wgeterror $?
 		fi
 		lv=`grep LINUXVDI ${rcdir}/$missname.xhtml 2> /dev/null`
 		if [ $? -eq 0 ] && [ Z"$linuxvdi" = Z"" ]
@@ -134,6 +166,7 @@ function getoutervmware() {
 		if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ]
 		then
 			wget -O - ${myvmware_root}${myvmware} > ${rcdir}/${missname}.xhtml
+			wgeterror $?
 		fi
 		mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/+/_/g'`
 		debugecho "DEBUG: $myvmware Missing Versions $mversions"
@@ -230,6 +263,7 @@ function vmwaremenu2() {
 		if [ ! -e ${rcdir}/_dlg_${choice}.xhtml ] || [ $doreset -eq 1 ]
 		then
 			wget -O ${rcdir}/_dlg_${choice}.xhtml "https://my.vmware.com${vurl}"
+			wgeterror $?
 		fi
 		menu2files=1
 		getvsmcnt $choice
@@ -697,7 +731,7 @@ function vsmpkgs() {
 	if [ $choice = "Desktop_End_User_Computing" ]
 	then
 		# need to get this
-		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Workstation_Pro Desktop_End_User_Computing_VMware_Horizon_Clients"
+		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Workstation_Pro Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion"
 		##
 		# Fusion is part of Horizon and has an issue
 		#  Desktop_End_User_Computing_VMware_Fusion
@@ -1003,41 +1037,14 @@ function getvsm() {
 						debugecho "DEBUG: eurl => $eurl"
 						wget -O $name --progress=bar:force -nd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $eurl 
 						err=$?
-						debugecho "wget: $err"
 						diddownload=0
-						case "$err" in
-						0)
-							diddownload=1
-							;;
-						1)
-							colorecho "Generic Error Getting $name" 1
-							;;
-						2)
-							colorecho "Parse Error Getting $name" 1
-							;;
-						3)
-							colorecho "File Error: $name (disk full, etc.)" 1
-							;;
-						4)
-							colorecho "Network Error Getting $name" 1
-							;;
-						5)
-							colorecho "SSL Error Getting $name" 1
-							;;
-						6)
-							colorecho "Credential Error Getting $name" 1
-							;;
-						7)
-							colorecho "Protocol Error Getting $name" 1
-							;;
-						8)
-							colorecho "Server Error Getting $name" 1
-							;;
-						esac
+						wgeterror $err
 						# echo if error remove file
 						if [ $err -ne 0 ]
 						then
 							rm $name
+						else
+							diddownload=1
 						fi
 					else
 						colorecho "No Redirect Error Getting $name" 1
