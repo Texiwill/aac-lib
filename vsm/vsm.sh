@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.2.3"
+VERSIONID="3.2.4"
 
 # args: stmt error
 function colorecho() {
@@ -1337,7 +1337,7 @@ then
 	mkdir -p $cdir
 else
 	u=`ls -ald $cdir | cut -d ' ' -f 3`
-	if [ Z"$xu" = Z"$u" ]
+	if [ Z"$xu" != Z"$u" ]
 	then
 		colorecho "$cdir is not writable by ${xu}." 1
 		exit

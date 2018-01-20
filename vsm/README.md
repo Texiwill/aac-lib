@@ -224,6 +224,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.2.4 - Protection for temporary directory were reversed
+
 3.2.3 - Protections from temporary directory owned by wrong user causing
 	connection errors
 
