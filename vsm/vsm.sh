@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.2.1"
+VERSIONID="3.2.2"
 
 # args: stmt error
 function colorecho() {
@@ -753,6 +753,13 @@ function vsmpkgs() {
 			fi
 			getvmware 
 		fi
+		#if [ $choice = "Datacenter_Cloud_Infrastructure" ]
+		#then
+		#	pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software-Defined_Data_Center"
+		#elif [ $choice = "Infrastructure_Operations_Management" ]
+		#then
+		#	pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack Infrastructure_Operations_Management_VMware_vRealize_Network_Insight"
+		#fi
 	fi
 	debugecho "DEBUG vsmpkgs: $pkgs"
 }
@@ -1185,6 +1192,14 @@ BOLD=`tput smso`
 NB=`tput rmso`
 TEAL=`tput setaf 6`
 mycolumns=`tput cols`
+
+x=`id -un`
+
+if [ Z"$x" = Z"root" ]
+then
+	echo "${RED}VSM cannot run as root.${NC}"
+	exit
+fi
 
 # import values from .vsmrc
 if [ -e $HOME/.vsmrc ]

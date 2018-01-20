@@ -16,7 +16,9 @@ This version was optimized for RedHat style distributions and will need
 a change to work on non-RedHat style distributions. If someone uses
 debian and wants this to work there, get me the dpkg commands needed.
 
-To install use the following script:
+To install use the following script (it will prompt you for the root
+password) no need to use sudo yourself:
+
 ```
 #!/bin/sh
 which wget >& /dev/null
@@ -33,10 +35,10 @@ sudo ./aac-base.install -i vsm
 
 Here is an example run and help:
 ```
-$ ./vsm.sh --help
-./vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit]
-[-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore] [-nc|--nocolor]
-[--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password
+$ /usr/local/bin/vsm.sh --help
+/usr/local/bin/vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] 
+[-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore] 
+[-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password
 password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] 
 [-W] [-V|--version] [-y] [--debug] [--repo repopath] [--save]
 	--dlg - download specific package by name or part of a name
@@ -222,6 +224,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.2.2 - Protections from running as root and added install.sh to repo
+
 3.2.1 - Minor fix... Fusion wrong file uploaded!
 
 3.2.0 - Added Support for VMware Fusion download and improved errors when
