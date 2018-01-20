@@ -224,6 +224,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.2.3 - Protections from temporary directory owned by wrong user causing
+	connection errors
+
 3.2.2 - Protections from running as root and added install.sh to repo
 
 3.2.1 - Minor fix... Fusion wrong file uploaded!

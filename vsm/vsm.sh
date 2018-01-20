@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.2.2"
+VERSIONID="3.2.3"
 
 # args: stmt error
 function colorecho() {
@@ -1193,11 +1193,11 @@ NB=`tput rmso`
 TEAL=`tput setaf 6`
 mycolumns=`tput cols`
 
-x=`id -un`
+xu=`id -un`
 
-if [ Z"$x" = Z"root" ]
+if [ Z"$xu" = Z"root" ]
 then
-	echo "${RED}VSM cannot run as root.${NC}"
+	colorecho "VSM cannot run as root." 1
 	exit
 fi
 
@@ -1335,6 +1335,13 @@ echo "	My VMware:	$domyvmware"
 if [ ! -e $cdir ]
 then
 	mkdir -p $cdir
+else
+	u=`ls -ald $cdir | cut -d ' ' -f 3`
+	if [ Z"$xu" = Z"$u" ]
+	then
+		colorecho "$cdir is not writable by ${xu}." 1
+		exit
+	fi
 fi
 rcdir="${cdir}/depot.vmware.com/PROD/channel"
 cd $cdir
