@@ -113,6 +113,10 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.6.1 VSM: added jq to dependencies
+
+1.0.1 DNScrypt: switched to use GitHub for code and updates
+
 1.6.4 moved update to not require root
 
 1.6.3 fixed startsrv to always restart

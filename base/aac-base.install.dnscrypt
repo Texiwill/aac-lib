@@ -5,19 +5,20 @@
 # DNSCrypt Proxy for CentOS/RHEL 7 using DNSMasq
 
 function dnscrypt_version() {
-	echo "1.0.0"
+	echo "1.0.1"
 }
 
 function dnscrypt() {
 	echo "Installing or Updating DNS-Crypt"
 
-	DEVEL="gcc cpp glibc-devel glibc-headers kernel-headers mpfr libmpc libsodium-devel wget bzip2 automake libtool-ltdl-devel"
+	PROD="dnsmasq haveged bind-utils lsof libtool-ltdl GeoIP"
+	DEVEL="gcc cpp glibc-devel glibc-headers kernel-headers mpfr libmpc libsodium-devel wget bzip2 automake libtool-ltdl-devel unzip"
 
 	# Install needed RPMS
 	echo $RPMLIST | grep haveged > /dev/null
 	if [ $? != 0 ]
 	then
-		yum -y install dnsmasq haveged bind-utils lsof libtool-ltdl GeoIP
+		yum -y install $PROD
 	fi
 
 	# Start haveged to get entropy
@@ -41,16 +42,19 @@ function dnscrypt() {
 	then
 		yum -y install $DEVEL
 
-		wget https://download.dnscrypt.org/dnscrypt-proxy/LATEST.tar.bz2
-		tar -xjf LATEST.tar.bz2
+		#wget https://download.dnscrypt.org/dnscrypt-proxy/LATEST.tar.bz2
+		#tar -xjf LATEST.tar.bz2
+		wget -O master.zip https://github.com/dyne/dnscrypt-proxy/archive/master.zip
+		unzip master.zip
 		cd dnscrypt-proxy*
+		./autogen.sh
 		./configure
 		make
 		make install
 		# to get everything really need to do it again for some reason
 		make install
 		# This is not copied but necessary
-		cp contrib/dnscrypt-update-resolvers.sh /usr/local/bin
+		cat contrib/dnscrypt-update-resolvers.sh|sed 's#RESOLVERS_URL=.*$#RESOLVERS_URL="https://raw.githubusercontent.com/dyne/dnscrypt-proxy/master/dnscrypt-resolvers.csv"#' > /usr/local/bin/dnscrypt-update-resolvers.sh
 	
 		cd ..
 		# remove development bits
