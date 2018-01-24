@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.2.4"
+VERSIONID="3.5.0"
 
 # args: stmt error
 function colorecho() {
@@ -101,20 +101,26 @@ function getchoice() {
 
 function findmissing() {
 	# Fake Suites
-	case "$choice" in
-		Desktop_End_User_Computing_VMware_Horizon)
-			pkgs="Desktop_End_User_Computing_VMware_Horizon_7_4"
-			;;
-		Desktop_End_User_Computing_VMware_Fusion)
-			pkgs="Desktop_End_User_Computing_VMware_Fusion_10_0"
-			;;
-		Desktop_End_User_Computing_VMware_Workstation_Pro)
-			pkgs="Desktop_End_User_Computing_VMware_Workstation_Pro_14_0"
-			;;
-		Desktop_End_User_Computing_VMware_Horizon_Clients)
-			pkgs="Desktop_End_User_Computing_VMware_Horizon_Clients_4_0"
-			;;
-	esac
+	reget=0
+	if [ Z"$myvmware" != Z"" ]
+	then
+		domyvm=`echo ${myvmware}| awk -F/ '{print NF}'`
+		if [ $domyvm -gt 2 ]
+		then
+			myname=`grep "${myvmware}/" ${rcdir}/_downloads.xhtml | cut -d\" -f 2|sed 's/Software-Defined/Software_Defined/'`
+			myver=`grep "${myvmware}/" ${rcdir}/_downloads.xhtml | cut -d\" -f 14`
+			myver=`basename $myver`
+			pkgs=`echo "${choice}_${myver}" | sed 's/[ \.]/_/g'`
+			debugecho "calc pkg => $pkgs"
+		fi
+	fi
+	mybypass=0
+	#case "$choice" in
+	#	Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager)
+	#	pkgs="Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager_5_8_4"
+	#	mybypass=1
+	#	;;
+	#esac
 	tpkg=`echo $pkgs | tr '[:upper:]' '[:lower:]'`
 	# Fake xhtml
 	for x in `echo $myvmware | sed 's#/# #g'`
@@ -122,7 +128,7 @@ function findmissing() {
 		tpkg=`echo $tpkg | sed "s/${x}_//g"`
 	done
 	spkg=`echo $tpkg | awk '{print $1}'`
-	domyvm=`echo ${myvmware}/${spkg} | awk -F/ '{print NF}'`
+	domyvm=`echo ${myvmware}/${spkg} | sed 's:/$::' |awk -F/ '{print NF}'`
 	if [ $domyvm -eq 4 ]
 	then
 		pmiss=`echo $tpkg | sed 's/ /|/g'`
@@ -134,33 +140,60 @@ function findmissing() {
 			wget -O - ${myvmware_root}${myvmware}/$spkg > ${rcdir}/${missname}.xhtml
 			wgeterror $?
 		fi
-		lv=`grep LINUXVDI ${rcdir}/$missname.xhtml 2> /dev/null`
-		if [ $? -eq 0 ] && [ Z"$linuxvdi" = Z"" ]
+		grep -i "Unable to Complete Your Request" ${rcdir}/${missname}.xhtml >& /dev/null
+		if [ $? -ne 0 ]
 		then
-			linuxvdi=`echo $lv | cut -d= -f 3 | cut -d\& -f 1`
-		fi
-		tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g"|egrep -v $pmiss`
-
-		# missing pkg entries
-		if [ Z"$tver" != Z"" ]
-		then
-			mc=`basename $mchoice`
-			debugecho "DEBUG: Missing from $mc is $tver"
-			for x in $tver
-			do
-				pkgs="$pkgs ${mc}_$x"
-			done
-			pkgs=`echo $pkgs | tr ' ' '\n' | sort -rV`
-			missing=`echo $tver | sed 's/ /|/g'`
+			lv=`grep LINUXVDI ${rcdir}/$missname.xhtml 2> /dev/null`
+			if [ $? -eq 0 ] && [ Z"$linuxvdi" = Z"" ]
+			then
+				linuxvdi=`echo $lv | cut -d= -f 3 | cut -d\& -f 1`
+			fi
+			if [ Z"$pmiss" != Z"" ]
+			then
+				tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g"|egrep -v $pmiss |egrep -v hidden`
+			else
+				tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g" |egrep -v hidden` 
+			fi
+			# missing pkg entries
+			if [ Z"$tver" = Z"" ]
+			then
+				#usenurl="https://my.vmware.com/group/vmware/details?downloadGroup=VCM-584&productId=542"
+				if [ Z"$usenurl" = Z"" ]
+				then
+					usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | grep -v OSS | cut -d\" -f 4`
+				fi
+				#debugecho "N: $usenurl"
+				if [ ! -e ${rcdir}/${missname}_1.xhtml ]
+				then
+					wget -O ${rcdir}/${missname}_1.xhtml "https://my.vmware.com${usenurl}"
+					wgeterror $?
+				fi
+				# Now we need to get the versions
+				tver=`grep downloadGroupId ${rcdir}/${missname}_1.xhtml | cut -d\" -f2`
+				# pkgs change completely
+				pkgs=""
+			fi
+			if [ Z"$tver" != Z"" ]
+			then
+				mc=`basename $mchoice`
+				debugecho "DEBUG: Missing from $mc is $tver"
+				for x in $tver
+				do
+					pkgs="$pkgs ${mc}_$x"
+				done
+				pkgs=`echo $pkgs | tr ' ' '\n' | sort -rV`
+				missing=`echo $tver | sed 's/ /|/g'`
+			fi
+		else
+			colorecho "My VMware Site issue request could not be completed" 1
 		fi
 	fi
 }
 
 function getoutervmware() {
 	debugecho "DEBUG: $myvmware $choice $missing"
-	#echo $choice | egrep -v $missing >& /dev/null
-	#if [ $? -eq 1 ]
-	#then
+	if [ Z"$usenurl" = Z"" ]
+	then
 		spkg=`echo $choice | awk -F_ '{print $NF}'`
 		missname=`echo ${myvmware} | sed 's/\//_/g'`
 		if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ]
@@ -169,46 +202,87 @@ function getoutervmware() {
 			wgeterror $?
 		fi
 		mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/+/_/g'`
-		debugecho "DEBUG: $myvmware Missing Versions $mversions"
 		f=`basename $mchoice`
 		pkgs=""
-		for x in $mversions
-		do
-			echo $x | egrep -iv "_UWP|_Android|_IOS|Windows_Store" >& /dev/null
+		if [ Z"$mversions" != Z"" ]
+		then
+			for x in $mversions
+			do
+				echo $x | egrep -iv "_UWP|_Android|_IOS|Windows_Store" >& /dev/null
+				if [ $? -eq 0 ]
+				then
+					#a=`echo ${f}_${x} | sed "s/_\(.\)/_\u\1/g" | sed "s/^\(.\)/\u\1/g"`
+					pkgs="$pkgs ${f}_${x}"
+				fi
+			done
+		else
+			grep 'class="midProductColumn"' $rcdir/${missname}.xhtml >& /dev/null
 			if [ $? -eq 0 ]
 			then
-				#a=`echo ${f}_${x} | sed "s/_\(.\)/_\u\1/g" | sed "s/^\(.\)/\u\1/g"`
-				pkgs="$pkgs ${f}_${x}"
+				if [ Z"$usenurl" = Z"" ]
+				then
+					usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | grep -v OSS | cut -d\" -f 4`
+				fi
+				midprod=1
 			fi
-		done
-	#fi
+		fi
+	fi
 }
 
 function getinnervmware() {
 	# need to set $dlg here
 	debugecho "IV: $choice $missname $mversions"
-	wh=`basename $mchoice`
-	ph=`echo $mchoice | awk -F\/ '{a=NF-1; print $a}'`
-	wh=`echo $wh | sed "s/$ph//" | sed 's/_/ /g'|sed 's/^ //'`
-	#debugecho "wh => :$wh:"
-	what="midProductColumn\">$wh"
-	swh=`echo $wh | sed 's/ /_/g'`
-	wend=`echo $mversions | sed "s/.*$swh //"|awk '{print $1}'|sed 's/_/ /g'`
-	if [ Z"$wend" = Z"" ] || [ Z"$wend" = Z"$wh" ]
+	if [ Z"$usenurl" != Z"" ]
 	then
-		wend="section"
-	fi
-	mv=`echo $mversions | sed 's/ /|/g'|sed 's/_/ /g'`
-	#debugecho "wend => $wend mv => $mv"
-	if [ $dolatest -eq 1 ]
-	then
-		# finds what is on filesystem there now including latest
-		pkgs=`egrep "downloadGroup|$mv" $rcdir/${missname}.xhtml | awk "/$what/,/$wend/"| egrep -v "$wh|buttoncol|$wend" |awk -F= '{print $3}'|awk -F\& '{print $1}'|sed 's/^/dlg_/'|sed 's/-/_/g'|sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\).*$/\1/' | sort -u`
-		vsmnpkgs
+		#debugecho "N: $usenurl"
+		ver=`echo $choice | sed 's/\.//g'| sed 's/.*_\([0-9]\+\)$/\1/'`
+		if [ Z"$ver" != Z"$choice" ]
+		then
+		#	if [ ${#ver} -lt 3 ]
+		#	then
+				gld=`echo $usenurl | cut -d= -f 2 |cut -d\& -f1`
+				missname="_dlg_${gld}"
+				nurl=$usenurl
+				pkgs="${gld}"
+		#	else
+		#		# version is not correct so get from usenurl
+		#		gld=`echo $usenurl | sed 's/.*downloadGroup=\([a-Z]\+\).*/\1/'`
+		#		nurl=`echo $usenurl | sed "s/${gld}-[0-9]\+\&/${gld}-${ver}\&/"`
+		#		debugecho "N: $gld $ver"
+		#		missname="_dlg_${gld}_${ver}"
+		#		pkgs="${gld}_${ver}"
+		#	fi
+			if [ ! -e ${rcdir}/${missname}.xhtml ]
+			then
+				wget -O ${rcdir}/${missname}.xhtml "https://my.vmware.com${nurl}"
+				wgeterror $?
+			fi
+			vsmnpkgs 1
+		fi
 	else
-		# lists what should be there ignoring filesystem
-		pkgs=`egrep "downloadGroup|$mv" $rcdir/${missname}.xhtml | awk "/$what/,/$wend/"| egrep -v "$wh|buttoncol|$wend" |awk -F= '{print $3}'|awk -F\& '{print $1}'|sed 's/-/_/g'| sort -u`
-		vsmnpkgs 1
+		wh=`basename $mchoice`
+		ph=`echo $mchoice | awk -F\/ '{a=NF-1; print $a}'`
+		wh=`echo $wh | sed "s/$ph//" | sed 's/_/ /g'|sed 's/^ //'`
+		#debugecho "wh => :$wh:"
+		what="midProductColumn\">$wh"
+		swh=`echo $wh | sed 's/ /_/g'`
+		wend=`echo $mversions | sed "s/.*$swh //"|awk '{print $1}'|sed 's/_/ /g'`
+		if [ Z"$wend" = Z"" ] || [ Z"$wend" = Z"$wh" ]
+		then
+			wend="section"
+		fi
+		mv=`echo $mversions | sed 's/ /|/g'|sed 's/_/ /g'`
+		debugecho "wend => $wend mv => $mv"
+		if [ $dolatest -eq 1 ]
+		then
+			# finds what is on filesystem there now including latest
+			pkgs=`egrep "downloadGroup|$mv" $rcdir/${missname}.xhtml | awk "/$what/,/$wend/"| egrep -v "$wh|buttoncol|$wend" |awk -F= '{print $3}'|awk -F\& '{print $1}'|sed 's/^/dlg_/'|sed 's/-/_/g'|sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\).*$/\1/' | sort -u`
+			vsmnpkgs
+		else
+			# lists what should be there ignoring filesystem
+			pkgs=`egrep "downloadGroup|$mv" $rcdir/${missname}.xhtml | awk "/$what/,/$wend/"| egrep -v "$wh|buttoncol|$wend" |awk -F= '{print $3}'|awk -F\& '{print $1}'|sed 's/-/_/g'| sort -u`
+			vsmnpkgs 1
+		fi
 	fi
 	dlg=1
 	myinnervm=1
@@ -226,12 +300,16 @@ function getvmware() {
 			debugecho "DEBUG: do FM"
 			findmissing
 		else
-			if [ Z"$mversions" = Z"" ]
+			if [ Z"$mversions" = Z"" ] && [ Z"$usenurl" = Z"" ] && [ $midprod -eq 0 ]
 			then
 				myinnervm=0
 				# Get versions of suites
 				debugecho "DEBUG: do OV"
 				getoutervmware
+				if [ $midprod -eq 1 ]
+				then
+					getinnervmware
+				fi
 			else
 				# associate packages
 				debugecho "DEBUG: do IV"
@@ -244,9 +322,12 @@ function backvmware() {
 	if [ $domyvmware -eq 1 ]
 	then
 		mversions=""
-		if [ $dlg -ne 2 ]
+		if [ $dlg -ne 2 ] || [ Z"$usenurl" != Z"" ]
 		then
+			mversions=""
 			missing=""
+			usenurl=""
+			midprod=0
 		fi
 	fi
 }
@@ -269,8 +350,8 @@ function vmwaremenu2() {
 		getvsmcnt $choice
 		cnt=$?
 		debugecho "DEBUG: menu2files => $menu2files"
-		x=0
-		while [ $x -lt $cnt ]
+		x=1
+		while [ $x -le $cnt ]
 		do
 			getvsmdata $choice $x
 			if [ Z"$pkgs" = Z"" ]
@@ -320,7 +401,13 @@ function getouterrndir() {
 	like=''
 	likeforlike=''
 	rndll='download2.vmware.com'
-	v=`echo ${lchoice} | sed 's/[0-9A-Z]\+_\([0-9]\+\).*$/\1/' 2>/dev/null`
+	echo $lchoice  | grep '_' >& /dev/null
+	if [ $? -eq 0 ]
+	then
+		v=`echo ${lchoice} | sed 's/[0-9A-Z]\+_\([0-9]\+\).*$/\1/' 2>/dev/null`
+	else
+		v=`echo ${lchoice} | sed 's/[A-Z]\+\([0-9]\+\).*$/\1/' 2>/dev/null`
+	fi
 	if [ Z"$v" = Z"$lchoice" ]
 	then
 		v=0
@@ -331,6 +418,9 @@ function getouterrndir() {
 			# special case VIC, VROPS, VC
 			# Note VRSLCM_?? => VRSLCM10
 			rndir='VRSLCM10'
+			;;
+		VIO*)
+			rndir='VIO'
 			;;
 		LINUXVDI*)
 			if [ $v -ge 740 ]
@@ -343,6 +433,9 @@ function getouterrndir() {
 			else
 				rndir='view'
 			fi
+			;;
+		VVD*)
+			rndir="vvd/${v}"
 			;;
 		CART*|VIEWCLIENT*)
 			rndll='download3.vmware.com'
@@ -399,7 +492,12 @@ function getouterrndir() {
 			fi
 			;;
 		AV_*)
-			rndir='AppVolumes'
+			if [ $v -ge 2132 ]
+			then
+				rndir="AppVolumes/${v}"
+			else
+				rndir='AppVolumes'
+			fi
 			;;
 		V4H*)
 			if [ $v -gt 650 ]
@@ -430,6 +528,14 @@ function getouterrndir() {
 		VIDM_ONPREM*)
 			rntmp=`echo $lchoice | sed 's/[0-9]//g'`
 			rndir="${rntmp}${pver}"
+			;;
+		VRLI*)
+			if [ $v -gt 450 ]
+			then
+				rndir='strata1'
+			else
+				rndir='strata'
+			fi
 			;;
 		*)
 			echo $lchoice | grep VCENTER >& /dev/null
@@ -731,7 +837,7 @@ function vsmpkgs() {
 	if [ $choice = "Desktop_End_User_Computing" ]
 	then
 		# need to get this
-		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Workstation_Pro Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion"
+		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro"
 		##
 		# Fusion is part of Horizon and has an issue
 		#  Desktop_End_User_Computing_VMware_Fusion
@@ -753,13 +859,16 @@ function vsmpkgs() {
 			fi
 			getvmware 
 		fi
-		#if [ $choice = "Datacenter_Cloud_Infrastructure" ]
-		#then
-		#	pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software-Defined_Data_Center"
-		#elif [ $choice = "Infrastructure_Operations_Management" ]
-		#then
-		#	pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack Infrastructure_Operations_Management_VMware_vRealize_Network_Insight"
-		#fi
+		if [ $choice = "Datacenter_Cloud_Infrastructure" ]
+		then
+			pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center"
+			mversions=''
+		elif [ $choice = "Infrastructure_Operations_Management" ]
+		then
+			pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack" 
+			# Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager
+			mversions=''
+		fi
 	fi
 	debugecho "DEBUG vsmpkgs: $pkgs"
 }
@@ -811,7 +920,14 @@ function menu() {
 	back="Back"
 	if [ Z"$choice" = Z"root" ]
 	then
+		usenurl=""
 		linuxvdi=""
+		myvmware=""
+		midprod=0
+		menu2files=""
+		missing=""
+		missname=""
+		mversions=""
 		back=""
 	fi
 	debugecho "MENU: $file $domenu2 $dlg"
@@ -965,6 +1081,10 @@ function getvsmparams() {
 			size=`printf '%d\n' "$size" 2>/dev/null`
 			dlgcode=`echo $ndata | cut -d' ' -f3`
 			downloaduuid=`echo $ndata | cut -d ' ' -f13`
+			if [ Z"$vers" = Z"" ]
+			then
+				vers=$pver
+			fi
 			dtr="{\"sourcefilesize\":\"$size\",\"dlgcode\":\"$dlgcode\",\"languagecode\":\"en\",\"source\":\"vswa\",\"downloadtype\":\"manual\",\"eula\":\"Y\",\"downloaduuid\":\"$downloaduuid\",\"purchased\":\"Y\",\"dlgtype\":\"Product+Binaries\",\"productversion\":\"$pver\"}"
 			debugecho "DEBUG: drparams => $dtr"
 			drparams=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $dtr`
@@ -1092,7 +1212,6 @@ function usage() {
 	echo "	-u|--username - specify username"
 	echo "	-v|--vsmdir path - set VSM directory"
 	echo "	-V|--version - version number"
-	echo "	-W - get what is missing from all suites"
 	echo "	-y - do not ask to continue"
 	echo "	--dts - include DriversTools in All-style downloads"
 	echo "	--nodts - do not include DriversTools in All-style downloads"
@@ -1139,6 +1258,7 @@ checkdep libxml2
 checkdep perl-XML-Twig
 checkdep ncurses
 checkdep bc
+checkdep jq
 
 if [ $needdep -eq 1 ]
 then
@@ -1184,6 +1304,7 @@ err=0
 missing=""
 missname=""
 mversions=""
+midprod=1
 # onscreen colors
 RED=`tput setaf 1`
 PURPLE=`tput setaf 5`
@@ -1334,15 +1455,23 @@ echo "	My VMware:	$domyvmware"
 
 if [ ! -e $cdir ]
 then
-	mkdir -p $cdir
-else
-	u=`ls -ald $cdir | cut -d ' ' -f 3`
-	if [ Z"$xu" != Z"$u" ]
-	then
-		colorecho "$cdir is not writable by ${xu}." 1
-		exit
-	fi
+	mkdir -p $cdir 2>/dev/null
 fi
+
+# Check Cdir
+if [ ! -w $cdir ]
+then
+	colorecho "$cdir is not writable by ${xu}." 1
+	exit
+fi
+
+# Check Repo
+if [ ! -w $repo ]
+then
+	colorecho "$repo is not writable by ${xu}." 1
+	exit
+fi
+
 rcdir="${cdir}/depot.vmware.com/PROD/channel"
 cd $cdir
 
@@ -1410,24 +1539,7 @@ debugecho "DEBUG: Auth request"
 # Auth as VSM
 wget --save-headers --cookies=on --save-cookies cookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="Authorization: Basic $auth" --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/ >& /dev/null
 err=$?
-case "$err" in
-	1) colorecho "Generic Error" 1
-		;;
-	2) colorecho "Parse Error" 1
-		;;
-	3) colorecho "File Error: (disk full, etc.)" 1
-		;;
-	4) colorecho "Network Error" 1
-		;;
-	5) colorecho "SSL Error" 1
-		;;
-	6) colorecho "Credential Error" 1
-		;;
-	7) colorecho "Protocol Error" 1
-		;;
-	8) colorecho "Server Error" 1
-		;;
-esac
+wgeterror $err
 if [ $err -ne 0 ]
 then
 	exit $err
@@ -1450,24 +1562,7 @@ then
 	# Get index and subsequent data
 	wget -rxl 1 --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/index.xhtml
 	err=$?
-	case "$err" in
-		1) colorecho "Generic Error" 1
-			;;
-		2) colorecho "Parse Error" 1
-			;;
-		3) colorecho "File Error: (disk full, etc.)" 1
-			;;
-		4) colorecho "Network Error" 1
-			;;
-		5) colorecho "SSL Error" 1
-			;;
-		6) colorecho "Credential Error" 1
-			;;
-		7) colorecho "Protocol Error" 1
-			;;
-		8) colorecho "Server Error" 1
-			;;
-	esac
+	wgeterror $err
 	if [ $err -ne 0 ]
 	then
 		exit $err
@@ -1478,6 +1573,22 @@ then
 	fi
 fi
 
+if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
+then
+	# Get JSON
+	wget -O ${rcdir}/downloads.xhtml --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' 'https://my.vmware.com/web/vmware/downloads?p_p_id=ProductIndexPortlet_WAR_itdownloadsportlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=allProducts&p_p_cacheability=cacheLevelPage&p_p_col_id=column-3&p_p_col_count=1'
+	err=$?
+	wgeterror $err
+
+	# Parse JSON
+	cat ${rcdir}/downloads.xhtml | jq '.[][].proList[]|.name,.actions[]'| tr '\n' ' ' | sed 's/} {/}\n{/g' | sed 's/} "/}\n"/g' | sed 's/" {/"\n{/g' |egrep '^"|Download Product'|tr '\n' ' '|sed 's/} "/}\n"/g' > ${rcdir}/_downloads.xhtml
+
+	if [ $err -ne 0 ]
+	then
+		exit $err
+	fi
+fi
+
 # Present the list
 cd depot.vmware.com/PROD/channel
 
@@ -1485,6 +1596,7 @@ cd depot.vmware.com/PROD/channel
 mlist=0
 mchoice="root"
 myvmware_root="https://my.vmware.com/web/vmware/info/slug"
+usenurl=""
 linuxvdi=""
 myvmware=""
 menu2files=""
@@ -1583,9 +1695,9 @@ do
 		allm="Minimum_Required"
 		dlg=2
 		if [ Z"$prevchoice" = Z"" ]
-                then
-                        prevchoice=$choice
-                fi
+        then
+        	prevchoice=$choice
+        fi
 	fi
 	if [ $dodlg -gt 0 ]
 	then

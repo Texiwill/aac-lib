@@ -40,7 +40,7 @@ $ /usr/local/bin/vsm.sh --help
 [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore] 
 [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password
 password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] 
-[-W] [-V|--version] [-y] [--debug] [--repo repopath] [--save]
+[-V|--version] [-y] [--debug] [--repo repopath] [--save]
 	--dlg - download specific package by name or part of a name
 	-d|--dryrun - dryrun, do not download
 	-f|--force - force download of packages
@@ -60,7 +60,6 @@ password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory]
 	-v|--vsmdir path - set VSM directory
 	                   saved to configuration file
 	-V|--version - version number
-	-W - Get what is missing from all suites (wildcard)
 	-y - do not ask to continue
 	--dts - include DriversTools in All-style downloads
 	        saved to configuration file
@@ -90,10 +89,6 @@ password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory]
        favorite. There is only 1 favorite slot available. Favorites
        can be downloaded without traversing the menus.
 
-       Use of the -W option will result in the need for human interaction.
-       This option will require at least 1.5TB of disk space and several
-       hours to complete. It is not designed for normal use!
-
        Those items that show up in Cyan when the -m|--myvmware option
        is set are those items only seen with that option. I.e. not part
        of the standard downloads from VSM. 
@@ -103,9 +98,12 @@ password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory]
        shows up if the directory is not in the repo and is not related to 
        missing files or new files.
 
-       To enable download of VMware Horizon, VMware Horizon Clients, VMware
-       Workstation, and VMware Fusion use the -m option. Else they will not
-       appear.
+       To enable download of My VMware content which includes minimally
+       VMware Horizon, VMware Horizon Clients, VMware Workstation,
+       and VMware Fusion use the -m option. Else they will not appear.
+
+       Caveat: Access to these downloads does not imply you are licensed
+       for the material. Please see My VMware for your licenses.
 
 $ ./vsm.sh
 <span style="color:purple">Using the following options:</span>
@@ -224,6 +222,11 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.5.0 - Using My VMware to pick up the up to date names instead of hardcoding 
+	them. Added VMware Validated Design (VVD). Fixed VRNI and AppVolumes. 
+	Also added the need for jq rpm, a JSON interpreter, for the 
+	up-to-date names.
+
 3.2.4 - Protection for temporary directory were reversed
 
 3.2.3 - Protections from temporary directory owned by wrong user causing
@@ -249,9 +252,9 @@ that is the only distribution specific bits in the script.
 
 2.5.2 - Fix to --dlg for single file downloads. Local was missing
 
-2.5.1 - Protection for -W option
+2.5.1 - Protection for wildcard option
 
-2.5.0 - Code reorganization and addition of -W option as a wildcard option
+2.5.0 - Code reorganization and addition of wildcard option
 
 2.0.2 - Fixed bug with single file selection
 
