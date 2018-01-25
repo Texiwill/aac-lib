@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.5.0"
+VERSIONID="3.5.1"
 
 # args: stmt error
 function colorecho() {
@@ -865,8 +865,10 @@ function vsmpkgs() {
 			mversions=''
 		elif [ $choice = "Infrastructure_Operations_Management" ]
 		then
-			pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack" 
-			# Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager
+			if [ $dovex -eq 1 ]
+			then
+				pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack" 
+			fi
 			mversions=''
 		fi
 	fi
@@ -1291,6 +1293,7 @@ cdir="/tmp/vsm"
 mypkg=""
 mydlg=""
 dodlg=0
+dovex=0
 # general
 pver=''
 name=''
@@ -1381,6 +1384,9 @@ do
 			mydlg=$2
 			dodlg=1
 			shift
+			;;
+		--vexpertx)
+			dovex=1
 			;;
 		-W)
 			dodlg=2
@@ -1609,6 +1615,13 @@ prevchoice=""
 favorites=""
 dlg=0
 pkgs=""
+
+if [ $dovex -eq 1 ]
+then
+	colorecho "###" 1
+	colorecho "# Entering vExpert Mode" 1
+	colorecho "###" 1
+fi
 
 if [ $dodlg -gt 0 ]
 then
