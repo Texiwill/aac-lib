@@ -222,6 +222,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.5.1 - Missing option corrected
+
 3.5.0 - Using My VMware to pick up the up to date names instead of hardcoding 
 	them. Added VMware Validated Design (VVD). Fixed VRNI and AppVolumes. 
 	Also added the need for jq rpm, a JSON interpreter, for the 
