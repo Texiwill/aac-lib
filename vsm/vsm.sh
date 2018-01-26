@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.5.3"
+VERSIONID="3.5.4"
 
 # args: stmt error
 function colorecho() {
@@ -401,10 +401,10 @@ function getouterrndir() {
 	like=''
 	likeforlike=''
 	rndll='download2.vmware.com'
-	echo $lchoice  | grep '_' >& /dev/null
+	echo $lchoice  | egrep '_|-' >& /dev/null
 	if [ $? -eq 0 ]
 	then
-		v=`echo ${lchoice} | sed 's/[0-9A-Z]\+_\([0-9]\+\).*$/\1/' 2>/dev/null`
+		v=`echo ${lchoice} | sed 's/[0-9A-Z]\+[-_]\([0-9]\+\).*$/\1/' 2>/dev/null`
 	else
 		v=`echo ${lchoice} | sed 's/[A-Z]\+\([0-9]\+\).*$/\1/' 2>/dev/null`
 	fi
@@ -813,13 +813,14 @@ function vsmnpkgs() {
 			a=`ls ${x}* 2>/dev/null| grep -v 'OSS' | sed 's/\.xhtml//' | sed 's/U/0U/' | sort -rn -k1.${l},1.${e} | sort -n | sed 's/0U/U/' | egrep -v 'VCENTER|PLUGIN|SDK|OSL' | tail -1 | sed 's/dlg_//'`
 		else
 			# find available
-			if [ -e dlg_${x}.xhtml ] && [ -d ${repo}/dlg_${x} ]
+			xy=`echo $x | sed 's/-/_/g'`
+			if [ -e dlg_${x}.xhtml ] && [ -d ${repo}/dlg_${xy} ]
 			then
 				a=$x
-			elif [ -e dlg_${x}.xhtml ] && [ ! -d ${repo}/dlg_${x} ]
+			elif [ -e dlg_${x}.xhtml ] && [ ! -d ${repo}/dlg_${xy} ]
 			then
 				a="${BOLD}${x}${NC}"
-			elif [ ! -e dlg_${x}.xhtml ] && [ -d ${repo}/dlg_${x} ]
+			elif [ ! -e dlg_${x}.xhtml ] && [ -d ${repo}/dlg_${xy} ]
 			then
 				a="${TEAL}${x}${NC}"
 			else
@@ -1008,7 +1009,7 @@ function menu2() {
 		vmwaremenu2
 	fi
 	npkg=""
-	f=`echo $1 |sed 's/\.xhtml//'`
+	f=`echo $1 |sed 's/\.xhtml//' | sed 's/-/_/g'`
 	for x in $pkgs
 	do
 		if [ ! -e ${repo}/${f}/${x} ] && [ ! -e ${repo}/${f}/${x}.gz ]
@@ -1112,16 +1113,17 @@ function getvsmparams() {
 function getvsm() {
 	lchoice=$1
 	additional=$2
+	ldir=`echo $lchoice | sed 's/-/_/g'`
 
 	# this gets the repo items
 	# check if file or file.gz
 	# does not exist
 	cd $repo
-	if [ ! -e dlg_$lchoice ]
+	if [ ! -e dlg_$ldir ]
 	then
-		mkdir dlg_$lchoice
+		mkdir dlg_$ldir
 	fi
-	cd dlg_$lchoice 
+	cd dlg_$ldir 
 	if [ Z"$additional" != Z"base" ] 
 	then
 		if [ ! -e $additional ]

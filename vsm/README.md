@@ -222,6 +222,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.5.4 - Fixed download directory issue
+
 3.5.3 - More option issues corrected.
 
 3.5.2 - Fixed some downloads (VRLI for vCenter and others) thanks to fellow 
