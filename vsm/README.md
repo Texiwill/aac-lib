@@ -222,6 +222,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.5.2 - Fixed some downloads (VRLI for vCenter and others) thanks to fellow 
+	vExperts Michael Rudluff and Rotem Agmon
+
 3.5.1 - Missing option corrected
 
 3.5.0 - Using My VMware to pick up the up to date names instead of hardcoding 

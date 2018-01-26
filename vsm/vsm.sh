@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.5.1"
+VERSIONID="3.5.2"
 
 # args: stmt error
 function colorecho() {
@@ -420,7 +420,12 @@ function getouterrndir() {
 			rndir='VRSLCM10'
 			;;
 		VIO*)
-			rndir='VIO'
+			if [ $v -ge 400 ]
+			then
+				rndir='VIO'
+			else
+				rndir='VIO_3'
+			fi
 			;;
 		LINUXVDI*)
 			if [ $v -ge 740 ]
@@ -1086,6 +1091,11 @@ function getvsmparams() {
 			if [ Z"$vers" = Z"" ]
 			then
 				vers=$pver
+			fi
+			# one off
+			if [ Z"$dlgcode" = Z"VRLI-451-VCENTER" ]
+			then
+				dlgcode="VRLI-451"
 			fi
 			dtr="{\"sourcefilesize\":\"$size\",\"dlgcode\":\"$dlgcode\",\"languagecode\":\"en\",\"source\":\"vswa\",\"downloadtype\":\"manual\",\"eula\":\"Y\",\"downloaduuid\":\"$downloaduuid\",\"purchased\":\"Y\",\"dlgtype\":\"Product+Binaries\",\"productversion\":\"$pver\"}"
 			debugecho "DEBUG: drparams => $dtr"
