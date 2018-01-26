@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.5.2"
+VERSIONID="3.5.3"
 
 # args: stmt error
 function colorecho() {
@@ -941,7 +941,7 @@ function menu() {
 	if [ $domenu2 -eq 0 ]
 	then
 		vsmpkgs $file
-		if [ Z"$choice" = Z"root" ] && [ $domyvmware -eq 1 ]
+		if [ Z"$choice" = Z"root" ] && [ $domyvmware -eq 1 ] && [ $dovex -eq 1 ]
 		then
 			pkgs="$pkgs Desktop_End_User_Computing"
 		fi
