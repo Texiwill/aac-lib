@@ -440,7 +440,12 @@ function getouterrndir() {
 			fi
 			;;
 		VVD*)
-			rndir="vvd/${v}"
+			if [ ${v} -gt 200 ]
+			then
+				rndir="vvd/${v}"
+			else
+				rndir="vvd"
+			fi
 			;;
 		CART*|VIEWCLIENT*)
 			rndll='download3.vmware.com'

@@ -222,6 +222,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.5.5 - Fixed download of VVD issue 
+
 3.5.4 - Fixed download directory issue
 
 3.5.3 - More option issues corrected.
