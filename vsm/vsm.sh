@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.5.4"
+VERSIONID="3.5.5"
 
 # args: stmt error
 function colorecho() {
