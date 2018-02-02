@@ -41,42 +41,42 @@ $ /usr/local/bin/vsm.sh --help
 [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password
 password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] 
 [-V|--version] [-y] [--debug] [--repo repopath] [--save]
-	--dlg - download specific package by name or part of a name
-	-d|--dryrun - dryrun, do not download
-	-f|--force - force download of packages
-        --favorite - Download suite marked as favorite
-	-e|--exit - reset and exit
-	-h|--help - this help
-	-l|--latest - substitute latest for each package instead of listed
-		Only really useful for latest distribution at moment
-	-m|--myvmware - get missing suite and packages from My VMware
-		Cannot mark this suite information as a favorite
-	-mr - reset just My VMware information
-	-ns|--nostore - do not store credential data and remove if exists
-	-nc|--nocolor - do not output with color
-	-p|--password - specify password
-	-r|--reset - reset repos
-	-u|--username - specify username
-	-v|--vsmdir path - set VSM directory
-	                   saved to configuration file
-	-V|--version - version number
-	-y - do not ask to continue
-	--dts - include DriversTools in All-style downloads
-	        saved to configuration file
-	--nodts - do not include DriversTools in All-style downloads
-	          saved to configuration file
-	--oss - include OpenSource in All-style downloads
-	        saved to configuration file
-	--nooss - do not include OpenSource in All-style downloads
-	          saved to configuration file
-	--oem - include CustomIso in All-style downloads
-	        saved to configuration file
-	--nooem - do not include CustomIso in All-style downloads
-	          saved to configuration file
-	--debug - debug mode
-	--repo path - specify path of repo
-	              saved to configuration file
-	--save - save defaults to $HOME/.vsmrc
+    --dlg - download specific package by name or part of a name
+    -d|--dryrun - dryrun, do not download
+    -f|--force - force download of packages
+    --favorite - Download suite marked as favorite, works with -m/-mr option
+    -e|--exit - reset and exit
+    -h|--help - this help
+    -l|--latest - substitute latest for each package instead of listed
+    	Only really useful for latest distribution at moment
+    -m|--myvmware - get missing suite and packages from My VMware
+    	Cannot mark this suite information as a favorite
+    -mr - reset just My VMware information, implies -m
+    -ns|--nostore - do not store credential data and remove if exists
+    -nc|--nocolor - do not output with color
+    -p|--password - specify password
+    -r|--reset - reset repos
+    -u|--username - specify username
+    -v|--vsmdir path - set VSM directory
+                       saved to configuration file
+    -V|--version - version number
+    -y - do not ask to continue
+    --dts - include DriversTools in All-style downloads
+            saved to configuration file
+    --nodts - do not include DriversTools in All-style downloads
+              saved to configuration file
+    --oss - include OpenSource in All-style downloads
+            saved to configuration file
+    --nooss - do not include OpenSource in All-style downloads
+              saved to configuration file
+    --oem - include CustomIso in All-style downloads
+            saved to configuration file
+    --nooem - do not include CustomIso in All-style downloads
+              saved to configuration file
+    --debug - debug mode
+    --repo path - specify path of repo
+                  saved to configuration file
+    --save - save defaults to $HOME/.vsmrc
 
 	All-style downloads include: All, All_No_OpenSource, Minimum_Required
 	Requires packages:
@@ -222,6 +222,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.6.0 - -mr now implies -m, added Mark capability to -m, fixed wget not
+	using cookies all the time
+
 3.5.5 - Fixed download of VVD issue 
 
 3.5.4 - Fixed download directory issue
