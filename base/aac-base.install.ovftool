@@ -11,7 +11,7 @@
 ###
 . ./aac-base.install.vsm
 function ovftool_version() {
-	echo "1.0.1"
+	echo "1.1.0"
 }
 
 function ovftool() {
@@ -25,7 +25,7 @@ function ovftool() {
 
 	chmod +x /usr/local/bin/ov-import.sh
 
-	INSTALL="fuseiso"
+	INSTALL="fuseiso hiera"
 	DEVEL=""
 
 	# Find way to download direct
