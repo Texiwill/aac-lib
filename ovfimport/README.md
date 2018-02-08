@@ -27,6 +27,9 @@ tool do the work after some minor configuration.
 These tools read all the options for an OVA/OVF and allows settings to
 be specified for all of them as necessary.
 
+ov-import.sh makes extensive use of hiera and yaml files for configuration
+and dependency mapping. e.g. picking up global information.
+
 ### Description
 The govc-import.sh tool requires govc and json_reformat from the YAJL
 (Yet Another JSON Library) software package. Without which this script
@@ -49,9 +52,13 @@ export GOVC_RESOURCE_POOL='/Datacenter/host/Cluster/Resources'
 export GOVC_DATACENTER=DatacenterName
 ```
 
-We also read the $HOME/.ov-defaults, ./.ov-defaults, or the
+In v1, we also read the $HOME/.ov-defaults, ./.ov-defaults, or the
 .ov-defaults stored with the ov-import.sh script file for specific
 configuration options for the OVAs/OVFs to import.
+
+Now we use hiera and read the yaml files in $HOME/.ov-imports/ where there
+is a global.yaml for global items and a yaml file per OVF/OVA/ISO/ZIP
+to upload.
 
 Here is a sample .ov-defaults. These defaults represent some
 global settings for gateway, dns, netmask, vSwitch, and network. Each of
@@ -65,6 +72,9 @@ the import script will ask for it. If you use PASSWORD here, govc will
 ask for it on import. If the password is blank PASSWORD will also be
 used so govc can ask for it directly. There is also a richer ov-defaults
 included in this repository.
+
+During setup of ov-import.sh, this ov-defaults file is converted to the
+hiera format.
 
 ovtfool does not ask for passwords within the import. The govc tool does
 not handle vServices but the ovftool script does. See below for those
@@ -112,12 +122,14 @@ govc-import.sh [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]]
 
 or
 
-ov-import.sh [-y|--name Key-Name-to-use] [-p|--precheck] [-d|--dryrun] [-n|--nocleanup] [-h|--help] [ova/ovf to import]
+ov-import.sh [-y|--name Key-Name-to-use] [-p|--precheck] [-d|--dryrun] [-n|--nocleanup] [-h|--help] [-v1] [--setup] [ova/ovf to import]
 
 	-y|--name specifies the name part of the Key to use within the .ov-defaults file
 	-p|--precheck prechecks the OVA or OVF for missing options
 	-d|--dryrun runs all but the final import. This will create a file named filename.a.txt which contains the final import command
 	-n|--nocleanup is implied by --dryrun. The *.a.txt files are kept around as are any unpacked ZIP or mounted ISO images
+	-v1 specifies to use the original, non-hiera data file
+	--setup converts the non-hiera data file to the hiera format
 	-h|--help displays the help
 	ova/ovf/ZIP/iso to import is the last argument, allowing to specify a specfic file instead of all OVAs, OVFs, and ZIP files within the current directory. This is the only way to import from an ISO image.
 
@@ -156,6 +168,7 @@ Products and the results are as expected, working:
   * VMware vSphere Replication Server (VR) [OV]
   * VMware Big Data Extensions (BDE) [OV]
   * VMware vCenter Server Appliance (VCSA) [OV]
+  * VMware vRealize Suite LCM Appliance (vLCM) [OV]
 * And these unofficial OVA/OVFs:
   * <a href="http://www.virtuallyghetto.com/2016/11/esxi-6-5-virtual-appliance-is-now-available.html">William Lam's Nested ESXi Appliance</a> [OV]
 * And the following Third Party Products:
@@ -179,6 +192,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+2.0 Updated to make use of hiera
+
 1.8 Updated for latest VCSA
 
 1.7 Updated README

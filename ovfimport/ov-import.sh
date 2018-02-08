@@ -1,17 +1,50 @@
 #!/bin/bash
 #
-# Copyright (c) 2017-2018 AstroArch Consulting, Inc. All rights reserved
+# Copyright (c) 2017 AstroArch Consulting, Inc. All rights reserved
 #
-# Version 1.8
+VERSION="2.0"
 
+function setup_qry() {
+	m=$1
+	if [ $usev1 -eq 0 ]
+	then
+		echo "clientcert: $m" > t.yaml
+	fi
+}
+
+function oqry() {
+	m=$1
+	f=$2
+	#rc=`grep -i "${m}::${f}:" $defaults|cut -d: -f 4|sed 's/^[ \t]\+//'`
+	if [ $usev1 -eq 0 ]
+	then
+		rc=`hiera -c $defaults -y t.yaml $f 2>/dev/null`
+		if [ Z"$rc" = Z"nil" ]
+		then
+			rc=""
+		fi
+	else
+		rc=`grep -i " ${f}-${m}$" $defaults|awk '{print $1}'`
+	fi
+}
+
+rc=""
 precheck=0
 dryrun=0
 nocleanup=0
 ovaovf=""
+usev1=0
+dosetup=0
 while [[ $# -gt 0 ]]
 do
 	key="$1"
 	case $key in 
+		--setup)
+			dosetup=1
+			;;
+		-v1)
+			usev1=1
+			;;
 		-p|--precheck)
 			precheck=1
 			;;
@@ -27,15 +60,19 @@ do
 			shift;
 			;;
 		-h|--help)
-			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [-z name ] [ova/ovf file]"
-			echo "  -z specifies alternative name to use for lookups in $HOME/.ov-defaults"
+			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [-v1] [--setup] [-y name ] [ova/ovf file]"
+			echo "  -y specifies alternative name to use for lookups in $HOME/.ov-imports"
 			echo "  --dryrun implies --nocleanup"
+			echo "	-v1 implies do not use hiera"
+			echo "	--setup implies convert to hiera format"
 			exit;
 			;;
 		-*)
-			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [-z name] [ova/ovf file]"
-			echo "  -z specifies alternative name to use for lookups in $HOME/.ov-defaults"
+			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [-v1] [--setup] [-y name] [ova/ovf file]"
+			echo "  -y specifies alternative name to use for lookups in $HOME/.ov-imports"
 			echo "  --dryrun implies --nocleanup"
+			echo "	-v1 implies do not use hiera"
+			echo "	--setup implies convert to hiera format"
 			exit;
 			;;
 		*)
@@ -85,42 +122,93 @@ if [ $? != 0 ]
 then
 	echo "INFO: We need fusermount somewhere in your path for ISO images"
 fi
+hiera=`which hiera`
+if [ $? != 0 ]
+then
+	echo "ERROR: We need hiera somewhere in your path for OV Facts"
+	exit
+fi
 
 defdir=`dirname $0`
 defaults=""
-if [ -e $HOME/.ov-defaults ]
+olddef=0
+if [ -e $HOME/.ov-imports ] && [ $usev1 -eq 0 ]
 then
-	defaults="$HOME/.ov-defaults"
+	defaults=$HOME/.ov-imports/ov-defaults
+elif [ -e $defdir/.ov-imports ] && [ $usev1 -eq 0 ]
+then
+	defaults=$defdir/.ov-imports/ov-defaults
+elif [ -e .ov-imports ] && [ $usev1 -eq 0 ]
+then
+	defaults=`pwd`/.ov-imports/ov-defaults
 else
-	if [ -e $defdir/.ov-defaults ]
+	if [ -e $HOME/.ov-defaults ]
 	then
-		defaults="$defdir/.ov-defaults"
+		defaults="$HOME/.ov-defaults"
+		olddef=1
+		d=$HOME
 	else
-		defaults=".ov-defaults"
+		if [ -e $defdir/.ov-defaults ]
+		then
+			defaults="$defdir/.ov-defaults"
+			olddef=1
+			d=$defdir
+		elif [ -e .ov-defaults ]
+		then
+			defaults=".ov-defaults"
+			olddef=1
+			d=`pwd`
+		fi
 	fi
+fi
+if [ $olddef -eq 1 ] && [ $usev1 -eq 0 ]
+then
+	a=`grep -v \# $defaults | awk -F- '{print $NF}'| sort -u`
+	mkdir ${d}/.ov-imports 2>/dev/null
+	for x in $a; do echo '---' > ${d}/.ov-imports/${x}.yaml; grep -v \# $defaults|grep $x| sed "s/$x//"| sed 's/-$//' | awk '{printf "%s: %s\n",$2,$1}' >> ${d}/.ov-imports/${x}.yaml; done
+	cat << EOF >> ${d}/.ov-imports/ov-defaults
+---
+:backends:
+  - yaml
+:yaml:
+  :datadir: "${d}/.ov-imports/"
+:hierarchy:
+  - "%{clientcert}"
+  - "global"
+EOF
+	defaults=${d}/.ov-imports/ov-defaults
 fi
 if [ ! -e "$defaults" ]
 then
-	echo "We need a .ov-defaults file $HOME, the directory of the script, or the directory containing the OVA/OVFs to process"
+	echo "We need a .ov-imports directory and related hiera files in $HOME, the directory of the script, or the directory containing the OVA/OVFs to process"
+	exit
+fi
+
+if [ $dosetup -eq 1 ]
+then
+	echo "Setup Finished"
 	exit
 fi
 
 missing="";
-for x in domain netmask dns gw network vswitch ntp ceip syslog password ssh
-do
-	z=`grep -i " ${x}-global" $defaults|awk '{print $1}'`
-	eval g${x}=$z
-	if [ Z"$z" = Z"" ]
-	then
-		missing="$missing\t${x}-global\n"
-	fi
-done
-if [ Z"$missing" != Z"" ]
+if [ $usev1 -eq 1 ]
 then
-	echo "Missing these global definitions in $defaults"
-	echo -e $missing
+	for x in domain netmask dns gw network vswitch ntp ceip syslog password ssh
+	do
+		oqry global ${x}
+		z=$rc
+		eval g${x}=$z
+		if [ Z"$z" = Z"" ]
+		then
+			missing="$missing\tglobal::${x}\n"
+		fi
+	done
+	if [ Z"$missing" != Z"" ]
+	then
+		echo "Missing these global definitions in $defaults"
+		echo -e $missing
+	fi
 fi
-
 # if we specified single file and it exists then do not unzip
 dounzip=1
 domount=0
@@ -233,9 +321,15 @@ do
 		y=`echo $name|sed 's/ /_/g'`
 	fi
 
+	if [ $usev1 -eq 0 ]
+	then
+		setup_qry $y
+	fi
+
 	# override name from key/value pairs
 	# override y as well
-	yy=`grep -i " override-name-${y}$" $defaults|awk '{print $1}'`
+	oqry ${y} override-name 
+	yy=$rc
 	if [ Z"$yy" != Z"" ]
 	then
 		echo -e "Using Override Name $yy"
@@ -246,7 +340,8 @@ do
 	echo -e "Working on $name\n\tfrom file $x"
 
 	# Check to see if we can import
-	z=`grep -i " noimport-${y}$" $defaults|awk '{print $1}'`
+	oqry ${y} noimport
+	z=$rc
 	if [ Z"$z" != Z"" ]
 	then
 		echo "INFO: As requested, will not import $y."
@@ -255,7 +350,8 @@ do
 	
 	# check for allExtraConfig needed by Nested
 	allExtraConfig=""
-	z=`grep -i " allextraconfig-${y}$" $defaults|awk '{print $1}'`
+	oqry ${y} allextraconfig
+	z=$rc
 	if [ Z"$z" = Z"1" ]
 	then
 		allExtraConfig="--allowAllExtraConfig --X:enableHiddenProperties"
@@ -268,7 +364,8 @@ do
 
 	# determine where to stop the pre-check loop
 	dobreak=""
-	z=`grep -i " break-${y}$" $defaults|awk '{print $1}'`
+	oqry ${y} break
+	z=$rc
 	if [ Z"$z" != Z"" ]
 	then
 		dobreak=$z
@@ -278,12 +375,19 @@ do
 	missing=""
 	for xx in domain network vswitch ntp ssh ip netmask dns gw hostname ceip searchpath syslog
 	do
-		z=`grep -i " ${xx}-${y}$" $defaults|awk '{print $1}'`
+		oqry ${y} $xx
+		z=$rc
 		eval ${xx}=$z
-		if [ Z"$z" = Z"" ]
+		if [ $usev1 -eq 1 ]
 		then
-			#missing="$missing\tusing global for ${xx}-${y}\n"
-			eval ${xx}=\$g$xx
+			if [ Z"$z" = Z"" ]
+			then
+				#missing="$missing\tusing global for ${xx}-${y}\n"
+				if [ $usev1 -eq 0 ]
+				then
+					eval ${xx}=\$g$xx
+				fi
+			fi
 		fi
 		if [ Z"$xx" = "$dobreak" ]
 		then
@@ -300,7 +404,8 @@ do
 			do
 				
 				vet=${nn}${n}
-				z=`grep -i " ${vet}-${y}$" $defaults|awk '{print $1}'`
+				oqry ${y} ${vet}
+				z=$rc
 				eval ${vet}=$z
 			done
 		done
@@ -328,11 +433,12 @@ do
 		if [ $c -gt 1 ]
 		then
 			vet="network${c}"
-			z=`grep -i " ${vet}-${y}$" $defaults|awk '{print $1}'|sed 's/%20/ /g'`
+			oqry ${y} $vet
+			z=$rc
 			#eval ${vet}=$z
 			if [ Z"$z" = Z"" ]
 			then
-				missing="$missing\t${vet}-${y}\n"
+				missing="$missing\t${y}-${vet}\n"
 			fi
 			prop="$prop${myfs}--net:\"$n\"=\"$z\"";
 		else 
@@ -340,7 +446,8 @@ do
 		fi
 		((c+=1))
 	done
-	z=`grep -i " deployment-${y}$" $defaults|awk '{print $1}'`
+	oqry ${y} deployment
+	z=$rc
 	if [ Z"$z" != Z"" ]
 	then
 		prop="$prop${myfs}--deploymentOption=$z"
@@ -396,6 +503,9 @@ do
 			*password*)
 				getpass=1
 				;;
+			*Password*)
+				getpass=1
+				;;
 			*passwd*)
 				getpass=1
 				;;
@@ -409,7 +519,8 @@ do
 				dofind=1
 				;;
 		esac
-		z=`grep -i " ${xx}-${y}$" $defaults|awk '{print $1}'`
+		oqry ${y} $xx
+		z=$rc
 		if [ $dofind -eq 1 ]
 		then
 			if [ Z"$z" != Z"" ]
@@ -428,10 +539,11 @@ do
 		pass=""
 		if [ $getpass -eq 1 ]
 		then
-			pass=`grep -i " password-${y}$" $defaults|awk '{print $1}'`
+			oqry ${y} password
+			pass=$rc
 			if [ Z"$pass" = Z"" ]
 			then
-				if [ Z"$gpassword" != "" ]
+				if [ Z"$gpassword" != "" ] && [ $usev1 -eq 1 ]
 				then
 					pass=$gpassword
 				else
@@ -463,16 +575,16 @@ do
 		then
 			# if value for key is - then do not set
 			jg=""
-			missing="$missing\tNot Using ${xx}-${y}\n"
+			missing="$missing\tNot Using ${y}-${xx}\n"
 		elif [ Z"$z" != Z"" ]
 		then
 			# if value for key is set then override
 			jg=$z
-			missing="$missing\tOverride w/Specific ${xx}-${y}\n"
+			missing="$missing\tOverride w/Specific ${y}-${xx}\n"
 		else
 			if [ Z"$jg" = Z"" ]
 			then
-				missing="$missing\tMissing ${xx}-${y}\n"
+				missing="$missing\tMissing ${y}-${xx}\n"
 			fi
 		fi
 		
@@ -501,7 +613,8 @@ do
 	fi
 	#eprop=`echo "--name=\"$name\" $prop"|sed 's/%20/ /g'|sed 's/(/\\\\(/'|sed 's/)/\\\\)/'`
 	target=$GOVC_RESOURCE_POOL
-	tgt=`grep -i " target-${y}$" $defaults|awk '{print $1}'`
+	oqry ${y} target
+	tgt=$rc
 	if [ Z"$tgt" != Z"" ]
 	then
 		target=$tgt
@@ -547,7 +660,7 @@ then
 	fi
 	if [ $dryrun -eq 0 ]
 	then
-		rm *.a.txt a.txt 2>/dev/null
+		rm *.a.txt a.txt t.yaml 2>/dev/null
 		rm -rf $ifiles $xfiles
 	fi
 fi
