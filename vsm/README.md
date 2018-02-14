@@ -222,6 +222,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.7.0 - CustomIso (OEM), and DriverTools can now be downloaded for all
+My VMware packages where they exist.
+
 3.6.0 - -mr now implies -m, added Mark capability to -m, fixed wget not
 	using cookies all the time
 
