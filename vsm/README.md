@@ -39,7 +39,7 @@ $ /usr/local/bin/vsm.sh --help
 /usr/local/bin/vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] 
 [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore] 
 [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password
-password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] 
+password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] 
 [-V|--version] [-y] [--debug] [--repo repopath] [--save]
     --dlg - download specific package by name or part of a name
     -d|--dryrun - dryrun, do not download
@@ -55,6 +55,8 @@ password] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory]
     -ns|--nostore - do not store credential data and remove if exists
     -nc|--nocolor - do not output with color
     -p|--password - specify password
+    --progress - show progress of downloads (only makes sense with -q)
+    -q|--quiet - be less verbose
     -r|--reset - reset repos
     -u|--username - specify username
     -v|--vsmdir path - set VSM directory
@@ -222,6 +224,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.7.1 - Minor bug fix when encountering My VMware package that contains
+VSM packages, added quiet and progress flags, and a slight code reorganization.
+
 3.7.0 - CustomIso (OEM), and DriverTools can now be downloaded for all
 My VMware packages where they exist.
 

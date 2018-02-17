@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.7.0"
+VERSIONID="3.7.1"
 
 # args: stmt error
 function colorecho() {
@@ -75,8 +75,22 @@ function mywget() {
 		# getting pre-url
 		lurl=`wget $_PROGRESS_OPT --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' -O - $hr 2>&1 | grep Location | awk '{print $2}'`
 	else
-		wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' -O $ou $hr
-		err=$?
+		if [ $doquiet -eq 1 ]
+		then
+			if [ $doprogress -eq 1 ]
+			then
+				echo -n "+"
+			fi
+			wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' -O $ou $hr >& /dev/null
+			err=$?
+			if [ $doprogress -eq 1 ]
+			then
+				echo -n "+"
+			fi
+		else
+			wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' -O $ou $hr
+			err=$?
+		fi
 	fi
 	wgeterror $err
 }
@@ -1020,6 +1034,8 @@ function save_vsmrc() {
 		echo "myoem=$myoem" >> $HOME/.vsmrc
 		echo "mydts=$mydts" >> $HOME/.vsmrc
 		echo "myoss=$myoss" >> $HOME/.vsmrc
+		echo "doquiet=$doquiet" >> $HOME/.vsmrc
+		echo "myprogress=$doprogress" >> $HOME/.vsmrc
 	fi
 }
 
@@ -1070,6 +1086,7 @@ function menu() {
 	debugecho "MENU: $file $domenu2 $dlg"
 	if [ $domenu2 -eq 0 ]
 	then
+		doprogress=0
 		vsmpkgs $file
 		if [ Z"$choice" = Z"root" ] && [ $domyvmware -eq 1 ] && [ $dovex -eq 1 ]
 		then
@@ -1123,10 +1140,15 @@ function menu() {
 	then
 		addpath
 	fi
+	if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
+	then
+		doprogress=1
+	fi
 }
 
 function menu2() {
 	all=""
+	doprogress=0
 	debugecho "MENU2: $1"
 	if [ Z"$2" = Z"OpenSource" ]
 	then
@@ -1178,6 +1200,10 @@ function menu2() {
 	if [ $choice != "Back" ]
 	then
 		addpath
+	fi
+	if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
+	then
+		doprogress=1
 	fi
 }
 
@@ -1333,10 +1359,20 @@ function getvsm() {
 							diddownload=1
 						fi
 					else
-						colorecho "No Redirect Error Getting $name" 1
+						if [ $doprogress -eq 1 ]
+						then
+							echo -n "E"
+						else
+							colorecho "No Redirect Error Getting $name" 1
+						fi
 					fi
 				else
-						colorecho "Blocked Redirect Error Getting $name" 1
+						if [ $doprogress -eq 1 ]
+						then
+							echo -n "B"
+						else
+							colorecho "Blocked Redirect Error Getting $name" 1
+						fi
 				fi
 			else 
 				echo "Download $name to `pwd`"
@@ -1353,7 +1389,7 @@ function version() {
 }
 
 function usage() {
-	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
+	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
 	echo "	--dlg - download specific package by name or part of name"
 	echo "	-d|--dryrun - dryrun, do not download"
 	echo "	-f|--force - force download of packages"
@@ -1368,6 +1404,7 @@ function usage() {
 	echo "	-nc|--nocolor - do not output with color"
 	echo "	-p|--password - specify password"
 	echo "	--progress - show progress for OEM, OSS, and DriverTools"
+	echo "	-q|--quiet - be less verbose"
 	echo "	-r|--reset - reset repos"
 	echo "	-u|--username - specify username"
 	echo "	-v|--vsmdir path - set VSM directory"
@@ -1474,6 +1511,8 @@ missname=""
 mversions=""
 midprod=1
 doprogress=0
+myprogress=0
+doquiet=0
 # onscreen colors
 RED=`tput setaf 1`
 PURPLE=`tput setaf 5`
@@ -1592,8 +1631,11 @@ do
 			remyvmware=1
 			domyvmware=1
 			;;
+		-q|--quiet)
+			doquiet=1
+			;;
 		--progress)
-			doprogress=1
+			myprogress=1
 			;;
 		--favorite)
 			if [ Z"$favorite" != Z"" ]
@@ -1610,6 +1652,11 @@ do
 	esac
 	shift
 done
+
+if [ $dodebug -eq 1 ]
+then
+	doquiet=0
+fi
 
 # remote trailing slash
 repo=$(echo $repo | sed 's:/*$::')
@@ -1740,8 +1787,14 @@ if [ $doreset -eq 1 ]
 then
 	debugecho "DEBUG: Reset Request"
 	# Get index and subsequent data
-	wget $_PROGRESS_OPT -rxl 1 --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/index.xhtml
-	err=$?
+	if [ $doquiet -wq 1 ]
+	then
+		wget $_PROGRESS_OPT -rxl 1 --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/index.xhtml >& /dev/null
+		err=$?
+	else
+		wget $_PROGRESS_OPT -rxl 1 --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/index.xhtml
+		err=$?
+	fi
 	wgeterror $err
 	if [ $err -ne 0 ]
 	then
@@ -1865,6 +1918,10 @@ EOF
 	# now we run through all the prevchoices
 	favorites=`sort -uV $tmp | grep -v dlg_`
 	debugecho "DEBUG: DLG => $favorites"
+fi
+if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
+then
+	doprogress=1
 fi
 
 while [ 1 ]
@@ -1999,8 +2056,15 @@ do
 						assomissing=""
 						wouldassomiss=0
 						# get associated packages
+						if [ $myfav -eq 0 ]
+						then
+							doprogress=0
+						fi
 						getasso
-
+						if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
+						then
+							doprogress=1
+						fi
 						if [ $wouldassomiss -eq 1 ] && [ $domyvmware -eq 1 ]
 						then
 							debugecho "Could get $choice from My VMware"
@@ -2136,6 +2200,10 @@ do
 							fi
 							while [ $x -le $cnt ]
 							do
+								if [ $doprogress -eq 1 ]
+								then
+									echo -n "."
+								fi
 								getvsmdata $currchoice $x
 								# only do the selected
 								doit=0
@@ -2173,6 +2241,10 @@ do
 								# out to dev null seems to be required
 								$((x++)) 2> /dev/null
 							done
+							if [ $doprogress -eq 1 ]
+							then
+								echo "!"
+							fi
 							if [ $xignore -eq 0 ]
 							then
 								if [ $diddownload -eq 1 ]
@@ -2212,7 +2284,7 @@ do
 									then
 										vmwaremenu2 $o
 									else
-										if [ -e _dlg_${o}.xhtml ]
+										if [ -e dlg_${o}.xhtml ]
 										then
 											domts=1
 										fi
