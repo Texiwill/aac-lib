@@ -192,6 +192,9 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+2.1 Fixed hiera bug with hyphen as the argument. Needed single quotes
+around it. The --setup configures this.
+
 2.0 Updated to make use of hiera
 
 1.8 Updated for latest VCSA

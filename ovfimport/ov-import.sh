@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Copyright (c) 2017 AstroArch Consulting, Inc. All rights reserved
+# Copyright (c) 2017-2018 AstroArch Consulting, Inc. All rights reserved
 #
-VERSION="2.0"
+VERSION="2.1"
 
 function setup_qry() {
 	m=$1
@@ -18,7 +18,9 @@ function oqry() {
 	#rc=`grep -i "${m}::${f}:" $defaults|cut -d: -f 4|sed 's/^[ \t]\+//'`
 	if [ $usev1 -eq 0 ]
 	then
+		echo -n "hiera -c $defaults -y t.yaml $f 2>/dev/null"
 		rc=`hiera -c $defaults -y t.yaml $f 2>/dev/null`
+		echo " ... $rc"
 		if [ Z"$rc" = Z"nil" ]
 		then
 			rc=""
@@ -165,7 +167,7 @@ if [ $olddef -eq 1 ] && [ $usev1 -eq 0 ]
 then
 	a=`grep -v \# $defaults | awk -F- '{print $NF}'| sort -u`
 	mkdir ${d}/.ov-imports 2>/dev/null
-	for x in $a; do echo '---' > ${d}/.ov-imports/${x}.yaml; grep -v \# $defaults|grep $x| sed "s/$x//"| sed 's/-$//' | awk '{printf "%s: %s\n",$2,$1}' >> ${d}/.ov-imports/${x}.yaml; done
+	for x in $a; do echo '---' > ${d}/.ov-imports/${x}.yaml; grep -v \# $defaults|grep $x| sed "s/$x//"| sed 's/-$//' | awk '{printf "%s: %s\n",$2,$1}'| sed "s/: -$/: '-'/g" >> ${d}/.ov-imports/${x}.yaml; done
 	cat << EOF >> ${d}/.ov-imports/ov-defaults
 ---
 :backends:
@@ -556,7 +558,7 @@ do
 					fi
 				fi
 			fi
-			jg="'$pass'"
+			jg="$pass"
 		fi
 		shared=""
 		if [ $getshared -eq 1 ]
