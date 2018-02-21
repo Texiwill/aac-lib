@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.7.1"
+VERSIONID="3.7.2"
 
 # args: stmt error
 function colorecho() {
@@ -626,6 +626,9 @@ function getouterrndir() {
 		VIDM_ONPREM*)
 			rntmp=`echo $lchoice | sed 's/[0-9]//g'`
 			rndir="${rntmp}${pver}"
+			;;
+		VRNI*)
+			rndir="vrni"
 			;;
 		VRLI*)
 			if [ $v -gt 450 ]
@@ -1458,7 +1461,7 @@ checkdep bc
 checkdep jq
 
 wget --help | grep -q '\--show-progress' && \
-  _PROGRESS_OPT="-q --show-progress" || _PROGRESS_OPT=""
+  _PROGRESS_OPT="-q --show-progress" || _PROGRESS_OPT="--progress=bar:force"
 
 if [ $needdep -eq 1 ]
 then
@@ -1787,7 +1790,7 @@ if [ $doreset -eq 1 ]
 then
 	debugecho "DEBUG: Reset Request"
 	# Get index and subsequent data
-	if [ $doquiet -wq 1 ]
+	if [ $doquiet -eq 1 ]
 	then
 		wget $_PROGRESS_OPT -rxl 1 --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/index.xhtml >& /dev/null
 		err=$?
