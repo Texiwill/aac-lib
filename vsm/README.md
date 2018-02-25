@@ -224,6 +224,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.7.3 - Improved progress to include download progress
+
 3.7.2 - Minor bug fix to allow proper download of VRNI
 
 3.7.1 - Minor bug fix when encountering My VMware package that contains

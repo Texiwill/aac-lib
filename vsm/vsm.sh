@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.7.2"
+VERSIONID="3.7.3"
 
 # args: stmt error
 function colorecho() {
@@ -35,6 +35,7 @@ function debugecho() {
 		echo ${1}
 	fi
 }
+
 function wgeterror() {
 	err=$1
 	debugecho "wget: $err"
@@ -70,26 +71,33 @@ function mywget() {
 	ou=$1
 	hr=$2
 	hd=$3
-	if [ Z"$ou" = "-" ]
+	if [ Z"$1" != Z"-rxl 1" ]
+	then
+		ou="-O $1"
+	fi
+	if [ Z"$1" = "-" ]
 	then
 		# getting pre-url
 		lurl=`wget $_PROGRESS_OPT --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' -O - $hr 2>&1 | grep Location | awk '{print $2}'`
+		err=${PIPESTATUS[0]}
 	else
 		if [ $doquiet -eq 1 ]
 		then
 			if [ $doprogress -eq 1 ]
 			then
 				echo -n "+"
+				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | tr '\342\200\230\231' ' ' | sed '/^--/d' | sed '/Length:/d' |sed '/Saving/d'|sed '/HTTP/d' | sed '/Reusing/d' | tail -f -n +4
+			else
+				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr >& /dev/null
 			fi
-			wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' -O $ou $hr >& /dev/null
-			err=$?
+			err=${PIPESTATUS[0]}
 			if [ $doprogress -eq 1 ]
 			then
 				echo -n "+"
 			fi
 		else
-			wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' -O $ou $hr
-			err=$?
+			wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | tr '\342\200\230\231' ' ' | sed '/^--/d' | sed '/Length:/d' |sed '/Saving/d'|sed '/HTTP/d' | sed '/Reusing/d' | tail -f -n +6
+			err=${PIPESTATUS[0]}
 		fi
 	fi
 	wgeterror $err
@@ -1392,7 +1400,7 @@ function version() {
 }
 
 function usage() {
-	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
+	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
 	echo "	--dlg - download specific package by name or part of name"
 	echo "	-d|--dryrun - dryrun, do not download"
 	echo "	-f|--force - force download of packages"
@@ -1403,6 +1411,7 @@ function usage() {
 	echo "		Only really useful for latest distribution at moment"
 	echo "	-m|--myvmware - get missing suite and packages from My VMware"
 	echo "	-mr - reset just the My VMware information, implies -m"
+	echo "	-nq|--noquiet - disable quiet mode"
 	echo "	-ns|--nostore - do not store credential data and remove if exists"
 	echo "	-nc|--nocolor - do not output with color"
 	echo "	-p|--password - specify password"
@@ -1637,6 +1646,9 @@ do
 		-q|--quiet)
 			doquiet=1
 			;;
+		-nq|--noquiet)
+			doquiet=0
+			;;
 		--progress)
 			myprogress=1
 			;;
@@ -1785,20 +1797,25 @@ if [ ! -e ${cdir}/depot.vmware.com ]
 then
 	doreset=1
 fi
+if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
+then
+	doprogress=1
+fi
 
 if [ $doreset -eq 1 ]
 then
 	debugecho "DEBUG: Reset Request"
 	# Get index and subsequent data
-	if [ $doquiet -eq 1 ]
-	then
-		wget $_PROGRESS_OPT -rxl 1 --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/index.xhtml >& /dev/null
-		err=$?
-	else
-		wget $_PROGRESS_OPT -rxl 1 --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/index.xhtml
-		err=$?
-	fi
-	wgeterror $err
+	mywget "-rxl 1" https://depot.vmware.com/PROD/index.xhtml
+	#if [ $doquiet -eq 1 ]
+	#then
+	#	wget $_PROGRESS_OPT -rxl 1 --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/index.xhtml >& /dev/null
+	#	err=$?
+	#else
+	#	wget $_PROGRESS_OPT -rxl 1 --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/index.xhtml
+	#	err=$?
+	#fi
+	#wgeterror $err
 	if [ $err -ne 0 ]
 	then
 		exit $err
@@ -1921,10 +1938,6 @@ EOF
 	# now we run through all the prevchoices
 	favorites=`sort -uV $tmp | grep -v dlg_`
 	debugecho "DEBUG: DLG => $favorites"
-fi
-if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
-then
-	doprogress=1
 fi
 
 while [ 1 ]
