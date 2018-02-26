@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.7.3"
+VERSIONID="3.7.4"
 
 # args: stmt error
 function colorecho() {
@@ -96,8 +96,10 @@ function mywget() {
 				echo -n "+"
 			fi
 		else
-			wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | tr '\342\200\230\231' ' ' | sed '/^--/d' | sed '/Length:/d' |sed '/Saving/d'|sed '/HTTP/d' | sed '/Reusing/d' | tail -f -n +6
+			echo -n "+"
+			wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | tr '\342\200\230\231' ' ' | sed '/^--/d' | sed '/Length:/d' |sed '/Saving/d'|sed '/HTTP/d' | sed '/Reusing/d' | tail -f -n +4
 			err=${PIPESTATUS[0]}
+			echo -n "+"
 		fi
 	fi
 	wgeterror $err
@@ -729,7 +731,15 @@ function getinnerrndir() {
 						rndir="view"
 						;;
 					euc-unified-access-*)
-						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/' | sed 's/\.//'`
+						yr=`echo $name | sed 's/.*-\([0-9]\.[0-9]\.[0-9]\).*$/\1/'|sed 's/\.//g'`
+						mo=`echo $name | sed 's/.*-[0-9]\.[0-9]\.\([0-9]\).*$/\1/'`
+						debugecho "yr => $yr; mo => $mo"
+						if [ $mo -eq 0 ] || [ $yr -lt 321 ]
+						then
+							rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/' | sed 's/\.//g'`
+						else
+							rntmp=$yr
+						fi
 						rndir="UAG_${rntmp}"
 						;;
 				esac
@@ -747,7 +757,15 @@ function getinnerrndir() {
 						rndir="view"
 						;;
 					euc-unified-access-*)
-						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/' | sed 's/\.//'`
+						yr=`echo $name | sed 's/.*-\([0-9]\.[0-9]\.[0-9]\).*$/\1/'|sed 's/\.//g'`
+						mo=`echo $name | sed 's/.*-[0-9]\.[0-9]\.\([0-9]\).*$/\1/'`
+						debugecho "yr => $yr; mo => $mo"
+						if [ $mo -eq 0 ] || [ $yr -lt 321 ]
+						then
+							rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/' | sed 's/\.//g'`
+						else
+							rntmp=$yr
+						fi
 						rndir="UAG_${rntmp}"
 						;;
 				esac
@@ -1797,6 +1815,13 @@ if [ ! -e ${cdir}/depot.vmware.com ]
 then
 	doreset=1
 fi
+if [ $dovex -eq 1 ]
+then
+	colorecho "###" 1
+	colorecho "# Entering vExpert Mode" 1
+	colorecho "###" 1
+fi
+
 if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
 then
 	doprogress=1
@@ -1859,13 +1884,6 @@ prevchoice=""
 favorites=""
 dlg=0
 pkgs=""
-
-if [ $dovex -eq 1 ]
-then
-	colorecho "###" 1
-	colorecho "# Entering vExpert Mode" 1
-	colorecho "###" 1
-fi
 
 if [ $dodlg -gt 0 ]
 then
