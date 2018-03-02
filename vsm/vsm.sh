@@ -1103,7 +1103,11 @@ function vsmpkgs() {
 		fi
 		if [ $choice = "Datacenter_Cloud_Infrastructure" ]
 		then
-			pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center Datacenter_Cloud_Infrastructure_VMware_vCloud_Director"
+			pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center"
+			if [ $dovex -eq 1 ]
+			then
+				pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_vCloud_Director"
+			fi
 			pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 			mversions=''
 		elif [ $choice = "Infrastructure_Operations_Management" ]
