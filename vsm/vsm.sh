@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.7.4"
+VERSIONID="3.7.5"
 
 # args: stmt error
 function colorecho() {
@@ -34,6 +34,29 @@ function debugecho() {
 	then
 		echo ${1}
 	fi
+}
+
+progressfilt ()
+{
+	local flag=false c count cr=$'\r' nl=$'\n'
+	while IFS='' read -d '' -rn 1 c
+	do
+		if $flag
+		then
+			printf '%c' "$c" | tr '\342\200\230\231' ' '
+		else
+			if [[ $c != $cr && $c != $nl ]]
+			then
+				count=0
+			else
+				((count++))
+				if ((count > 1))
+				then
+					flag=true
+				fi
+			fi
+		fi
+	done
 }
 
 function wgeterror() {
@@ -86,7 +109,7 @@ function mywget() {
 			if [ $doprogress -eq 1 ]
 			then
 				echo -n "+"
-				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | tr '\342\200\230\231' ' ' | sed '/^--/d' | sed '/Length:/d' |sed '/Saving/d'|sed '/HTTP/d' | sed '/Reusing/d' | tail -f -n +4
+				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt 
 			else
 				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr >& /dev/null
 			fi
@@ -96,10 +119,8 @@ function mywget() {
 				echo -n "+"
 			fi
 		else
-			echo -n "+"
-			wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | tr '\342\200\230\231' ' ' | sed '/^--/d' | sed '/Length:/d' |sed '/Saving/d'|sed '/HTTP/d' | sed '/Reusing/d' | tail -f -n +4
+			wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt
 			err=${PIPESTATUS[0]}
-			echo -n "+"
 		fi
 	fi
 	wgeterror $err
@@ -250,30 +271,66 @@ function getoutervmware() {
 			mywget ${rcdir}/${missname}.xhtml ${myvmware_root}${myvmware}
 		fi
 		mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/+/_/g'`
+		#mc=`echo $mversions | wc -w`
+		#debugecho "mc => $mc"
 		f=`basename $mchoice`
 		pkgs=""
-		if [ Z"$mversions" != Z"" ]
-		then
-			for x in $mversions
-			do
-				echo $x | egrep -iv "_UWP|_Android|_IOS|Windows_Store" >& /dev/null
+		#if [ $mc -eq 1 ]
+		#then
+		#	choice="${f}_${mversions}"
+		#	addpath
+		#	vsmpkgs "$choice.xhtml"
+		#	pc=`echo $pkgs | wc -w`
+		#	if [ $pc -eq 1 ]
+		#	then
+		#		mversions=""
+		#		choice=$pkgs
+		#		stripcolor
+		#		vmwaremenu2
+		#		pkgs=""
+		#		getpath
+		#		dlg=0
+		#		f=`dirname $mchoice`
+		#		f=`basename $f`
+		#		# now we have the dlg file!
+		#		tver=`grep option _dlg_${choice}.xhtml | grep downloadGroupId | cut -d\" -f2`
+		#		for x in $tver
+		#		do
+		#			echo $x | egrep -iv "_UWP|_Android|_IOS|Windows_Store" >& /dev/null
+		#			if [ $? -eq 0 ]
+		#			then
+		#				#a=`echo ${f}_${x} | sed "s/_\(.\)/_\u\1/g" | sed "s/^\(.\)/\u\1/g"`
+		#				pkgs="$pkgs ${f}_${x}"
+		#			fi
+		#		done
+		#		missing=`echo $tver | sed 's/ /|/g'`
+		#	fi
+		#	getpath
+		#else
+		#	pkgs=""
+			if [ Z"$mversions" != Z"" ]
+			then
+				for x in $mversions
+				do
+					echo $x | egrep -iv "_UWP|_Android|_IOS|Windows_Store" >& /dev/null
+					if [ $? -eq 0 ]
+					then
+						#a=`echo ${f}_${x} | sed "s/_\(.\)/_\u\1/g" | sed "s/^\(.\)/\u\1/g"`
+						pkgs="$pkgs ${f}_${x}"
+					fi
+				done
+			else
+				grep 'class="midProductColumn"' $rcdir/${missname}.xhtml >& /dev/null
 				if [ $? -eq 0 ]
 				then
-					#a=`echo ${f}_${x} | sed "s/_\(.\)/_\u\1/g" | sed "s/^\(.\)/\u\1/g"`
-					pkgs="$pkgs ${f}_${x}"
+					if [ Z"$usenurl" = Z"" ]
+					then
+						usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | grep -v OSS | cut -d\" -f 4`
+					fi
+					midprod=1
 				fi
-			done
-		else
-			grep 'class="midProductColumn"' $rcdir/${missname}.xhtml >& /dev/null
-			if [ $? -eq 0 ]
-			then
-				if [ Z"$usenurl" = Z"" ]
-				then
-					usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | grep -v OSS | cut -d\" -f 4`
-				fi
-				midprod=1
 			fi
-		fi
+		#fi
 	fi
 }
 
@@ -326,7 +383,7 @@ function getinnervmware() {
 			wend="section"
 		fi
 		mv=`echo $mversions | sed 's/ /|/g'|sed 's/_/ /g'`
-		debugecho "wend => $wend mv => $mv"
+		debugecho "what => $what wend => $wend mv => $mv"
 		if [ $dolatest -eq 1 ]
 		then
 			# finds what is on filesystem there now including latest
@@ -516,6 +573,12 @@ function getouterrndir() {
 			else
 				rndir="nsx-V-610"
 			fi
+			;;
+		VSPP_VCD*)
+			rndir="vcd"
+			;;
+		CX*)
+			rndir="vcandr"
 			;;
 		VIO*)
 			if [ $v -ge 400 ]
@@ -717,6 +780,23 @@ function getinnerrndir() {
 			debugecho "DEBUG: rndir => $rndir"
 		fi
 		case "$dnlike" in
+			VSPP_VCD*)
+				v=`echo $name | sed 's/\.bin//'|awk -F- '{print $NF}'`
+				case $v in
+					7034009)
+						rndir="vcd/9002"
+						;;
+					6883868)
+						rndir="vcd81011"
+						;;
+					5515092)
+						rndir="vcd82002"
+						;;
+					3880025)
+						rndir="vcd81001"
+						;;
+				esac
+				;;
 			VIDM*)
 				case "$name" in
 					clients*)
@@ -1003,6 +1083,7 @@ function vsmpkgs() {
 		# Fusion is part of Horizon and has an issue
 		#  Desktop_End_User_Computing_VMware_Fusion
 		##
+		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 	else
 		if [ $dlg -gt 0 ]
 		then
@@ -1022,7 +1103,8 @@ function vsmpkgs() {
 		fi
 		if [ $choice = "Datacenter_Cloud_Infrastructure" ]
 		then
-			pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center"
+			pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center Datacenter_Cloud_Infrastructure_VMware_vCloud_Director"
+			pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 			mversions=''
 		elif [ $choice = "Infrastructure_Operations_Management" ]
 		then
@@ -1030,6 +1112,7 @@ function vsmpkgs() {
 			then
 				pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack"
 				# Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager
+				pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 			fi
 			mversions=''
 		fi
@@ -1130,9 +1213,9 @@ function menu() {
 			mark="Mark"
 			dlg=2
 			if [ Z"$prevchoice" = Z"" ]
-                	then
-                        	prevchoice=$choice
-                	fi
+			then
+				prevchoice=$choice
+			fi
 		fi
 	fi
 	export COLUMNS=20

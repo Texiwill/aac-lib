@@ -224,6 +224,9 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.7.5 - Fix to progress bars once more, should be final form. Added another
+suite and fixed more broken due to new version downloads.
+
 3.7.4 - Fixed missing progress when -nq specified
 
 3.7.3 - Improved progress to include download progress
