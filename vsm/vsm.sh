@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.7.6"
+VERSIONID="3.7.7"
 
 # args: stmt error
 function colorecho() {
@@ -783,6 +783,9 @@ function getinnerrndir() {
 			VSPP_VCD*)
 				v=`echo $name | sed 's/\.bin//'|awk -F- '{print $NF}'`
 				case $v in
+					7554058)
+						rndir="vcd/9002"
+						;;
 					7034009)
 						rndir="vcd/9002"
 						;;
