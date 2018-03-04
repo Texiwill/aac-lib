@@ -224,6 +224,11 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.7.6 - Changes to how .vsmrc is processed to support Docker. .vsmrc can 
+now be in $HOME, Repo Dir, or VSM XML Dir (/tmp/vsm). If the .vsmrc is
+in any directory besides the default or $HOME you will need to specify
+the --repo or -v|--vsmdir options and order is important.
+
 3.7.5 - Fix to progress bars once more, should be final form. Added another
 suite and fixed more broken due to new version downloads.
 

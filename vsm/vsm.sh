@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.7.5"
+VERSIONID="3.7.6"
 
 # args: stmt error
 function colorecho() {
@@ -1124,9 +1124,30 @@ function vsmpkgs() {
 	debugecho "DEBUG vsmpkgs: $pkgs"
 }
 
+function load_vsmrc() {
+	if [ -e $HOME/.vsmrc ]
+	then
+		vsmrc="$HOME/.vsmrc"
+		. $HOME/.vsmrc
+	elif [ -e $repo/.vsmrc ]
+	then
+		vsmrc="$repo/.vsmrc"
+		. $repo/.vsmrc
+	elif [ -e $cdir/.vsmrc ]
+	then
+		vsmrc="$cdir/.vsmrc"
+		. $cdir/.vsmrc
+	fi
+	# if we already use .vsmrc then continue to do so
+	if [ Z"$repo" != Z"" ]
+	then
+		dosave=1
+	fi
+}
+
 function save_vsmrc() {
-	colorecho "Saving to $HOME/.vsmrc"
-	echo -n '' > $HOME/.vsmrc
+	colorecho "Saving to $vsmrc"
+	echo -n '' > $vsmrc
 	if [ $domyvmware -eq 1 ] && [ Z"$mchoice" != Z"" ]
 	then
 		if [ ! -e ${rcdir}/${favorite}.xhtml ]
@@ -1136,22 +1157,24 @@ function save_vsmrc() {
 	fi
 	if [ Z"$mchoice" = Z"root" ]
 	then
-		echo "mfchoice='$mfchoice'" >> $HOME/.vsmrc
-		echo "myfvmware='$myfvmware'" >> $HOME/.vsmrc
+		echo "mfchoice='$mfchoice'" >> $vsmrc
+		echo "myfvmware='$myfvmware'" >> $vsmrc
 	else
-		echo "mfchoice='$mchoice'" >> $HOME/.vsmrc
-		echo "myfvmware='$myvmware'" >> $HOME/.vsmrc
+		echo "mfchoice='$mchoice'" >> $vsmrc
+		echo "myfvmware='$myvmware'" >> $vsmrc
 	fi
-	echo "favorite='$favorite'" >> $HOME/.vsmrc
+	echo "favorite='$favorite'" >> $vsmrc
 	if [ $dosave -eq 1 ]
 	then
-		echo "repo='$repo'" >> $HOME/.vsmrc
-		echo "cdir='$cdir'" >> $HOME/.vsmrc
-		echo "myoem=$myoem" >> $HOME/.vsmrc
-		echo "mydts=$mydts" >> $HOME/.vsmrc
-		echo "myoss=$myoss" >> $HOME/.vsmrc
-		echo "doquiet=$doquiet" >> $HOME/.vsmrc
-		echo "myprogress=$doprogress" >> $HOME/.vsmrc
+		echo "repo='$repo'" >> $vsmrc
+		echo "cdir='$cdir'" >> $vsmrc
+		echo "myoem=$myoem" >> $vsmrc
+		echo "mydts=$mydts" >> $vsmrc
+		echo "myoss=$myoss" >> $vsmrc
+		echo "myquiet=$doquiet" >> $vsmrc
+		echo "myprogress=$doprogress" >> $vsmrc
+		echo "dovex=$dovex" >> $vsmrc
+		echo "domyvmware=$domyvmware" >> $vsmrc
 	fi
 }
 
@@ -1603,8 +1626,10 @@ remyvmware=0
 myyes=0
 myfav=0
 myinnervm=0
+myquiet=0
 repo="/tmp/vsm"
 cdir="/tmp/vsm"
+vsmrc=""
 mypkg=""
 mydlg=""
 dodlg=0
@@ -1648,15 +1673,7 @@ then
 fi
 
 # import values from .vsmrc
-if [ -e $HOME/.vsmrc ]
-then
-	. $HOME/.vsmrc
-	# if we already use .vsmrc then continue to do so
-	if [ Z"$repo" != Z"" ]
-	then
-		dosave=1
-	fi
-fi
+load_vsmrc
 
 while [[ $# -gt 0 ]]
 do
@@ -1700,6 +1717,10 @@ do
 			;;
 		--repo)
 			repo=$2
+			if [ Z"$vsmrc" = Z"" ]
+			then
+				load_vsmrc
+			fi
 			shift
 			;;
 		--dlg)
@@ -1715,6 +1736,10 @@ do
 			;;
 		-v|--vsmdir)
 			cdir=$2
+			if [ Z"$vsmrc" = Z"" ]
+			then
+				load_vsmrc
+			fi
 			shift
 			;;
 		--save)
@@ -1776,6 +1801,11 @@ done
 if [ $dodebug -eq 1 ]
 then
 	doquiet=0
+fi
+
+if [ $myquiet -eq 1 ]
+then
+	doquiet=1
 fi
 
 # remote trailing slash
