@@ -224,7 +224,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
-3.7.8 - Bug fix when missing .vsmrc, fixes to progress
+3.7.8 - Bug fix when missing .vsmrc, fixes to progress. My thanks to Alex
+Lopez (@ivirtualex) for finding the bug.
 
 3.7.7 - slight change to versioning of a package
 
