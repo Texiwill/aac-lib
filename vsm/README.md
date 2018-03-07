@@ -49,6 +49,7 @@ password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--
     -h|--help - this help
     -l|--latest - substitute latest for each package instead of listed
     	Only really useful for latest distribution at moment
+	Not as useful as it once was.
     -m|--myvmware - get missing suite and packages from My VMware
     	Cannot mark this suite information as a favorite
     -mr - reset just My VMware information, implies -m
@@ -57,7 +58,8 @@ password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--
     -p|--password - specify password
     --progress - show progress of downloads (only makes sense with -q)
     -q|--quiet - be less verbose
-    -r|--reset - reset repos
+    -r|--reset - reset vsmdir - Not as useful as it once was -mr is much more
+	useful
     -u|--username - specify username
     -v|--vsmdir path - set VSM directory
                        saved to configuration file
@@ -107,7 +109,7 @@ password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--
        Caveat: Access to these downloads does not imply you are licensed
        for the material. Please see My VMware for your licenses.
 
-$ ./vsm.sh
+$ ./vsm.sh -mr
 <span style="color:purple">Using the following options:</span>
    	Version:	1.0.0
    	VSM XML Dir:	/tmp/vsm
@@ -213,7 +215,7 @@ cd /home/user
 
 The following line starts VSM download at 6AM. You would add using the command `crontab -e`:
 ```
-0 6 * * * /usr/local/bin/vsm.sh -y -r -l --favorite
+0 6 * * * /usr/local/bin/vsm.sh -y -mr --favorite
 ```
 
 ### Support
