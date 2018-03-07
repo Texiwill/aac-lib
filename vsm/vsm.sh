@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.7.7"
+VERSIONID="3.7.8"
 
 # args: stmt error
 function colorecho() {
@@ -94,9 +94,19 @@ function mywget() {
 	ou=$1
 	hr=$2
 	hd=$3
+	wgprogress=$doprogress
 	if [ Z"$1" != Z"-rxl 1" ]
 	then
 		ou="-O $1"
+	fi
+	if [ Z"$4" != Z"" ]
+	then
+		wgprogress=$4
+	else
+		if [ $doquiet -eq 1 ]
+		then
+			wgprogress=0
+		fi
 	fi
 	if [ Z"$1" = "-" ]
 	then
@@ -109,6 +119,9 @@ function mywget() {
 			if [ $doprogress -eq 1 ]
 			then
 				echo -n "+"
+			fi
+			if [ $wgprogress -eq 1 ]
+			then
 				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt 
 			else
 				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr >& /dev/null
@@ -1140,6 +1153,9 @@ function load_vsmrc() {
 	then
 		vsmrc="$cdir/.vsmrc"
 		. $cdir/.vsmrc
+	else
+		# nothing there default
+		vsmrc="$HOME/.vsmrc"
 	fi
 	# if we already use .vsmrc then continue to do so
 	if [ Z"$repo" != Z"" ]
@@ -1149,35 +1165,38 @@ function load_vsmrc() {
 }
 
 function save_vsmrc() {
-	colorecho "Saving to $vsmrc"
-	echo -n '' > $vsmrc
-	if [ $domyvmware -eq 1 ] && [ Z"$mchoice" != Z"" ]
+	if [ Z"$vsmrc" != Z"" ]
 	then
-		if [ ! -e ${rcdir}/${favorite}.xhtml ]
+		colorecho "Saving to $vsmrc"
+		echo -n '' > $vsmrc
+		if [ $domyvmware -eq 1 ] && [ Z"$mchoice" != Z"" ]
 		then
-			favorite=${favorite}
+			if [ ! -e ${rcdir}/${favorite}.xhtml ]
+			then
+				favorite=${favorite}
+			fi
 		fi
-	fi
-	if [ Z"$mchoice" = Z"root" ]
-	then
-		echo "mfchoice='$mfchoice'" >> $vsmrc
-		echo "myfvmware='$myfvmware'" >> $vsmrc
-	else
-		echo "mfchoice='$mchoice'" >> $vsmrc
-		echo "myfvmware='$myvmware'" >> $vsmrc
-	fi
-	echo "favorite='$favorite'" >> $vsmrc
-	if [ $dosave -eq 1 ]
-	then
-		echo "repo='$repo'" >> $vsmrc
-		echo "cdir='$cdir'" >> $vsmrc
-		echo "myoem=$myoem" >> $vsmrc
-		echo "mydts=$mydts" >> $vsmrc
-		echo "myoss=$myoss" >> $vsmrc
-		echo "myquiet=$doquiet" >> $vsmrc
-		echo "myprogress=$doprogress" >> $vsmrc
-		echo "dovex=$dovex" >> $vsmrc
-		echo "domyvmware=$domyvmware" >> $vsmrc
+		if [ Z"$mchoice" = Z"root" ]
+		then
+			echo "mfchoice='$mfchoice'" >> $vsmrc
+			echo "myfvmware='$myfvmware'" >> $vsmrc
+		else
+			echo "mfchoice='$mchoice'" >> $vsmrc
+			echo "myfvmware='$myvmware'" >> $vsmrc
+		fi
+		echo "favorite='$favorite'" >> $vsmrc
+		if [ $dosave -eq 1 ]
+		then
+			echo "repo='$repo'" >> $vsmrc
+			echo "cdir='$cdir'" >> $vsmrc
+			echo "myoem=$myoem" >> $vsmrc
+			echo "mydts=$mydts" >> $vsmrc
+			echo "myoss=$myoss" >> $vsmrc
+			echo "myquiet=$doquiet" >> $vsmrc
+			echo "myprogress=$doprogress" >> $vsmrc
+			echo "dovex=$dovex" >> $vsmrc
+			echo "domyvmware=$domyvmware" >> $vsmrc
+		fi
 	fi
 }
 
@@ -1491,7 +1510,7 @@ function getvsm() {
 					then
 						eurl=`python -c "import urllib, sys; print urllib.unquote(sys.argv[1])" $lurl`
 						debugecho "DEBUG: eurl => $eurl"
-						mywget $name $eurl "--progress=bar:force -nd"
+						mywget $name $eurl "--progress=bar:force -nd" 1
 						diddownload=0
 						# echo if error remove file
 						if [ $err -ne 0 ]
