@@ -51,7 +51,6 @@ password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--
     	Only really useful for latest distribution at moment
 	Not as useful as it once was.
     -m|--myvmware - get missing suite and packages from My VMware
-    	Cannot mark this suite information as a favorite
     -mr - reset just My VMware information, implies -m
     -ns|--nostore - do not store credential data and remove if exists
     -nc|--nocolor - do not output with color
