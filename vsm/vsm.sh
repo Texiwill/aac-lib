@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.7.9"
+VERSIONID="3.8.0"
 
 # args: stmt error
 function colorecho() {
@@ -116,7 +116,7 @@ function mywget() {
 	else
 		if [ $doquiet -eq 1 ]
 		then
-			if [ $doprogress -eq 1 ]
+			if [ $doprogress -eq 1 ] && [ $indomenu2 -eq 1 ]
 			then
 				echo -n "+"
 			fi
@@ -127,7 +127,7 @@ function mywget() {
 				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr >& /dev/null
 			fi
 			err=${PIPESTATUS[0]}
-			if [ $doprogress -eq 1 ]
+			if [ $doprogress -eq 1 ] && [ $indomenu2 -eq 1 ]
 			then
 				echo -n "+"
 			fi
@@ -1643,6 +1643,7 @@ mydts=-1
 myoss=-1
 myoem=-1
 domenu2=0
+indomenu2=0
 domyvmware=0
 remyvmware=0
 myyes=0
@@ -2208,6 +2209,7 @@ do
 				domenu2=1
 				while [ $domenu2 -eq 1 ]
 				do
+					indomenu2=1
 					for choice in $choices
 					do
 						debugecho "DEBUG: Working on $choice"
@@ -2529,13 +2531,13 @@ do
 							fi
 							domts=0
 						done
-						
 						diddownload=0
 						#choice=$prevchoice
 					done
 					getpath
 					getchoice
 				done # domenu2
+				indomenu2=0
 			done
 			doall=0
 			echo ""
