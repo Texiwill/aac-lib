@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.7.8"
+VERSIONID="3.7.9"
 
 # args: stmt error
 function colorecho() {
@@ -1309,7 +1309,7 @@ function menu() {
 
 function menu2() {
 	all=""
-	doprogress=0
+	#doprogress=0
 	debugecho "MENU2: $1"
 	if [ Z"$2" = Z"OpenSource" ]
 	then
@@ -2229,10 +2229,10 @@ do
 						assomissing=""
 						wouldassomiss=0
 						# get associated packages
-						if [ $myfav -eq 0 ]
-						then
-							doprogress=0
-						fi
+						#if [ $myfav -eq 0 ]
+						#then
+						#	doprogress=0
+						#fi
 						getasso
 						if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
 						then

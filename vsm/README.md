@@ -109,8 +109,7 @@ password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--
        for the material. Please see My VMware for your licenses.
 
 $ ./vsm.sh -mr
-<span style="color:purple">Using the following options:</span>
-Using the following options:
+**Using the following options:**
 	Version:	3.7.8
 	VSM XML Dir:	/tmp/vsm
 	Repo Dir:	/mnt/repo
@@ -120,7 +119,7 @@ Using the following options:
 	Get Latest:	0
 	My VMware:	1
 	Use credstore:	1
-Saving to /home/user/.vsmrc
+**Saving to /home/user/.vsmrc**
    
 Continue with VSM (Y/n)?
    
@@ -179,7 +178,7 @@ Saving to: ‘VMware-VMvisor-Installer-201704001-5310538.x86_64.iso’
    100%[======================================>] 347,172,864 7.70MB/s   in 45s  
 
 2017-10-11 08:04:21 (7.43 MB/s) - ‘VMware-VMvisor-Installer-201704001-5310538.x86_64.iso’ saved [347172864/347172864]
-<span style="color:purple">Downloads to /mnt/rainbow/iso/vmware/depot/content/dlg_ESXI65U1</span>
+**Downloads to /mnt/rainbow/iso/vmware/depot/content/dlg_ESXI65U1**
  
 1) All		   7) VROVA_730		  13) VR65
 2) Minimum_Required	   8) VRLI_450_VCENTER	  14) Mark
@@ -188,8 +187,8 @@ Saving to: ‘VMware-VMvisor-Installer-201704001-5310538.x86_64.iso’
 5) VC650E		  11) ESXI650D
 6) VROPS_660		  12) VIC110
 #? 14
-<span style="color:purple">Favorite: Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Enterprise_Plus
-Saving to /home/elh/.vsmrc</span>
+**Favorite: Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Enterprise_Plus**
+**Saving to /home/elh/.vsmrc**
 ```
 
 ### Installation
@@ -228,6 +227,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.7.9 - Bug fix in progress. My thanks to Alex Lopez (@ivirtualex) for finding.
+
 3.7.8 - Bug fix when missing .vsmrc, fixes to progress. My thanks to Alex
 Lopez (@ivirtualex) for finding the bug.
 
