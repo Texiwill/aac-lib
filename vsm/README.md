@@ -110,14 +110,17 @@ password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--
 
 $ ./vsm.sh -mr
 <span style="color:purple">Using the following options:</span>
-   	Version:	1.0.0
-   	VSM XML Dir:	/tmp/vsm
-   	Repo Dir:	/mnt/rainbow/iso/vmware/depot/content
-   	Dryrun:		0
-   	Force Download:	0
-   	Reset XML Dir:	0
-   	Get Latest:	0
-   	Use credstore:	1
+Using the following options:
+	Version:	3.7.8
+	VSM XML Dir:	/tmp/vsm
+	Repo Dir:	/mnt/repo
+	Dryrun:		0
+	Force Download:	0
+	Reset XML Dir:	0
+	Get Latest:	0
+	My VMware:	1
+	Use credstore:	1
+Saving to /home/user/.vsmrc
    
 Continue with VSM (Y/n)?
    
