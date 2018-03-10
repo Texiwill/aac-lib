@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.8.0"
+VERSIONID="3.8.1"
 
 # args: stmt error
 function colorecho() {
@@ -2209,7 +2209,6 @@ do
 				domenu2=1
 				while [ $domenu2 -eq 1 ]
 				do
-					indomenu2=1
 					for choice in $choices
 					do
 						debugecho "DEBUG: Working on $choice"
@@ -2359,6 +2358,7 @@ do
 						debugecho "DEBUG: $mychoice $dodat $dooem $dooss $dots"
 			
 						# do the regular including All/All_Plus_OpenSource
+						indomenu2=1
 						if [ $dodat -eq 1 ]
 						then
 							err=0
@@ -2531,13 +2531,13 @@ do
 							fi
 							domts=0
 						done
+						indomenu2=0
 						diddownload=0
 						#choice=$prevchoice
 					done
 					getpath
 					getchoice
 				done # domenu2
-				indomenu2=0
 			done
 			doall=0
 			echo ""
