@@ -11,11 +11,41 @@
 # wget 
 #
 # vim: tabstop=4 shiftwidth=4
+function findos() {
+	if [ -e /etc/os-release ]
+	then
+		. /etc/os-release
+		theos=`echo $ID | tr [:upper:] [:lower:]`
+	elif [ -e /etc/centos-release ]
+	then
+		theos=`cut -d' ' -f1 < /etc/centos-release | tr [:upper:] [:lower:]`
+	elif [ -e /etc/redhat-release ]
+	then
+		theos=`cut -d' ' -f1 < /etc/redhat-release | tr [:upper:] [:lower:]`
+	elif [ -e /etc/fedora-release ]
+	then
+		theos=`cut -d' ' -f1 < /etc/fedora-release | tr [:upper:] [:lower:]`
+	elif [ -e /etc/debian-release ]
+	then
+		theos=`cut -d' ' -f1 < /etc/debian-release | tr [:upper:] [:lower:]`
+	else
+		colorecho "Do not know this operating system. LinuxVSM may not work." 1
+		theos="unknown"
+	fi
+}
 
+theos=''
+findos
 which wget >& /dev/null
 if [ $? -eq 1 ]
 then
-        sudo yum -y install wget
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
+	then
+        	sudo yum -y install wget
+	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
+	then
+        	sudo apt-get install -y wget
+	fi
 fi
 
 wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
