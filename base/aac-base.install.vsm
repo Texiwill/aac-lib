@@ -4,19 +4,21 @@
 #
 # Install Bits for VSM
 #
-# Target: CentOS/RHEL 7
+# Target: CentOS/RHEL 7/Debian/Ubuntu
 #
 # Version 1.0
 #
 ###
 
 function vsm_version() {
-	echo "1.6.1"
+	echo "1.7.0"
 }
 
 function vsm() {
 	INSTALL="wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc jq"
+	DINSTALL="wget python python-urllib3 libxml2 libxml2-utils xml-twig-tools ncurses-base bc jq"
 	DEVEL=""
+	DDEVEL=$DEVEL
 
 	# Find way to download direct
 	if [ -e vsm.sh ]
@@ -28,12 +30,19 @@ function vsm() {
 	chmod +x /usr/local/bin/vsm.sh
 	
 	# Install RPMS
-	echo $RPMLIST | egrep "perl-XML-Twig" > /dev/null
-	a=$?
-	echo $RPMLIST | egrep "^jq" > /dev/null
-	if [ $? != 0 ] || [ $a != 0 ]
+	if [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 	then
-		yum -y install $INSTALL $DEVEL
+		checkdep xml-twig-tools
+	elif [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
+	then
+		checkdep perl-XML-Twig
+	fi
+	a=$needdep
+	checkdep jq
+	if [ $needdep != 0 ] || [ $a != 0 ]
+	then
+		#yum -y install $INSTALL $DEVEL
+		installdep
 	fi
 
 	cd $menu_pd

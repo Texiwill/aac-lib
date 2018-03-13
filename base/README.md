@@ -113,6 +113,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.7.0 Base/VSM: Support for Debian/Ubuntu
+
 1.5.3 VMA: Wrong package installed
 
 1.1.0 OVF: Updated to use hiera and added -v1 option to use old config files
