@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (c) AstroArch Consulting, Inc.  2017,2018
 # All rights reserved
@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.8.1"
+VERSIONID="3.9.0"
 
 # args: stmt error
 function colorecho() {
@@ -111,7 +111,7 @@ function mywget() {
 	if [ Z"$1" = "-" ]
 	then
 		# getting pre-url
-		lurl=`wget $_PROGRESS_OPT --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' -O - $hr 2>&1 | grep Location | awk '{print $2}'`
+		lurl=`wget --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' -O - $hr 2>&1 | grep Location | awk '{print $2}'`
 		err=${PIPESTATUS[0]}
 	else
 		if [ $doquiet -eq 1 ]
@@ -122,7 +122,12 @@ function mywget() {
 			fi
 			if [ $wgprogress -eq 1 ]
 			then
-				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt 
+				if [ Z"$_PROGRESS_OPT" != Z"" ]
+				then
+					wget $_PROGRESS_OPT $hd --progress=bar:force -nd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr
+				else
+					wget $_PROGRESS_OPT --progress=bar:force -nd $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt 
+				fi
 			else
 				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr >& /dev/null
 			fi
@@ -132,7 +137,12 @@ function mywget() {
 				echo -n "+"
 			fi
 		else
-			wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt
+			if [ Z"$_PROGRESS_OPT" != Z"" ]
+			then
+				wget $_PROGRESS_OPT --progress=bar:force -nd $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr
+			else
+				wget $_PROGRESS_OPT $hd --progress=bar:force -nd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $h 2> /dev/null 2>&1 | progressfilt
+			fi
 			err=${PIPESTATUS[0]}
 		fi
 	fi
@@ -934,7 +944,7 @@ function getvsmdata() {
 	xx=$2
 	if [ $menu2files -eq 0 ] || [ $domts -eq 1 ]
 	then
-		data=`xmllint --html --xpath "//*/li[@class=\"depot-content\"][$xx]" dlg_${cchoice}.xhtml 2>/dev/null`
+		data=`xmllint --html --xpath "(//*/li[@class=\"depot-content\"])[$xx]" dlg_${cchoice}.xhtml 2>/dev/null`
 		name=`echo $data|xml_grep --html --text_only '//*/a' 2>/dev/null`
 	else
 		pver=`xmllint --html --xpath "//tr" _dlg_${cchoice}.xhtml  2> /dev/null  | tr '\n' ' ' |sed 's/<\/tr>/<\/tr>\n/' |head -1 |sed 's/<t[hd]>//g' |sed 's/<\/t[hd]>//g' |awk '{print $3}'`
@@ -942,7 +952,7 @@ function getvsmdata() {
 		then
 			pver=`grep selected _dlg_${cchoice}.xhtml |head -1 | cut -d\" -f2`
 		fi
-		data=`xmllint --html --xpath "//td[@class=\"filename\"][$xx]" _dlg_${cchoice}.xhtml 2> /dev/null`
+		data=`xmllint --html --xpath "(//td[@class=\"filename\"])[$xx]" _dlg_${cchoice}.xhtml 2> /dev/null`
 		name=`echo $data|sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g' | grep fileNameHolder | cut -d '>' -f 2 | sed 's/ //g'`
 	fi
 	debugecho "DEBUG: name => $name"
@@ -1500,7 +1510,7 @@ function getvsm() {
 				then
 					lurl=$url
 				else
-					lurl=`wget $_PROGRESS_OPT --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $url 2>&1 | grep Location | awk '{print $2}'`
+					lurl=`wget --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $url 2>&1 | grep Location | awk '{print $2}'`
 				fi
 				debugecho "DEBUG: lurl => $lurl"
 				echo $lurl|grep -i blocked >& /dev/null
@@ -1596,31 +1606,80 @@ function usage() {
 	exit;
 }
 
+function findos() {
+	if [ -e /etc/os-release ]
+	then
+		. /etc/os-release
+		theos=`echo $ID | tr [:upper:] [:lower:]`
+	elif [ -e /etc/centos-release ]
+	then
+		theos=`cut -d' ' -f1 < /etc/centos-release | tr [:upper:] [:lower:]`
+	elif [ -e /etc/redhat-release ]
+	then
+		theos=`cut -d' ' -f1 < /etc/redhat-release | tr [:upper:] [:lower:]`
+	elif [ -e /etc/fedora-release ]
+	then
+		theos=`cut -d' ' -f1 < /etc/fedora-release | tr [:upper:] [:lower:]`
+	elif [ -e /etc/debian-release ]
+	then
+		theos=`cut -d' ' -f1 < /etc/debian-release | tr [:upper:] [:lower:]`
+	else
+		colorecho "Do not know this operating system. LinuxVSM may not work." 1
+		theos="unknown"
+	fi
+}
+
 function checkdep() {
 	dep=$1
-	rpm -q $dep > /dev/null
-	if [ $? -eq 1 ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
 	then
-		echo "Missing Dependency $dep"
-		needdep=1
+		rpm -q $dep > /dev/null
+		if [ $? -eq 1 ]
+		then
+			echo "Missing Dependency $dep"
+			needdep=1
+		fi
+	fi
+	if [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
+	then
+		dpkg -s $dep >& /dev/null
+		if [ $? -eq 1 ]
+		then
+			echo "Missing Dependency $dep"
+			needdep=1
+		fi
+	fi
+	if [ Z"$theos" = Z"unknown" ]
+	then
+		colorecho "Cannot Check Dependency $dep." 1
 	fi
 }
 
 
 # check dependencies
+theos=''
 docolor=1
 needdep=0
+findos
 checkdep wget
 checkdep python
 checkdep python-urllib3
 checkdep libxml2
-checkdep perl-XML-Twig
-checkdep ncurses
+if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
+then
+	checkdep perl-XML-Twig
+	checkdep ncurses
+elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
+then
+	checkdep xml-twig-tools
+	checkdep libxml2-utils
+	checkdep ncurses-base
+fi
 checkdep bc
 checkdep jq
 
 wget --help | grep -q '\--show-progress' && \
-  _PROGRESS_OPT="-q --show-progress" || _PROGRESS_OPT="--progress=bar:force"
+   _PROGRESS_OPT="-q --show-progress" || _PROGRESS_OPT=""
 
 if [ $needdep -eq 1 ]
 then
@@ -1841,6 +1900,7 @@ then
 	echo "	Username:		$username"
 	echo "	Save Credentials:	$nostore"
 fi
+echo "	OS Mode:        $theos"
 echo "	VSM XML Dir:	$cdir"
 echo "	Repo Dir:	$repo"
 echo "	Dryrun:		$dryrun"
@@ -1905,6 +1965,10 @@ else
 	echo "	Use credstore:	1"
 	auth=`cat .credstore`
 fi
+if [ $dovex -eq 1 ]
+then
+	colorecho "	vExpert Mode:   1"
+fi
 
 # save a copy of the .vsmrc and continue
 save_vsmrc
@@ -1954,12 +2018,6 @@ echo ".vmware.com	TRUE	/	TRUE	$TS	JSESSIONID	$JS" >> cookies.txt
 if [ ! -e ${cdir}/depot.vmware.com ]
 then
 	doreset=1
-fi
-if [ $dovex -eq 1 ]
-then
-	colorecho "###" 1
-	colorecho "# Entering vExpert Mode" 1
-	colorecho "###" 1
 fi
 
 if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]

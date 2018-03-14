@@ -227,6 +227,8 @@ If someone can provide debian package maangement bits, send them on as
 that is the only distribution specific bits in the script.
 
 ### Changelog
+3.9.0 - Added Debian Support
+
 3.8.1 - Hopefully the last progress issue
 
 3.8.0 - One more progress issue.
