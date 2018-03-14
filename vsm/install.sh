@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright (c) AstroArch Consulting, Inc.  2017,2018
 # All rights reserved
 #
@@ -53,4 +53,6 @@ chmod +x aac-base.install
 ./aac-base.install -u
 sudo ./aac-base.install -i vsm
 
-echo "VSM is now in /usr/local/bin/vsm.sh"
+PURPLE=`tput setaf 5`
+NC=`tput sgr0`
+echo "${PURPLE}VSM is now in /usr/local/bin/vsm.sh${NC}"
