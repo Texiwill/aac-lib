@@ -12,29 +12,16 @@ missing definition files that cause the VMware version to stop working. It
 also finds ones not in the definitions yet. It is also possible to find
 the latest of every package.
 
-This version was optimized for RedHat style distributions and will need
-a change to work on non-RedHat style distributions. If someone uses
-debian and wants this to work there, get me the dpkg commands needed.
+As of v4.0.0 LinuxVSM now uses the My VMware mode by default. This
+implies that previously out of date items are not up to date once more.
 
-To install use the following script (it will prompt you for the root
-password) no need to use sudo yourself:
+Also, you should know that Code Stream is a license ontop of VRA, and
+VRA is already in LinuxVSM.
 
-```
-#!/bin/sh
-which wget >& /dev/null
-if [ $? -eq 1 ]
-then
-	sudo yum -y install wget
-fi
-
-wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
-chmod +x aac-base.install
-./aac-base.install -u
-sudo ./aac-base.install -i vsm
-```
+To install use the included script, install.sh
 
 Here is an example run and help:
-<pre>
+```
 $ /usr/local/bin/vsm.sh --help
 /usr/local/bin/vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] 
 [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore] 
@@ -44,13 +31,13 @@ password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--
     --dlg - download specific package by name or part of a name
     -d|--dryrun - dryrun, do not download
     -f|--force - force download of packages
-    --favorite - Download suite marked as favorite, works with -m/-mr option
+    --favorite - Download suite marked as favorite
     -e|--exit - reset and exit
     -h|--help - this help
     -l|--latest - substitute latest for each package instead of listed
-    	Only really useful for latest distribution at moment
-	Not as useful as it once was.
-    -m|--myvmware - get missing suite and packages from My VMware
+        Deprecated: Now the default, the argument does nothing any more.
+    -m|--myvmware - get missing suite and packages from My VMware. 
+        Deprecated: Now the default, the argument does nothing any more.
     -mr - reset just My VMware information, implies -m
     -ns|--nostore - do not store credential data and remove if exists
     -nc|--nocolor - do not output with color
@@ -76,124 +63,141 @@ password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--
             saved to configuration file
     --nooem - do not include CustomIso in All-style downloads
               saved to configuration file
-    --debug - debug mode
+    --debug - debug mode, outputs --progress and useful information on failure
     --repo path - specify path of repo
                   saved to configuration file
     --save - save defaults to $HOME/.vsmrc
 
-	All-style downloads include: All, All_No_OpenSource, Minimum_Required
-	Requires packages:
-	wget python python-urllib3 libxml2 perl-XML-Twig ncurses
+    All-style downloads include: All, All_No_OpenSource, Minimum_Required
 
-	To Download the latest Perl CLI use (to escape the wild cards):
-	./vsm.sh --dlg CLI\.\*\\.x86_64.tar.gz
+    Requires packages:
+    wget python python-urllib3 libxml2 perl-XML-Twig ncurses
 
-       Use of the Mark option, marks the current product suite as the
-       favorite. There is only 1 favorite slot available. Favorites
-       can be downloaded without traversing the menus.
+    To Download the latest Perl CLI use (to escape the wild cards):
+	$ vsm.sh -mr -y --dlg CLI\.\*\\.x86_64.tar.gz
 
-       Those items that show up in Cyan when the -m|--myvmware option
-       is set are those items only seen with that option. I.e. not part
-       of the standard downloads from VSM. 
+    Use of the Mark option, marks the current product suite as the
+    favorite. There is only 1 favorite slot available. Favorites
+    can be downloaded without traversing the menus. To download your 
+    favorite use:
+	$ vsm.sh -mr -y --favorite -q --progress
 
-       Those items in reverse color (white on black or cyan) are those items
-       not downloaded. For packages and not files, the reverse color only
-       shows up if the directory is not in the repo and is not related to 
-       missing files or new files.
+    Those items that show up in Cyan are those where My VMware meta data has    
+    not been downloaded yet.
 
-       To enable download of My VMware content which includes minimally
-       VMware Horizon, VMware Horizon Clients, VMware Workstation,
-       and VMware Fusion use the -m option. Else they will not appear.
+    Those items in reverse color (white on black or cyan) are those items
+    not downloaded. For packages and not files, the reverse color only
+    shows up if the directory is not in the repo and is not related to 
+    missing files or new files.
 
-       Caveat: Access to these downloads does not imply you are licensed
-       for the material. Please see My VMware for your licenses.
+    Caveat: Access to these downloads does not imply you are licensed
+    for the material. Please see My VMware for your licenses.
 
-$ ./vsm.sh -mr
-<span style="color:purple">Using the following options:</span>
-	Version:	3.7.8
+Example Run:
+
+$ vsm.sh -mr -y
+Using the following options:
+	Version:	    4.0.0
+	OS Mode:        centos
 	VSM XML Dir:	/tmp/vsm
-	Repo Dir:	/mnt/repo
-	Dryrun:		0
+	Repo Dir:	    /mnt/repo
+	Dryrun:		    0
 	Force Download:	0
 	Reset XML Dir:	0
-	Get Latest:	0
-	My VMware:	1
+	Get Latest:	    0
+	My VMware:	    1
 	Use credstore:	1
-<span style="color:purple">Saving to /home/user/.vsmrc</span>
-   
-Continue with VSM (Y/n)?
-   
-Saving to: ‘index.html.1’
-   
-100%[======================================>] 455,010     1.87MB/s   in 0.2s   
-   
-2017-09-14 08:03:49 (1.87 MB/s) - ‘index.html.1’ saved [455010/455010]
-   
+Saving to /home/user/.vsmrc
 1) Datacenter_Cloud_Infrastructure
 2) Infrastructure_Operations_Management
-4) Exit
+3) Exit
 #? 1
 1) Datacenter_Cloud_Infrastructure_VMware_Software_Manager
-2) Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite
-3) Datacenter_Cloud_Infrastructure_VMware_vSphere
-4) Datacenter_Cloud_Infrastructure_VMware_vSphere_with_Operations_Management
-5) Back
-6) Exit
-#? 3
+2) Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center
+3) Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite
+4) Datacenter_Cloud_Infrastructure_VMware_vSphere
+5) Datacenter_Cloud_Infrastructure_VMware_vSphere_with_Operations_Management
+6) Back
+7) Exit
+#? 4
 1) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5
 2) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_0
 3) Datacenter_Cloud_Infrastructure_VMware_vSphere_5_5
 4) Datacenter_Cloud_Infrastructure_VMware_vSphere_5_1
-5) Back
-6) Exit
+5) Datacenter_Cloud_Infrastructure_VMware_vSphere_5_0
+6) Back
+7) Exit
 #? 1
-1) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Desktop
-2) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Enterprise
-3) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Enterprise_Plus
-4) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Essentials
-5) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Essentials_Plus
-6) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Standard
-7) Back
-8) Exit
-#? 3
-1) All		   7) VROVA_730		  13) VR65
-2) Minimum_Required	   8) VRLI_450_VCENTER	  14) Mark
-3) All_Plus_OpenSource  9) BDE_232		  15) Back
-4) NSXV_632		  10) VDP614		  16) Exit
-5) VC650E		  11) ESXI650D
-6) VROPS_660		  12) VIC110
-#? 11
-1) All
-2) Minimum_Required
-3) All_Plus_OpenSource
-4) VMware-VMvisor-Installer-201704001-5310538.x86_64.iso
-5) ESXi650-201704001.zip
-6) OpenSource
-7) CustomIso
-8) DriversTools
-9) Back
-10) Exit
-#? 4
-Saving to: ‘VMware-VMvisor-Installer-201704001-5310538.x86_64.iso’
-   100%[======================================>] 347,172,864 7.70MB/s   in 45s  
-
-2017-10-11 08:04:21 (7.43 MB/s) - ‘VMware-VMvisor-Installer-201704001-5310538.x86_64.iso’ saved [347172864/347172864]
-<span style="color:purple">Downloads to /mnt/rainbow/iso/vmware/depot/content/dlg_ESXI65U1</span>
- 
-1) All		   7) VROVA_730		  13) VR65
-2) Minimum_Required	   8) VRLI_450_VCENTER	  14) Mark
-3) All_Plus_OpenSource  9) BDE_232		  15) Back
-4) NSXV_632		  10) VDP614		  16) Exit
-5) VC650E		  11) ESXI650D
-6) VROPS_660		  12) VIC110
+1) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Essentials
+2) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Essentials_Plus
+3) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Standard
+4) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise
+5) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
+6) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Desktop
+7) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_vSphere_Scale-Out
+8) Back
+9) Exit
+#? 5
+ 1) All
+ 2) Minimum_Required
+ 3) All_Plus_OpenSource
+ 4) BDE_232
+ 5) ESXI65U1
+ 6) NSXV_640
+ 7) VC65U1E
+ 8) VDP617
+ 9) VIC131
+10) VR6512
+11) VRLI_451_VCENTER
+12) VROPS_661
+13) VROVA_731
+14) Mark
+15) Back
+16) Exit
 #? 14
-<span style="color:purple">Favorite: Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_English_Enterprise_Plus</span>
-<span style="color:purple">Saving to /home/elh/.vsmrc</span>
-</pre>
+Favorite: Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
+Saving to /home/user/.vsmrc
+#? 5
+ 1) All
+ 2) Minimum_Required
+ 3) All_Plus_OpenSource
+ 4) VMware-VMvisor-Installer-6.5.0.update01-5969303.x86_64.iso
+ 5) update-from-esxi6.5-6.5_update01.zip
+ 6) VMware-ESXi-6.5U1-RollupISO.iso
+ 7) ESXi6.5U1-RollupISO-README.pdf
+ 8) OpenSource
+ 9) CustomIso
+10) DriversTools
+11) Back
+12) Exit
+#? 1
+All ESXI65U1 already downloaded
+...... 0% [                                       ] 0           --.-K/s              
+100%[======================================>] 424         --.-K/s   in 0s      
+
+2018-03-17 18:07:16 (51.9 MB/s) -  Release_Notes_lsi-mr3-7.703.15.00-1OEM.txt  saved [424/424]
+
+...................................................EE......EE!
+Downloads  to /mnt/repo/dlg_ESXI65U1/CustomIso
+..........................................................................................................................!
+All ESXI65U1 DriversTools already downloaded!
+ 1) All
+ 2) Minimum_Required
+ 3) All_Plus_OpenSource
+ 4) VMware-VMvisor-Installer-6.5.0.update01-5969303.x86_64.iso
+ 5) update-from-esxi6.5-6.5_update01.zip
+ 6) VMware-ESXi-6.5U1-RollupISO.iso
+ 7) ESXi6.5U1-RollupISO-README.pdf
+ 8) OpenSource
+ 9) CustomIso
+10) DriversTools
+11) Back
+12) Exit
+#? 12
+```
 
 ### Installation
-Place in any directory. Requires the following packages:
-	wget python python-urllib3 libxml2 perl-XML-Twig ncurses
+To install use the provided install.sh script which calls the aac-lib/base installers to install vsm.
 
 ### Update
 To keep vsm and your repository updated to the latest release/downloads
@@ -204,7 +208,7 @@ currently marked favorite. Note 'user' is your username.
 Caveat: This approach only works if you use the aac-lib/base installers to
 install vsm. If you did not then just use the last line.
 
-Be sure to mark a release as your favorite! If you do not, this does
+Be sure to Mark a release as your favorite! If you do not, this does
 not work. The 'Mark' menu item does this.
 
 I added these lines to a script within /etc/cron.daily (which usually runs at 3AM):
@@ -223,10 +227,9 @@ The following line starts VSM download at 6AM. You would add using the command `
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
-If someone can provide debian package maangement bits, send them on as
-that is the only distribution specific bits in the script.
-
 ### Changelog
+4.0.0 - My VMware now default, cleaned up Debug more
+
 3.9.0 - Added Debian Support
 
 3.8.1 - Hopefully the last progress issue

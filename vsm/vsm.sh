@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="3.9.0"
+VERSIONID="4.0.0"
 
 # args: stmt error
 function colorecho() {
@@ -39,6 +39,10 @@ function debugecho() {
 progressfilt ()
 {
 	local flag=false c count cr=$'\r' nl=$'\n'
+	if [ Z"$_PROGRESS_OPT" != Z"" ]
+	then
+		flag=true
+	fi
 	while IFS='' read -d '' -rn 1 c
 	do
 		if $flag
@@ -122,12 +126,7 @@ function mywget() {
 			fi
 			if [ $wgprogress -eq 1 ]
 			then
-				if [ Z"$_PROGRESS_OPT" != Z"" ]
-				then
-					wget $_PROGRESS_OPT $hd --progress=bar:force -nd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr
-				else
-					wget $_PROGRESS_OPT --progress=bar:force -nd $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt 
-				fi
+				wget $_PROGRESS_OPT --progress=bar:force -nd $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt 
 			else
 				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr >& /dev/null
 			fi
@@ -137,12 +136,7 @@ function mywget() {
 				echo -n "+"
 			fi
 		else
-			if [ Z"$_PROGRESS_OPT" != Z"" ]
-			then
-				wget $_PROGRESS_OPT --progress=bar:force -nd $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr
-			else
-				wget $_PROGRESS_OPT $hd --progress=bar:force -nd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $h 2> /dev/null 2>&1 | progressfilt
-			fi
+			wget $_PROGRESS_OPT $hd --progress=bar:force -nd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2> /dev/null 2>&1 | progressfilt
 			err=${PIPESTATUS[0]}
 		fi
 	fi
@@ -298,62 +292,28 @@ function getoutervmware() {
 		#debugecho "mc => $mc"
 		f=`basename $mchoice`
 		pkgs=""
-		#if [ $mc -eq 1 ]
-		#then
-		#	choice="${f}_${mversions}"
-		#	addpath
-		#	vsmpkgs "$choice.xhtml"
-		#	pc=`echo $pkgs | wc -w`
-		#	if [ $pc -eq 1 ]
-		#	then
-		#		mversions=""
-		#		choice=$pkgs
-		#		stripcolor
-		#		vmwaremenu2
-		#		pkgs=""
-		#		getpath
-		#		dlg=0
-		#		f=`dirname $mchoice`
-		#		f=`basename $f`
-		#		# now we have the dlg file!
-		#		tver=`grep option _dlg_${choice}.xhtml | grep downloadGroupId | cut -d\" -f2`
-		#		for x in $tver
-		#		do
-		#			echo $x | egrep -iv "_UWP|_Android|_IOS|Windows_Store" >& /dev/null
-		#			if [ $? -eq 0 ]
-		#			then
-		#				#a=`echo ${f}_${x} | sed "s/_\(.\)/_\u\1/g" | sed "s/^\(.\)/\u\1/g"`
-		#				pkgs="$pkgs ${f}_${x}"
-		#			fi
-		#		done
-		#		missing=`echo $tver | sed 's/ /|/g'`
-		#	fi
-		#	getpath
-		#else
-		#	pkgs=""
-			if [ Z"$mversions" != Z"" ]
-			then
-				for x in $mversions
-				do
-					echo $x | egrep -iv "_UWP|_Android|_IOS|Windows_Store" >& /dev/null
-					if [ $? -eq 0 ]
-					then
-						#a=`echo ${f}_${x} | sed "s/_\(.\)/_\u\1/g" | sed "s/^\(.\)/\u\1/g"`
-						pkgs="$pkgs ${f}_${x}"
-					fi
-				done
-			else
-				grep 'class="midProductColumn"' $rcdir/${missname}.xhtml >& /dev/null
+		if [ Z"$mversions" != Z"" ]
+		then
+			for x in $mversions
+			do
+				echo $x | egrep -iv "_UWP|_Android|_IOS|Windows_Store" >& /dev/null
 				if [ $? -eq 0 ]
 				then
-					if [ Z"$usenurl" = Z"" ]
-					then
-						usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | grep -v OSS | cut -d\" -f 4`
-					fi
-					midprod=1
+					#a=`echo ${f}_${x} | sed "s/_\(.\)/_\u\1/g" | sed "s/^\(.\)/\u\1/g"`
+					pkgs="$pkgs ${f}_${x}"
 				fi
+			done
+		else
+			grep 'class="midProductColumn"' $rcdir/${missname}.xhtml >& /dev/null
+			if [ $? -eq 0 ]
+			then
+				if [ Z"$usenurl" = Z"" ]
+				then
+					usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | grep -v OSS | cut -d\" -f 4`
+				fi
+				midprod=1
 			fi
-		#fi
+		fi
 	fi
 }
 
@@ -475,7 +435,7 @@ function vmwaremenu2() {
 		mname="_dlg_$currchoice"
 	fi
 	debugecho "vmwaremenu2: $domyvmware $ach $mname"
-	if [ $domyvmware -eq 1 ] && [ ! -e ${rcdir}/dlg_${ach}.xhtml ]
+	if [ $domyvmware -eq 1 ] #&& [ ! -e ${rcdir}/dlg_${ach}.xhtml ]
 	then
 		pkgs=''
 		vsme=`echo $ach | sed 's/_/[-_]/g'`
@@ -526,8 +486,8 @@ function getvsmcnt() {
 function getproddata() {
 	if [ $myinnervm -eq 1 ]
 	then
-		vers=`grep selected $rcdir/${missname}.xhtml | awk -F\> '{print $2}'|awk -F\< '{print $1}'`
 		prod=`grep '<title>' $rcdir/${missname}.xhtml|cut -d '>' -f 2|cut -d '<' -f 1 | sed 's/Download //' | sed 's/ [0-9]\+$//'`
+		vers=`grep selected $rcdir/${missname}.xhtml | awk -F\> '{print $2}'|awk -F\< '{print $1}' | sed 's/[[:space:]]\+$//'|sed 's/ /+/g'`
 	else
 		prod=`xml_grep --html --text_only '*[@title="prod"]' ${prevchoice}.xhtml 2>/dev/null`
 		vers=`xml_grep --html --text_only '*[@title="version"]' ${prevchoice}.xhtml 2>/dev/null`
@@ -802,6 +762,7 @@ function getinnerrndir() {
 			fi
 			debugecho "DEBUG: rndir => $rndir"
 		fi
+		debugecho "DEBUG: dnlike => $dnlike"
 		case "$dnlike" in
 			VSPP_VCD*)
 				v=`echo $name | sed 's/\.bin//'|awk -F- '{print $NF}'`
@@ -833,7 +794,12 @@ function getinnerrndir() {
 						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/'`
 						rndir="VIDM_ONPREM_${rntmp}"
 						;;
+					IntegrationBroker*)
+						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/'`
+						rndir="VIDM_ONPREM_${rntmp}"
+						;;
 					euc-unified-access-*-3.0.0*)
+						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/'`
 						rndir="view"
 						;;
 					euc-unified-access-*)
@@ -849,6 +815,10 @@ function getinnerrndir() {
 						rndir="UAG_${rntmp}"
 						;;
 				esac
+				if [ Z"$dnlike" = Z"VIDM_ONPREM_32" ] && [ Z"$name" = Z"VMware_Identity_Manager_Connector_Installer_for_Windows.exe" ]
+				then
+					rndir="VIDM_ONPREM_3.1"
+				fi
 				;;	
 			VIEW_62*)
 				case "$name" in
@@ -915,6 +885,666 @@ function getinnerrndir() {
 					m=`echo $dnlike | sed 's/VC//' | sed "s/$n//i"`
 					rndir="vc/$m/$n"
 				fi
+				case "$name" in
+					VMware-vSphereTlsReconfigurator-6.5.0-5597882.x86_64.msi)
+						rndir="vc/65"
+						;;
+				esac
+				;;
+			DT__ESX*)
+				rndll='download3.vmware.com'
+				case "$name" in
+					*"mpt3sas-13.00.01"*)
+						rndir="SCATEST/Avago_32"
+						;;
+				esac
+				;;
+			DT_ESX*)
+				rndll='download3.vmware.com'
+				case "$name" in
+					*"bnxt"*"-20.8.0upd"*)
+						rndir="scatest/Broadcom_63561"
+						;;
+					*"bnxt"*"-20.8.3"*)
+						rndir="scatest/Broadcom_63561"
+						;;
+					*"bnxt"*"-20.8.2"*)
+						rndir="scatest/Broadcom_1522"
+						;;
+					*"bnxt"*"-20.8.152-79"*)
+						rndir="scatest/Broadcom_1522"
+						;;
+					*"bnxt"*"-20.8.152.0."*)
+						rndir="scatest/Broadcom_1522"
+						;;
+					*"bnxt"*"-20.8.2"*)
+						rndir="scatest/Broadcom_152"
+						;;
+					*"bnxt"*"-20.8.152.0-7899"*)
+						rndir="scatest/Broadcom_83465"
+						;;
+					*"bnxt"*"-20.8.152.0-7898"*)
+						rndir="scatest/Broadcom_152"
+						;;
+					*"bnxt"*"-20.8.11.0-78505"*)
+						rndir="scatest/Broadcom_14"
+						;;
+					*"bnxt"*"-20.8.11.0"*)
+						rndir="scatest/Broadcom_7345"
+						;;
+					*"ftSys_msgpt3-6.5.0.118"*)
+						rndir="scatest/Stratus_62351"
+						;;
+					*"6.0.0-i40en-1.5.8"*)
+						rndir="scatest/Intel_1276"
+						;;
+					*"i40en-1.5.8"*)
+						rndir="scatest/Intel_8456"
+						;;
+					*"sfc-4.10.8.1000"*)
+						rndir="scatest/Solarflare_1234"
+						;;
+					*"fnic_driver_1.6.0.37_ESX55"*)
+						rndir="scatest/Cisco_67468"
+						;;
+					*"fnic_driver_1.6.0.37"*)
+						rndir="scatest/Cisco_675"
+						;;
+					*"fnic-1.6.0.37"*)
+						rndir="scatest/Cisco_675"
+						;;
+					*"fnic_driver_1.6.0.36"*)
+						rndir="scatest/Cisco_4563"
+						;;
+					*"intel-nvme-1.3.2.8-772"*)
+						rndir="scatest/Intel_132"
+						;;
+					*"intel-nvme-1.3.2.8"*)
+						rndir="scatest/Intel_76353"
+						;;
+					*"igbn-1.4.1"*)
+						rndir="scatest/Intel_3765"
+						;;
+					*"cxl-2.0.0.21"*)
+						rndir="scatest/Chelsio_21"
+						;;
+					*"cxl-1.1.0.64"*)
+						rndir="scatest/Chelsio_1234"
+						;;
+					*"6.0.0-smartpqi-1.0.1.244"*)
+						rndir="scatest/Adaptec_64326"
+						;;
+					*"smartpqi-1.0.1.244"*)
+						rndir="scatest/PMCS_54385"
+						;;
+					*"nhpsa-2.0.28"*)
+						rndir="scatest/HPE_75673"
+						;;
+					*"nhpsa-2.0.24"*)
+						rndir="scatest/HP_1235"
+						;;
+					*"nhpsa-2.0.18"*)
+						rndir="scatest/HPE_6745"
+						;;
+					*"nhpsa-2.0.16"*)
+						rndir="scatest/sandisk/HP_1234"
+						;;
+					*"hpsa-6.0.0.130"*)
+						rndir="scatest/HPE_130"
+						;;
+					*"hpsa-6.0.0.132"*)
+						rndir="scatest/HPE_3546"
+						;;
+					*"hpsa-5.5.0.128"*)
+						rndir="scatest/HPE_8465"
+						;;
+					*"hpsa-6.0.0.128"*)
+						rndir="scatest/HEP_1234"
+						;;
+					*"hpsa-5.5.0.132"*)
+						rndir="scatest/HPE_02"
+						;;
+					*"qed-6.5-76"*)
+						rndir="scatest/QLogic_483"
+						;;
+					*"qed-6.5-63"*)
+						rndir="scatest/Qlogic_1221"
+						;;
+					*"ntv-3.0.8.6-74"*)
+						rndir="scatest/QLogic_434537"
+						;;
+					*"ntv-3.0.8.6."*)
+						rndir="scatest/QLogic_483"
+						;;
+					*"ntv-2.0.7.5"*)
+						rndir="SCATEST/QLogic_20"
+						;;
+					*"6.0.0-lsi_msgpt35-04.00.01.00"*)
+						rndir="scatest/Avago_8634"
+						;;
+					*"6.0.0-lsi_msgpt35-03.125.01.00"*)
+						rndir="scatest/Avago_86723"
+						;;
+					*"6.0.0-lsi_msgpt35-03.125.00.00"*)
+						rndir="scatest/Avago_3564"
+						;;
+					*"6.0.0-lsi_msgpt35-05.00.00.00"*)
+						rndir="scatest/Avago_050"
+						;;
+					*"6.0.0-lsi_msgpt35-01.00.05.00"*)
+						rndir="scatest/Avago_001"
+						;;
+					*"6.0.0-lsi_msgpt3-16.00.01.00"*)
+						rndir="scatest/Avago_1265"
+						;;
+					*"6.0.0-lsi_msgpt3-14.15.01.00"*)
+						rndir="scatest/Dell_17356"
+						;;
+					*"6.0.0-lsi_mr3-7.703.51.00"*)
+						rndir="scatest/Avago_07962"
+						;;
+					*"6.0.0-lsi_mr3-7.702.17.00"*)
+						rndir="scatest/Avago_702"
+						;;
+					*"6.0.0-lsi_mr3-7.704.07.00"*)
+						rndir="scatest/Avago_62141"
+						;;
+					*"6.0.0-lsi_mr3-7.702.51.00"*)
+						rndir="scatest/Avago_003"
+						;;
+					*"6.0.0-lsi_mr3-7.700.27.00"*)
+						rndir="scatest/Avago_1208"
+						;;
+					*"6.0.0-lsi_mr3-7.703.13"*)
+						rndir="scatest/Avago_1203"
+						;;
+					*"msgpt35-04.00.01.00"*)
+						rndir="scatest/Avago_87584"
+						;;
+					*"msgpt35-05.00.00.00"*)
+						rndir="scatest/Avago_1204"
+						;;
+					*"6.0.0-lsi_msgpt35-06.00.00.00"*)
+						rndir="scatest/Avago_6654"
+						;;
+					*"msgpt35-06.00.00.00"*)
+						rndir="scatest/Avago_67321"
+						;;
+					*"msgpt35-03.125.01.00"*)
+						rndir="scatest/Avago_1237"
+						;;
+					*"msgpt35-03.125.00.00"*)
+						rndir="scatest/Avago_126"
+						;;
+					*"msgpt3-14.15.01.00"*)
+						rndir="scatest/Dell_87637"
+						;;
+					*"6.0.0-lsi_msgpt3-14.15.00.00"*)
+						rndir="SCATEST/Avago_154"
+						;;
+					*"msgpt3-14.15.00.00"*)
+						rndir="SCATEST/Avago_155"
+						;;
+					*"msgpt3-16.00.01"*)
+						rndir="scatest/Avago_016"
+						;;
+					*"msgpt35-01.00.05"*)
+						rndir="scatest/Avago_1213"
+						;;
+					*"mr3-7.704.07.00"*)
+						rndir="scatest/Avago_76731"
+						;;
+					*"mr3-7.703.51.00"*)
+						rndir="scatest/Avago_76744"
+						;;
+					*"6.0.0-lsi_mr3-7.703.18.00"*)
+						rndir="scatest/Avago_61526"
+						;;
+					*"mr3-7.703.18.00"*)
+						rndir="scatest/Avago_81638"
+						;;
+					*"mr3-7.703.15.00-75"*)
+						rndir="scatest/Avago_64536"
+						;;
+					*"mr3-7.703.15.00"*)
+						rndir="scatest/Avago_64536"
+						;;
+					*"mr3-7.703.13.00"*)
+						rndir="SCATEST/Avago_703"
+						;;
+					*"mr3-7.702.51.00"*)
+						rndir="scatest/Avago_51"
+						;;
+					*"mr3-7.702.17.00"*)
+						rndir="scatest/Avago_705"
+						;;
+					*"mr3-7.700.27.00"*)
+						rndir="scatest/Avago_002"
+						;;
+					*"mr3-7.700.50.00"*)
+						rndir="scatest/DELL_9989"
+						;;
+					*"mr3-6.610.21.00"*)
+						rndir="scatest/Avago_021"
+						;;
+					*"perc8-06.806.90.00"*)
+						rndir="scatest/Dell_1645"
+						;;
+					*"nenic-1.0.16"*)
+						rndir="scatest/Cisco_87312"
+						;;
+					*"qcnic-6.5-75"*)
+						rndir="scatest/QLogic_145"
+						;;
+					*"qcnic-1.0.10"*)
+						rndir="scatest/QLogic_145"
+						;;
+					*"qfle3f-1.0.45"*)
+						rndir="scatest/QLogic_145"
+						;;
+					*"6.0.0-brcmfcoe-11.4.1231"*)
+						rndir="scatest/Broadcom_87467"
+						;;
+					*"brcmfcoe-11.4.1231"*)
+						rndir="scatest/Broadcom_243"
+						;;
+					*"qedf-1.2.24.3"*)
+						rndir="scatest/QLogic_23764"
+						;;
+					*"qedf-1.2.24.1"*)
+						rndir="scatest/QLogic_224"
+						;;
+					*"qedf-1.2.24.0"*)
+						rndir="scatest/QLogic_85476"
+						;;
+					*"qedil-1.0.22.0"*)
+						rndir="scatest/QLogic_634537"
+						;;
+					*"qedil-1.0.19.0"*)
+						rndir="SCATEST/Qlogic_19"
+						;;
+					*"aacraid-6.0.6.2.1.55027"*)
+						rndir="scatest/PMCS_621"
+						;;
+					*"aacraid-6.0.6.2.1.55022"*)
+						rndir="scatest/Adaptec_4789"
+						;;
+					*"aacraid-6.0.6.2.1.52040"*)
+						rndir="scatest/PMCS_2412"
+						;;
+					*"aacraid-1.2.1.52040"*)
+						rndir="scatest/PMCS_2412"
+						;;
+					*"aacraid-1.2.1.55027"*)
+						rndir="scatest/Adaptec_128"
+						;;
+					*"aacraid-5.2.1.55027"*)
+						rndir="scatest/Adaptec_128"
+						;;
+					*"aacraid-6.2.1"*)
+						rndir="scatest/PMCS_621"
+						;;
+					*"NetXtremeII-v60.713.39"*)
+						rndir="scatest/QLogic_1411"
+						;;
+					*"bnx2x-2.713.30.v60.9"*)
+						rndir="scatest/QLogic_1411"
+						;;
+					*"bnx2x-2.713.60.v55.1"*)
+						rndir="scatest/QLogic_37125"
+						;;
+					*"NetXtremeII-4.0"*)
+						rndir="SCATEST/QLogic_737"
+						;;
+					*"bnx2fc-1.713.20"*)
+						rndir="SCATEST/QLogic_737"
+						;;
+					*"bnx2i-2.713.10.v60.3"*)
+						rndir="SCATEST/Qlogic_900"
+						;;
+					*"cnic"*"1.713.10.v60.1"*)
+						rndir="SCATEST/Qlogic_900"
+						;;
+					*"cnic"*"2.713.10.v60.5"*)
+						rndir="SCATEST/Qlogic_900"
+						;;
+					*"bnx2x-2.713.10.v60.4"*)
+						rndir="SCATEST/QLogic_737"
+						;;
+					*"6.0.0-lpfc-11.4.249"*)
+						rndir="scatest/Broadcom_53541"
+						;;
+					*"lpfc-11.4.249"*)
+						rndir="scatest/Emulex_854"
+						;;
+					*"ConnectX-4-5_4.16.12"*)
+						rndir="scatest/Mellanox_1234"
+						;;
+					*"nenic-1.0.16"*)
+						rndir="scatest/Cisco_87312"
+						;;
+					*"qcnic-6.5-75"*)
+						rndir="scatest/QLogic_145"
+						;;
+					*"qcnic-1.0.10"*)
+						rndir="scatest/QLogic_145"
+						;;
+					*"brcmfcoe-11.4.1231"*)
+						rndir="scatest/Broadcom_243"
+						;;
+					*"lpfc-11.4.249"*)
+						rndir="scatest/Emulex_854"
+						;;
+					*"ConnectX-4-5_4.16.12"*)
+						rndir="scatest/Mellanox_1234"
+						;;
+					*"ConnectX-4-5_4.15.13.2"*)
+						rndir="scatest/Mellanox_153"
+						;;
+					*"ConnectX-4-5_4.15.10.3"*)
+						rndir="scatest/Mellanox_14568"
+						;;
+					*"ntv-3.0.8.6-74"*)
+						rndir="scatest/QLogic_434537"
+						;;
+					*"ConnectX-3_3.16.11"*)
+						rndir="scatest/Mellanox_89651"
+						;;
+					*"ConnectX-3.15.11.6"*)
+						rndir="scatest/Mellanox_18361"
+						;;
+					*"nmlx4_en-3.15.11.6"*)
+						rndir="scatest/Mellanox_18361"
+						;;
+					*"nmlx4_en-3.16.11"*)
+						rndir="scatest/Mellanox_89651"
+						;;
+					*"ConnectX-4-5_4.15.12.12"*)
+						rndir="scatest/Mellanox_723"
+						;;
+					*"nmlx5-core-4.15.12.12"*)
+						rndir="scatest/Mellanox_723"
+						;;
+					*"nmlx5-core-4.15.13.2"*)
+						rndir="scatest/Mellanox_153"
+						;;
+					*"nmlx5-core-4_15_10_3"*)
+						rndir="scatest/Mellanox_14568"
+						;;
+					*"lpfc-11.1.257.1"*)
+						rndir="scatest/Emulex_46537"
+						;;
+					*"lpfc-11.1.245"*)
+						rndir="scatest/Emulex_4567"
+						;;
+					*"lpfc-11.4.199"*)
+						rndir="scatest/Emulex_0071"
+						;;
+					*"qcnic-6.5-72"*)
+						rndir="scatest/QLogic_86372"
+						;;
+					*"qfle3-1.0.6"*)
+						rndir="scatest/QLogic_86372"
+						;;
+					*"qfle3f-1.0.44"*)
+						rndir="scatest/QLogic_86372"
+						;;
+					*"qfle3i-1.0.13"*)
+						rndir="scatest/QLogic_86372"
+						;;
+					*"elxiscsi-11.2.1263"*)
+						rndir="scatest/Emulex_1265"
+						;;
+					*"bnxt"*"-20.8.0-72"*)
+						rndir="scatest/Broadcom_56363"
+						;;
+					*"6.0.0-i40en-1.5.6"*)
+						rndir="scatest/Intel_86489"
+						;;
+					*"i40en-1.5.6"*)
+						rndir="scatest/Intel_156"
+						;;
+					*"i40e-2.0.7"*)
+						rndir="scatest/Intel_26756"
+						;;
+					*"6.0.0-bnxt"*"-20.8.10"*)
+						rndir="scatest/Broadcom_05"
+						;;
+					*"bnxt"*"-20.8.10"*)
+						rndir="scatest/Broadcom_43463"
+						;;
+					*"brcmfcoe-11.4.1216.0-714"*)
+						rndir="scatest/Emulex_85123"
+						;;
+					*"brcmfcoe-11.4.1216.0."*)
+						rndir="scatest/Emulex_85123"
+						;;
+					*"brcmfcoe-11.4.1216.0-710"*)
+						rndir="scatest/Broadcom_8213"
+						;;
+					*"brcmfcoe-11.4.1216.0-708"*)
+						rndir="scatest/Emulex_116"
+						;;
+					*"brcmfcoe-11.4.1126"*)
+						rndir="scatest/Broadcom_8213"
+						;;
+					*"nenic-1.0.13"*)
+						rndir="scatest/Cisco_1235"
+						;;
+					*"6.0.0-intel-nvme-1.3.2.4"*)
+						rndir="scatest/Intel_73463"
+						;;
+					*"intel-nvme-1.3.2.4"*)
+						rndir="scatest/Intel_6431"
+						;;
+					*"elxiscsi-11.4.1210"*)
+						rndir="scatest/Emulex_1239"
+						;;
+					*"6.0.0-smartpqi-1.0.1.239"*)
+						rndir="scatest/Adaptec_131"
+						;;
+					*"smartpqi-1.0.1.239"*)
+						rndir="scatest/PMCS_76487"
+						;;
+					*"6.0.0-elxnet-11.4.1205"*)
+						rndir="scatest/Emulex_7453"
+						;;
+					*"elxnet-11.4.1205"*)
+						rndir="scatest/Emulex_1233"
+						;;
+					*"elxnet-11.2.1271"*)
+						rndir="scatest/Emulex_75421"
+						;;
+					*"5.5.0-elxnet-11.1.245"*)
+						rndir="scatest/Emulex_1983"
+						;;
+					*"6.0.0-elxnet-11.1.245"*)
+						rndir="scatest/Emulex_245"
+						;;
+					*"elxnet-11.1.245"*)
+						rndir="scatest/Broadcom_4567"
+						;;
+					*"be2iscsi-11.2.1263"*)
+						rndir="scatest/Emulex_1276"
+						;;
+					*"be2iscsi-11.1.145"*)
+						rndir="scatest/Emulex_57132"
+						;;
+					*"be2iscsi-11.4.1210"*)
+						rndir="scatest/Emulex_4536"
+						;;
+					*"be2iscsi-11.4.1178"*)
+						rndir="SCATEST/Emulex_1178"
+						;;
+					*"be2iscsi-11.2.1197"*)
+						rndir="SCATEST/Emulex_1197"
+						;;
+					*"ixgben-1.6.5"*)
+						rndir="scatest/Intel_1239"
+						;;
+					*"ixgben-1.5.3"*)
+						rndir="scatest/Intel_1235"
+						;;
+					*"ixgbe-4.5.3"*)
+						rndir="scatest/Intel_1254"
+						;;
+					*"ixgbe-4.4.1"*)
+						rndir="scatest/Intel_63"
+						;;
+					*"bnx-6.0"*)
+						rndir="scatest/QLogic_61"
+						;;
+					*"bnx2fc-1.713.60"*)
+						rndir="scatest/QLogic_61"
+						;;
+					*"cnic_register-1.713.60"*)
+						rndir="scatest/QLogic_61"
+						;;
+					*"cnic-2.713.60"*)
+						rndir="scatest/QLogic_61"
+						;;
+					*"bnx2i-2.713.60"*)
+						rndir="scatest/QLogic_61"
+						;;
+					*"bnx2x-2.713.60"*)
+						rndir="scatest/QLogic_61"
+						;;
+					*"hfcndd-10.42.20.162"*)
+						rndir="scatest/Hitachi_76523"
+						;;
+					*"hfcndd-10.42.20.152"*)
+						rndir="scatest/Hitachi_86739"
+						;;
+					*"nenic-1.0.11"*)
+						rndir="scatest/Cisco_1236"
+						;;
+					*"6.0.0-iavmd-1.3.0.1004"*)
+						rndir="scatest/Intel_62538"
+						;;
+					*"iavmd-1.3.0.1004."*)
+						rndir="scatest/Intel_62538"
+						;;
+					*"iavmd-1.3.0"*)
+						rndir="scatest/Intel_634823"
+						;;
+					*"6.0.0-iavmd-1.2.0"*)
+						rndir="scatest/Intel_00145"
+						;;
+					*"iavmd-1.2.0"*)
+						rndir="scatest/Intel_1233"
+						;;
+					*"iavmd-1.1.0"*)
+						rndir="SCATEST/Intel_809"
+						;;
+					*"6.0.0-i40en-1.4.3"*)
+						rndir="scatest/Intel_34761"
+						;;
+					*"i40en-1.4.3."*)
+						rndir="scatest/Intel_34761"
+						;;
+					*"i40en-1.4.3-"*)
+						rndir="scatest/Intel_1232"
+						;;
+					*"elxiscsi-11.4.1184"*)
+						rndir="scatest/Emulex_1238"
+						;;
+					*"celerity16fc-2.10"*)
+						rndir="scatest/ATTO_1212"
+						;;
+					*"6.0.0-elxnet-11.4.1179"*)
+						rndir="scatest/Emulex_1235"
+						;;
+					*"elxnet-11.4.1179"*)
+						rndir="scatest/Emulex_007"
+						;;
+					*"bnxt"*"-20.6.3"*)
+						rndir="scatest/Broadcom_678334"
+						;;
+					*"ConnectX-4-5_4.16.10.3"*)
+						rndir="scatest"
+						;;
+					*"ConnectX-4-4.16.10"*)
+						rndir="scatest"
+						;;
+					*"6.0.0-brcmfcoe-11.4.1121"*)
+						rndir="scatest/Emulex_1121"
+						;;
+					*"brcmfcoe-11.4.1121"*)
+						rndir="scatest/Emulex_12475"
+						;;
+					*"lpfc-11.1.257.0"*)
+						rndir="SCATEST/Emulex_257"
+						;;
+					*"qcnic-6.5-64"*)
+						rndir="scatest/QLogic_1111"
+						;;
+					*"qcnic-1.0.4"*)
+						rndir="scatest/QLogic_1111"
+						;;
+					*"qfle3-1.0.55"*)
+						rndir="scatest/QLogic_1111"
+						;;
+					*"qfle3f-1.0.31"*)
+						rndir="scatest/QLogic_1111"
+						;;
+					*"qfle3i-1.0.5"*)
+						rndir="scatest/QLogic_1111"
+						;;
+					*"qedentv-3.0.7.5"*)
+						rndir="scatest/Qlogic_1235"
+						;;
+					*"6.0.0-lpfc-11.4.142"*)
+						rndir="scatest/Emulex_1234"
+						;;
+					*"lpfc-11.4.142"*)
+						rndir="scatest/Emulex_1231"
+						;;
+					*"msgpt3-15.00.02.00"*)
+						rndir="scatest/Avago_75623"
+						;;
+					*"6.0.0-lpfc-11.2.320"*)
+						rndir="scatest/Emulex_181695"
+						;;
+					*"lpfc-11.2.320"*)
+						rndir="SCATEST/Emulex_320"
+						;;
+					*"lpfc-11.1.183.647"*)
+						rndir="scatest/Emulex_647"
+						;;
+					*"5.5.0-lpfc-11.1.183.641"*)
+						rndir="scatest/Emulex_641"
+						;;
+					*"lpfc-11.1.183.641"*)
+						rndir="scatest/Emulex_1246"
+						;;
+					*"elxiscsi-11.2.1197"*)
+						rndir="scatest/Emulex_128845"
+						;;
+					*"qedentv-3.0.7.2"*)
+						rndir="scatest/Qlogic_567"
+						;;
+					*"ftSys_qlnativefc-6.5.0.98"*)
+						rndir="scatest/Stratus_345"
+						;;
+					*"i40e-6.5.0.100"*)
+						rndir="scatest/Stratus_1269"
+						;;
+					*"qlnativefc-2.1.70.0"*)
+						rndir="scatest/QLogic_7594"
+						;;
+					*"qlnativefc-2.1.65.0"*)
+						rndir="scatest/QLogic_46237"
+						;;
+					*"qlnativefc-2.1.63.0"*)
+						rndir="scatest/Qlogic_07634"
+						;;
+					*"6.0.0-smartpqi-1.0.0.1060"*)
+						rndir="SCATEST/PMCS_1060"
+						;;
+					*"smartpqi-1.0.0.1060"*)
+						rndir="scatest/PMC_1991"
+						;;
+				esac
 				;;
 			VIC*)	
 				m="${dnlike//[^[:digit:]]/}"
@@ -947,10 +1577,14 @@ function getvsmdata() {
 		data=`xmllint --html --xpath "(//*/li[@class=\"depot-content\"])[$xx]" dlg_${cchoice}.xhtml 2>/dev/null`
 		name=`echo $data|xml_grep --html --text_only '//*/a' 2>/dev/null`
 	else
-		pver=`xmllint --html --xpath "//tr" _dlg_${cchoice}.xhtml  2> /dev/null  | tr '\n' ' ' |sed 's/<\/tr>/<\/tr>\n/' |head -1 |sed 's/<t[hd]>//g' |sed 's/<\/t[hd]>//g' |awk '{print $3}'`
-		if [ Z"$pver" = Z"Version" ]
+		pver=`grep selected=\"selected\" _dlg_${cchoice}.xhtml 2> /dev/null | cut -d\" -f2 | sed 's/[[:space:]]\+$//'| sed 's/ /+/g'`
+		if [ ${PIPESTATUS[0]} -ne 0 ]
 		then
-			pver=`grep selected _dlg_${cchoice}.xhtml |head -1 | cut -d\" -f2`
+			pver=`xmllint --html --xpath "//tr" _dlg_${cchoice}.xhtml  2> /dev/null  | tr '\n' ' ' |sed 's/<\/tr>/<\/tr>\n/' |head -1 |sed 's/<t[hd]>//g' |sed 's/<\/t[hd]>//g' |awk '{print $3}'| sed 's/[[:space:]]\+$//'| sed 's/ /+/g'`
+		fi
+		if [ Z"$pver" = Z"" ]
+		then
+			pver=$vers
 		fi
 		data=`xmllint --html --xpath "(//td[@class=\"filename\"])[$xx]" _dlg_${cchoice}.xhtml 2> /dev/null`
 		name=`echo $data|sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g' | grep fileNameHolder | cut -d '>' -f 2 | sed 's/ //g'`
@@ -967,20 +1601,20 @@ function getasso() {
 	oss=""
 	oem=""
 	assomiss=0
-	if [ $domyvmware -eq 1 ] && [ ! -e dlg_${choice}.xhtml ]
+	if [ $domyvmware -eq 1 ] #&& [ ! -e dlg_${choice}.xhtml ]
 	then
 		vmwaremenu2
 	fi
-	if [ -e dlg_${choice}.xhtml ]
-	then
-		asso=`xml_grep --html --text_only '*[@title="associated-channels"]' dlg_${choice}.xhtml  2>/dev/null| sed 's/,//g'|sed 's/dlg_//g'`
-		moreasso="dlg"
-	elif [ -e _dlg_${choice}.xhtml ]
+	if [ -e _dlg_${choice}.xhtml ]
 	then
 		assomiss=1
 		# Get ASSO from my vmware bits
 		asso=`xmllint --html --xpath "//div[@class=\"activitiesLog\"]" _dlg_${choice}.xhtml 2>/dev/null |grep secondary | cut -d= -f3 | cut -d\& -f 1 | sed 's/-/_/g'`
 		moreasso="_dlg"
+	elif [ -e dlg_${choice}.xhtml ]
+	then
+		asso=`xml_grep --html --text_only '*[@title="associated-channels"]' dlg_${choice}.xhtml  2>/dev/null| sed 's/,//g'|sed 's/dlg_//g'`
+		moreasso="dlg"
 	fi
 	debugecho "DEBUG: moreasso => $moreasso"
 	if [ Z"$moreasso" != Z"" ]
@@ -1075,16 +1709,18 @@ function vsmnpkgs() {
 		else
 			# find available
 			xy=`echo $x | sed 's/-/_/g'`
-			if [ -e dlg_${x}.xhtml ] && [ -d ${repo}/dlg_${xy} ]
-			then
-				a=$x
-			elif [ -e dlg_${x}.xhtml ] && [ ! -d ${repo}/dlg_${xy} ]
-			then
-				a="${BOLD}${x}${NC}"
-			elif [ ! -e dlg_${x}.xhtml ] && [ -d ${repo}/dlg_${xy} ]
+			#if [ -e dlg_${x}.xhtml ] && [ -d ${repo}/dlg_${xy} ]
+			#then
+			#	a=$x
+			#elif [ -e dlg_${x}.xhtml ] && [ ! -d ${repo}/dlg_${xy} ]
+			#then
+			#	a="${BOLD}${x}${NC}"
+			a=${x}
+			if [ ! -e _dlg_${x}.xhtml ] && [ -d ${repo}/dlg_${xy} ]
 			then
 				a="${TEAL}${x}${NC}"
-			else
+			elif [ -e _dlg_${x}.xhtml ] && [ ! -d ${repo}/dlg_${xy} ]
+			then
 				a="${BOLD}${TEAL}${x}${NC}"
 			fi
 		fi
@@ -1111,14 +1747,14 @@ function vsmpkgs() {
 		##
 		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 	else
-		if [ $dlg -gt 0 ]
-		then
-			if [ $dolatest -eq 1 ]
-			then
-				pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\).*$/\1/' | sort -u`
-				vsmnpkgs
-			fi
-		fi
+		#if [ $dlg -gt 0 ]
+		#then
+			#if [ $dolatest -eq 1 ]
+			#then
+			#	pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\).*$/\1/' | sort -u`
+			#	vsmnpkgs
+			#fi
+		#fi
 		if [ Z"$pkgs" = Z"" ]
 		then
 			if [ -e $file ]
@@ -1301,6 +1937,7 @@ function menu() {
 				colorecho "Favorite: $favorite"
 				save_vsmrc
 			else
+				# not for root or next layer
 				break
 			fi
 		else
@@ -1325,14 +1962,14 @@ function menu2() {
 	then
 		all="All_Plus_OpenSource"
 	fi
-	if [ -e $1 ]
-	then
-		pkgs=`xml_grep --text_only '//*/a' $1 2>/dev/null`
-	else
+	#if [ -e $1 ]
+	#then
+	#	pkgs=`xml_grep --text_only '//*/a' $1 2>/dev/null`
+	#else
 		vmwaremenu2
-	fi
+	#fi
 	npkg=""
-	f=`echo $1 |sed 's/\.xhtml//' | sed 's/-/_/g'`
+	f=`echo $1 |sed 's/\.xhtml//' | sed 's/-/_/g' | sed 's/^_//'`
 	for x in $pkgs
 	do
 		if [ ! -e ${repo}/${f}/${x} ] && [ ! -e ${repo}/${f}/${x}.gz ]
@@ -1417,11 +2054,11 @@ function getvsmparams() {
 			size=`printf '%d\n' "$size" 2>/dev/null`
 			dlgcode=`echo $ndata | cut -d' ' -f3`
 			downloaduuid=`echo $ndata | cut -d ' ' -f13`
-			if [ Z"$vers" = Z"" ]
-			then
-				vers=$pver
-			fi
-			# one off
+			#if [ Z"$vers" = Z"" ]
+			#then
+			#	vers=$pver
+			#fi
+			
 			if [ Z"$dlgcode" = Z"VRLI-451-VCENTER" ]
 			then
 				dlgcode="VRLI-451"
@@ -1429,6 +2066,7 @@ function getvsmparams() {
 			dtr="{\"sourcefilesize\":\"$size\",\"dlgcode\":\"$dlgcode\",\"languagecode\":\"en\",\"source\":\"vswa\",\"downloadtype\":\"manual\",\"eula\":\"Y\",\"downloaduuid\":\"$downloaduuid\",\"purchased\":\"Y\",\"dlgtype\":\"Product+Binaries\",\"productversion\":\"$pver\"}"
 			debugecho "DEBUG: drparams => $dtr"
 			drparams=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $dtr`
+			debugecho "DEBUG: drparams => $drparams"
 			href="https://depot.vmware.com/getAuthUrl"
 			#https://download2.vmware.com/software/vcops/v4h_651/Reports_V4VAdapter-6.5.1-7363818.zip
 			durl="https://${rndll}/software/${rndir}/${fname}"
@@ -1526,19 +2164,31 @@ function getvsm() {
 						if [ $err -ne 0 ]
 						then
 							rm $name
+							if [ $debugv -eq 1 ]
+							then
+								echo ""
+								echo "DEBUGV: name => $name" 
+								echo "DEBUGV: dnlike => $dnlike" 
+								echo "DEBUGV: url => $url" 
+							fi
 						else
 							diddownload=1
 						fi
 					else
-						if [ $doprogress -eq 1 ]
+						if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 						then
 							echo -n "E"
+							if [ $debugv -eq 1 ]
+							then
+								echo ""
+								echo "DEBUGV: url => $url" 
+							fi
 						else
 							colorecho "No Redirect Error Getting $name" 1
 						fi
 					fi
 				else
-						if [ $doprogress -eq 1 ]
+						if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 						then
 							echo -n "B"
 						else
@@ -1690,6 +2340,7 @@ fi
 #
 # Default settings
 dodebug=0
+debugv=0
 diddownload=0
 doforce=0
 dolatest=0
@@ -1703,7 +2354,7 @@ myoss=-1
 myoem=-1
 domenu2=0
 indomenu2=0
-domyvmware=0
+domyvmware=1
 remyvmware=0
 myyes=0
 myfav=0
@@ -1828,6 +2479,9 @@ do
 			dosave=1
 			;;
 		--debug)
+			debugv=1
+			;;
+		--debugv)
 			dodebug=1
 			;;
 		--dts)
@@ -1959,6 +2613,7 @@ then
 	then
 		# handle storing 'Basic Auth' for reuse
 		echo -n $auth > .credstore
+		chmod 600 .credstore
 	fi
 	echo "	Use credstore:	0"
 else
@@ -2008,6 +2663,7 @@ if [ $err -ne 0 ]
 then
 	exit $err
 fi
+chmod 600 cookies.txt
 
 # Extract JSESSIONID
 JS=`grep JSESSIONID index.html | awk -F\; '{print $1}' |awk -F= '{print $2}'`
@@ -2316,7 +2972,7 @@ do
 						# do not show if ALL, choice set above!
 						if [ $doall -eq 0 ] && [ $dodlg -eq 0 ]
 						then
-							menu2 dlg_${choice}.xhtml $oss $oem $dts
+							menu2 _dlg_${choice}.xhtml $oss $oem $dts
 							# menu2 requires doall be set
 							#if [ Z"$choice" = Z"All" ]
 							#then
@@ -2433,7 +3089,7 @@ do
 							fi
 							while [ $x -le $cnt ]
 							do
-								if [ $doprogress -eq 1 ]
+								if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 								then
 									echo -n "."
 								fi
@@ -2466,15 +3122,21 @@ do
 								then
 									if [ $dodlg -eq 1 ]
 									then
+										echo ""
 										echo "Local:$repo/dlg_$currchoice/$name"
 									fi
 									debugecho "DEBUG: Getting $name"
 									getvsm $currchoice "base"
+									if [ $dodlg -eq 1 ]
+									then
+										# Just exist, got package
+										exit
+									fi
 								fi
 								# out to dev null seems to be required
 								$((x++)) 2> /dev/null
 							done
-							if [ $doprogress -eq 1 ]
+							if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 							then
 								echo "!"
 							fi
@@ -2522,7 +3184,7 @@ do
 											domts=1
 										fi
 									fi
-									if [ $doprogress -eq 1 ]
+									if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 									then
 										echo -n "."
 									fi
@@ -2558,15 +3220,21 @@ do
 											xignore=0
 											if [ $dodlg -eq 1 ]
 											then
+												echo ""
 												echo "Local:$repo/dlg_$currchoice/$om/$name"
 											fi
 											getvsm $currchoice $om $o
 											# out to dev null seems to be required
+											if [ $dodlg -eq 1 ]
+											then
+												# package exist, exit
+												exit
+											fi
 										fi
 										let x=$x+1
 									done
 								done
-								if [ $doprogress -eq 1 ]
+								if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 								then
 									echo "!"
 								fi
