@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.0.0"
+VERSIONID="4.0.1"
 
 # args: stmt error
 function colorecho() {
@@ -877,6 +877,9 @@ function getinnerrndir() {
 					VMware-VIM*)
 						dnlike="$lchoice";
 						;;
+					*"updaterepo"*)
+						dnlike="$lchoice";
+						;;
 				esac
 				# Do the std if we are not using nlike
 				if [ Z"$dnlike" = Z"$lchoice" ]
@@ -888,6 +891,9 @@ function getinnerrndir() {
 				case "$name" in
 					VMware-vSphereTlsReconfigurator-6.5.0-5597882.x86_64.msi)
 						rndir="vc/65"
+						;;
+					VMware-vSphereTlsReconfigurator-6.5.0-5597882.x86_64.rpm)
+						rndir="vc/65/u1e"
 						;;
 				esac
 				;;
@@ -1719,7 +1725,7 @@ function vsmnpkgs() {
 			if [ ! -e _dlg_${x}.xhtml ] && [ -d ${repo}/dlg_${xy} ]
 			then
 				a="${TEAL}${x}${NC}"
-			elif [ -e _dlg_${x}.xhtml ] && [ ! -d ${repo}/dlg_${xy} ]
+			elif [ ! -d ${repo}/dlg_${xy} ]
 			then
 				a="${BOLD}${TEAL}${x}${NC}"
 			fi
@@ -1851,7 +1857,7 @@ function stripcolor() {
 	echo $choice | fgrep '[' >& /dev/null
 	if [ $? -eq 0 ]
 	then
-		choice=`echo $choice | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | sed -r "s/\x1B\(B//g"`
+		choice=`echo $choice | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | sed -r "s/\x1B\(B//g"|sed -r "s/[[:cntrl:]]//g"`
 	fi
 	debugecho "SC: $choice"
 }

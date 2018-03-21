@@ -228,6 +228,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+4.0.1 - Support for VC65U1G plus bugfix from Alex Lopez (@ivirtualex)
+
 4.0.0 - My VMware now default, cleaned up Debug more
 
 3.9.0 - Added Debian Support
