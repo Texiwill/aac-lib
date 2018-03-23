@@ -213,9 +213,9 @@ not work. The 'Mark' menu item does this.
 
 I added these lines to a script within /etc/cron.daily (which usually runs at 3AM):
 ```
-cd /home/user
-/home/user/aac-base.install -u
-/home/user/aac-base.install -i vsm
+cd /home/user/aac-base
+/home/user/aac-base/aac-base.install -u
+/home/user/aac-base/aac-base.install -i vsm
 ```
 
 The following line starts VSM download at 6AM. You would add using the command `crontab -e`:
@@ -228,6 +228,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+4.0.2 - Support for VC55U3H, 60U3 fixes, and --dlg updates thanks to Michelle Laverick (@m_laverick)
+
 4.0.1 - Support for VC65U1G plus bugfix from Alex Lopez (@ivirtualex)
 
 4.0.0 - My VMware now default, cleaned up Debug more

@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.0.1"
+VERSIONID="4.0.2"
 
 # args: stmt error
 function colorecho() {
@@ -22,11 +22,14 @@ function colorecho() {
 	then
 		COLOR=$RED
 	fi
-	if [ $docolor -eq 1 ]
+	if [ $debugv -ne 2 ]
 	then
-		echo "${COLOR}${1}${NC}"
-	else
-		echo ${1}
+		if [ $docolor -eq 1 ]
+		then
+			echo "${COLOR}${1}${NC}"
+		else
+			echo ${1}
+		fi
 	fi
 }
 function debugecho() {
@@ -136,7 +139,7 @@ function mywget() {
 				echo -n "+"
 			fi
 		else
-			wget $_PROGRESS_OPT $hd --progress=bar:force -nd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2> /dev/null 2>&1 | progressfilt
+			wget $_PROGRESS_OPT $hd --progress=bar:force -nd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt
 			err=${PIPESTATUS[0]}
 		fi
 	fi
@@ -863,8 +866,9 @@ function getinnerrndir() {
 				rndir="vrops${m}"
 				;;
 			VC55*)
+				rndir="vi/55"
 				case "$name" in
-					VMware-VIMSetup-all-*update03*)
+					VMware-VIMSetup-all-*7460842*)
 						rndir="vi2/55"
 						;;
 					VMware-vCenter-*30700*)
@@ -1271,10 +1275,10 @@ function getinnerrndir() {
 					*"nmlx5-core-4.15.12.12"*)
 						rndir="scatest/Mellanox_723"
 						;;
-					*"nmlx5-core-4.15.13.2"*)
+					*"nmlx5_core-4.15.13.2"*)
 						rndir="scatest/Mellanox_153"
 						;;
-					*"nmlx5-core-4_15_10_3"*)
+					*"nmlx5_core-4_15_10_3"*)
 						rndir="scatest/Mellanox_14568"
 						;;
 					*"lpfc-11.1.257.1"*)
@@ -2129,25 +2133,30 @@ function getvsm() {
 		fi
 	fi
 	
+	debugecho "DEBUG: $currchoice $name"
+	if [ $menu2files -eq 1 ] || [ $domts -eq 1 ]
+	then
+		getinnerrndir $tchoice
+	fi
+	#echo "Download $name to `pwd`?"
+	#read c
+	getvsmparams
+	if [ Z"$drparams" = Z"CART" ]
+	then
+		url=$href
+	else
+		url="$href?params=$drparams&downloadurl=$durl&familyversion=$vers&productfamily=$prod"
+	fi
+	debugecho "DEBUG: url => $url"
+	if [ $debugv -eq 2 ]
+	then
+		echo "$lchoice|$rndir|$rndll" | sed 's/\.vmware\.com//'
+		echo "$lchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
+	fi
 	if [ $dovsmit -eq 1 ]
 	then
 		if  ([ ! -e ${name} ] && [ ! -e ${name}.gz ]) || [ $doforce -eq 1 ]
 		then 
-			debugecho "DEBUG: $currchoice $name"
-			if [ $menu2files -eq 1 ] || [ $domts -eq 1 ]
-			then
-				getinnerrndir $tchoice
-			fi
-			#echo "Download $name to `pwd`?"
-			#read c
-			getvsmparams
-			if [ Z"$drparams" = Z"CART" ]
-			then
-				url=$href
-			else
-				url="$href?params=$drparams&downloadurl=$durl&familyversion=$vers&productfamily=$prod"
-			fi
-			debugecho "DEBUG: url => $url"
 			if [ $dryrun -eq 0 ]
 			then
 				if [ Z"$drparams" = Z"CART" ]
@@ -2394,6 +2403,7 @@ midprod=1
 doprogress=0
 myprogress=0
 doquiet=0
+myq=0
 # onscreen colors
 RED=`tput setaf 1`
 PURPLE=`tput setaf 5`
@@ -2487,6 +2497,9 @@ do
 		--debug)
 			debugv=1
 			;;
+		--debug2)
+			debugv=2
+			;;
 		--debugv)
 			dodebug=1
 			;;
@@ -2520,6 +2533,7 @@ do
 			;;
 		-nq|--noquiet)
 			doquiet=0
+			myq=0
 			;;
 		--progress)
 			myprogress=1
@@ -2545,7 +2559,7 @@ then
 	doquiet=0
 fi
 
-if [ $myquiet -eq 1 ]
+if [ $myquiet -eq 1 ] && [ $myq -eq 0 ]
 then
 	doquiet=1
 fi
@@ -2689,7 +2703,16 @@ fi
 
 if [ $doreset -eq 1 ]
 then
-	debugecho "DEBUG: Reset Request"
+	colorecho "Reset Request"
+	if [ Z"$_PROGRESS_OPT" != Z"" ]
+	then
+		_PROGRESS_OPT=' '
+	fi
+	doqr=$doquiet
+	if [ $doquiet -eq 1 ]
+	then
+		doquiet=0
+	fi
 	# Get index and subsequent data
 	mywget "-rxl 1" https://depot.vmware.com/PROD/index.xhtml
 	#if [ $doquiet -eq 1 ]
@@ -2709,6 +2732,11 @@ then
 	then
 		exit 0
 	fi
+	if [ Z"$_PROGRESS_OPT" = Z" " ]
+	then
+		_PROGRESS_OPT=''
+	fi
+	doquiet=$doqr
 fi
 
 if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
@@ -2793,14 +2821,16 @@ EOF
 			exit
 		fi
 	fi
+	debugecho "DEBUG: $files"
 
-	tmp='/tmp/vsm/tt$$'
+	tmp="/tmp/vsm/tt$$"
 	for x in $files
 	do
 		x=`echo $x |sed 's/.xhtml//'`
 		d=`grep -l $x *.xhtml | grep -v $x | grep -v '^_' | sort -V | tail -1 | sed 's/.xhtml//'`
 		#echo -n "$d => "
 		dd=`echo $d | sed 's/dlg_//'`
+		debugecho "DEBUG: x => $x d => $d dd => $dd"
 		if [ $dodlg -eq 1 ]
 		then
 			choice=$dd
@@ -2810,9 +2840,15 @@ EOF
 		if [ Z"$dd" != Z"$d" ]
 		then
 			grep -l $dd *.xhtml | grep -v $dd | grep -v '^_' | sed 's/.xhtml//' >> $tmp
+		else
+			echo $dd >> $tmp
+			if [ $dodlg -eq 1 ]
+			then
+				choice=`echo $x | sed 's/dlg_//'`
+			fi
 		fi
 	done
-	debugecho "DEBUG: DLG => Get List"
+	debugecho "DEBUG: Choice => $choice"
 	# now we run through all the prevchoices
 	favorites=`sort -uV $tmp | grep -v dlg_`
 	debugecho "DEBUG: DLG => $favorites"
