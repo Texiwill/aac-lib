@@ -214,8 +214,8 @@ not work. The 'Mark' menu item does this.
 I added these lines to a script within /etc/cron.daily (which usually runs at 3AM):
 ```
 cd /home/user/aac-base
-/home/user/aac-base/aac-base.install -u
-/home/user/aac-base/aac-base.install -i vsm
+./aac-base.install -u
+./aac-base.install -i vsm
 ```
 
 The following line starts VSM download at 6AM. You would add using the command `crontab -e`:
