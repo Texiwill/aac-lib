@@ -48,6 +48,8 @@ then
 	fi
 fi
 
+mkdir aac-base
+cd aac-base
 wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
 chmod +x aac-base.install
 ./aac-base.install -u
