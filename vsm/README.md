@@ -228,6 +228,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+4.0.3 - Small Bug with --dlg fixed, plus initial download speedup
+
 4.0.2 - Support for VC55U3H, 60U3 fixes, and --dlg updates thanks to Michelle Laverick (@m_laverick)
 
 4.0.1 - Support for VC65U1G plus bugfix from Alex Lopez (@ivirtualex)

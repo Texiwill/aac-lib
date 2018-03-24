@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.0.2"
+VERSIONID="4.0.3"
 
 # args: stmt error
 function colorecho() {
@@ -102,7 +102,7 @@ function mywget() {
 	hr=$2
 	hd=$3
 	wgprogress=$doprogress
-	if [ Z"$1" != Z"-rxl 1" ]
+	if [ Z"$1" != Z" " ]
 	then
 		ou="-O $1"
 	fi
@@ -139,7 +139,7 @@ function mywget() {
 				echo -n "+"
 			fi
 		else
-			wget $_PROGRESS_OPT $hd --progress=bar:force -nd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt
+			wget $_PROGRESS_OPT $hd --progress=bar:force --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr # 2>&1 | progressfilt
 			err=${PIPESTATUS[0]}
 		fi
 	fi
@@ -2714,7 +2714,7 @@ then
 		doquiet=0
 	fi
 	# Get index and subsequent data
-	mywget "-rxl 1" https://depot.vmware.com/PROD/index.xhtml
+	mywget ' ' https://depot.vmware.com/PROD/index.xhtml '-rxl 1' 
 	#if [ $doquiet -eq 1 ]
 	#then
 	#	wget $_PROGRESS_OPT -rxl 1 --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/index.xhtml >& /dev/null
@@ -2823,7 +2823,7 @@ EOF
 	fi
 	debugecho "DEBUG: $files"
 
-	tmp="/tmp/vsm/tt$$"
+	tmp="$cdir/tt$$"
 	for x in $files
 	do
 		x=`echo $x |sed 's/.xhtml//'`
@@ -3172,6 +3172,7 @@ do
 									if [ $dodlg -eq 1 ]
 									then
 										# Just exist, got package
+rm $tmp
 										exit
 									fi
 								fi
@@ -3270,6 +3271,7 @@ do
 											if [ $dodlg -eq 1 ]
 											then
 												# package exist, exit
+												rm $tmp
 												exit
 											fi
 										fi
@@ -3311,6 +3313,7 @@ do
 			echo ""
 			if [ $myfav -eq 1 ] || [ $dodlg -gt 0 ]
 			then
+				rm $tmp
 				exit
 			fi
 		fi
