@@ -52,6 +52,7 @@ scripts as well. Such as:
 The usage of the script is:
 
 	sudo ./aac-base.install [--update|-u] [--install|-i installer] [--help|-h] [timezone]
+	--install|-i - use specific installer
 	--update|-u - update the script(s), then reload
 
 Use the following script, which requires sudo, to get everything to run

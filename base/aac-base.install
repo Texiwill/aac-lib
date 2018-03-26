@@ -9,7 +9,7 @@
 # Target: CentOS/RHEL 7
 #
 ###
-VERSION="1.7.0"
+VERSION="1.7.1"
 
 function version() {
 	echo "$0 version is $VERSION"
@@ -226,6 +226,7 @@ function usage() {
 	echo "	-u => Update"
 	echo "	-i => Install"
 	echo "  -v => version"
+	echo "	Last Argument is used to set the timezone"
 	echo "	Default timezone $TZ"
 	echo "	Available installers are:"
 	for x in `ls ${prog}.*`
@@ -276,7 +277,14 @@ do
 			usage
 			;;
 		*) 
-			TZ=$1
+			fgrep "$1" /usr/share/zoneinfo/zone.tab >& /dev/null
+			if [ $? -eq 0 ]
+			then
+				TZ=$1
+			else
+				echo "Bad Time Zone Specified"
+				exit
+			fi
 			;;
 	esac
 	shift
