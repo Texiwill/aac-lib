@@ -52,8 +52,8 @@ mkdir aac-base
 cd aac-base
 wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
 chmod +x aac-base.install
-./aac-base.install -u
-sudo ./aac-base.install -i vsm
+./aac-base.install -u $1
+sudo ./aac-base.install -i vsm $1
 
 PURPLE=`tput setaf 5`
 NC=`tput sgr0`

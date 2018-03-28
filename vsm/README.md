@@ -18,7 +18,20 @@ implies that previously out of date items are not up to date once more.
 Also, you should know that Code Stream is a license ontop of VRA, and
 VRA is already in LinuxVSM.
 
-To install use the included script, install.sh
+To install use the included script, install.sh as follows.
+```
+	chmod 755 install.sh
+	./install.sh
+```
+If you are outside the America/Chicago timezone you will want to call it as follows:
+```
+	./install.sh Time/Zone
+```
+
+For example to set the time zone for London UK use:
+```
+	./install.sh 'Europe/London'
+```
 
 Here is an example run and help:
 ```
@@ -228,6 +241,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+4.0.4 - MacOS Support
+
 4.0.3 - Small Bug with --dlg fixed, plus initial download speedup
 
 4.0.2 - Support for VC55U3H, 60U3 fixes, and --dlg updates thanks to Michelle Laverick (@m_laverick)
