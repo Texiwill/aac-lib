@@ -11,12 +11,12 @@
 ###
 
 function vsm_version() {
-	echo "1.7.0"
+	echo "1.7.1"
 }
 
 function vsm() {
-	INSTALL="wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc jq"
-	DINSTALL="wget python python-urllib3 libxml2 libxml2-utils xml-twig-tools ncurses-base bc jq"
+	INSTALL="wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc jq sharutils"
+	DINSTALL="wget python python-urllib3 libxml2 libxml2-utils xml-twig-tools ncurses-base bc jq sharutils"
 	DEVEL=""
 	DDEVEL=$DEVEL
 
@@ -39,7 +39,9 @@ function vsm() {
 	fi
 	a=$needdep
 	checkdep jq
-	if [ $needdep != 0 ] || [ $a != 0 ]
+	b=$needdep
+	checkdep sharutils
+	if [ $needdep != 0 ] || [ $a != 0 ] || [ $b != 0 ]
 	then
 		#yum -y install $INSTALL $DEVEL
 		installdep
