@@ -12,6 +12,8 @@ A MacOS and slightly more intelligent version of VSM. See README.md for more inf
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/vsm>LinuxVSM README</a>
 
 ### Installation
+Tested against MacOS X High Sierra - 10.13.4
+
 To install vsm.sh on MacOS you need to first install the prerequisites. 
 Those are Xcode, XML::Twig, Homebrew, jq, and wget. Here is how you do those:
 
