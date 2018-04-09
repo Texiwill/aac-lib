@@ -18,7 +18,9 @@ implies that previously out of date items are not up to date once more.
 Also, you should know that Code Stream is a license ontop of VRA, and
 VRA is already in LinuxVSM.
 
-To install use the included script, install.sh as follows.
+To install on MacOS X read <a href=https://github.com/Texiwill/aac-lib/blob/master/vsm/MacOS.md>MacOS.md</a>.
+
+To install on Linux use the included script, install.sh as follows.
 ```
 	chmod 755 install.sh
 	./install.sh
@@ -36,11 +38,13 @@ For example to set the time zone for London UK use:
 Here is an example run and help:
 ```
 $ /usr/local/bin/vsm.sh --help
-/usr/local/bin/vsm.sh [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] 
-[-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore] 
-[-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password
-password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] 
-[-V|--version] [-y] [--debug] [--repo repopath] [--save]
+/usr/local/bin/vsm.sh [-c|--check] [--dlg search] [-d|--dryrun] [-f|--force] 
+[--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] 
+[-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss]
+[-p|--password password] [--progress] [-q|--quiet] [-r|--reset] 
+[-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] 
+[--debug] [--repo repopath] [--save]
+    -c|--check - do sha256 check against download
     --dlg - download specific package by name or part of a name
     -d|--dryrun - dryrun, do not download
     -f|--force - force download of packages
@@ -108,17 +112,18 @@ password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--
 
 Example Run:
 
-$ vsm.sh -mr -y
+$ vsm.sh -mr -y -c
 Using the following options:
-	Version:	    4.0.0
+	Version:	4.5.0
+	Data Version:   1.0.0
 	OS Mode:        centos
 	VSM XML Dir:	/tmp/vsm
-	Repo Dir:	    /mnt/repo
-	Dryrun:		    0
+	Repo Dir:	/mnt/repo
+	Dryrun:		0
 	Force Download:	0
+	Checksum:       1
 	Reset XML Dir:	0
-	Get Latest:	    0
-	My VMware:	    1
+	My VMware:	1
 	Use credstore:	1
 Saving to /home/user/.vsmrc
 1) Datacenter_Cloud_Infrastructure
@@ -190,10 +195,14 @@ All ESXI65U1 already downloaded
 
 2018-03-17 18:07:16 (51.9 MB/s) -  Release_Notes_lsi-mr3-7.703.15.00-1OEM.txt  saved [424/424]
 
+Release_Notes_lsi-mr3-7.703.15.00-1OEM.txt: check passed
+
 ...................................................EE......EE!
 Downloads  to /mnt/repo/dlg_ESXI65U1/CustomIso
 ..........................................................................................................................!
 All ESXI65U1 DriversTools already downloaded!
+All sha256sum Check Sums Passed
+
  1) All
  2) Minimum_Required
  3) All_Plus_OpenSource
@@ -233,7 +242,7 @@ cd /home/user/aac-base
 
 The following line starts VSM download at 6AM. You would add using the command `crontab -e`:
 ```
-0 6 * * * /usr/local/bin/vsm.sh -y -mr --favorite
+0 6 * * * /usr/local/bin/vsm.sh -c -y -mr --favorite
 ```
 
 ### Support
@@ -241,6 +250,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+4.5.0 - Rewrite to better allow updates, --dlg to work, sha256/sha1 sums, and improved MacOS support, not to mention improvements in performance
+
 4.0.4 - MacOS Support
 
 4.0.3 - Small Bug with --dlg fixed, plus initial download speedup

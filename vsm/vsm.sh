@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.0.3"
+VERSIONID="4.5.0"
 
 # args: stmt error
 function colorecho() {
@@ -101,10 +101,11 @@ function mywget() {
 	ou=$1
 	hr=$2
 	hd=$3
+	err=0
 	wgprogress=$doprogress
 	if [ Z"$1" != Z" " ]
 	then
-		ou="-O $1"
+		ou="-nd -O $1"
 	fi
 	if [ Z"$4" != Z"" ]
 	then
@@ -121,6 +122,7 @@ function mywget() {
 		lurl=`wget --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' -O - $hr 2>&1 | grep Location | awk '{print $2}'`
 		err=${PIPESTATUS[0]}
 	else
+		debugecho "doquiet => $doquiet : $doprogress : $indomenu2 : $wgprogress"
 		if [ $doquiet -eq 1 ]
 		then
 			if [ $doprogress -eq 1 ] && [ $indomenu2 -eq 1 ]
@@ -129,11 +131,12 @@ function mywget() {
 			fi
 			if [ $wgprogress -eq 1 ]
 			then
-				wget $_PROGRESS_OPT --progress=bar:force -nd $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt 
+				wget $_PROGRESS_OPT --progress=bar:force $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt 
+				err=${PIPESTATUS[0]}
 			else
 				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr >& /dev/null
+				err=${PIPESTATUS[0]}
 			fi
-			err=${PIPESTATUS[0]}
 			if [ $doprogress -eq 1 ] && [ $indomenu2 -eq 1 ]
 			then
 				echo -n "+"
@@ -193,8 +196,8 @@ function findmissing() {
 					myusenurl='/group/vmware/details?downloadGroup=VCM-584&productId=542'
 					;;
 				*)
-					myname=`grep "${myvmware}/" ${rcdir}/_downloads.xhtml | cut -d\" -f 2|sed 's/Software-Defined/Software_Defined/'`
-					myver=`grep "${myvmware}/" ${rcdir}/_downloads.xhtml | cut -d\" -f 14`
+					myname=`egrep "${myvmware}[/\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 2|sed 's/Software-Defined/Software_Defined/'`
+					myver=`egrep "${myvmware}[/\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 14`
 					myver=`basename $myver`
 					pkgs=`echo "${choice}_${myver}" | sed 's/[ \.]/_/g'`
 					debugecho "calc pkg => $pkgs"
@@ -248,13 +251,13 @@ function findmissing() {
 				then
 					if [ Z"$myusenurl" = Z"" ]
 					then
-						usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | grep -v OSS | cut -d\" -f 4`
+						usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | grep -v OSS | cut -d\" -f 4 | head -1`
 					else
 						usenurl=$myusenurl
 					fi
 				fi
 				#debugecho "N: $usenurl"
-				if [ ! -e ${rcdir}/${missname}_1.xhtml ]
+				if [ ! -e ${rcdir}/${missname}_1.xhtml ] || [ $doreset -eq 1 ]
 				then
 					mywget ${rcdir}/${missname}_1.xhtml "https://my.vmware.com${usenurl}"
 				fi
@@ -312,7 +315,7 @@ function getoutervmware() {
 			then
 				if [ Z"$usenurl" = Z"" ]
 				then
-					usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | grep -v OSS | cut -d\" -f 4`
+					usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | grep -v OSS | cut -d\" -f 4 | head -1`
 				fi
 				midprod=1
 			fi
@@ -327,11 +330,22 @@ function getinnervmware() {
 	then
 		#debugecho "N: $usenurl"
 		ver=`echo $choice | sed 's/\.//g'| sed 's/.*_\([0-9]\+\)$/\1/'`
+		# not a good test :(
 		if [ Z"$ver" != Z"$choice" ]
 		then
 		#	if [ ${#ver} -lt 3 ]
 		#	then
-				gld=`echo $usenurl | cut -d= -f 2 |cut -d\& -f1`
+				gld=`echo $usenurl | cut -d= -f 2 |cut -d\& -f1|sed 's/-/_/g'`
+				pld=`echo $gld | sed 's/\([A-Z]\+\)_[0-9]\+/\1/'`
+				gver=`echo $gld | sed 's/.*_\([0-9]\+\)$/\1/'`
+				# Need to substitute versions if necessary
+				# This may catch appropriate items
+				debugecho "PLD => $pld"
+				if [ Z"$gver" != Z"$ver" ] && [ Z"$pld" = Z"VRNI" ]
+				then
+					gld=`echo $gld | sed "s/$gver/$ver/"`
+					usenurl=`echo $usenurl | sed "s/$gver/$ver/"`
+				fi
 				missname="_dlg_${gld}"
 				nurl=$usenurl
 				pkgs="${gld}"
@@ -343,7 +357,7 @@ function getinnervmware() {
 		#		missname="_dlg_${gld}_${ver}"
 		#		pkgs="${gld}_${ver}"
 		#	fi
-			if [ ! -e ${rcdir}/${missname}.xhtml ]
+			if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ]
 			then
 				mywget ${rcdir}/${missname}.xhtml "https://my.vmware.com${nurl}"
 			fi
@@ -479,7 +493,7 @@ function getvsmcnt() {
 	then
 		cnt=`xml_grep --html --pretty_print --cond '//*/[@class="depot-content"]' dlg_${cchoice}.xhtml 2>/dev/null  |grep display-order | wc -l`
 	else
-		cnt=`xmllint --html --xpath "//td[@class=\"filename\"]" _dlg_${cchoice}.xhtml 2> /dev/null | grep strong | wc -l`
+		cnt=`xmllint --html --xpath "//td[@class=\"filename\"]" _dlg_${cchoice}.xhtml 2> /dev/null | grep fileNameHolder | wc -l`
 	fi
 	debugecho "DEBUG: getvsmcnt => $cnt"
 	#let cnt=$cnt+1
@@ -508,1067 +522,239 @@ function getouterrndir() {
 	like=''
 	likeforlike=''
 	rndll='download2.vmware.com'
-	echo $lchoice  | egrep '_[0-9]|-[0-9]' >& /dev/null
-	if [ $? -eq 0 ]
+	ornlin=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | grep "$lchoice|" |sort -V|tail -1`
+ 	orndir=`echo $ornlin | cut -d\| -f 2`
+ 	orndll="`echo $ornlin | cut -d\| -f 3`.vmware.com"
+	if [ Z"$orndir" = Z"" ]
 	then
-		v=`echo ${lchoice} | sed 's/[0-9A-Z]\+[-_]\([0-9]\+\).*$/\1/' 2>/dev/null | awk -F_ '{print $NF}'`
-	else
-		v=`echo ${lchoice} | sed 's/[A-Z]\+\([0-9]\+\).*$/\1/' 2>/dev/null | awk -F_ '{print $NF}'`
-	fi
-	if [ Z"$v" = Z"$lchoice" ]
-	then
-		v=0
-	fi
-	debugecho "DEBUG: v => $v"
-	case "$lchoice" in
-		VRSLCM*)
-			# special case VIC, VROPS, VC
-			# Note VRSLCM_?? => VRSLCM10
-			rndir='VRSLCM10'
-			;;
-		VS_PERL_SDK*)
-			e=`echo $lchoice | sed "s/VS_PERL_SDK${v}//" | tr [:upper:] [:lower:]`
-			if [ Z"$e" != Z"" ]
-			then
-				rndir="vsphere${v}/perlsdk/${v}${e}"
-			else
-				rndir="vsphere${v}/perlsdk"
-			fi
-			;;
-		VDDK*)
-			if [ $v -ge 652 ]
-			then
-				e=`echo $lchoice | awk -F_ '{print $NF}'`
-				rndir="VDDK/$v/$e"
-			else
-				rndir="VDDK"
-			fi
-			;;
-		VMTOOLS*)
-			if [ $v -gt 1017 ]
-			then
-				rndir="vmtools/${v}"
-			else
-				rndir="vmtools"
-			fi
-			;;
-		NSX_V_*_TOOLS)
-			if [ $v -gt 612 ]
-			then
-				rndir="nsx-V-${v}"
-			else
+		echo $lchoice  | egrep '_[0-9]|-[0-9]' >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			v=`echo ${lchoice} | sed 's/[0-9A-Z]\+[-_]\([0-9]\+\).*$/\1/' 2>/dev/null | awk -F_ '{print $NF}'`
+		else
+			v=`echo ${lchoice} | sed 's/[A-Z]\+\([0-9]\+\).*$/\1/' 2>/dev/null | awk -F_ '{print $NF}'`
+		fi
+		if [ Z"$v" = Z"$lchoice" ]
+		then
+			v=0
+		fi
+		debugecho "DEBUG: v => $v"
+		case "$lchoice" in
+			VRSLCM*)
+				# special case VIC, VROPS, VC
+				# Note VRSLCM_?? => VRSLCM10
+				rndir='VRSLCM10'
+				;;
+			VS_PERL_SDK*)
+				e=`echo $lchoice | sed "s/VS_PERL_SDK${v}//" | tr [:upper:] [:lower:]`
+				if [ Z"$e" != Z"" ]
+				then
+					rndir="vsphere${v}/perlsdk/${v}${e}"
+				else
+					rndir="vsphere${v}/perlsdk"
+				fi
+				;;
+			VDDK*)
+				if [ $v -ge 652 ]
+				then
+					e=`echo $lchoice | awk -F_ '{print $NF}'`
+					rndir="VDDK/$v/$e"
+				else
+					rndir="VDDK"
+				fi
+				;;
+			VMTOOLS*)
+				if [ $v -gt 1017 ]
+				then
+					rndir="vmtools/${v}"
+				else
+					rndir="vmtools"
+				fi
+				;;
+			NSX_V_*_TOOLS)
+				if [ $v -gt 612 ]
+				then
+					rndir="nsx-V-${v}"
+				else
+					rndir="nsx-V-610"
+				fi
+				;;
+			NSX_V*)
 				rndir="nsx-V-610"
-			fi
-			;;
-		VSPP_VCD*)
-			rndir="vcd"
-			;;
-		CX*)
-			rndir="vcandr"
-			;;
-		VIO*)
-			if [ $v -ge 400 ]
-			then
-				rndir='VIO'
-			else
-				rndir='VIO_3'
-			fi
-			;;
-		LINUXVDI*)
-			if [ $v -ge 740 ]
-			then
-				rntmp=`echo $lchoice | sed 's/LINUXVDI/HZ/g'`
-				rndir="view/${rntmp}"
-			elif [ $v -ge 730 ]
-			then
-				rndir='view/HZ18FQ4'
-			else
+				;;
+			VSPP_VCD*)
+				rndir="vcd"
+				;;
+			CX*)
+				rndir="vcandr"
+				;;
+			VIO*)
+				if [ $v -ge 400 ]
+				then
+					rndir='VIO'
+				else
+					rndir='VIO_3'
+				fi
+				;;
+			LINUXVDI*)
+				if [ $v -ge 740 ]
+				then
+					rntmp=`echo $lchoice | sed 's/LINUXVDI/HZ/g'`
+					rndir="view/${rntmp}"
+				elif [ $v -ge 730 ]
+				then
+					rndir='view/HZ18FQ4'
+				else
+					rndir='view'
+				fi
+				;;
+			ZONES10*)
+				rndir="vi"
+				;;
+			*"_ESXI_5"*)
+				rndir="vi"
+				;;
+			VVD*)
+				if [ ${v} -gt 200 ]
+				then
+					rndir="vvd/${v}"
+				else
+					rndir="vvd"
+				fi
+				;;
+			CART*|VIEWCLIENT*)
+				rndll='download3.vmware.com'
+				rntmp=`echo $lchoice | cut -d_ -f 1`
+				rndir="view/viewclients/${rntmp}"
+				;;
+			HZNWS*)
+				rndir='HZNWS20'
+				;;
+			VIEWCRT*)
+				#rndll='download3.vmware.com'
+				rndir="view/viewclients"
+				;;
+			VIEWLINUX*)
 				rndir='view'
-			fi
-			;;
-		VVD*)
-			if [ ${v} -gt 200 ]
-			then
-				rndir="vvd/${v}"
-			else
-				rndir="vvd"
-			fi
-			;;
-		CART*|VIEWCLIENT*)
-			rndll='download3.vmware.com'
-			rntmp=`echo $lchoice | cut -d_ -f 1`
-			rndir="view/viewclients/${rntmp}"
-			;;
-		HZNWS*)
-			rndir='HZNWS20'
-			;;
-		VIEWCRT*)
-			#rndll='download3.vmware.com'
-			rndir="view/viewclients"
-			;;
-		VIEWLINUX*)
-			rndir='view'
-			;;
-		VIEW*)
-			if [ $v -ge 740 ]
-			then
-				rntmp=`echo $linuxvdi | sed 's/LINUXVDI/HZ/g'`
-				rndir="view/${rntmp}"
-			elif [ $v -ge 730 ]
-			then
-				rndir="view/HZ18FQ4"
-			elif [ $v -eq 625 ]
-			then
-				rndir="view624"
-			else
-				rndir="view"
-			fi
-			;;
-		HVRO*)
-			rndir='HvCOplugin'
-			;;
-		THIN*)
-			rns=`echo $lchoice | sed 's/THIN_//'`
-			rntmp=`echo $lchoice | sed 's/THIN_//' | sed 's/\([0-9]0[1-9]\).*$/\1/'|sed 's/\([0-9][1-9]\).*$/\1/'`
-			if [ $rns -gt 520 ]
-			then
-				rntmp="${rntmp}/$rns"
-			fi
-			rndir="thin/${rntmp}"
-			;;
-		UEM*)
-			rndir='UEM'
-			;;
-		MIRAGE*)
-			if [ $v -gt 540 ]
-			then
-				rntmp=`echo $lchoice | sed 's/MIRAGE_//'|sed 's/_TOOLS//'`
-				rndir="mirage/${rntmp}"
-			else
-				rndir="mirage"
-			fi
-			;;
-		AV_*)
-			if [ $v -ge 2132 ]
-			then
-				rndir="AppVolumes/${v}"
-			else
-				rndir='AppVolumes'
-			fi
-			;;
-		V4H*)
-			if [ $v -gt 650 ]
-			then
-				rntmp=`echo $lchoice | sed 's/_GA//g' | tr [:upper:] [:lower:]`
-				rndir="vcops/${rntmp}"
-			else
-				rndir="vcops"
-			fi
-			;;
-		V4PA*)
-			if [ $v -gt 650 ]
-			then
-				rntmp=`echo $lchoice | sed 's/_GA//g' | tr [:upper:] [:lower:]`
-				rndir="v4pa/${rntmp}"
-			else
-				rndir="v4pa"
-			fi
-			;;
-		FUS*)
-			rndll='download3.vmware.com'
-			rndir='fusion/file'
-			;;
-		WKST*)
-			rndll='download3.vmware.com'
-			rndir='wkst/file'
-			;;
-		VIDM_ONPREM*)
-			rntmp=`echo $lchoice | sed 's/[0-9]//g'`
-			rndir="${rntmp}${pver}"
-			;;
-		VRNI*)
-			rndir="vrni"
-			;;
-		VRLI*)
-			if [ $v -gt 450 ]
-			then
-				rndir='strata1'
-			else
-				rndir='strata'
-			fi
-			;;
-		*)
-			echo $lchoice | grep VCENTER >& /dev/null
-			lvcenter=$?
-			echo $lchoice | grep U >& /dev/null
-			uvcenter=$?
-			if [ $uvcenter -eq 0 ]
-			then
-				likeforhead=`echo $lchoice | sed 's/\([a-Z_]\+[0-9][0-9]\).*$/\1/'`
-				likefortail=`echo $lchoice | sed "s/${likeforhead}//" | sed 's/\([0-9U]\).*/\1/' | sed 's/[0-9]/[0-9]/' | sed 's/U$//'`
-				likeforlike="$likeforhead$likefortail"
-			else
-				likeforlike=`echo $lchoice | sed 's/\([a-Z_]\+[0-9][0-9]\).*$/\1/' | sed 's/[0-9]/[0-9]/g' | sed 's/U$//'`
-			fi
-			debugecho "DEBUG: likeforlike => $likeforlike"
-			if [ $lvcenter -eq 0 ]
-			then
-				like=`ls dlg_${likeforlike}*VCENTER.xhtml 2>/dev/null | grep -v OSS | sort -uV | tail -1`
-			else
-				like=`ls dlg_${likeforlike}*.xhtml 2>/dev/null | grep -v OSS | sort -uV | tail -1`
-			fi
-			if [ Z"$like" != Z"" ]
-			then
-				ename=`grep download_url $like | head -1 | sed 's/<li/\n<li/g' | grep download_url |sed 's/[<>]/ /g' | cut -d' ' -f4`
-				rndll=`echo $ename | cut -d\/ -f3`
-				rndir=`dirname $ename | sed 's/https:\/\/download[23].vmware.com\/software\///'`
-				debugecho "DEBUG: ename => $ename"
-				debugecho "DEBUG: rndll => $rndll"
-				debugecho "DEBUG: rndir => $rndir"
-			fi
-			;;
-	esac
+				;;
+			VIEW*)
+				if [ $v -ge 740 ]
+				then
+					rntmp=`echo $linuxvdi | sed 's/LINUXVDI/HZ/g'`
+					rndir="view/${rntmp}"
+				elif [ $v -ge 730 ]
+				then
+					rndir="view/HZ18FQ4"
+				elif [ $v -eq 625 ]
+				then
+					rndir="view624"
+				else
+					rndir="view"
+				fi
+				;;
+			HVRO*)
+				rndir='HvCOplugin'
+				;;
+			THIN*)
+				rns=`echo $lchoice | sed 's/THIN_//'`
+				rntmp=`echo $lchoice | sed 's/THIN_//' | sed 's/\([0-9]0[1-9]\).*$/\1/'|sed 's/\([0-9][1-9]\).*$/\1/'`
+				if [ $rns -gt 520 ]
+				then
+					rntmp="${rntmp}/$rns"
+				fi
+				rndir="thin/${rntmp}"
+				;;
+			UEM*)
+				rndir='UEM'
+				;;
+			MIRAGE*)
+				if [ $v -gt 540 ]
+				then
+					rntmp=`echo $lchoice | sed 's/MIRAGE_//'|sed 's/_TOOLS//'`
+					rndir="mirage/${rntmp}"
+				else
+					rndir="mirage"
+				fi
+				;;
+			AV_*)
+				if [ $v -ge 2132 ]
+				then
+					rndir="AppVolumes/${v}"
+				else
+					rndir='AppVolumes'
+				fi
+				;;
+			V4H*)
+				if [ $v -gt 650 ]
+				then
+					rntmp=`echo $lchoice | sed 's/_GA//g' | tr [:upper:] [:lower:]`
+					rndir="vcops/${rntmp}"
+				else
+					rndir="vcops"
+				fi
+				;;
+			V4PA*)
+				if [ $v -gt 650 ]
+				then
+					rntmp=`echo $lchoice | sed 's/_GA//g' | tr [:upper:] [:lower:]`
+					rndir="v4pa/${rntmp}"
+				else
+					rndir="v4pa"
+				fi
+				;;
+			FUS*)
+				rndll='download3.vmware.com'
+				rndir='fusion/file'
+				;;
+			WKST*)
+				rndll='download3.vmware.com'
+				rndir='wkst/file'
+				;;
+			VIDM_ONPREM*)
+				rntmp=`echo $lchoice | sed 's/[0-9]//g'`
+				rndir="${rntmp}${pver}"
+				;;
+			VRNI*)
+				rndir="vrni"
+				;;
+			VRLI*)
+				if [ $v -gt 450 ]
+				then
+					rndir='strata1'
+				else
+					rndir='strata'
+				fi
+				;;
+		esac
+	fi
+	debugecho "orndir => $orndir"
+	debugecho "orndll => $orndll"
 }
 
 function getinnerrndir() {
 	if [ $domyvmware -eq 1 ]
 	then
-		lchoice=$1
-		dnlike="$lchoice"
-		# sometimes name is not in the same directory! 
-		# So go for most recent versions location
-		ename=`echo $name | sed 's/[0-9]/[0-9]/g'`
-		debugecho "DEBUG: ename => $ename"
-		debugecho "DEBUG: lforl => $likeforlike"
-		echo $lchoice | grep VCENTER >& /dev/null
-		lvcenter=$?
-		if [ Z"$likeforlike" != Z"" ]
+		if [ Z"$orndir" = Z"" ]
 		then
-			if [ $lvcenter -eq 0 ]
+			#lchoice=$1
+			#dnlike="$lchoice"
+			# sometimes name is not in the same directory! 
+			# So go for most recent versions location
+			#ename=`echo $name | sed 's/\./\\./g'| sed 's/\[/./g' |sed 's/\]/./g'`
+			#debugecho "DEBUG: ename => $ename"
+			rnlin=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null| fgrep $name | sort -k6 -V|tail -1`
+			rndir=`echo $rnlin| cut -d' ' -f 5`
+			rndll="`echo $rnlin| cut -d' ' -f 4`.vmware.com"
+			if [ Z"$rndir" = Z"" ]
 			then
-				nlike=`grep -l $ename ${rcdir}/dlg_${likeforlike}*VCENTER.xhtml 2>/dev/null| grep -v OSS | sort -uV | tail -1| sed 's/.*\/dlg_//' | sed 's/\.xhtml//'`
-			else
-				nlike=`grep -l $ename ${rcdir}/dlg_${likeforlike}*.xhtml 2>/dev/null| grep -v OSS | sort -uV | tail -1 | sed 's/.*\/dlg_//' | sed 's/\.xhtml//'`
-			fi
-			# no per file so go older method
-			debugecho "DEBUG: like => $like; nlike => $nlike"
-			if [ Z"$nlike" != Z"" ] && [ Z"dlg_${nlike}.xhtml" != Z"$like" ]
-			then
-				ename=`egrep $ename ${rcdir}/dlg_${nlike}.xhtml | sed 's/<li/\n<li/g' | grep download_url |sed 's/[<>]/ /g' | cut -d' ' -f4`
-				dnlike=$nlike
-				debugecho "DEBUG: ename => $ename"
-				if [ Z"$ename" != Z"" ]
+				if [ -e _dlg_${lchoice}.xhtml ]
 				then
-					rndll=`echo $ename | cut -d\/ -f3`
-					rndir=`dirname $ename | sed 's/https:\/\/download[23].vmware.com\/software\///'`
+					rndir=`grep "Release Notes" _dlg_${lchoice}.xhtml| cut -d\" -f2| cut -d/ -f6,7`
 				fi
 			fi
-			debugecho "DEBUG: rndir => $rndir"
-		fi
-		debugecho "DEBUG: dnlike => $dnlike"
-		case "$dnlike" in
-			VSPP_VCD*)
-				v=`echo $name | sed 's/\.bin//'|awk -F- '{print $NF}'`
-				case $v in
-					7554058)
-						rndir="vcd/9002"
-						;;
-					7034009)
-						rndir="vcd/9002"
-						;;
-					6883868)
-						rndir="vcd81011"
-						;;
-					5515092)
-						rndir="vcd82002"
-						;;
-					3880025)
-						rndir="vcd81001"
-						;;
-				esac
-				;;
-			VIDM*)
-				case "$name" in
-					clients*)
-						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/'`
-						rndir="VIDM_ONPREM_${rntmp}"
-						;;
-					VMware-Identity-*-Desktop-*)
-						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/'`
-						rndir="VIDM_ONPREM_${rntmp}"
-						;;
-					IntegrationBroker*)
-						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/'`
-						rndir="VIDM_ONPREM_${rntmp}"
-						;;
-					euc-unified-access-*-3.0.0*)
-						rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/'`
-						rndir="view"
-						;;
-					euc-unified-access-*)
-						yr=`echo $name | sed 's/.*-\([0-9]\.[0-9]\.[0-9]\).*$/\1/'|sed 's/\.//g'`
-						mo=`echo $name | sed 's/.*-[0-9]\.[0-9]\.\([0-9]\).*$/\1/'`
-						debugecho "yr => $yr; mo => $mo"
-						if [ $mo -eq 0 ] || [ $yr -lt 321 ]
-						then
-							rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/' | sed 's/\.//g'`
-						else
-							rntmp=$yr
-						fi
-						rndir="UAG_${rntmp}"
-						;;
-				esac
-				if [ Z"$dnlike" = Z"VIDM_ONPREM_32" ] && [ Z"$name" = Z"VMware_Identity_Manager_Connector_Installer_for_Windows.exe" ]
-				then
-					rndir="VIDM_ONPREM_3.1"
-				fi
-				;;	
-			VIEW_62*)
-				case "$name" in
-					VMware-Horizon-View-Extras*|VMware-viewagent-linux*)
-						rndir="view"
-						;;
-				esac
-				;;
-			LINUXVDI*|VIEW*)
-				case "$name" in
-					euc-unified-access-*-3.0.0*)
-						rndir="view"
-						;;
-					euc-unified-access-*)
-						yr=`echo $name | sed 's/.*-\([0-9]\.[0-9]\.[0-9]\).*$/\1/'|sed 's/\.//g'`
-						mo=`echo $name | sed 's/.*-[0-9]\.[0-9]\.\([0-9]\).*$/\1/'`
-						debugecho "yr => $yr; mo => $mo"
-						if [ $mo -eq 0 ] || [ $yr -lt 321 ]
-						then
-							rntmp=`echo $name | sed 's/.*-\([0-9]\.[0-9]\).*$/\1/' | sed 's/\.//g'`
-						else
-							rntmp=$yr
-						fi
-						rndir="UAG_${rntmp}"
-						;;
-				esac
-				;;
-			V4H*|V4PA*)
-				case "$name" in
-					vRealize[_-]Operations*)
-						m=`echo $name | sed 's/\.//g'|sed 's/.*[_-]\([0-9][0-9][0-9]\).*$/\1/'`
-						if [ $m -eq 601 ]
-						then
-							m=600
-						fi
-						rndir="vrops${m}"
-						;;
-				esac
-				;;
-			VROPS*)	
-				m="${dnlike//[^[:digit:]]/}"
-				rndir="vrops${m}"
-				;;
-			VC55*)
-				rndir="vi/55"
-				case "$name" in
-					VMware-VIMSetup-all-*7460842*)
-						rndir="vi2/55"
-						;;
-					VMware-vCenter-*30700*)
-						rndir="vi2/55"
-						;;
-				esac
-				;;
-			VC65*)	
-				case "$name" in 
-					VMware-VIM*)
-						dnlike="$lchoice";
-						;;
-					*"updaterepo"*)
-						dnlike="$lchoice";
-						;;
-				esac
-				# Do the std if we are not using nlike
-				if [ Z"$dnlike" = Z"$lchoice" ]
-				then
-					n=`echo $dnlike | sed 's/VC[0-9][0-9]//' | tr [:upper:] [:lower:]`
-					m=`echo $dnlike | sed 's/VC//' | sed "s/$n//i"`
-					rndir="vc/$m/$n"
-				fi
-				case "$name" in
-					VMware-vSphereTlsReconfigurator-6.5.0-5597882.x86_64.msi)
-						rndir="vc/65"
-						;;
-					VMware-vSphereTlsReconfigurator-6.5.0-5597882.x86_64.rpm)
-						rndir="vc/65/u1e"
-						;;
-				esac
-				;;
-			DT__ESX*)
-				rndll='download3.vmware.com'
-				case "$name" in
-					*"mpt3sas-13.00.01"*)
-						rndir="SCATEST/Avago_32"
-						;;
-				esac
-				;;
-			DT_ESX*)
-				rndll='download3.vmware.com'
-				case "$name" in
-					*"bnxt"*"-20.8.0upd"*)
-						rndir="scatest/Broadcom_63561"
-						;;
-					*"bnxt"*"-20.8.3"*)
-						rndir="scatest/Broadcom_63561"
-						;;
-					*"bnxt"*"-20.8.2"*)
-						rndir="scatest/Broadcom_1522"
-						;;
-					*"bnxt"*"-20.8.152-79"*)
-						rndir="scatest/Broadcom_1522"
-						;;
-					*"bnxt"*"-20.8.152.0."*)
-						rndir="scatest/Broadcom_1522"
-						;;
-					*"bnxt"*"-20.8.2"*)
-						rndir="scatest/Broadcom_152"
-						;;
-					*"bnxt"*"-20.8.152.0-7899"*)
-						rndir="scatest/Broadcom_83465"
-						;;
-					*"bnxt"*"-20.8.152.0-7898"*)
-						rndir="scatest/Broadcom_152"
-						;;
-					*"bnxt"*"-20.8.11.0-78505"*)
-						rndir="scatest/Broadcom_14"
-						;;
-					*"bnxt"*"-20.8.11.0"*)
-						rndir="scatest/Broadcom_7345"
-						;;
-					*"ftSys_msgpt3-6.5.0.118"*)
-						rndir="scatest/Stratus_62351"
-						;;
-					*"6.0.0-i40en-1.5.8"*)
-						rndir="scatest/Intel_1276"
-						;;
-					*"i40en-1.5.8"*)
-						rndir="scatest/Intel_8456"
-						;;
-					*"sfc-4.10.8.1000"*)
-						rndir="scatest/Solarflare_1234"
-						;;
-					*"fnic_driver_1.6.0.37_ESX55"*)
-						rndir="scatest/Cisco_67468"
-						;;
-					*"fnic_driver_1.6.0.37"*)
-						rndir="scatest/Cisco_675"
-						;;
-					*"fnic-1.6.0.37"*)
-						rndir="scatest/Cisco_675"
-						;;
-					*"fnic_driver_1.6.0.36"*)
-						rndir="scatest/Cisco_4563"
-						;;
-					*"intel-nvme-1.3.2.8-772"*)
-						rndir="scatest/Intel_132"
-						;;
-					*"intel-nvme-1.3.2.8"*)
-						rndir="scatest/Intel_76353"
-						;;
-					*"igbn-1.4.1"*)
-						rndir="scatest/Intel_3765"
-						;;
-					*"cxl-2.0.0.21"*)
-						rndir="scatest/Chelsio_21"
-						;;
-					*"cxl-1.1.0.64"*)
-						rndir="scatest/Chelsio_1234"
-						;;
-					*"6.0.0-smartpqi-1.0.1.244"*)
-						rndir="scatest/Adaptec_64326"
-						;;
-					*"smartpqi-1.0.1.244"*)
-						rndir="scatest/PMCS_54385"
-						;;
-					*"nhpsa-2.0.28"*)
-						rndir="scatest/HPE_75673"
-						;;
-					*"nhpsa-2.0.24"*)
-						rndir="scatest/HP_1235"
-						;;
-					*"nhpsa-2.0.18"*)
-						rndir="scatest/HPE_6745"
-						;;
-					*"nhpsa-2.0.16"*)
-						rndir="scatest/sandisk/HP_1234"
-						;;
-					*"hpsa-6.0.0.130"*)
-						rndir="scatest/HPE_130"
-						;;
-					*"hpsa-6.0.0.132"*)
-						rndir="scatest/HPE_3546"
-						;;
-					*"hpsa-5.5.0.128"*)
-						rndir="scatest/HPE_8465"
-						;;
-					*"hpsa-6.0.0.128"*)
-						rndir="scatest/HEP_1234"
-						;;
-					*"hpsa-5.5.0.132"*)
-						rndir="scatest/HPE_02"
-						;;
-					*"qed-6.5-76"*)
-						rndir="scatest/QLogic_483"
-						;;
-					*"qed-6.5-63"*)
-						rndir="scatest/Qlogic_1221"
-						;;
-					*"ntv-3.0.8.6-74"*)
-						rndir="scatest/QLogic_434537"
-						;;
-					*"ntv-3.0.8.6."*)
-						rndir="scatest/QLogic_483"
-						;;
-					*"ntv-2.0.7.5"*)
-						rndir="SCATEST/QLogic_20"
-						;;
-					*"6.0.0-lsi_msgpt35-04.00.01.00"*)
-						rndir="scatest/Avago_8634"
-						;;
-					*"6.0.0-lsi_msgpt35-03.125.01.00"*)
-						rndir="scatest/Avago_86723"
-						;;
-					*"6.0.0-lsi_msgpt35-03.125.00.00"*)
-						rndir="scatest/Avago_3564"
-						;;
-					*"6.0.0-lsi_msgpt35-05.00.00.00"*)
-						rndir="scatest/Avago_050"
-						;;
-					*"6.0.0-lsi_msgpt35-01.00.05.00"*)
-						rndir="scatest/Avago_001"
-						;;
-					*"6.0.0-lsi_msgpt3-16.00.01.00"*)
-						rndir="scatest/Avago_1265"
-						;;
-					*"6.0.0-lsi_msgpt3-14.15.01.00"*)
-						rndir="scatest/Dell_17356"
-						;;
-					*"6.0.0-lsi_mr3-7.703.51.00"*)
-						rndir="scatest/Avago_07962"
-						;;
-					*"6.0.0-lsi_mr3-7.702.17.00"*)
-						rndir="scatest/Avago_702"
-						;;
-					*"6.0.0-lsi_mr3-7.704.07.00"*)
-						rndir="scatest/Avago_62141"
-						;;
-					*"6.0.0-lsi_mr3-7.702.51.00"*)
-						rndir="scatest/Avago_003"
-						;;
-					*"6.0.0-lsi_mr3-7.700.27.00"*)
-						rndir="scatest/Avago_1208"
-						;;
-					*"6.0.0-lsi_mr3-7.703.13"*)
-						rndir="scatest/Avago_1203"
-						;;
-					*"msgpt35-04.00.01.00"*)
-						rndir="scatest/Avago_87584"
-						;;
-					*"msgpt35-05.00.00.00"*)
-						rndir="scatest/Avago_1204"
-						;;
-					*"6.0.0-lsi_msgpt35-06.00.00.00"*)
-						rndir="scatest/Avago_6654"
-						;;
-					*"msgpt35-06.00.00.00"*)
-						rndir="scatest/Avago_67321"
-						;;
-					*"msgpt35-03.125.01.00"*)
-						rndir="scatest/Avago_1237"
-						;;
-					*"msgpt35-03.125.00.00"*)
-						rndir="scatest/Avago_126"
-						;;
-					*"msgpt3-14.15.01.00"*)
-						rndir="scatest/Dell_87637"
-						;;
-					*"6.0.0-lsi_msgpt3-14.15.00.00"*)
-						rndir="SCATEST/Avago_154"
-						;;
-					*"msgpt3-14.15.00.00"*)
-						rndir="SCATEST/Avago_155"
-						;;
-					*"msgpt3-16.00.01"*)
-						rndir="scatest/Avago_016"
-						;;
-					*"msgpt35-01.00.05"*)
-						rndir="scatest/Avago_1213"
-						;;
-					*"mr3-7.704.07.00"*)
-						rndir="scatest/Avago_76731"
-						;;
-					*"mr3-7.703.51.00"*)
-						rndir="scatest/Avago_76744"
-						;;
-					*"6.0.0-lsi_mr3-7.703.18.00"*)
-						rndir="scatest/Avago_61526"
-						;;
-					*"mr3-7.703.18.00"*)
-						rndir="scatest/Avago_81638"
-						;;
-					*"mr3-7.703.15.00-75"*)
-						rndir="scatest/Avago_64536"
-						;;
-					*"mr3-7.703.15.00"*)
-						rndir="scatest/Avago_64536"
-						;;
-					*"mr3-7.703.13.00"*)
-						rndir="SCATEST/Avago_703"
-						;;
-					*"mr3-7.702.51.00"*)
-						rndir="scatest/Avago_51"
-						;;
-					*"mr3-7.702.17.00"*)
-						rndir="scatest/Avago_705"
-						;;
-					*"mr3-7.700.27.00"*)
-						rndir="scatest/Avago_002"
-						;;
-					*"mr3-7.700.50.00"*)
-						rndir="scatest/DELL_9989"
-						;;
-					*"mr3-6.610.21.00"*)
-						rndir="scatest/Avago_021"
-						;;
-					*"perc8-06.806.90.00"*)
-						rndir="scatest/Dell_1645"
-						;;
-					*"nenic-1.0.16"*)
-						rndir="scatest/Cisco_87312"
-						;;
-					*"qcnic-6.5-75"*)
-						rndir="scatest/QLogic_145"
-						;;
-					*"qcnic-1.0.10"*)
-						rndir="scatest/QLogic_145"
-						;;
-					*"qfle3f-1.0.45"*)
-						rndir="scatest/QLogic_145"
-						;;
-					*"6.0.0-brcmfcoe-11.4.1231"*)
-						rndir="scatest/Broadcom_87467"
-						;;
-					*"brcmfcoe-11.4.1231"*)
-						rndir="scatest/Broadcom_243"
-						;;
-					*"qedf-1.2.24.3"*)
-						rndir="scatest/QLogic_23764"
-						;;
-					*"qedf-1.2.24.1"*)
-						rndir="scatest/QLogic_224"
-						;;
-					*"qedf-1.2.24.0"*)
-						rndir="scatest/QLogic_85476"
-						;;
-					*"qedil-1.0.22.0"*)
-						rndir="scatest/QLogic_634537"
-						;;
-					*"qedil-1.0.19.0"*)
-						rndir="SCATEST/Qlogic_19"
-						;;
-					*"aacraid-6.0.6.2.1.55027"*)
-						rndir="scatest/PMCS_621"
-						;;
-					*"aacraid-6.0.6.2.1.55022"*)
-						rndir="scatest/Adaptec_4789"
-						;;
-					*"aacraid-6.0.6.2.1.52040"*)
-						rndir="scatest/PMCS_2412"
-						;;
-					*"aacraid-1.2.1.52040"*)
-						rndir="scatest/PMCS_2412"
-						;;
-					*"aacraid-1.2.1.55027"*)
-						rndir="scatest/Adaptec_128"
-						;;
-					*"aacraid-5.2.1.55027"*)
-						rndir="scatest/Adaptec_128"
-						;;
-					*"aacraid-6.2.1"*)
-						rndir="scatest/PMCS_621"
-						;;
-					*"NetXtremeII-v60.713.39"*)
-						rndir="scatest/QLogic_1411"
-						;;
-					*"bnx2x-2.713.30.v60.9"*)
-						rndir="scatest/QLogic_1411"
-						;;
-					*"bnx2x-2.713.60.v55.1"*)
-						rndir="scatest/QLogic_37125"
-						;;
-					*"NetXtremeII-4.0"*)
-						rndir="SCATEST/QLogic_737"
-						;;
-					*"bnx2fc-1.713.20"*)
-						rndir="SCATEST/QLogic_737"
-						;;
-					*"bnx2i-2.713.10.v60.3"*)
-						rndir="SCATEST/Qlogic_900"
-						;;
-					*"cnic"*"1.713.10.v60.1"*)
-						rndir="SCATEST/Qlogic_900"
-						;;
-					*"cnic"*"2.713.10.v60.5"*)
-						rndir="SCATEST/Qlogic_900"
-						;;
-					*"bnx2x-2.713.10.v60.4"*)
-						rndir="SCATEST/QLogic_737"
-						;;
-					*"6.0.0-lpfc-11.4.249"*)
-						rndir="scatest/Broadcom_53541"
-						;;
-					*"lpfc-11.4.249"*)
-						rndir="scatest/Emulex_854"
-						;;
-					*"ConnectX-4-5_4.16.12"*)
-						rndir="scatest/Mellanox_1234"
-						;;
-					*"nenic-1.0.16"*)
-						rndir="scatest/Cisco_87312"
-						;;
-					*"qcnic-6.5-75"*)
-						rndir="scatest/QLogic_145"
-						;;
-					*"qcnic-1.0.10"*)
-						rndir="scatest/QLogic_145"
-						;;
-					*"brcmfcoe-11.4.1231"*)
-						rndir="scatest/Broadcom_243"
-						;;
-					*"lpfc-11.4.249"*)
-						rndir="scatest/Emulex_854"
-						;;
-					*"ConnectX-4-5_4.16.12"*)
-						rndir="scatest/Mellanox_1234"
-						;;
-					*"ConnectX-4-5_4.15.13.2"*)
-						rndir="scatest/Mellanox_153"
-						;;
-					*"ConnectX-4-5_4.15.10.3"*)
-						rndir="scatest/Mellanox_14568"
-						;;
-					*"ntv-3.0.8.6-74"*)
-						rndir="scatest/QLogic_434537"
-						;;
-					*"ConnectX-3_3.16.11"*)
-						rndir="scatest/Mellanox_89651"
-						;;
-					*"ConnectX-3.15.11.6"*)
-						rndir="scatest/Mellanox_18361"
-						;;
-					*"nmlx4_en-3.15.11.6"*)
-						rndir="scatest/Mellanox_18361"
-						;;
-					*"nmlx4_en-3.16.11"*)
-						rndir="scatest/Mellanox_89651"
-						;;
-					*"ConnectX-4-5_4.15.12.12"*)
-						rndir="scatest/Mellanox_723"
-						;;
-					*"nmlx5-core-4.15.12.12"*)
-						rndir="scatest/Mellanox_723"
-						;;
-					*"nmlx5_core-4.15.13.2"*)
-						rndir="scatest/Mellanox_153"
-						;;
-					*"nmlx5_core-4_15_10_3"*)
-						rndir="scatest/Mellanox_14568"
-						;;
-					*"lpfc-11.1.257.1"*)
-						rndir="scatest/Emulex_46537"
-						;;
-					*"lpfc-11.1.245"*)
-						rndir="scatest/Emulex_4567"
-						;;
-					*"lpfc-11.4.199"*)
-						rndir="scatest/Emulex_0071"
-						;;
-					*"qcnic-6.5-72"*)
-						rndir="scatest/QLogic_86372"
-						;;
-					*"qfle3-1.0.6"*)
-						rndir="scatest/QLogic_86372"
-						;;
-					*"qfle3f-1.0.44"*)
-						rndir="scatest/QLogic_86372"
-						;;
-					*"qfle3i-1.0.13"*)
-						rndir="scatest/QLogic_86372"
-						;;
-					*"elxiscsi-11.2.1263"*)
-						rndir="scatest/Emulex_1265"
-						;;
-					*"bnxt"*"-20.8.0-72"*)
-						rndir="scatest/Broadcom_56363"
-						;;
-					*"6.0.0-i40en-1.5.6"*)
-						rndir="scatest/Intel_86489"
-						;;
-					*"i40en-1.5.6"*)
-						rndir="scatest/Intel_156"
-						;;
-					*"i40e-2.0.7"*)
-						rndir="scatest/Intel_26756"
-						;;
-					*"6.0.0-bnxt"*"-20.8.10"*)
-						rndir="scatest/Broadcom_05"
-						;;
-					*"bnxt"*"-20.8.10"*)
-						rndir="scatest/Broadcom_43463"
-						;;
-					*"brcmfcoe-11.4.1216.0-714"*)
-						rndir="scatest/Emulex_85123"
-						;;
-					*"brcmfcoe-11.4.1216.0."*)
-						rndir="scatest/Emulex_85123"
-						;;
-					*"brcmfcoe-11.4.1216.0-710"*)
-						rndir="scatest/Broadcom_8213"
-						;;
-					*"brcmfcoe-11.4.1216.0-708"*)
-						rndir="scatest/Emulex_116"
-						;;
-					*"brcmfcoe-11.4.1126"*)
-						rndir="scatest/Broadcom_8213"
-						;;
-					*"nenic-1.0.13"*)
-						rndir="scatest/Cisco_1235"
-						;;
-					*"6.0.0-intel-nvme-1.3.2.4"*)
-						rndir="scatest/Intel_73463"
-						;;
-					*"intel-nvme-1.3.2.4"*)
-						rndir="scatest/Intel_6431"
-						;;
-					*"elxiscsi-11.4.1210"*)
-						rndir="scatest/Emulex_1239"
-						;;
-					*"6.0.0-smartpqi-1.0.1.239"*)
-						rndir="scatest/Adaptec_131"
-						;;
-					*"smartpqi-1.0.1.239"*)
-						rndir="scatest/PMCS_76487"
-						;;
-					*"6.0.0-elxnet-11.4.1205"*)
-						rndir="scatest/Emulex_7453"
-						;;
-					*"elxnet-11.4.1205"*)
-						rndir="scatest/Emulex_1233"
-						;;
-					*"elxnet-11.2.1271"*)
-						rndir="scatest/Emulex_75421"
-						;;
-					*"5.5.0-elxnet-11.1.245"*)
-						rndir="scatest/Emulex_1983"
-						;;
-					*"6.0.0-elxnet-11.1.245"*)
-						rndir="scatest/Emulex_245"
-						;;
-					*"elxnet-11.1.245"*)
-						rndir="scatest/Broadcom_4567"
-						;;
-					*"be2iscsi-11.2.1263"*)
-						rndir="scatest/Emulex_1276"
-						;;
-					*"be2iscsi-11.1.145"*)
-						rndir="scatest/Emulex_57132"
-						;;
-					*"be2iscsi-11.4.1210"*)
-						rndir="scatest/Emulex_4536"
-						;;
-					*"be2iscsi-11.4.1178"*)
-						rndir="SCATEST/Emulex_1178"
-						;;
-					*"be2iscsi-11.2.1197"*)
-						rndir="SCATEST/Emulex_1197"
-						;;
-					*"ixgben-1.6.5"*)
-						rndir="scatest/Intel_1239"
-						;;
-					*"ixgben-1.5.3"*)
-						rndir="scatest/Intel_1235"
-						;;
-					*"ixgbe-4.5.3"*)
-						rndir="scatest/Intel_1254"
-						;;
-					*"ixgbe-4.4.1"*)
-						rndir="scatest/Intel_63"
-						;;
-					*"bnx-6.0"*)
-						rndir="scatest/QLogic_61"
-						;;
-					*"bnx2fc-1.713.60"*)
-						rndir="scatest/QLogic_61"
-						;;
-					*"cnic_register-1.713.60"*)
-						rndir="scatest/QLogic_61"
-						;;
-					*"cnic-2.713.60"*)
-						rndir="scatest/QLogic_61"
-						;;
-					*"bnx2i-2.713.60"*)
-						rndir="scatest/QLogic_61"
-						;;
-					*"bnx2x-2.713.60"*)
-						rndir="scatest/QLogic_61"
-						;;
-					*"hfcndd-10.42.20.162"*)
-						rndir="scatest/Hitachi_76523"
-						;;
-					*"hfcndd-10.42.20.152"*)
-						rndir="scatest/Hitachi_86739"
-						;;
-					*"nenic-1.0.11"*)
-						rndir="scatest/Cisco_1236"
-						;;
-					*"6.0.0-iavmd-1.3.0.1004"*)
-						rndir="scatest/Intel_62538"
-						;;
-					*"iavmd-1.3.0.1004."*)
-						rndir="scatest/Intel_62538"
-						;;
-					*"iavmd-1.3.0"*)
-						rndir="scatest/Intel_634823"
-						;;
-					*"6.0.0-iavmd-1.2.0"*)
-						rndir="scatest/Intel_00145"
-						;;
-					*"iavmd-1.2.0"*)
-						rndir="scatest/Intel_1233"
-						;;
-					*"iavmd-1.1.0"*)
-						rndir="SCATEST/Intel_809"
-						;;
-					*"6.0.0-i40en-1.4.3"*)
-						rndir="scatest/Intel_34761"
-						;;
-					*"i40en-1.4.3."*)
-						rndir="scatest/Intel_34761"
-						;;
-					*"i40en-1.4.3-"*)
-						rndir="scatest/Intel_1232"
-						;;
-					*"elxiscsi-11.4.1184"*)
-						rndir="scatest/Emulex_1238"
-						;;
-					*"celerity16fc-2.10"*)
-						rndir="scatest/ATTO_1212"
-						;;
-					*"6.0.0-elxnet-11.4.1179"*)
-						rndir="scatest/Emulex_1235"
-						;;
-					*"elxnet-11.4.1179"*)
-						rndir="scatest/Emulex_007"
-						;;
-					*"bnxt"*"-20.6.3"*)
-						rndir="scatest/Broadcom_678334"
-						;;
-					*"ConnectX-4-5_4.16.10.3"*)
-						rndir="scatest"
-						;;
-					*"ConnectX-4-4.16.10"*)
-						rndir="scatest"
-						;;
-					*"6.0.0-brcmfcoe-11.4.1121"*)
-						rndir="scatest/Emulex_1121"
-						;;
-					*"brcmfcoe-11.4.1121"*)
-						rndir="scatest/Emulex_12475"
-						;;
-					*"lpfc-11.1.257.0"*)
-						rndir="SCATEST/Emulex_257"
-						;;
-					*"qcnic-6.5-64"*)
-						rndir="scatest/QLogic_1111"
-						;;
-					*"qcnic-1.0.4"*)
-						rndir="scatest/QLogic_1111"
-						;;
-					*"qfle3-1.0.55"*)
-						rndir="scatest/QLogic_1111"
-						;;
-					*"qfle3f-1.0.31"*)
-						rndir="scatest/QLogic_1111"
-						;;
-					*"qfle3i-1.0.5"*)
-						rndir="scatest/QLogic_1111"
-						;;
-					*"qedentv-3.0.7.5"*)
-						rndir="scatest/Qlogic_1235"
-						;;
-					*"6.0.0-lpfc-11.4.142"*)
-						rndir="scatest/Emulex_1234"
-						;;
-					*"lpfc-11.4.142"*)
-						rndir="scatest/Emulex_1231"
-						;;
-					*"msgpt3-15.00.02.00"*)
-						rndir="scatest/Avago_75623"
-						;;
-					*"6.0.0-lpfc-11.2.320"*)
-						rndir="scatest/Emulex_181695"
-						;;
-					*"lpfc-11.2.320"*)
-						rndir="SCATEST/Emulex_320"
-						;;
-					*"lpfc-11.1.183.647"*)
-						rndir="scatest/Emulex_647"
-						;;
-					*"5.5.0-lpfc-11.1.183.641"*)
-						rndir="scatest/Emulex_641"
-						;;
-					*"lpfc-11.1.183.641"*)
-						rndir="scatest/Emulex_1246"
-						;;
-					*"elxiscsi-11.2.1197"*)
-						rndir="scatest/Emulex_128845"
-						;;
-					*"qedentv-3.0.7.2"*)
-						rndir="scatest/Qlogic_567"
-						;;
-					*"ftSys_qlnativefc-6.5.0.98"*)
-						rndir="scatest/Stratus_345"
-						;;
-					*"i40e-6.5.0.100"*)
-						rndir="scatest/Stratus_1269"
-						;;
-					*"qlnativefc-2.1.70.0"*)
-						rndir="scatest/QLogic_7594"
-						;;
-					*"qlnativefc-2.1.65.0"*)
-						rndir="scatest/QLogic_46237"
-						;;
-					*"qlnativefc-2.1.63.0"*)
-						rndir="scatest/Qlogic_07634"
-						;;
-					*"6.0.0-smartpqi-1.0.0.1060"*)
-						rndir="SCATEST/PMCS_1060"
-						;;
-					*"smartpqi-1.0.0.1060"*)
-						rndir="scatest/PMC_1991"
-						;;
-				esac
-				;;
-			VIC*)	
-				m="${dnlike//[^[:digit:]]/}"
-				m=`echo $m | sed -e 's/\(.\)/\1\./g' |sed 's/\.$//'`
-				rndir="vic${m}"
-				;;
-		esac
-	
-		if [ Z"$rndir" = Z"" ]
-		then
-			if [ -e _dlg_${lchoice}.xhtml ]
-			then
-				rndir=`grep "Release Notes" _dlg_${lchoice}.xhtml| cut -d\" -f2| cut -d/ -f6,7`
-			fi
+		else
+			rndir=$orndir
+			rndll=$orndll
 		fi
 		if [ Z"$rndir" != Z"" ]
 		then
@@ -1635,6 +821,7 @@ function getasso() {
 		for x in `ls ${moreasso}*${rchoice}_*.xhtml 2>/dev/null | grep -v ${moreasso}_${choice}.xhtml | grep -v VCENTER`
 		do
 			y=`echo $x | sed 's/\.xhtml//'|sed "s/${moreasso}_//"`
+			# only list all asso if dodlg != 1
 			if [ Z"$asso" = Z"" ]
 			then
 				asso=$y
@@ -1647,6 +834,10 @@ function getasso() {
 	# Now go through asso list and split into parts
 	for x in $asso
 	do
+		if [ $dodlg -eq 1 ] && [ Z"$x" != Z"$mypkg" ]
+		then
+			continue
+		fi
 		# debugecho "$choice: $x"
 		# sometimes files do not exist!
 		if [ -e dlg_${x}.xhtml ]
@@ -1697,6 +888,7 @@ function getasso() {
 	debugecho "DEBUG: dtslist => $dtslist"
 	debugecho "DEBUG: osslist => $osslist"
 	debugecho "DEBUG: assomissing => $assomissing"
+	debugecho "DEBUG: $choice => $mypkg"
 }
 
 function vsmnpkgs() {
@@ -1725,8 +917,12 @@ function vsmnpkgs() {
 			#elif [ -e dlg_${x}.xhtml ] && [ ! -d ${repo}/dlg_${xy} ]
 			#then
 			#	a="${BOLD}${x}${NC}"
-			a=${x}
-			if [ ! -e _dlg_${x}.xhtml ] && [ -d ${repo}/dlg_${xy} ]
+			if [ $dodlg -eq 1 ] && [ Z"$choice" != Z"$xy" ]
+			then
+				continue
+			fi
+			a=${xy}
+			if [ ! -e _dlg_${xy}.xhtml ] && [ -d "${repo}/dlg_${xy}" ]
 			then
 				a="${TEAL}${x}${NC}"
 			elif [ ! -d ${repo}/dlg_${xy} ]
@@ -1801,11 +997,11 @@ function load_vsmrc() {
 	then
 		vsmrc="$HOME/.vsmrc"
 		. $HOME/.vsmrc
-	elif [ -e $repo/.vsmrc ]
+	elif [ -e "$repo/.vsmrc" ]
 	then
 		vsmrc="$repo/.vsmrc"
 		. $repo/.vsmrc
-	elif [ -e $cdir/.vsmrc ]
+	elif [ -e "$cdir/.vsmrc" ]
 	then
 		vsmrc="$cdir/.vsmrc"
 		. $cdir/.vsmrc
@@ -1850,6 +1046,7 @@ function save_vsmrc() {
 			echo "myoss=$myoss" >> $vsmrc
 			echo "myquiet=$doquiet" >> $vsmrc
 			echo "myprogress=$doprogress" >> $vsmrc
+			echo "doshacheck=$doshacheck" >> $vsmrc
 			echo "dovex=$dovex" >> $vsmrc
 			echo "domyvmware=$domyvmware" >> $vsmrc
 		fi
@@ -1939,6 +1136,7 @@ function menu() {
 			#fi
 			if [ $choice = "Exit" ]
 			then
+				rm -f ${cdir}/$vpat
 				exit
 			fi
 			if [ $choice = "Mark" ]
@@ -1982,7 +1180,7 @@ function menu2() {
 	f=`echo $1 |sed 's/\.xhtml//' | sed 's/-/_/g' | sed 's/^_//'`
 	for x in $pkgs
 	do
-		if [ ! -e ${repo}/${f}/${x} ] && [ ! -e ${repo}/${f}/${x}.gz ]
+		if [ ! -e "${repo}/${f}/${x}" ] && [ ! -e "${repo}/${f}/${x}.gz" ]
 		then
 			if [ Z"$npkg" = Z"" ]
 			then
@@ -2008,6 +1206,7 @@ function menu2() {
 			stripcolor
 			if [ $choice = "Exit" ]
 			then
+				rm -f ${cdir}/$vpat
 				exit
 			fi
 			break
@@ -2038,30 +1237,53 @@ function getvsmparams() {
 		# nuts n bolts
 		#debugecho "DEBUG: data => $data"
 		fname=`echo $data | sed 's/<\/span>/<\/span>\n/g'|grep fileNameHolder|cut -d\> -f2 |cut -d' ' -f1`
-		tsize=`echo $data | sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g'| sed -n '3p' | sed 's/^: //'`
-		size=`echo $tsize | cut -d ' ' -f 1`
-		units=`echo $tsize | cut -d ' ' -f 2`
-		#debugecho "DEBUG: size => $size ; units => $units"
+		# some older files have more than one 'file size'
+		tn=`echo $data | sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g'| grep -n 'File size' | cut -d: -f 1 | head -1`
+		let tn=$tn+1
+		tsize=`echo $data | sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g'| sed -n "${tn}p" | sed 's/^: //'`
+		sha="sha256sum"
+		tn=`echo $data | sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g'| grep -n 'SHA256SUM' | cut -d: -f 1 | head -1`
+		if [ Z"$tn" = Z"" ]
+		then
+			# no 256 so revert to sha1
+			tn=`echo $data | sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g'| grep -n 'SHA1SUM' | cut -d: -f 1 | head -1`
+			sha="sha1sum"
+		fi
+		let tn=$tn+1
+		sha256=`echo $data | sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g'| sed -n "${tn}p" | cut -d' ' -f2`
+		units=`echo $tsize | sed 's/.*[ 0-9]\([A-Z]\+\)/\1/'`
+		if [ Z"$units" != Z"" ]
+		then
+			size=`echo $tsize | cut -d ' ' -f 1| sed "s/$units//"`
+		else
+			size=`echo $tsize | cut -d ' ' -f 1`
+		fi
+		#units=`echo $tsize | cut -d ' ' -f 2`
+		debugecho "DEBUG: size => $size ; units => $units"
 		fdata=`echo $data | sed 's/<\/a>/\n/g'| sed 's/<\/span/\n/g'|grep "button primary"`
-		echo $fdata |egrep "CART|viewclients" >& /dev/null
+		#echo $fdata |grep -v CART17Q1_HCI_WIN_100|egrep "CART|viewclients" >& /dev/null
+		echo $fdata |grep 'download.\.vmware\.com' >& /dev/null
 		if [ $? -eq 0 ]
 		then
 			drparams="CART"
-			href=`echo $fdata | cut -d\" -f 4`
+			href=`echo $fdata | sed 's/href/\nhref/' |grep href | cut -d\" -f2`
 			durl=''
 		else
 			ndata=`echo $fdata | cut -d\" -f 6 | sed 's/amp;//g'| sed 's/[\&\?=]/ /g'`
 			#debugecho "DEBUG: ndata => $ndata"
-			size=`echo "$size *1024"|bc` # KB
-			if [ Z"$units" = Z"MB" ] || [ Z"$units" = Z"GB" ]
-			then # GB
-				size=`echo "$size *1024"|bc`
+			if [ Z"$size" != Z"" ]
+			then
+				size=`echo "$size *1024"|bc` # KB
+				if [ Z"$units" = Z"MB" ] || [ Z"$units" = Z"GB" ] || [ Z"$units" = Z"G" ] || [ Z"$units" = Z"M" ]
+				then # GB
+					size=`echo "$size *1024"|bc`
+				fi
+				if [ Z"$units" = Z"GB" ] || [ Z"$units" = Z"G" ]
+				then # GB
+					size=`echo "$size *1000"|bc`
+				fi
+				size=`printf '%d\n' "$size" 2>/dev/null`
 			fi
-			if [ Z"$units" = Z"GB" ]
-			then # GB
-				size=`echo "$size *1000"|bc`
-			fi
-			size=`printf '%d\n' "$size" 2>/dev/null`
 			dlgcode=`echo $ndata | cut -d' ' -f3`
 			downloaduuid=`echo $ndata | cut -d ' ' -f13`
 			#if [ Z"$vers" = Z"" ]
@@ -2079,7 +1301,12 @@ function getvsmparams() {
 			debugecho "DEBUG: drparams => $drparams"
 			href="https://depot.vmware.com/getAuthUrl"
 			#https://download2.vmware.com/software/vcops/v4h_651/Reports_V4VAdapter-6.5.1-7363818.zip
-			durl="https://${rndll}/software/${rndir}/${fname}"
+			if [ Z"${rndir}" = Z"/" ]
+			then
+				durl="https://${rndll}/software/${fname}"
+			else
+				durl="https://${rndll}/software/${rndir}/${fname}"
+			fi
 		fi
 		debugecho "DEBUG: durl => $durl"
 		#durl=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $sdu`
@@ -2099,7 +1326,7 @@ function getvsm() {
 	# this gets the repo items
 	# check if file or file.gz
 	# does not exist
-	cd $repo
+	cd "$repo"
 	if [ ! -e dlg_$ldir ]
 	then
 		mkdir dlg_$ldir
@@ -2148,71 +1375,108 @@ function getvsm() {
 		url="$href?params=$drparams&downloadurl=$durl&familyversion=$vers&productfamily=$prod"
 	fi
 	debugecho "DEBUG: url => $url"
+	rnnot=0
+	if [ Z"$rndll" = Z"" ] || [ Z"$rndir" = Z"" ] || [ Z"$rndir" = Z"$name" ]
+	then
+		if [ $debugv -eq 1 ]
+		then
+			echo ""
+			echo "DEBUGV: name => $name" 
+			echo "DEBUGV: dt => $prevchoice $currchoice $tchoice" 
+			echo "DEBUGV: url => $url" 
+			rnnot=1
+		fi
+	fi
 	if [ $debugv -eq 2 ]
 	then
-		echo "$lchoice|$rndir|$rndll" | sed 's/\.vmware\.com//'
-		echo "$lchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
+		#echo "$lchoice|$rndir|$rndll" | sed 's/\.vmware\.com//'
+		echo "$prevchoice $currchoice $tchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
 	fi
 	if [ $dovsmit -eq 1 ]
 	then
 		if  ([ ! -e ${name} ] && [ ! -e ${name}.gz ]) || [ $doforce -eq 1 ]
 		then 
-			if [ $dryrun -eq 0 ]
+			if [ Z"$drparams" = Z"CART" ]
 			then
-				if [ Z"$drparams" = Z"CART" ]
+				lurl=$url
+			else
+				lurl=`wget --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $url 2>&1 | grep Location | awk '{print $2}'`
+			fi
+			debugecho "DEBUG: lurl => $lurl"
+			echo $lurl|grep -i blocked >& /dev/null
+			if [ $? -ne 0 ]
+			then
+				if [ Z"$lurl" != Z"" ]
 				then
-					lurl=$url
-				else
-					lurl=`wget --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $url 2>&1 | grep Location | awk '{print $2}'`
-				fi
-				debugecho "DEBUG: lurl => $lurl"
-				echo $lurl|grep -i blocked >& /dev/null
-				if [ $? -ne 0 ]
-				then
-					if [ Z"$lurl" != Z"" ]
+					eurl=`python -c "import urllib, sys; print urllib.unquote(sys.argv[1])" $lurl`
+					debugecho "DEBUG: eurl => $eurl"
+					diddownload=0
+					if [ $dryrun -eq 0 ]
 					then
-						eurl=`python -c "import urllib, sys; print urllib.unquote(sys.argv[1])" $lurl`
-						debugecho "DEBUG: eurl => $eurl"
-						mywget $name $eurl "--progress=bar:force -nd" 1
-						diddownload=0
-						# echo if error remove file
-						if [ $err -ne 0 ]
+						mywget $name $eurl "--progress=bar:force" 1
+					else
+						mywget $name $eurl "--spider --progress=bar:force" 1
+					fi
+					# echo if error remove file
+					if [ $err -ne 0 ]
+					then
+						if [ $dryrun -eq 0 ]
 						then
 							rm $name
-							if [ $debugv -eq 1 ]
-							then
-								echo ""
-								echo "DEBUGV: name => $name" 
-								echo "DEBUGV: dnlike => $dnlike" 
-								echo "DEBUGV: url => $url" 
-							fi
-						else
-							diddownload=1
+						fi
+						if [ $debugv -eq 1 ] && [ $rnnot -ne 1 ]
+						then
+							echo ""
+							echo "DEBUGV: name => $name" 
+							echo "DEBUGV: dt => $prevchoice $currchoice $tchoice" 
+							echo "DEBUGV: url => $url" 
 						fi
 					else
-						if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+						if [ $debugv -eq 2 ]
 						then
-							echo -n "E"
-							if [ $debugv -eq 1 ]
-							then
-								echo ""
-								echo "DEBUGV: url => $url" 
-							fi
-						else
-							colorecho "No Redirect Error Getting $name" 1
+							echo "$prevchoice $currchoice $tchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
 						fi
+						if [ $doshacheck -eq 1 ]
+						then
+							shadownload=1
+							echo -n "$name: check "
+							if [ Z"$sha" = Z"sha256sum" ]
+							then
+								sc=`sha256sum $name|cut -d' ' -f 1`
+							else
+								sc=`sha1sum $name|cut -d' ' -f 1`
+							fi
+							if [ Z"$sc" != Z"$sha256" ]
+							then
+								shafail="${shafail}
+	${name}"
+								colorecho "failed" 1
+							else
+								echo "passed"
+							fi
+						fi
+						diddownload=1
 					fi
 				else
-						if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+					if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+					then
+						echo -n "E"
+						if [ $debugv -eq 1 ]
 						then
-							echo -n "B"
-						else
-							colorecho "Blocked Redirect Error Getting $name" 1
+							echo ""
+							echo "DEBUGV: url => $url" 
 						fi
+					else
+						colorecho "No Redirect Error Getting $name" 1
+					fi
 				fi
-			else 
-				echo "Download $name to `pwd`"
-				echo "via url => $url"
+			else
+				if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+				then
+					echo -n "B"
+					else
+					colorecho "Blocked Redirect Error Getting $name" 1
+				fi
 			fi
 		fi
 	fi
@@ -2220,12 +1484,17 @@ function getvsm() {
 }
 
 function version() {
-	echo "$0 version $VERSIONID"
+	echo "LinuxVSM Version:"
+	echo "	OS:        $theos"
+	echo "	`basename $0`:    $VERSIONID"
+	echo "	data file: `grep vsm.data $vdat|cut -d' ' -f 3|sed 's/vsm.data.//'`"
 	exit
 }
 
 function usage() {
-	echo "$0 [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
+	echo "LinuxVSM Help"
+	echo "$0 [-c|--check] [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
+	echo "	-c|--check - do sha256 check against download"
 	echo "	--dlg - download specific package by name or part of name"
 	echo "	-d|--dryrun - dryrun, do not download"
 	echo "	-f|--force - force download of packages"
@@ -2233,8 +1502,9 @@ function usage() {
 	echo "	-e|--exit - reset and exit"
 	echo "	-h|--help - this help"
 	echo "	-l|--latest - substitute latest for each package instead of listed"
-	echo "		Only really useful for latest distribution at moment"
+	echo "		Deprecated: Now the default, the argument does nothing any more."
 	echo "	-m|--myvmware - get missing suite and packages from My VMware"
+	echo "		Deprecated: Now the default, the argument does nothing any more."
 	echo "	-mr - reset just the My VMware information, implies -m"
 	echo "	-nq|--noquiet - disable quiet mode"
 	echo "	-ns|--nostore - do not store credential data and remove if exists"
@@ -2242,27 +1512,33 @@ function usage() {
 	echo "	-p|--password - specify password"
 	echo "	--progress - show progress for OEM, OSS, and DriverTools"
 	echo "	-q|--quiet - be less verbose"
-	echo "	-r|--reset - reset repos"
+	echo "	-r|--reset - reset VSM repoi - Not as useful as it once was"
 	echo "	-u|--username - specify username"
-	echo "	-v|--vsmdir path - set VSM directory"
+	echo "	-v|--vsmdir path - set VSM directory - saved to configuration file"
 	echo "	-V|--version - version number"
 	echo "	-y - do not ask to continue"
 	echo "	--dts - include DriversTools in All-style downloads"
+	echo "		    saved to configuration file"
 	echo "	--nodts - do not include DriversTools in All-style downloads"
+	echo "		      saved to configuration file"
 	echo "	--oss - include OpenSource in All-style downloads"
+	echo "		    saved to configuration file"
 	echo "	--nooss - do not include OpenSource in All-style downloads"
+	echo "		      saved to configuration file"
 	echo "	--oem - include CustomIso in All-style downloads"
+	echo "		    saved to configuration file"
 	echo "	--nooem - do not include CustomIso in All-style downloads"
+	echo "		      saved to configuration file"
 	echo "	--debug - debug mode"
 	echo "	--repo path - specify path of repo"
+	echo "		          saved to configuration file"
 	echo "	--save - save settings to \$HOME/.vsmrc, favorite always saved on Mark"
 	echo ""
 	echo "	All-style downloads include: All, All_No_OpenSource, Minimum_Required"
-	echo "	Requires packages:"
-	echo "	wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc"
 	echo ""
-	echo "To Download the latest Perl CLI use (to escape the wild cards):"
-	echo "./vsm.sh --dlg CLI\.\*\\.x86_64.tar.gz"
+	echo "To Download the latest Perl CLI use "
+	echo "	(to escape the wild cards used by the internal regex):"
+	echo "	./vsm.sh --dlg CLI\.\*\\.x86_64.tar.gz"
 	echo ""
 	echo "Use of the Mark option, marks the current product suite as the" 
 	echo "favorite. There is only 1 favorite slot available. Favorites"
@@ -2289,8 +1565,15 @@ function findos() {
 	then
 		theos=`cut -d' ' -f1 < /etc/debian-release | tr [:upper:] [:lower:]`
 	else
-		colorecho "Do not know this operating system. LinuxVSM may not work." 1
-		theos="unknown"
+		# Mac OS
+		uname -a | grep Darwin  >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			theos="macos"
+		else
+			colorecho "Do not know this operating system. LinuxVSM may not work." 1
+			theos="unknown"
+		fi
 	fi
 }
 
@@ -2314,22 +1597,72 @@ function checkdep() {
 			needdep=1
 		fi
 	fi
+	if [ Z"$theos" = Z"macos" ]
+	then
+		if [ Z"$dep" = Z"xcodebuild" ]
+		then
+			which $dep  >& /dev/null
+			if [ $? -eq 1 ]
+			then
+				echo "Missing Dependency Xcode"
+				needdep=1
+			fi
+		elif [ Z"$dep" = Z"jq" ] || [ Z"$dep" = Z"wget" ] || [ Z"$dep" = Z"gnu-sed" ]
+		then
+			brew list | grep $dep >& /dev/null
+			if [ $? -eq 1 ]
+			then
+				echo "Missing Dependency $dep"
+				needdep=1
+			fi
+		elif [ Z"$dep" = Z"urllib2" ]
+		then
+			python -c "help('modules')" 2>/dev/null | grep $dep >& /dev/null
+			if [ $? -eq 1 ]
+			then
+				echo "Missing Dependency $dep"
+				needdep=1
+			fi
+		else
+			which $dep  >& /dev/null
+			if [ $? -eq 1 ]
+			then
+				echo "Missing Dependency $dep"
+				needdep=1
+			fi
+		fi
+	fi
 	if [ Z"$theos" = Z"unknown" ]
 	then
 		colorecho "Cannot Check Dependency $dep." 1
 	fi
 }
 
-
 # check dependencies
 theos=''
 docolor=1
 needdep=0
+debugv=0
 findos
+if [ Z"$theos" = Z"macos" ]
+then
+	checkdep xcodebuild
+	checkdep xml_grep
+	#checkdep urllib2
+	checkdep gnu-sed
+	checkdep uudecode
+	alias sed=gsed
+	alias uudecode="`which uudecode` -p"
+	alias sha256sum="`which shasum` -a 256"
+	alias sha1sum="`which shasum`"
+else
+	checkdep python-urllib3
+	checkdep libxml2
+	checkdep sharutils
+	alias uudecode="`which uudecode` -o -"
+fi
 checkdep wget
 checkdep python
-checkdep python-urllib3
-checkdep libxml2
 if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
 then
 	checkdep perl-XML-Twig
@@ -2342,9 +1675,7 @@ then
 fi
 checkdep bc
 checkdep jq
-
-wget --help | grep -q '\--show-progress' && \
-   _PROGRESS_OPT="-q --show-progress" || _PROGRESS_OPT=""
+shopt -s expand_aliases
 
 if [ $needdep -eq 1 ]
 then
@@ -2352,10 +1683,13 @@ then
 	exit
 fi
 
+# latest wget does things differently
+wget --help | grep -q '\--show-progress' && \
+   _PROGRESS_OPT="-q --show-progress" || _PROGRESS_OPT=""
+
 #
 # Default settings
 dodebug=0
-debugv=0
 diddownload=0
 doforce=0
 dolatest=0
@@ -2377,6 +1711,7 @@ myinnervm=0
 myquiet=0
 repo="/tmp/vsm"
 cdir="/tmp/vsm"
+vdat="/tmp/vsm/vsm.data"
 vsmrc=""
 mypkg=""
 mydlg=""
@@ -2389,6 +1724,8 @@ name=''
 data=''
 rndir=''
 rndll=''
+orndir=''
+orndll=''
 likeforlike=''
 like=''
 err=0
@@ -2403,6 +1740,8 @@ midprod=1
 doprogress=0
 myprogress=0
 doquiet=0
+doshacheck=0
+domre=0
 myq=0
 # onscreen colors
 RED=`tput setaf 1`
@@ -2428,11 +1767,14 @@ while [[ $# -gt 0 ]]
 do
 	key="$1"
 	case "$key" in
+		-c|--check)
+			doshacheck=1
+			;;
 		-h|--help)
 			usage
 			;;
 		-l|--latest)
-			dolatest=1
+			dolatest=0
 			;;
 		-r|--reset)
 			doreset=1
@@ -2465,7 +1807,7 @@ do
 			docolor=0
 			;;
 		--repo)
-			repo=$2
+			repo="$2"
 			if [ Z"$vsmrc" = Z"" ]
 			then
 				load_vsmrc
@@ -2479,9 +1821,6 @@ do
 			;;
 		--vexpertx)
 			dovex=1
-			;;
-		-W)
-			dodlg=2
 			;;
 		-v|--vsmdir)
 			cdir=$2
@@ -2502,6 +1841,9 @@ do
 			;;
 		--debugv)
 			dodebug=1
+			;;
+		--mre)
+			domre=1;
 			;;
 		--dts)
 			mydts=1
@@ -2554,38 +1896,18 @@ do
 	shift
 done
 
-if [ $dodebug -eq 1 ]
-then
-	doquiet=0
-fi
-
 if [ $myquiet -eq 1 ] && [ $myq -eq 0 ]
 then
 	doquiet=1
 fi
 
-# remote trailing slash
-repo=$(echo $repo | sed 's:/*$::')
+if [ $dodebug -eq 1 ]
+then
+	doquiet=0
+fi
 
-colorecho "Using the following options:"
-echo "	Version:	$VERSIONID"
-if [ Z"$username" != Z"" ]
-then
-	echo "	Username:		$username"
-	echo "	Save Credentials:	$nostore"
-fi
-echo "	OS Mode:        $theos"
-echo "	VSM XML Dir:	$cdir"
-echo "	Repo Dir:	$repo"
-echo "	Dryrun:		$dryrun"
-echo "	Force Download:	$doforce"
-echo "	Reset XML Dir:	$doreset"
-echo "	Get Latest:	$dolatest"
-echo "	My VMware:	$domyvmware"
-if [ $myfav -eq 1 ]
-then
-	echo "	Favorite: $favorite"
-fi
+# remote trailing slash
+repo=$(echo "$repo" | sed 's:/*$::')
 
 if [ ! -e $cdir ]
 then
@@ -2600,11 +1922,50 @@ then
 fi
 
 # Check Repo
-if [ ! -w $repo ]
+if [ ! -w "$repo" ]
 then
 	colorecho "$repo is not writable by ${xu}." 1
 	exit
 fi
+
+vdat=$cdir/vsm.data
+mywget $vdat https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.data >& /dev/null
+if [ $err -ne 0 ]
+then
+	rm -rf $vdat
+fi
+if [ ! -e $vdat ]
+then
+	vdat=`pwd`/vsm.data
+fi
+if [ ! -e $vdat ]
+then
+	colorecho "VSM cannot run without its data file." 1
+	exit
+fi
+
+colorecho "Using the following options:"
+echo "	Version:	$VERSIONID"
+echo "	Data Version:	`grep vsm.data $vdat|cut -d' ' -f 3|sed 's/vsm.data.//'`"
+if [ Z"$username" != Z"" ]
+then
+	echo "	Username:		$username"
+	echo "	Save Credentials:	$nostore"
+fi
+echo "	OS Mode:        $theos"
+echo "	VSM XML Dir:	$cdir"
+echo "	Repo Dir:	$repo"
+echo "	Dryrun:		$dryrun"
+echo "	Force Download:	$doforce"
+echo "	Checksum:	$doshacheck"
+echo "	Reset XML Dir:	$doreset"
+#echo "	Get Latest:	$dolatest"
+echo "	My VMware:	$domyvmware"
+if [ $myfav -eq 1 ]
+then
+	echo "	Favorite: $favorite"
+fi
+
 
 rcdir="${cdir}/depot.vmware.com/PROD/channel"
 cd $cdir
@@ -2704,6 +2065,7 @@ fi
 if [ $doreset -eq 1 ]
 then
 	colorecho "Reset Request"
+	rm -rf ${cdir}/vpat*.txt
 	if [ Z"$_PROGRESS_OPT" != Z"" ]
 	then
 		_PROGRESS_OPT=' '
@@ -2714,16 +2076,8 @@ then
 		doquiet=0
 	fi
 	# Get index and subsequent data
-	mywget ' ' https://depot.vmware.com/PROD/index.xhtml '-rxl 1' 
-	#if [ $doquiet -eq 1 ]
-	#then
-	#	wget $_PROGRESS_OPT -rxl 1 --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/index.xhtml >& /dev/null
-	#	err=$?
-	#else
-	#	wget $_PROGRESS_OPT -rxl 1 --load-cookies cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/index.xhtml
-	#	err=$?
-	#fi
-	#wgeterror $err
+	#mywget ' ' https://depot.vmware.com/PROD/index.xhtml '-rxl 1' 
+	mywget ' ' https://depot.vmware.com/PROD/index.xhtml '-rxl 1 --reject-regex dlg_*' 
 	if [ $err -ne 0 ]
 	then
 		exit $err
@@ -2739,6 +2093,29 @@ then
 	doquiet=$doqr
 fi
 
+if [ $domre -eq 1 ]
+then
+	doreset=$domre
+	rm -rf ${cdir}/vpat*.txt
+fi
+
+vpat=.vpat$$.txt
+vpas=`head -1 $vdat | cut -d ' ' -f 3` 
+echo "${vpas}.${VERSIONID}" > ${cdir}/${vpat}
+chmod 400 ${cdir}/$vpat
+
+uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | grep AV_2121 >& /dev/null
+if [ $? -ne 0 ]
+then
+	rm -rf ${cdir}/vpat*.txt
+	colorecho "Unable to proceed:" 1
+	colorecho "	LinuxVSM Datafile version mismatch" 1
+	colorecho "	Please update to latest version of LinuxVSM" 1
+	exit
+fi
+	
+
+
 if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
 then
 	# Get JSON
@@ -2749,6 +2126,7 @@ then
 
 	if [ $err -ne 0 ]
 	then
+		rm -f ${cdir}/$vpat
 		exit $err
 	fi
 fi
@@ -2767,90 +2145,68 @@ choice="root"
 name=""
 href=""
 drparams=""
+sha256=""
+sha="sha256sum"
+shafail=""
+shadownload=0
 durl=""
 prevchoice=""
 favorites=""
 dlg=0
 pkgs=""
 
-if [ $dodlg -gt 0 ]
+if [ $dodlg -eq 1 ]
 then
-	choice="All"
-	if [ $dodlg -eq 2 ]
+	debugecho "DEBUG: $mydlg"
+	# Find the file
+	mytf=`uudecode $vdat | egrep "$mydlg" | sort -k6 -V | tail -1`
+	debugecho "mytf => $mytf"
+	if [ Z"$mytf" = Z"" ]
 	then
-		#if [ $myyes -eq 0 ]
-		#then
-			echo ""
-			cat << EOF
-
--W downloads everything! It will take a very, very long time
-Are you sure you wish to do this?
-
-EOF
-			echo "Continue with VSM (Y/n)?"
-			read c
-			if [ Z"$c" != Z"Y" ] && [ Z"$c" != Z"y" ]
-			then
-				exit
-			fi
-			echo ""
-			cat << EOF
-
--W downloads everything! It will take a very, very long time
-Are you REALLY sure you wish to do this?
-
-EOF
-			echo "Continue with VSM (Y/n)?"
-			read c
-			if [ Z"$c" != Z"Y" ] && [ Z"$c" != Z"y" ]
-			then
-				exit
-			fi
-		#fi
-		# find all files
-		debugecho "DEBUG: mydlg => All of them"
-		files="dlg_*"
+		colorecho "No file found!" 1
+		rm -f ${cdir}/$vpat
+		exit
 	else
-		debugecho "DEBUG: $mydlg"
-		# Find the file
-		files=`egrep -il "$mydlg" dlg_*.xhtml | sort -V | tail -1 | sed 's/.xhtml//'`
-		mypkg=`echo $files | sed 's/dlg_//'`
-		if [ Z"$files" = Z"" ]
-		then
-			colorecho "No file found!" 1
-			exit
-		fi
+		files=`echo $mytf | cut -d' ' -f6`
+		mypkg=`echo $mytf | cut -d' ' -f3`
+		choice=`echo $mytf | cut -d' ' -f2`
+		prevchoice=`echo $mytf | cut -d' ' -f1`
 	fi
-	debugecho "DEBUG: $files"
-
-	tmp="$cdir/tt$$"
-	for x in $files
+	echo "Working $mydlg and found $files within $mypkg..."
+	# find paths
+	vc=`echo $prevchoice | sed 's/.*\([0-9]_[0-9]\).*/\1/'`
+	tc=`echo $prevchoice | tr '[:upper:]' '[:lower:]'|sed 's/\([0-9]\)_\([a-z_]\+\)/\1 \2/'|sed 's/_/./g'`
+	dc=`echo $tc | cut -d' ' -f1`
+	dc="${dc%?}?"
+	ec=`echo $tc | cut -d' ' -f2 | sed 's/\./_/g'`
+	# rebuild myvmware path
+	fv=`egrep "$dc" ${rcdir}/_downloads.xhtml | sort -V | tail -1`
+	mfchoice='root'
+	myfm=`echo $fv | cut -d\" -f14 | sed 's#./info/slug##'`
+	vf=`echo $myfm | sed 's/.*\([0-9]_[0-9]\)/\1/'`
+	myfm=`echo $myfm | sed "s/$vf/$vc/"`
+	myfvmware="${myfm}/${ec}"
+	tf=`echo $fv | cut -d\" -f2 | sed 's/ /_/g'`
+	# rebuild mchoice path
+	li=`xml_grep --text_only '//*/a' ${rcdir}/root.xhtml`
+	for x in $li Desktop_End_User_Computing
 	do
-		x=`echo $x |sed 's/.xhtml//'`
-		d=`grep -l $x *.xhtml | grep -v $x | grep -v '^_' | sort -V | tail -1 | sed 's/.xhtml//'`
-		#echo -n "$d => "
-		dd=`echo $d | sed 's/dlg_//'`
-		debugecho "DEBUG: x => $x d => $d dd => $dd"
-		if [ $dodlg -eq 1 ]
+		t=`echo $prevchoice | sed "s#${x}_##"`
+		#echo "$x => $t"
+		if [ Z"$t" != Z"${prevchoice}" ]
 		then
-			choice=$dd
-		fi
-		dp=""
-		# prevchoice
-		if [ Z"$dd" != Z"$d" ]
-		then
-			grep -l $dd *.xhtml | grep -v $dd | grep -v '^_' | sed 's/.xhtml//' >> $tmp
-		else
-			echo $dd >> $tmp
-			if [ $dodlg -eq 1 ]
-			then
-				choice=`echo $x | sed 's/dlg_//'`
-			fi
+			mfchoice="$mfchoice/${x}/${x}_${tf}"
+			t=`echo $prevchoice | sed "s#${x}_${tf}##" | tr '[:upper:]' '[:lower:]'|sed "s/_$ec//g"|sed 's/^_//'`
+			mfchoice="$mfchoice/${x}_${tf}_${t}/$prevchoice"
+			break
 		fi
 	done
-	debugecho "DEBUG: Choice => $choice"
+
 	# now we run through all the prevchoices
-	favorites=`sort -uV $tmp | grep -v dlg_`
+	favorites=$prevchoice
+	debugecho "DEBUG: Choice => $choice"
+	debugecho "DEBUG: mfchoice => $mfchoice"
+	debugecho "DEBUG: myfvmware => $myfvmware"
 	debugecho "DEBUG: DLG => $favorites"
 fi
 
@@ -2871,16 +2227,23 @@ do
         	fi
 	fi
 	# set up overrides
-	if [ $dodlg -gt 0 ]
-	then
-		# This overrides DTS incase it is selected!
-		dlg=2
-	elif [ $myfav -eq 1 ]
+	if [ $myfav -eq 1 ] || [ $dodlg -gt 0 ]
 	then
 		# setup auto-download of favorite
+		if [ $dodlg -gt 0 ]
+		then
+			# This overrides DTS incase it is selected!
+			dlg=2
+		fi
+		ochoice="All"
 		if [ $domyvmware -eq 1 ]
 		then
-			favorites=$favorite
+			if [ $dodlg -eq 0 ]
+			then
+				favorites=$favorite
+			else
+				ochoice=$choice
+			fi
 			mchoice=`dirname $mfchoice`
 			myvmware=`dirname $myfvmware`
 			mchoice=`dirname $mchoice`
@@ -2901,7 +2264,7 @@ do
 		fi
 		if [ Z"$favorites" != Z"" ]
 		then
-			choice="All"
+			choice=$ochoice
 			dlg=2
 		else
 			myfav=0
@@ -2933,10 +2296,6 @@ do
 			do
 				debugecho "DEBUG: Prevchoice => $prevchoice"
 				doall=0
-				if [ $dodlg -eq 2 ]
-				then
-					choice="All"
-				fi
 				getproddata
 
 				# if ALL then cycle through dlg in prevchoice
@@ -3131,7 +2490,7 @@ do
 							fi
 							while [ $x -le $cnt ]
 							do
-								if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+								if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
 								then
 									echo -n "."
 								fi
@@ -3168,18 +2527,21 @@ do
 										echo "Local:$repo/dlg_$currchoice/$name"
 									fi
 									debugecho "DEBUG: Getting $name"
-									getvsm $currchoice "base"
+									if [ Z"$name" != Z"" ]
+									then
+										getvsm $currchoice "base"
+									fi
 									if [ $dodlg -eq 1 ]
 									then
 										# Just exist, got package
-rm $tmp
+										rm -f ${cdir}/$vpat
 										exit
 									fi
 								fi
 								# out to dev null seems to be required
 								$((x++)) 2> /dev/null
 							done
-							if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+							if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
 							then
 								echo "!"
 							fi
@@ -3227,9 +2589,9 @@ rm $tmp
 											domts=1
 										fi
 									fi
-									if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+									if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
 									then
-										echo -n "."
+										echo -n "-"
 									fi
 									debugecho "DEBUG $y: $choice: $o => $mypkg"
 									getvsmcnt $o
@@ -3259,6 +2621,10 @@ rm $tmp
 										fi
 										if [ $doit -eq 1 ]
 										then
+											if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
+											then
+												echo -n "."
+											fi
 											# only do the selected
 											xignore=0
 											if [ $dodlg -eq 1 ]
@@ -3266,19 +2632,22 @@ rm $tmp
 												echo ""
 												echo "Local:$repo/dlg_$currchoice/$om/$name"
 											fi
-											getvsm $currchoice $om $o
+											if [ Z"$name" != Z"" ]
+											then
+												getvsm $currchoice $om $o
+											fi
 											# out to dev null seems to be required
 											if [ $dodlg -eq 1 ]
 											then
 												# package exist, exit
-												rm $tmp
+												rm -f ${cdir}/$vpat
 												exit
 											fi
 										fi
 										let x=$x+1
 									done
 								done
-								if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+								if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
 								then
 									echo "!"
 								fi
@@ -3309,11 +2678,21 @@ rm $tmp
 					getchoice
 				done # domenu2
 			done
+			if [ $doshacheck -eq 1 ] && [ Z"$shafail" != Z"" ]
+			then
+				colorecho "Following $sha Check Sums Failed
+	${shafail}" 1
+			elif [ $doshacheck -eq 1 ] && [ $shadownload -eq 1 ]
+			then
+				colorecho "All $sha Check Sums Passed"
+			fi
+			shadownload=0
+			shafail=''
 			doall=0
 			echo ""
 			if [ $myfav -eq 1 ] || [ $dodlg -gt 0 ]
 			then
-				rm $tmp
+				rm -f ${cdir}/$vpat
 				exit
 			fi
 		fi
