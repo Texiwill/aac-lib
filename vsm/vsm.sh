@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.5.0"
+VERSIONID="4.5.1"
 
 # args: stmt error
 function colorecho() {
@@ -773,7 +773,7 @@ function getvsmdata() {
 		data=`xmllint --html --xpath "(//*/li[@class=\"depot-content\"])[$xx]" dlg_${cchoice}.xhtml 2>/dev/null`
 		name=`echo $data|xml_grep --html --text_only '//*/a' 2>/dev/null`
 	else
-		pver=`grep selected=\"selected\" _dlg_${cchoice}.xhtml 2> /dev/null | cut -d\" -f2 | sed 's/[[:space:]]\+$//'| sed 's/ /+/g'`
+		pver=`grep selected=\"selected\" _dlg_${cchoice}.xhtml 2> /dev/null | head -1 | cut -d\" -f2 | sed 's/[[:space:]]\+$//'| sed 's/ /+/g'`
 		if [ ${PIPESTATUS[0]} -ne 0 ]
 		then
 			pver=`xmllint --html --xpath "//tr" _dlg_${cchoice}.xhtml  2> /dev/null  | tr '\n' ' ' |sed 's/<\/tr>/<\/tr>\n/' |head -1 |sed 's/<t[hd]>//g' |sed 's/<\/t[hd]>//g' |awk '{print $3}'| sed 's/[[:space:]]\+$//'| sed 's/ /+/g'`
@@ -952,6 +952,9 @@ function vsmpkgs() {
 		#  Desktop_End_User_Computing_VMware_Fusion
 		##
 		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
+	elif [ $choice = "Networking_Security" ]
+	then
+		pkgs="VMware_NSX"
 	else
 		#if [ $dlg -gt 0 ]
 		#then
@@ -1104,7 +1107,7 @@ function menu() {
 		vsmpkgs $file
 		if [ Z"$choice" = Z"root" ] && [ $domyvmware -eq 1 ] && [ $dovex -eq 1 ]
 		then
-			pkgs="$pkgs Desktop_End_User_Computing"
+			pkgs="$pkgs Desktop_End_User_Computing Networking_Security"
 		fi
 		# need to recreate dlg=1 here due to myvmware
 		if [ $domyvmware -eq 1 ] && [ $dlg -eq 1 ]
@@ -1372,6 +1375,20 @@ function getvsm() {
 	then
 		url=$href
 	else
+		# Ugh, special cases!
+		echo $drparams | grep 'NSX-T' >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			vers=$pver
+			prod="VMware+NSX"
+		fi
+		echo $drparams | grep -- '-NSX' >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			drparams=`echo $drparams | sed 's/-NSX//'`
+			vers=$pver
+			prod="VMware+vSphere"
+		fi
 		url="$href?params=$drparams&downloadurl=$durl&familyversion=$vers&productfamily=$prod"
 	fi
 	debugecho "DEBUG: url => $url"
@@ -1928,15 +1945,19 @@ then
 	exit
 fi
 
-vdat=$cdir/vsm.data
-mywget $vdat https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.data >& /dev/null
-if [ $err -ne 0 ]
-then
-	rm -rf $vdat
-fi
+vdat=`pwd`/vsm.data
 if [ ! -e $vdat ]
 then
-	vdat=`pwd`/vsm.data
+	vdat=$cdir/vsm.data
+	mywget $vdat https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.data >& /dev/null
+	if [ $err -ne 0 ]
+	then
+		rm -rf $vdat
+	fi
+fi
+if [ $debugv -eq 1 ]
+then
+	echo "	VSM Data: $vdat"
 fi
 if [ ! -e $vdat ]
 then
@@ -2159,7 +2180,7 @@ if [ $dodlg -eq 1 ]
 then
 	debugecho "DEBUG: $mydlg"
 	# Find the file
-	mytf=`uudecode $vdat | egrep "$mydlg" | sort -k6 -V | tail -1`
+	mytf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sort -k6 -V | tail -1`
 	debugecho "mytf => $mytf"
 	if [ Z"$mytf" = Z"" ]
 	then
@@ -2189,7 +2210,7 @@ then
 	tf=`echo $fv | cut -d\" -f2 | sed 's/ /_/g'`
 	# rebuild mchoice path
 	li=`xml_grep --text_only '//*/a' ${rcdir}/root.xhtml`
-	for x in $li Desktop_End_User_Computing
+	for x in $li Desktop_End_User_Computing Networking_Security
 	do
 		t=`echo $prevchoice | sed "s#${x}_##"`
 		#echo "$x => $t"

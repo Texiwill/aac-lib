@@ -250,6 +250,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+4.5.1 - Fixed --dlg error and added some missing data. Datafile 1.0.1 now
+
 4.5.0 - Rewrite to better allow updates, --dlg to work, sha256/sha1 sums, and improved MacOS support, not to mention improvements in performance
 
 4.0.4 - MacOS Support
