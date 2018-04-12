@@ -47,7 +47,7 @@ I added these lines to a script within /etc/cron.daily (which usually
 runs at 3AM):
 ```
 wget -O /usr/local/bin/vsm.sh https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
-chmod +x vsm.sh
+chmod +x /usr/local/bin/vsm.sh
 ```
 
 The following line starts VSM download at 6AM. You would add using the
