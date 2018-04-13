@@ -249,6 +249,14 @@ The following line starts VSM download at 6AM. You would add using the command `
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
+### Data file Changelog
+1.0.5 - Updates for 6.5/6.0 new drivers
+1.0.4 - Updates for vRealize Updates
+1.0.3 - Updates for 6.0 new drivers
+1.0.2 - Updates for 6.0 new drivers
+1.0.1 - added support for new packages and fixed missing files
+1.0.0 - Initial Release
+
 ### Changelog
 4.5.1 - Fixed --dlg error and added some missing data. Datafile 1.0.1 now
         Special thanks to Alex Lopez (@ivirtualex) and 
