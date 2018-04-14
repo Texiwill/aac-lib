@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.5.1"
+VERSIONID="4.5.2"
 
 # args: stmt error
 function colorecho() {
@@ -37,6 +37,18 @@ function debugecho() {
 	then
 		echo ${1}
 	fi
+}
+function shaecho() {
+	if [ $doshacheck -eq 1 ] && [ Z"$shafail" != Z"" ]
+	then
+		colorecho "Following $sha Check Sums Failed
+	${shafail}" 1
+	elif [ $doshacheck -eq 1 ] && [ $shadownload -eq 1 ]
+	then
+		colorecho "All $sha Check Sums Passed"
+	fi
+	shadownload=0
+	shafail=''
 }
 
 progressfilt ()
@@ -718,7 +730,7 @@ function getouterrndir() {
 				rndir="vrni"
 				;;
 			VRLI*)
-				if [ $v -gt 450 ]
+				if [ $v -eq 450 ]
 				then
 					rndir='strata1'
 				else
@@ -743,8 +755,11 @@ function getinnerrndir() {
 			#ename=`echo $name | sed 's/\./\\./g'| sed 's/\[/./g' |sed 's/\]/./g'`
 			#debugecho "DEBUG: ename => $ename"
 			rnlin=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null| fgrep $name | sort -k6 -V|tail -1`
-			rndir=`echo $rnlin| cut -d' ' -f 5`
-			rndll="`echo $rnlin| cut -d' ' -f 4`.vmware.com"
+			if [ ${#rnlin} -ne 0 ]
+			then
+				rndir=`echo $rnlin| cut -d' ' -f 5`
+				rndll="`echo $rnlin| cut -d' ' -f 4`.vmware.com"
+			fi
 			if [ Z"$rndir" = Z"" ]
 			then
 				if [ -e _dlg_${lchoice}.xhtml ]
@@ -1395,7 +1410,7 @@ function getvsm() {
 	rnnot=0
 	if [ Z"$rndll" = Z"" ] || [ Z"$rndir" = Z"" ] || [ Z"$rndir" = Z"$name" ]
 	then
-		if [ $debugv -eq 1 ]
+		if [ $debugv -ge 1 ]
 		then
 			echo ""
 			echo "DEBUGV: name => $name" 
@@ -1955,10 +1970,6 @@ then
 		rm -rf $vdat
 	fi
 fi
-if [ $debugv -eq 1 ]
-then
-	echo "	VSM Data: $vdat"
-fi
 if [ ! -e $vdat ]
 then
 	colorecho "VSM cannot run without its data file." 1
@@ -1968,6 +1979,10 @@ fi
 colorecho "Using the following options:"
 echo "	Version:	$VERSIONID"
 echo "	Data Version:	`grep vsm.data $vdat|cut -d' ' -f 3|sed 's/vsm.data.//'`"
+if [ $debugv -eq 1 ]
+then
+	echo "	VSM Data: $vdat"
+fi
 if [ Z"$username" != Z"" ]
 then
 	echo "	Username:		$username"
@@ -2394,6 +2409,7 @@ do
 						# do not show if ALL, choice set above!
 						if [ $doall -eq 0 ] && [ $dodlg -eq 0 ]
 						then
+							shaecho
 							menu2 _dlg_${choice}.xhtml $oss $oem $dts
 							# menu2 requires doall be set
 							#if [ Z"$choice" = Z"All" ]
@@ -2699,16 +2715,7 @@ do
 					getchoice
 				done # domenu2
 			done
-			if [ $doshacheck -eq 1 ] && [ Z"$shafail" != Z"" ]
-			then
-				colorecho "Following $sha Check Sums Failed
-	${shafail}" 1
-			elif [ $doshacheck -eq 1 ] && [ $shadownload -eq 1 ]
-			then
-				colorecho "All $sha Check Sums Passed"
-			fi
-			shadownload=0
-			shafail=''
+			shaecho
 			doall=0
 			echo ""
 			if [ $myfav -eq 1 ] || [ $dodlg -gt 0 ]

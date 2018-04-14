@@ -250,6 +250,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+1.0.6 - Keep up with 4.5.2
 1.0.5 - Updates for 6.5/6.0 new drivers
 1.0.4 - Updates for vRealize Updates
 1.0.3 - Updates for 6.0 new drivers
@@ -258,6 +259,8 @@ for more items.
 1.0.0 - Initial Release
 
 ### Changelog
+4.5.2 - Fixed logic for download paths, logic for showing checksum failures
+
 4.5.1 - Fixed --dlg error and added some missing data. Datafile 1.0.1 now
         Special thanks to Alex Lopez (@ivirtualex) and 
 	Mike Laverick (@m_laverick)
