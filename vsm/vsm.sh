@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.5.2"
+VERSIONID="4.5.3"
 
 # args: stmt error
 function colorecho() {
@@ -49,6 +49,24 @@ function shaecho() {
 	fi
 	shadownload=0
 	shafail=''
+}
+
+function getvdat() {
+	vdat=`pwd`/vsm.data
+	if [ ! -e $vdat ]
+	then
+		vdat=$cdir/vsm.data
+		mywget $vdat https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.data >& /dev/null
+		if [ $err -ne 0 ]
+		then
+			rm -rf $vdat
+		fi
+	fi
+	if [ ! -e $vdat ]
+	then
+		colorecho "VSM cannot run without its data file." 1
+		exit
+	fi
 }
 
 progressfilt ()
@@ -470,7 +488,7 @@ function vmwaremenu2() {
 		vsme=`echo $ach | sed 's/_/[-_]/g'`
 		debugecho "DEBUG: vsme => $vsme"
 		# will not work for dooss so need to know we are doing this
-		vurl=`egrep "$vsme" ${rcdir}/${mname}.xhtml 2>/dev/null |grep -v OSS | head -1 | cut -d \" -f 2`
+		vurl=`egrep "$vsme" ${rcdir}/${mname}.xhtml 2>/dev/null |grep -v OSS | head -1 | sed 's/<a href/\n<a href/' | grep href | cut -d \" -f 2 | sed 's#https://my\.vmware\.com##'`
 		debugecho "DEBUG: vurl => $vurl"
 		if [ ! -e ${rcdir}/_dlg_${ach}.xhtml ] || [ $doreset -eq 1 ]
 		then
@@ -620,11 +638,42 @@ function getouterrndir() {
 					rndir='view'
 				fi
 				;;
+			VROPS*)
+				m="${lchoice//[^[:digit:]]/}"
+				rndir="vrops${m}"
+				;;
+			VC55*)
+				rndir="vi/55"
+				;;
+			VC65*)
+				n=`echo $lchoice | sed 's/VC[0-9][0-9]//' | tr [:upper:] [:lower:]`
+				m=`echo $lchoice | sed 's/VC//' | sed "s/$n//i"`
+				rndir="vc/$m/$n"
+				;;
+			VC*)
+				rndir="vi"
+				;;
 			ZONES10*)
 				rndir="vi"
 				;;
-			*"_ESXI_5"*)
+			ESXI*)
+				if [ $v -gt 60 ]
+				then
+					rndir="esx/${v:0:2}"
+				else
+					rndir="vi/${v:0:2}"
+				fi
+				;;
+			OEM*)
 				rndir="vi"
+				;;
+			DT*)
+				rndll="download3.vmware.com"
+				;;
+			VIC*)
+				m="${lchoice//[^[:digit:]]/}"
+				m=`echo $m | sed -e 's/\(.\)/\1\./g' |sed 's/\.$//'`
+				rndir="vic${m}"
 				;;
 			VVD*)
 				if [ ${v} -gt 200 ]
@@ -714,6 +763,9 @@ function getouterrndir() {
 					rndir="v4pa"
 				fi
 				;;
+			VIDM*)
+				rndir="VIDM_ONPREM_${v:0:2}"
+				;;
 			FUS*)
 				rndll='download3.vmware.com'
 				rndir='fusion/file'
@@ -736,6 +788,20 @@ function getouterrndir() {
 				else
 					rndir='strata'
 				fi
+				;;
+			UAG*)
+				if [ $v -eq 300 ]
+				then
+					rndir="view"
+				elif [ $v -eq 0 ] || [ $v -lt 321 ]
+				then
+					rndir="UAG_${v:0:2}"
+				else
+					rndir="UAG_${v}"
+				fi
+				;;
+			*"OSS")
+				rndir="opensource"
 				;;
 		esac
 	fi
@@ -1516,6 +1582,7 @@ function getvsm() {
 }
 
 function version() {
+	getvdat
 	echo "LinuxVSM Version:"
 	echo "	OS:        $theos"
 	echo "	`basename $0`:    $VERSIONID"
@@ -1960,28 +2027,14 @@ then
 	exit
 fi
 
-vdat=`pwd`/vsm.data
-if [ ! -e $vdat ]
-then
-	vdat=$cdir/vsm.data
-	mywget $vdat https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.data >& /dev/null
-	if [ $err -ne 0 ]
-	then
-		rm -rf $vdat
-	fi
-fi
-if [ ! -e $vdat ]
-then
-	colorecho "VSM cannot run without its data file." 1
-	exit
-fi
+getvdat
 
 colorecho "Using the following options:"
 echo "	Version:	$VERSIONID"
 echo "	Data Version:	`grep vsm.data $vdat|cut -d' ' -f 3|sed 's/vsm.data.//'`"
 if [ $debugv -eq 1 ]
 then
-	echo "	VSM Data: $vdat"
+	echo "	VSM Data:	$vdat"
 fi
 if [ Z"$username" != Z"" ]
 then
@@ -2217,10 +2270,27 @@ then
 	ec=`echo $tc | cut -d' ' -f2 | sed 's/\./_/g'`
 	# rebuild myvmware path
 	fv=`egrep "$dc" ${rcdir}/_downloads.xhtml | sort -V | tail -1`
+	dvc=''
+	if [ ${#fv} -eq 0 ]
+	then
+		debugecho "DC: Finding Alternative"
+		dvc=`echo $vc | sed 's/_/./g'`
+		dc=`echo $tc | cut -d' ' -f1 | sed "s/\.$dvc//"`
+		ec=`echo $tc | cut -d' ' -f2 | sed 's/\./_/g'`
+		# rebuild myvmware path
+		fv=`egrep "$dc" ${rcdir}/_downloads.xhtml | sort -V | tail -1`
+		if [ ${#fv} -eq 0 ]
+		then
+			debugecho "dc => $dc"
+			colorecho "No Downloads Reference Found for $mydlg" 1
+			rm -f ${cdir}/$vpat
+			exit
+		fi
+	fi
 	mfchoice='root'
 	myfm=`echo $fv | cut -d\" -f14 | sed 's#./info/slug##'`
-	vf=`echo $myfm | sed 's/.*\([0-9]_[0-9]\)/\1/'`
-	myfm=`echo $myfm | sed "s/$vf/$vc/"`
+	vf=`dirname $myfm`
+	myfm="$vf/$vc"
 	myfvmware="${myfm}/${ec}"
 	tf=`echo $fv | cut -d\" -f2 | sed 's/ /_/g'`
 	# rebuild mchoice path
