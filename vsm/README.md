@@ -250,6 +250,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+1.0.9 - vSphere 6.7
 1.0.8 - New Drivers
 1.0.7 - Keep up with 4.5.3
 1.0.6 - Keep up with 4.5.2
