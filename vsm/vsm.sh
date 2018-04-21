@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.5.3"
+VERSIONID="4.5.4"
 
 # args: stmt error
 function colorecho() {
@@ -535,6 +535,7 @@ function getproddata() {
 	then
 		prod=`grep '<title>' $rcdir/${missname}.xhtml|cut -d '>' -f 2|cut -d '<' -f 1 | sed 's/Download //' | sed 's/ [0-9]\+$//'`
 		vers=`grep selected $rcdir/${missname}.xhtml | awk -F\> '{print $2}'|awk -F\< '{print $1}' | sed 's/[[:space:]]\+$//'|sed 's/ /+/g'`
+		dref=`grep downloadFilesURL $rcdir/${missname}.xhtml|sed 's/value=/\n/'|grep https|cut -d\" -f2`
 	else
 		prod=`xml_grep --html --text_only '*[@title="prod"]' ${prevchoice}.xhtml 2>/dev/null`
 		vers=`xml_grep --html --text_only '*[@title="version"]' ${prevchoice}.xhtml 2>/dev/null`
@@ -650,8 +651,14 @@ function getouterrndir() {
 				m=`echo $lchoice | sed 's/VC//' | sed "s/$n//i"`
 				rndir="vc/$m/$n"
 				;;
+			VC67*)
+				rndir="vc/67"
+				;;
 			VC*)
 				rndir="vi"
+				;;
+			VR[0123456789]*)
+				rndir="vr50"
 				;;
 			ZONES10*)
 				rndir="vi"
@@ -1346,6 +1353,7 @@ function getvsmparams() {
 		debugecho "DEBUG: size => $size ; units => $units"
 		fdata=`echo $data | sed 's/<\/a>/\n/g'| sed 's/<\/span/\n/g'|grep "button primary"`
 		#echo $fdata |grep -v CART17Q1_HCI_WIN_100|egrep "CART|viewclients" >& /dev/null
+		href=`echo $fdata | sed 's/href/\nhref/' |grep href | cut -d\" -f2`
 		echo $fdata |grep 'download.\.vmware\.com' >& /dev/null
 		if [ $? -eq 0 ]
 		then
@@ -1369,6 +1377,10 @@ function getvsmparams() {
 				size=`printf '%d\n' "$size" 2>/dev/null`
 			fi
 			dlgcode=`echo $ndata | cut -d' ' -f3`
+			#productID=`echo $ndata | cut -d' ' -f5`
+			#fileID=`echo $ndata | cut -d' ' -f9`
+			#tagID=''
+			#hashkey=`echo $ndata | cut -d' ' -f11`
 			downloaduuid=`echo $ndata | cut -d ' ' -f13`
 			#if [ Z"$vers" = Z"" ]
 			#then
@@ -1384,7 +1396,6 @@ function getvsmparams() {
 			drparams=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $dtr`
 			debugecho "DEBUG: drparams => $drparams"
 			href="https://depot.vmware.com/getAuthUrl"
-			#https://download2.vmware.com/software/vcops/v4h_651/Reports_V4VAdapter-6.5.1-7363818.zip
 			if [ Z"${rndir}" = Z"/" ]
 			then
 				durl="https://${rndll}/software/${fname}"

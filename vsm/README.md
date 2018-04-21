@@ -250,6 +250,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+1.0.13 - Updates for VR81
 1.0.12 - Several smaller updates for 6.5, Converter, etc.
 1.0.11 - VR81 Update
 1.0.9 - vSphere 6.7
@@ -264,6 +265,8 @@ for more items.
 1.0.0 - Initial Release
 
 ### Changelog
+4.5.4 - Fixed some logic for download paths
+
 4.5.3 - Fixed several bugs: Malformed Data causing download error
         (@ivirtualex),--dlg with older packages, error messages in wrong spot, 
 	inappropriate data file errors, code cleanup, and added to logic for 
