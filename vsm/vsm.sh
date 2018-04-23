@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.5.4"
+VERSIONID="4.5.5"
 
 # args: stmt error
 function colorecho() {
@@ -67,6 +67,56 @@ function getvdat() {
 		colorecho "VSM cannot run without its data file." 1
 		exit
 	fi
+}
+
+findfavpaths()
+{
+	pchoice=$1
+	# find paths
+	vc=`echo $pchoice | sed 's/.*\([0-9]_[0-9]\).*/\1/'`
+	tc=`echo $pchoice | tr '[:upper:]' '[:lower:]'|sed 's/\([0-9]\)_\([a-z_]\+\)/\1 \2/'|sed 's/_/./g'`
+	dc=`echo $tc | cut -d' ' -f1`
+	dc="${dc%?}?"
+	ec=`echo $tc | cut -d' ' -f2 | sed 's/\./_/g'`
+	# rebuild myvmware path
+	fv=`egrep "$dc" ${rcdir}/_downloads.xhtml | sort -V | tail -1`
+	dvc=''
+	if [ ${#fv} -eq 0 ]
+	then
+		debugecho "DC: Finding Alternative"
+		dvc=`echo $vc | sed 's/_/./g'`
+		dc=`echo $tc | cut -d' ' -f1 | sed "s/\.$dvc//"`
+		ec=`echo $tc | cut -d' ' -f2 | sed 's/\./_/g'`
+		# rebuild myvmware path
+		fv=`egrep "$dc" ${rcdir}/_downloads.xhtml | sort -V | tail -1`
+		if [ ${#fv} -eq 0 ]
+		then
+			debugecho "dc => $dc"
+			colorecho "No Downloads Reference Found for $mydlg" 1
+			rm -f ${cdir}/$vpat
+			exit
+		fi
+	fi
+	mfchoice='root'
+	myfm=`echo $fv | cut -d\" -f14 | sed 's#./info/slug##'`
+	vf=`dirname $myfm`
+	myfm="$vf/$vc"
+	myfvmware="${myfm}/${ec}"
+	tf=`echo $fv | cut -d\" -f2 | sed 's/ /_/g'`
+	# rebuild mchoice path
+	li=`xml_grep --text_only '//*/a' ${rcdir}/root.xhtml`
+	for x in $li Desktop_End_User_Computing Networking_Security
+	do
+		t=`echo $pchoice | sed "s#${x}_##"`
+		#echo "$x => $t"
+		if [ Z"$t" != Z"${pchoice}" ]
+		then
+			mfchoice="$mfchoice/${x}/${x}_${tf}"
+			t=`echo $pchoice | sed "s#${x}_${tf}##" | tr '[:upper:]' '[:lower:]'|sed "s/_$ec//g"|sed 's/^_//'`
+			mfchoice="$mfchoice/${x}_${tf}_${t}/$pchoice"
+			break
+		fi
+	done
 }
 
 progressfilt ()
@@ -535,7 +585,7 @@ function getproddata() {
 	then
 		prod=`grep '<title>' $rcdir/${missname}.xhtml|cut -d '>' -f 2|cut -d '<' -f 1 | sed 's/Download //' | sed 's/ [0-9]\+$//'`
 		vers=`grep selected $rcdir/${missname}.xhtml | awk -F\> '{print $2}'|awk -F\< '{print $1}' | sed 's/[[:space:]]\+$//'|sed 's/ /+/g'`
-		dref=`grep downloadFilesURL $rcdir/${missname}.xhtml|sed 's/value=/\n/'|grep https|cut -d\" -f2`
+		#dref=`grep downloadFilesURL $rcdir/${missname}.xhtml|sed 's/value=/\n/'|grep https|cut -d\" -f2`
 	else
 		prod=`xml_grep --html --text_only '*[@title="prod"]' ${prevchoice}.xhtml 2>/dev/null`
 		vers=`xml_grep --html --text_only '*[@title="version"]' ${prevchoice}.xhtml 2>/dev/null`
@@ -1353,7 +1403,7 @@ function getvsmparams() {
 		debugecho "DEBUG: size => $size ; units => $units"
 		fdata=`echo $data | sed 's/<\/a>/\n/g'| sed 's/<\/span/\n/g'|grep "button primary"`
 		#echo $fdata |grep -v CART17Q1_HCI_WIN_100|egrep "CART|viewclients" >& /dev/null
-		href=`echo $fdata | sed 's/href/\nhref/' |grep href | cut -d\" -f2`
+		#href=`echo $fdata | sed 's/href/\nhref/' |grep href | cut -d\" -f2 | sed 's/amp;//g'`
 		echo $fdata |grep 'download.\.vmware\.com' >& /dev/null
 		if [ $? -eq 0 ]
 		then
@@ -1603,11 +1653,12 @@ function version() {
 
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--dlg search] [-d|--dryrun] [-f|--force] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
+	echo "$0 [-c|--check] [--dlg search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
 	echo "	-c|--check - do sha256 check against download"
 	echo "	--dlg - download specific package by name or part of name"
 	echo "	-d|--dryrun - dryrun, do not download"
 	echo "	-f|--force - force download of packages"
+	echo "	--fav favorite - specify favorite on command line"
 	echo "	--favorite - download suite marked as favorite"
 	echo "	-e|--exit - reset and exit"
 	echo "	-h|--help - this help"
@@ -1846,6 +1897,7 @@ assomissing=""
 missing=""
 missname=""
 mversions=""
+fav=""
 midprod=1
 doprogress=0
 myprogress=0
@@ -1996,6 +2048,11 @@ do
 				myfav=1
 			fi
 			;;
+		--fav)
+			fav=$2
+			myfav=2
+			shift
+			;;
 		-V|--version)
 			version
 			;;
@@ -2064,6 +2121,10 @@ echo "	My VMware:	$domyvmware"
 if [ $myfav -eq 1 ]
 then
 	echo "	Favorite: $favorite"
+fi
+if [ $myfav -eq 2 ]
+then
+	echo "	Favorite: $fav"
 fi
 
 
@@ -2273,51 +2334,7 @@ then
 		prevchoice=`echo $mytf | cut -d' ' -f1`
 	fi
 	echo "Working $mydlg and found $files within $mypkg..."
-	# find paths
-	vc=`echo $prevchoice | sed 's/.*\([0-9]_[0-9]\).*/\1/'`
-	tc=`echo $prevchoice | tr '[:upper:]' '[:lower:]'|sed 's/\([0-9]\)_\([a-z_]\+\)/\1 \2/'|sed 's/_/./g'`
-	dc=`echo $tc | cut -d' ' -f1`
-	dc="${dc%?}?"
-	ec=`echo $tc | cut -d' ' -f2 | sed 's/\./_/g'`
-	# rebuild myvmware path
-	fv=`egrep "$dc" ${rcdir}/_downloads.xhtml | sort -V | tail -1`
-	dvc=''
-	if [ ${#fv} -eq 0 ]
-	then
-		debugecho "DC: Finding Alternative"
-		dvc=`echo $vc | sed 's/_/./g'`
-		dc=`echo $tc | cut -d' ' -f1 | sed "s/\.$dvc//"`
-		ec=`echo $tc | cut -d' ' -f2 | sed 's/\./_/g'`
-		# rebuild myvmware path
-		fv=`egrep "$dc" ${rcdir}/_downloads.xhtml | sort -V | tail -1`
-		if [ ${#fv} -eq 0 ]
-		then
-			debugecho "dc => $dc"
-			colorecho "No Downloads Reference Found for $mydlg" 1
-			rm -f ${cdir}/$vpat
-			exit
-		fi
-	fi
-	mfchoice='root'
-	myfm=`echo $fv | cut -d\" -f14 | sed 's#./info/slug##'`
-	vf=`dirname $myfm`
-	myfm="$vf/$vc"
-	myfvmware="${myfm}/${ec}"
-	tf=`echo $fv | cut -d\" -f2 | sed 's/ /_/g'`
-	# rebuild mchoice path
-	li=`xml_grep --text_only '//*/a' ${rcdir}/root.xhtml`
-	for x in $li Desktop_End_User_Computing Networking_Security
-	do
-		t=`echo $prevchoice | sed "s#${x}_##"`
-		#echo "$x => $t"
-		if [ Z"$t" != Z"${prevchoice}" ]
-		then
-			mfchoice="$mfchoice/${x}/${x}_${tf}"
-			t=`echo $prevchoice | sed "s#${x}_${tf}##" | tr '[:upper:]' '[:lower:]'|sed "s/_$ec//g"|sed 's/^_//'`
-			mfchoice="$mfchoice/${x}_${tf}_${t}/$prevchoice"
-			break
-		fi
-	done
+	findfavpaths $prevchoice
 
 	# now we run through all the prevchoices
 	favorites=$prevchoice
@@ -2325,6 +2342,15 @@ then
 	debugecho "DEBUG: mfchoice => $mfchoice"
 	debugecho "DEBUG: myfvmware => $myfvmware"
 	debugecho "DEBUG: DLG => $favorites"
+fi
+
+if [ $myfav -eq 2 ]
+then
+	favorite=$fav
+	myfav=1
+	findfavpaths $favorite
+	debugecho "DEBUG: mfchoice => $mfchoice"
+	debugecho "DEBUG: myfvmware => $myfvmware"
 fi
 
 while [ 1 ]

@@ -39,15 +39,16 @@ Here is an example run and help:
 ```
 $ /usr/local/bin/vsm.sh --help
 /usr/local/bin/vsm.sh [-c|--check] [--dlg search] [-d|--dryrun] [-f|--force] 
-[--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] 
-[-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss]
-[-p|--password password] [--progress] [-q|--quiet] [-r|--reset] 
-[-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] 
-[--debug] [--repo repopath] [--save]
+[--fav favorite] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] 
+[-m|--myvmware] [-mr] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] 
+[--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] 
+[-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] 
+[-V|--version] [-y] [--debug] [--repo repopath] [--save]
     -c|--check - do sha256 check against download
     --dlg - download specific package by name or part of a name
     -d|--dryrun - dryrun, do not download
     -f|--force - force download of packages
+    --fav favorite - specify favorite on command line, implies --favorite
     --favorite - Download suite marked as favorite
     -e|--exit - reset and exit
     -h|--help - this help
@@ -151,6 +152,9 @@ Saving to /home/user/.vsmrc
 3) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Standard
 4) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise
 5) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   Use the above line with the --fav line to get all of vSphere 6.5 Enterprise+
+
 6) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Desktop
 7) Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_vSphere_Scale-Out
 8) Back
@@ -245,11 +249,26 @@ The following line starts VSM download at 6AM. You would add using the command `
 0 6 * * * /usr/local/bin/vsm.sh -c -y -mr --favorite
 ```
 
+The following line starts VSM download at 6AM for multiple favorites. You would add using the command `crontab -e`:
+```
+0 6 * * * ~/bin/vsm-favorites.sh
+```
+
+Where vsm-favorites.sh exists off your home directory in the bin directory
+and contains the following to download all of vSphere 6.5 Enterprise Plus,
+vSphere 6.7 Enterprise Plus, and all of VMware vRealize Suite 2017.
+```
+/usr/local/bin/vsm.sh -mr -c -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
+/usr/local/bin/vsm.sh -c -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Enterprise_Plus
+/usr/local/bin/vsm.sh -c -y -q --progress --fav Infrastructure_Operations_Management_VMware_vRealize_Suite_2017_Enterprise
+```
+
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+1.0.14 - latest updates and 4.5.5 compatibility
 1.0.13 - Updates for VR81
 1.0.12 - Several smaller updates for 6.5, Converter, etc.
 1.0.11 - VR81 Update
@@ -265,6 +284,9 @@ for more items.
 1.0.0 - Initial Release
 
 ### Changelog
+4.5.5 - added --fav option to allow for using favorites from commandline
+        (no more need to Mark a Favorite)
+
 4.5.4 - Fixed some logic for download paths
 
 4.5.3 - Fixed several bugs: Malformed Data causing download error
