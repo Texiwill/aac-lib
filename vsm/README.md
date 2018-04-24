@@ -268,6 +268,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+1.0.15 - vSphere DriversTools Updates
 1.0.14 - latest updates and 4.5.5 compatibility
 1.0.13 - Updates for VR81
 1.0.12 - Several smaller updates for 6.5, Converter, etc.
