@@ -24,14 +24,19 @@ Those are Xcode, XML::Twig, Homebrew, jq, and wget. Here is how you do those:
 		brew install gnu-sed
 		brew install wget
 		brew install jq
-	Next install XML::Twig (note the 'sudo')
+	Next install XML::Twig (note the 'sudo'), if you rather not use sudo,
+	and I can understand why, you will have to update your PATH variables
+	to also point to where the xml_grep command is located. This is 
+	accomplished by editting /etc/paths. It is usually installed somewhere 
+	within your home directory so 'find $HOME -name xml_grep -print' can 
+	find it for you.
 		sudo perl -MCPAN -e shell
 		cpan> install XML::Twig
 		... lots of questions and such. Answer YES or Y or y to
 		any yes/no question presented ...
 		cpan> exit
 	Next install vsm.sh (note the use of 'sudo')
-		sudo get -O /usr/local/bin/vsm.sh https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
+		sudo wget -O /usr/local/bin/vsm.sh https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
 		sudo chmod +x /usr/local/bin/vsm.sh
 
 ### Update
