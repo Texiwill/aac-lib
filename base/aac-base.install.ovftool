@@ -11,7 +11,7 @@
 ###
 . ./aac-base.install.vsm
 function ovftool_version() {
-	echo "1.1.0"
+	echo "1.1.1"
 }
 
 function ovftool() {
@@ -26,30 +26,33 @@ function ovftool() {
 	chmod +x /usr/local/bin/ov-import.sh
 
 	INSTALL="fuseiso hiera"
+	DINSTALL=$INSTALL
 	DEVEL=""
 
 	# Find way to download direct
 	t=/tmp/d$$
-	/usr/local/bin/vsm.sh -y -f -ns --dlg ovftool\.\*.x86_64.bundle | tee $t
+	su -l -c "/usr/local/bin/vsm.sh -y -f -ns --dlg ovftool-4.2\.\*.x86_64.bundle" $myuser | tee $t
 	file=`grep Local $t | awk -F: '{print $2}'`
 	rm -f $t
 	
 	# Check for .tar.gz
 	if [ Z"$file" != Z"" ] && [ -e $file ]
 	then
-		chmod +x *.bundle
+		chmod +x $file
 	fi
 
 	# uninstall old
 	
 	# Install RPMS
-	yum -y install $INSTALL $DEVEL
+	installdep
 
 	# Run installer
-	./VMware-ovftool*.x86_64.bundle --eulas-agreed
+	$file --eulas-agreed
 
-	echo "Do not forget to create your $HOME/.govc"
-	echo "Please visit https://github.com/Texiwill/aac-lib/tree/master/ovfimport for ov-import assistance"
+	echo ""
+	colorecho "Do not forget to create your $HOME/.govc"
+	colorecho "Please visit https://github.com/Texiwill/aac-lib/tree/master/ovfimport for ov-import assistance"
+	echo ""
 
 	cd $menu_pd
 }

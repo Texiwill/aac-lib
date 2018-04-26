@@ -51,7 +51,7 @@ scripts as well. Such as:
 
 The usage of the script is:
 
-	sudo ./aac-base.install [--update|-u] [--install|-i installer] [--help|-h] [timezone]
+	sudo ./aac-base.install [--update|-u] [--install|-i installer] [--help|-h] [timezone] [--home home] [--user username]
 	--install|-i - use specific installer
 	--update|-u - update the script(s), then reload
 
@@ -68,8 +68,11 @@ fi
 wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
 chmod +x aac-base.install
 ./aac-base.install -u
-sudo ./aac-base.install
+sudo ./aac-base.install --home $HOME --user $USER
 </pre>
+
+Some installers, specifically for vcli, vma, and ovftool call LinuxVSM which
+must run as a regular user. Hence, the need for the --user and --home options.
 
 ### Installers
 
@@ -114,6 +117,12 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.1.1 OVFTOOL: Support for Debian and latest LinuxVSM
+
+1.7.1 Base: Support for --user
+
+1.5.4 VCLI: Support for Debian
+
 1.7.0 Base/VSM: Support for Debian/Ubuntu
 
 1.5.3 VMA: Wrong package installed

@@ -9,7 +9,7 @@
 # Target: CentOS/RHEL 7
 #
 ###
-VERSION="1.7.1"
+VERSION="1.7.2"
 
 function version() {
 	echo "$0 version is $VERSION"
@@ -21,6 +21,15 @@ function version() {
 		echo -n "$y version "
 		eval ${y}_version
 	done
+}
+
+function colorecho() {
+	COLOR=$PURPLE
+	if [ Z"$2" = Z"1" ]
+	then
+		COLOR=$RED
+	fi
+	echo "${COLOR}${1}${NC}"
 }
 
 function findos() {
@@ -241,6 +250,7 @@ theos=""
 needdep=0
 findos
 myhome=$HOME
+myuser=$USER
 update=0
 prog=$0
 installer=""
@@ -250,6 +260,14 @@ DINSTALL=""
 DDEVEL=""
 DEVEL=""
 TZ='America/Chicago'
+# onscreen colors
+RED=`tput setaf 1`
+PURPLE=`tput setaf 5`
+NC=`tput sgr0`
+BOLD=`tput smso`
+NB=`tput rmso`
+TEAL=`tput setaf 6`
+
 while [[ $# -gt 0 ]]
 do
 	key="$1"
@@ -260,6 +278,10 @@ do
 			;;
 		--home)
 			myhome=$2
+			shift
+			;;
+		--user)
+			myuser=$2
 			shift
 			;;
 		#--createrepo|-c)
