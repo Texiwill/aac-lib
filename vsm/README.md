@@ -268,6 +268,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+1.0.17 - vSphere DriversTools Updates, VMware Tools Updates
 1.0.16 - ovftool duplicates
 1.0.15 - vSphere DriversTools Updates
 1.0.14 - latest updates and 4.5.5 compatibility
