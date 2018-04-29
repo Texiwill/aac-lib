@@ -268,23 +268,23 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
-1.0.17 - vSphere DriversTools Updates, VMware Tools Updates
-1.0.16 - ovftool duplicates
-1.0.15 - vSphere DriversTools Updates
-1.0.14 - latest updates and 4.5.5 compatibility
-1.0.13 - Updates for VR81
-1.0.12 - Several smaller updates for 6.5, Converter, etc.
-1.0.11 - VR81 Update
-1.0.9 - vSphere 6.7
-1.0.8 - New Drivers
-1.0.7 - Keep up with 4.5.3
-1.0.6 - Keep up with 4.5.2
-1.0.5 - Updates for 6.5/6.0 new drivers
-1.0.4 - Updates for vRealize Updates
-1.0.3 - Updates for 6.0 new drivers
-1.0.2 - Updates for 6.0 new drivers
-1.0.1 - added support for new packages and fixed missing files
-1.0.0 - Initial Release
+- 1.0.17 - vSphere DriversTools Updates, VMware Tools Updates
+- 1.0.16 - ovftool duplicates
+- 1.0.15 - vSphere DriversTools Updates
+- 1.0.14 - latest updates and 4.5.5 compatibility
+- 1.0.13 - Updates for VR81
+- 1.0.12 - Several smaller updates for 6.5, Converter, etc.
+- 1.0.11 - VR81 Update
+- 1.0.9 - vSphere 6.7
+- 1.0.8 - New Drivers
+- 1.0.7 - Keep up with 4.5.3
+- 1.0.6 - Keep up with 4.5.2
+- 1.0.5 - Updates for 6.5/6.0 new drivers
+- 1.0.4 - Updates for vRealize Updates
+- 1.0.3 - Updates for 6.0 new drivers
+- 1.0.2 - Updates for 6.0 new drivers
+- 1.0.1 - added support for new packages and fixed missing files
+- 1.0.0 - Initial Release
 
 ### Changelog
 4.5.5 - added --fav option to allow for using favorites from commandline
