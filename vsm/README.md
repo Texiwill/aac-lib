@@ -237,11 +237,11 @@ install vsm. If you did not then just use the last line.
 Be sure to Mark a release as your favorite! If you do not, this does
 not work. The 'Mark' menu item does this.
 
-I added these lines to a script within /etc/cron.daily (which usually runs at 3AM):
+Do the following to auto-update LinuxVSM every day at 3AM (Note: update.sh
+is only created if you use install.sh to install, inspect the shell
+script for the appropriate lines for your own update.sh)
 ```
-cd /home/user/aac-base
-./aac-base.install -u
-./aac-base.install -i vsm
+cp $HOME/aac-base/update.sh /etc/cron.daily
 ```
 
 The following line starts VSM download at 6AM. You would add using the command `crontab -e`:
@@ -287,6 +287,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.5.5 - Update to install.sh to create the update.sh automatically
+
 4.5.5 - added --fav option to allow for using favorites from commandline
         (no more need to Mark a Favorite)
 

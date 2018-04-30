@@ -55,6 +55,13 @@ chmod +x aac-base.install
 ./aac-base.install -u $1
 sudo ./aac-base.install -i vsm $1
 
+cat > update.sh << EOF
+cd $HOME/aac-base
+./aac-base.install -u $1
+./aac-base.install -i vsm $1
+EOF
+chmod +x update.sh
+
 PURPLE=`tput setaf 5`
 NC=`tput sgr0`
 echo "${PURPLE}VSM is now in /usr/local/bin/vsm.sh${NC}"
