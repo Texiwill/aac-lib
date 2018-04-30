@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.5.5"
+VERSIONID="4.5.6"
 
 # args: stmt error
 function colorecho() {
@@ -105,7 +105,7 @@ findfavpaths()
 	tf=`echo $fv | cut -d\" -f2 | sed 's/ /_/g'`
 	# rebuild mchoice path
 	li=`xml_grep --text_only '//*/a' ${rcdir}/root.xhtml`
-	for x in $li Desktop_End_User_Computing Networking_Security
+	for x in $li Infrastructure_Operations_Management Desktop_End_User_Computing Networking_Security
 	do
 		t=`echo $pchoice | sed "s#${x}_##"`
 		#echo "$x => $t"
@@ -317,11 +317,16 @@ function findmissing() {
 				then
 					linuxvdi=`echo $lv | cut -d= -f 3 | cut -d\& -f 1`
 				fi
-				if [ Z"$pmiss" != Z"" ]
+				if [ $beta -eq 1 ]
 				then
-					tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g"|egrep -v $pmiss |egrep -v hidden`
+					tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g" |egrep -v hidden | sort -u` 
 				else
-					tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g" |egrep -v hidden` 
+					if [ Z"$pmiss" != Z"" ]
+					then
+						tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g"|egrep -v $pmiss |egrep -v hidden | sort -u`
+					else
+						tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g" |egrep -v hidden | sort -u` 
+					fi
 				fi
 			fi
 			# missing pkg entries
@@ -331,7 +336,7 @@ function findmissing() {
 				then
 					if [ Z"$myusenurl" = Z"" ]
 					then
-						usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | grep -v OSS | cut -d\" -f 4 | head -1`
+						usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | sed 's/href=/\nhref=/g' | grep href | grep -v OSS | cut -d\" -f 2 | head -1`
 					else
 						usenurl=$myusenurl
 					fi
@@ -713,6 +718,12 @@ function getouterrndir() {
 			ZONES10*)
 				rndir="vi"
 				;;
+			SRM_SRA81*)
+				rndir="srm810"
+				;;
+			SRM*)
+				rndir="srm50"
+				;;
 			ESXI*)
 				if [ $v -gt 60 ]
 				then
@@ -1084,24 +1095,17 @@ function vsmpkgs() {
 	if [ $choice = "Desktop_End_User_Computing" ]
 	then
 		# need to get this
-		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro"
-		##
-		# Fusion is part of Horizon and has an issue
-		#  Desktop_End_User_Computing_VMware_Fusion
-		##
+		if [ $beta -eq 1 ]
+		then
+			pkgs="Desktop_End_User_Computing_VMware_Workspace_ONE Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro"
+		else
+			pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro"
+		fi
 		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 	elif [ $choice = "Networking_Security" ]
 	then
 		pkgs="VMware_NSX"
 	else
-		#if [ $dlg -gt 0 ]
-		#then
-			#if [ $dolatest -eq 1 ]
-			#then
-			#	pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\).*$/\1/' | sort -u`
-			#	vsmnpkgs
-			#fi
-		#fi
 		if [ Z"$pkgs" = Z"" ]
 		then
 			if [ -e $file ]
@@ -1112,7 +1116,7 @@ function vsmpkgs() {
 		fi
 		if [ $choice = "Datacenter_Cloud_Infrastructure" ]
 		then
-			pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center"
+			pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite Datacenter_Cloud_Infrastructure_VMware_vSphere_with_Operations_Management"
 			if [ $dovex -eq 1 ]
 			then
 				pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_vCloud_Director"
@@ -1121,9 +1125,11 @@ function vsmpkgs() {
 			mversions=''
 		elif [ $choice = "Infrastructure_Operations_Management" ]
 		then
+			pkgs="Infrastructure_Operations_Management_VMware_vRealize_Automation Infrastructure_Operations_Management_VMware_vRealize_Network_Insight Infrastructure_Operations_Management_VMware_vRealize_Suite"
 			if [ $dovex -eq 1 ]
 			then
-				pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack"
+				pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack Infrastructure_Operations_Management_VMware_Site_Recovery_Manager"
+				# Infrastructure_Operations_Management_VMware_vRealize_Operations"
 				# Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager
 				pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 			fi
@@ -1245,7 +1251,7 @@ function menu() {
 		vsmpkgs $file
 		if [ Z"$choice" = Z"root" ] && [ $domyvmware -eq 1 ] && [ $dovex -eq 1 ]
 		then
-			pkgs="$pkgs Desktop_End_User_Computing Networking_Security"
+			pkgs="$pkgs Infrastructure_Operations_Management Desktop_End_User_Computing Networking_Security"
 		fi
 		# need to recreate dlg=1 here due to myvmware
 		if [ $domyvmware -eq 1 ] && [ $dlg -eq 1 ]
@@ -1259,6 +1265,14 @@ function menu() {
 			then
 				prevchoice=$choice
 			fi
+		fi
+	fi
+	if [ $beta -eq 1 ]
+	then
+		domyvm=`echo ${myvmware}| awk -F/ '{print NF}'`
+		if [ $domyvm -eq 3 ]
+		then
+			pkgs=`echo $pkgs | sed 's/[ $]/\n/g' |sort -uVr | tr '\n' ' '| sed 's/ $//'`
 		fi
 	fi
 	export COLUMNS=20
@@ -1859,6 +1873,7 @@ nostore=0
 doexit=0
 dryrun=0
 dosave=0
+beta=0
 mydts=-1
 myoss=-1
 myoem=-1
@@ -1994,6 +2009,9 @@ do
 			;;
 		--save)
 			dosave=1
+			;;
+		--beta)
+			beta=1
 			;;
 		--debug)
 			debugv=1

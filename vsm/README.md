@@ -268,6 +268,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.18 - latest updates and 4.5.6 compatibility
 - 1.0.17 - vSphere DriversTools Updates, VMware Tools Updates
 - 1.0.16 - ovftool duplicates
 - 1.0.15 - vSphere DriversTools Updates
@@ -287,6 +288,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.5.6 - Update for new Windows VSM Data Files and new options
+
 4.5.5 - Update to install.sh to create the update.sh automatically
 
 4.5.5 - added --fav option to allow for using favorites from commandline
