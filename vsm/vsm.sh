@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.5.6"
+VERSIONID="4.5.7"
 
 # args: stmt error
 function colorecho() {
@@ -378,7 +378,12 @@ function getoutervmware() {
 		then
 			mywget ${rcdir}/${missname}.xhtml ${myvmware_root}${myvmware}
 		fi
-		mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/+/_/g'`
+		if [ $beta -eq 1 ]
+		then
+			mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/+/_/g' | sed 's/\&amp;/\&/g'`
+		else
+			mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/+/_/g'`
+		fi
 		#mc=`echo $mversions | wc -w`
 		#debugecho "mc => $mc"
 		f=`basename $mchoice`
@@ -711,6 +716,9 @@ function getouterrndir() {
 				;;
 			VC*)
 				rndir="vi"
+				;;
+			HCS*)
+				rndir="AppVolumes"
 				;;
 			VR[0123456789]*)
 				rndir="vr50"
@@ -1251,7 +1259,12 @@ function menu() {
 		vsmpkgs $file
 		if [ Z"$choice" = Z"root" ] && [ $domyvmware -eq 1 ] && [ $dovex -eq 1 ]
 		then
-			pkgs="$pkgs Infrastructure_Operations_Management Desktop_End_User_Computing Networking_Security"
+			echo $pkgs |grep Infrastructure_Operations_Management >& /dev/null
+			if [ $? -eq 1 ]
+			then
+				pkgs="$pkgs Infrastructure_Operations_Management"
+			fi
+			pkgs="$pkgs Desktop_End_User_Computing Networking_Security"
 		fi
 		# need to recreate dlg=1 here due to myvmware
 		if [ $domyvmware -eq 1 ] && [ $dlg -eq 1 ]
