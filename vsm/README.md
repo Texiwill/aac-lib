@@ -268,6 +268,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.20 - 4.5.8 compatibility
 - 1.0.19 - latest updates and 4.5.7 compatibility
 - 1.0.18 - latest updates and 4.5.6 compatibility
 - 1.0.17 - vSphere DriversTools Updates, VMware Tools Updates
@@ -289,6 +290,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.5.8 - Infrastructure Operations Management added back to top
+
 4.5.7 - Small changes for new options
 
 4.5.6 - Update for new Windows VSM Data Files and new options
