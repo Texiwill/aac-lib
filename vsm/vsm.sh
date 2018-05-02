@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.5.8"
+VERSIONID="4.5.9"
 
 # args: stmt error
 function colorecho() {
@@ -1257,14 +1257,17 @@ function menu() {
 	then
 		doprogress=0
 		vsmpkgs $file
-		echo $pkgs |grep Infrastructure_Operations_Management >& /dev/null
-		if [ $? -eq 1 ]
+		if [ Z"$choice" = Z"root" ] && [ $domyvmware -eq 1 ] 
 		then
-			pkgs="$pkgs Infrastructure_Operations_Management"
-		fi
-		if [ Z"$choice" = Z"root" ] && [ $domyvmware -eq 1 ] && [ $dovex -eq 1 ]
-		then
-			pkgs="$pkgs Desktop_End_User_Computing Networking_Security"
+			echo $pkgs |grep Infrastructure_Operations_Management >& /dev/null
+			if [ $? -eq 1 ]
+			then
+				pkgs="$pkgs Infrastructure_Operations_Management"
+			fi
+			if [ $dovex -eq 1 ]
+			then
+				pkgs="$pkgs Desktop_End_User_Computing Networking_Security"
+			fi
 		fi
 		# need to recreate dlg=1 here due to myvmware
 		if [ $domyvmware -eq 1 ] && [ $dlg -eq 1 ]
