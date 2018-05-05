@@ -268,6 +268,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.24 - More DriversTools updates
 - 1.0.23 - Fix for DriversTools
 - 1.0.22 - ESXI65U2 Updates
 - 1.0.21 - 4.5.9 compatibility
