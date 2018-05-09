@@ -268,6 +268,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.26 - 4.6.0 compatibility
 - 1.0.25 - More DriversTools updates w/duplicate deletions that caused issues
 - 1.0.24 - More DriversTools updates
 - 1.0.23 - Fix for DriversTools
@@ -295,6 +296,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.6.0 - Download logic bug fixed for differently formated HTML
+
 4.5.9 - Menu logic bug fixed
 
 4.5.8 - Infrastructure Operations Management added back to top

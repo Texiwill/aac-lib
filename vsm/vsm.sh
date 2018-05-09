@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.5.9"
+VERSIONID="4.6.0"
 
 # args: stmt error
 function colorecho() {
@@ -317,14 +317,17 @@ function findmissing() {
 				then
 					linuxvdi=`echo $lv | cut -d= -f 3 | cut -d\& -f 1`
 				fi
-				if [ $beta -eq 1 ]
+				echo $missname | grep vmware_vrealize_network_insight >& /dev/null
+				pli=$?
+				if [ $beta -eq 1 ] && [ $pli -eq 1 ]
 				then
 					tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g" |egrep -v hidden | sort -u` 
 				else
 					if [ Z"$pmiss" != Z"" ]
 					then
 						tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g"|egrep -v $pmiss |egrep -v hidden | sort -u`
-					else
+					elif [ $beta -ne 1 ]
+					then
 						tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g" |egrep -v hidden | sort -u` 
 					fi
 				fi
