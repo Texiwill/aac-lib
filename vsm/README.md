@@ -258,6 +258,9 @@ Where vsm-favorites.sh exists off your home directory in the bin directory
 and contains the following to download all of vSphere 6.5 Enterprise Plus,
 vSphere 6.7 Enterprise Plus, and all of VMware vRealize Suite 2017.
 ```
+# ensure vsm is not running, should take 30m not 24 hours.
+pkill -9 vsm
+# now autoupdate repo
 /usr/local/bin/vsm.sh -mr -c -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
 /usr/local/bin/vsm.sh -c -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Enterprise_Plus
 /usr/local/bin/vsm.sh -c -y -q --progress --fav Infrastructure_Operations_Management_VMware_vRealize_Suite_2017_Enterprise
@@ -268,6 +271,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.27 - Updates for 6.7 DriversTools
 - 1.0.26 - 4.6.0 compatibility
 - 1.0.25 - More DriversTools updates w/duplicate deletions that caused issues
 - 1.0.24 - More DriversTools updates
