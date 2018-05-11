@@ -271,6 +271,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.28 - Updates for 6.7 and other DriversTools
 - 1.0.27 - Updates for 6.7 DriversTools
 - 1.0.26 - 4.6.0 compatibility
 - 1.0.25 - More DriversTools updates w/duplicate deletions that caused issues
