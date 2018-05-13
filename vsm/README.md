@@ -271,6 +271,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.29 - 4.6.1 compatibility
 - 1.0.28 - Updates for 6.7 and other DriversTools
 - 1.0.27 - Updates for 6.7 DriversTools
 - 1.0.26 - 4.6.0 compatibility
@@ -301,6 +302,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.6.1 - Fixed --fav bug with parsing
+
 4.6.0 - Download logic bug fixed for differently formated HTML
 
 4.5.9 - Menu logic bug fixed

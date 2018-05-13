@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.6.0"
+VERSIONID="4.6.1"
 
 # args: stmt error
 function colorecho() {
@@ -73,7 +73,7 @@ findfavpaths()
 {
 	pchoice=$1
 	# find paths
-	vc=`echo $pchoice | sed 's/.*\([0-9]_[0-9]\).*/\1/'`
+	vc=`echo $pchoice | sed 's/[a-Z_]\+\([0-9]_[0-9]\|[0-9]\+\).*/\1/'`
 	tc=`echo $pchoice | tr '[:upper:]' '[:lower:]'|sed 's/\([0-9]\)_\([a-z_]\+\)/\1 \2/'|sed 's/_/./g'`
 	dc=`echo $tc | cut -d' ' -f1`
 	dc="${dc%?}?"
