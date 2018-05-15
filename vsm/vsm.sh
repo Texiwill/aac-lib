@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.6.1"
+VERSIONID="4.6.2"
 
 # args: stmt error
 function colorecho() {
@@ -1106,12 +1106,7 @@ function vsmpkgs() {
 	if [ $choice = "Desktop_End_User_Computing" ]
 	then
 		# need to get this
-		if [ $beta -eq 1 ]
-		then
-			pkgs="Desktop_End_User_Computing_VMware_Workspace_ONE Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro"
-		else
-			pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro"
-		fi
+		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro"
 		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 	elif [ $choice = "Networking_Security" ]
 	then
