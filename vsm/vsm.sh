@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.6.2"
+VERSIONID="4.6.3"
 
 # args: stmt error
 function colorecho() {
@@ -1619,9 +1619,11 @@ function getvsm() {
 							echo "DEBUGV: url => $url" 
 						fi
 					else
-						if [ $debugv -eq 2 ]
+						if [ $debugv -ge 1 ]
 						then
+							echo ""
 							echo "$prevchoice $currchoice $tchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
+							echo ""
 						fi
 						if [ $doshacheck -eq 1 ]
 						then

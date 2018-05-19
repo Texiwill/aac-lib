@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.34 - Updates to VR81
 - 1.0.33 - Updates for 6.7 DriversTools
 - 1.0.32 - Updates for 6.5U2 DriversTools
 - 1.0.31 - Updates for DriversTools & 4.6.2 compatibility
@@ -46,6 +47,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.6.3 - Small Debug fix
+
 4.6.2 - Fixed a small bug in display
 
 4.6.1 - Fixed --fav bug with parsing
