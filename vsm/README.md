@@ -38,14 +38,15 @@ For example to set the time zone for London UK use:
 Here is an example run and help:
 ```
 $ /usr/local/bin/vsm.sh --help
-/usr/local/bin/vsm.sh [-c|--check] [--dlg search] [-d|--dryrun] [-f|--force] 
+/usr/local/bin/vsm.sh [-c|--check] [--dlg|--dlgl search] [-d|--dryrun] [-f|--force] 
 [--fav favorite] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] 
 [-m|--myvmware] [-mr] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] 
 [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] 
 [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] 
 [-V|--version] [-y] [--debug] [--repo repopath] [--save]
     -c|--check - do sha256 check against download
-    --dlg - download specific package by name or part of a name
+    --dlg - download specific package by name or part of a name (regex)
+    --dlgl - list package by name or part of a name (regex)
     -d|--dryrun - dryrun, do not download
     -f|--force - force download of packages
     --fav favorite - specify favorite on command line, implies --favorite

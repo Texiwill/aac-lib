@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.41 - Compatibility with 4.6.4
 - 1.0.40 - Updates for DriversTools
 - 1.0.39 - Updates of DriversTools, CustomIso, and others
 - 1.0.38 - Updates for NSXV-641
@@ -53,6 +54,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.6.4 - added "--dlgl pattern" to test --dlg search patterns
+
 4.6.3 - Small Debug fix
 
 4.6.2 - Fixed a small bug in display

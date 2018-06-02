@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.6.3"
+VERSIONID="4.6.4"
 
 # args: stmt error
 function colorecho() {
@@ -1683,9 +1683,10 @@ function version() {
 
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--dlg search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
+	echo "$0 [-c|--check] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
 	echo "	-c|--check - do sha256 check against download"
-	echo "	--dlg - download specific package by name or part of name"
+	echo "	--dlg - download specific package by name or part of name (regex)"
+	echo "	--dlgl - list all packages by name or part of name (regex)"
 	echo "	-d|--dryrun - dryrun, do not download"
 	echo "	-f|--force - force download of packages"
 	echo "	--fav favorite - specify favorite on command line"
@@ -1936,6 +1937,7 @@ doquiet=0
 doshacheck=0
 domre=0
 myq=0
+dodlglist=0
 # onscreen colors
 RED=`tput setaf 1`
 PURPLE=`tput setaf 5`
@@ -2010,6 +2012,12 @@ do
 		--dlg)
 			mydlg=$2
 			dodlg=1
+			shift
+			;;
+		--dlgl)
+			mydlg=$2
+			dodlg=1
+			dodlglist=1
 			shift
 			;;
 		--vexpertx)
@@ -2354,7 +2362,13 @@ if [ $dodlg -eq 1 ]
 then
 	debugecho "DEBUG: $mydlg"
 	# Find the file
-	mytf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sort -k6 -V | tail -1`
+	if [ $dodlglist -eq 0 ]
+	then
+		mytf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sort -k6 -V | tail -1`
+	else
+		uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sort -k6 -V | cut -d' ' -f6
+		exit
+	fi
 	debugecho "mytf => $mytf"
 	if [ Z"$mytf" = Z"" ]
 	then
