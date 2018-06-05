@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.42 - DriversTools, VRLI 4.6.1
 - 1.0.41 - Compatibility with 4.6.4
 - 1.0.40 - Updates for DriversTools
 - 1.0.39 - Updates of DriversTools, CustomIso, and others
