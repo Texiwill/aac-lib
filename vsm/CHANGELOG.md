@@ -11,7 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
-- 1.0.43 - DriverTools 6.4.5
+- 1.0.44 - DriversTools, Compatibility with 4.6.6
+- 1.0.43 - DriversTools, compatibility with 4.6.5
 - 1.0.42 - DriversTools, VRLI 4.6.1
 - 1.0.41 - Compatibility with 4.6.4
 - 1.0.40 - Updates for DriversTools
@@ -56,6 +57,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.6.6 - More product name changes, DriversTools updates
+
 4.6.5 - Small change as Product Names have changes
 
 4.6.4 - added "--dlgl pattern" to test --dlg search patterns

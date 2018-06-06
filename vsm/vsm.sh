@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.6.5"
+VERSIONID="4.6.6"
 
 # args: stmt error
 function colorecho() {
@@ -1205,7 +1205,7 @@ function vsmpkgs() {
 		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 	elif [ $choice = "Networking_Security" ]
 	then
-		pkgs="Networking_Security_VMware_NSX_Data_Center_for_vSphere Networking_Security_VMware_NSX-T_Data_Center"
+		pkgs="Networking_Security_VMware_NSX_Data_Center_for_vSphere Networking_Security_VMware_NSX_T_Data_Center"
 	else
 		if [ Z"$pkgs" = Z"" ]
 		then
