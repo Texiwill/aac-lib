@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.6.4"
+VERSIONID="4.6.5"
 
 # args: stmt error
 function colorecho() {
@@ -536,6 +536,94 @@ function backvmware() {
 	fi
 }
 
+function vmwarecv() {
+	debugecho "CV: $choice $missname $mversions"
+	liferurl=`grep Liferay\.currentURLEncoded $rcdir/_dlg_${choice}.xhtml`
+	rPId=`echo $lifeurl  | cut -d% -f10 | sed 's/3D//' |sed "s/';//"`
+	productId=`echo $lifeurl  | cut -d% -f8 | sed 's/3D//' |sed "s/';//"`
+	prodlist=`grep downloadGroupId $rcdir/_dlg_${choice}.xhtml | cut -d\" -f6`
+	if [ Z"$prodlist" != Z"" ]
+	then
+		npkg=""
+		for x in $prodlist
+		do
+			if [ ! -e "${repo}/dlg_${x}" ]
+			then
+				if [ Z"$npkg" = Z"" ]
+				then
+					npkg="${BOLD}${TEAL}${x}${NB}"	
+				else
+					npkg="$npkg ${BOLD}${TEAL}${x}${NB}"
+				fi
+			else
+				if [ Z"$npkg" = Z"" ]
+				then
+					npkg="$x"
+				else
+					npkg="$npkg $x"
+				fi
+			fi
+		done
+		debugecho "CV: $choice $missname $mversions"
+		# Select a different $ach by new $vurl
+		export COLUMNS=10
+		select vchoice in $npkg Back Exit
+		do
+			if [ Z"$vchoice" != Z"" ]
+			then
+				stripcolor $vchoice
+				if [ $vchoice = "Exit" ]
+				then
+					rm -f ${cdir}/$vpat
+					exit
+				fi
+				break
+			else
+				echo -n "Please enter a valid numeric number:"
+			fi
+		done
+		if [ Z"$vchoice" != Z"Back" ]
+		then
+			vurl="/web/vmware/details?productId=${productId}&rPId=${rPId}&downloadGroup=${vchoice}"
+			vmwaremi $vchoice $vurl
+		fi
+	fi
+}
+
+function vmwaremi()
+{
+	ich=$1
+	iurl=$2
+	debugecho "DEBUG: $ich vurl => $vurl"
+	if [ ! -e ${rcdir}/_dlg_${ich}.xhtml ] || [ $doreset -eq 1 ]
+	then
+		if [ Z"$iurl" != Z"" ]
+		then
+			mywget ${rcdir}/_dlg_${ich}.xhtml "https://my.vmware.com${iurl}"
+		fi
+	fi
+
+	# parse data
+	menu2files=1
+	getvsmcnt $ich
+	cnt=$?
+	debugecho "DEBUG: menu2files => $menu2files"
+	x=1
+	while [ $x -le $cnt ]
+	do
+		getvsmdata $ich $x
+		if [ Z"$pkgs" = Z"" ]
+		then
+			pkgs=$name
+		else
+			pkgs="$pkgs $name"
+		fi
+		$((x++)) 2> /dev/null
+	done
+	getouterrndir $ich
+	mval="_dlg_${ich}.xhtml"
+}
+
 function vmwaremenu2() {
 	ach=$choice
 	mname=$missname
@@ -553,30 +641,37 @@ function vmwaremenu2() {
 		# will not work for dooss so need to know we are doing this
 		vurl=`egrep "$vsme" ${rcdir}/${mname}.xhtml 2>/dev/null |grep -v OSS | head -1 | sed 's/<a href/\n<a href/' | grep href | cut -d \" -f 2 | sed 's#https://my\.vmware\.com##'`
 		debugecho "DEBUG: vurl => $vurl"
-		if [ ! -e ${rcdir}/_dlg_${ach}.xhtml ] || [ $doreset -eq 1 ]
+		if [ $alpha -eq 1 ]
 		then
-			if [ Z"$vurl" != Z"" ]
+			vmwaremi $ach $vurl
+		else
+			if [ ! -e ${rcdir}/_dlg_${ach}.xhtml ] || [ $doreset -eq 1 ]
 			then
-				mywget ${rcdir}/_dlg_${ach}.xhtml "https://my.vmware.com${vurl}"
+				if [ Z"$vurl" != Z"" ]
+				then
+					mywget ${rcdir}/_dlg_${ach}.xhtml "https://my.vmware.com${vurl}"
+				fi
 			fi
+
+			# parse data
+			menu2files=1
+			getvsmcnt $ach
+			cnt=$?
+			debugecho "DEBUG: menu2files => $menu2files"
+			x=1
+			while [ $x -le $cnt ]
+			do
+				getvsmdata $ach $x
+				if [ Z"$pkgs" = Z"" ]
+				then
+					pkgs=$name
+				else
+					pkgs="$pkgs $name"
+				fi
+				$((x++)) 2> /dev/null
+			done
+			getouterrndir $ach
 		fi
-		menu2files=1
-		getvsmcnt $ach
-		cnt=$?
-		debugecho "DEBUG: menu2files => $menu2files"
-		x=1
-		while [ $x -le $cnt ]
-		do
-			getvsmdata $ach $x
-			if [ Z"$pkgs" = Z"" ]
-			then
-				pkgs=$name
-			else
-				pkgs="$pkgs $name"
-			fi
-			$((x++)) 2> /dev/null
-		done
-		getouterrndir $ach
 	fi
 }
 
@@ -584,9 +679,9 @@ function getvsmcnt() {
 	cchoice=$1
 	if [ $menu2files -eq 0 ] || [ $domts -eq 1 ]
 	then
-		cnt=`xml_grep --html --pretty_print --cond '//*/[@class="depot-content"]' dlg_${cchoice}.xhtml 2>/dev/null  |grep display-order | wc -l`
+		cnt=`xml_grep --html --pretty_print --cond '//*/[@class="depot-content"]' $rcdir/dlg_${cchoice}.xhtml 2>/dev/null  |grep display-order | wc -l`
 	else
-		cnt=`xmllint --html --xpath "//td[@class=\"filename\"]" _dlg_${cchoice}.xhtml 2> /dev/null | grep fileNameHolder | wc -l`
+		cnt=`xmllint --html --xpath "//td[@class=\"filename\"]" ${rcdir}/_dlg_${cchoice}.xhtml 2> /dev/null | grep fileNameHolder | wc -l`
 	fi
 	debugecho "DEBUG: getvsmcnt => $cnt"
 	#let cnt=$cnt+1
@@ -1110,7 +1205,7 @@ function vsmpkgs() {
 		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 	elif [ $choice = "Networking_Security" ]
 	then
-		pkgs="VMware_NSX"
+		pkgs="Networking_Security_VMware_NSX_Data_Center_for_vSphere Networking_Security_VMware_NSX-T_Data_Center"
 	else
 		if [ Z"$pkgs" = Z"" ]
 		then
@@ -1207,13 +1302,18 @@ function save_vsmrc() {
 }
 
 function stripcolor() {
-	debugecho "SC: $choice"
-	echo $choice | fgrep '[' >& /dev/null
+	sc=$choice
+	if [ $# -eq 1 ]
+	then
+		sc=$1
+	fi
+	debugecho "SC: $sc"
+	echo $sc | fgrep '[' >& /dev/null
 	if [ $? -eq 0 ]
 	then
-		choice=`echo $choice | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | sed -r "s/\x1B\(B//g"|sed -r "s/[[:cntrl:]]//g"`
+		choice=`echo $sc | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | sed -r "s/\x1B\(B//g"|sed -r "s/[[:cntrl:]]//g"`
 	fi
-	debugecho "SC: $choice"
+	debugecho "SC: $sc"
 }
 
 function menu() {
@@ -1332,9 +1432,10 @@ function menu() {
 }
 
 function menu2() {
+	mval=$1
 	all=""
 	#doprogress=0
-	debugecho "MENU2: $1"
+	debugecho "MENU2: $mval"
 	if [ Z"$2" = Z"OpenSource" ]
 	then
 		all="All_Plus_OpenSource"
@@ -1344,9 +1445,14 @@ function menu2() {
 	#	pkgs=`xml_grep --text_only '//*/a' $1 2>/dev/null`
 	#else
 		vmwaremenu2
+		# Put find 'sub-versions' of releases
+		if [ $alpha -eq 1 ]
+		then
+			vmwarecv
+		fi
 	#fi
 	npkg=""
-	f=`echo $1 |sed 's/\.xhtml//' | sed 's/-/_/g' | sed 's/^_//'`
+	f=`echo $mval |sed 's/\.xhtml//' | sed 's/-/_/g' | sed 's/^_//'`
 	for x in $pkgs
 	do
 		if [ ! -e "${repo}/${f}/${x}" ] && [ ! -e "${repo}/${f}/${x}.gz" ]
@@ -1890,6 +1996,7 @@ nostore=0
 doexit=0
 dryrun=0
 dosave=0
+alpha=0
 beta=0
 mydts=-1
 myoss=-1
@@ -2033,6 +2140,9 @@ do
 			;;
 		--save)
 			dosave=1
+			;;
+		--alpha)
+			alpha=1
 			;;
 		--beta)
 			beta=1
