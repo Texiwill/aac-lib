@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.6.6"
+VERSIONID="4.6.7"
 
 # args: stmt error
 function colorecho() {
@@ -1936,6 +1936,9 @@ function checkdep() {
 	fi
 }
 
+# set language to English
+LANG=en_US.utf8
+export LANG
 # check dependencies
 theos=''
 docolor=1
