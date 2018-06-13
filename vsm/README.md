@@ -266,6 +266,21 @@ pkill -9 vsm
 /usr/local/bin/vsm.sh -c -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Enterprise_Plus
 /usr/local/bin/vsm.sh -c -y -q --progress --fav Infrastructure_Operations_Management_VMware_vRealize_Suite_2017_Enterprise
 ```
+### Use Case/Examples
+
+Download all install isos for a given release version. 
+
+The first line lists all available items for a given regex. The inner
+part of the loop will download them. Note that some files result in
+downloads the other options result in data not found. The most current
+of each release will download in this fashion, data from VMware makes
+historical versions harder to download.
+```
+for x in `/usr/local/bin/vsm.sh -y -nh --dlgl $1 | grep $2 | cut -d' ' -f2`
+do
+	/usr/local/bin/vsm.sh -y -nh --dlg $x
+done
+```
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add

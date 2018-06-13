@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.46 - DriversTools, Compatibility with 4.6.8
 - 1.0.45 - DriversTools, Compatibility with 4.6.7
 - 1.0.44 - DriversTools, Compatibility with 4.6.6
 - 1.0.43 - DriversTools, compatibility with 4.6.5
@@ -58,6 +59,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.6.8 - Update for older versions, README update for Examples
+
 4.6.7 - DriversTools + Language fix for non-english language users
 
 4.6.6 - More product name changes, DriversTools updates

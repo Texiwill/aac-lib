@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.6.7"
+VERSIONID="4.6.8"
 
 # args: stmt error
 function colorecho() {
@@ -538,22 +538,21 @@ function backvmware() {
 
 function vmwarecv() {
 	debugecho "CV: $choice $missname $mversions"
-	liferurl=`grep Liferay\.currentURLEncoded $rcdir/_dlg_${choice}.xhtml`
-	rPId=`echo $lifeurl  | cut -d% -f10 | sed 's/3D//' |sed "s/';//"`
-	productId=`echo $lifeurl  | cut -d% -f8 | sed 's/3D//' |sed "s/';//"`
 	prodlist=`grep downloadGroupId $rcdir/_dlg_${choice}.xhtml | cut -d\" -f6`
 	if [ Z"$prodlist" != Z"" ]
 	then
 		npkg=""
 		for x in $prodlist
 		do
-			if [ ! -e "${repo}/dlg_${x}" ]
+			# dirs use _ not -
+			y=`echo $x|sed 's/-/_/g'`
+			if [ ! -e "${repo}/dlg_${y}" ]
 			then
 				if [ Z"$npkg" = Z"" ]
 				then
-					npkg="${BOLD}${TEAL}${x}${NB}"	
+					npkg="${BOLD}${TEAL}${x}${NB}${NC}"	
 				else
-					npkg="$npkg ${BOLD}${TEAL}${x}${NB}"
+					npkg="$npkg ${BOLD}${TEAL}${x}${NB}${NC}"
 				fi
 			else
 				if [ Z"$npkg" = Z"" ]
@@ -567,12 +566,12 @@ function vmwarecv() {
 		debugecho "CV: $choice $missname $mversions"
 		# Select a different $ach by new $vurl
 		export COLUMNS=10
-		select vchoice in $npkg Back Exit
+		select choice in $npkg Back Exit
 		do
-			if [ Z"$vchoice" != Z"" ]
+			if [ Z"$choice" != Z"" ]
 			then
-				stripcolor $vchoice
-				if [ $vchoice = "Exit" ]
+				stripcolor
+				if [ $choice = "Exit" ]
 				then
 					rm -f ${cdir}/$vpat
 					exit
@@ -582,10 +581,20 @@ function vmwarecv() {
 				echo -n "Please enter a valid numeric number:"
 			fi
 		done
-		if [ Z"$vchoice" != Z"Back" ]
+		if [ Z"$choice" != Z"Back" ]
 		then
-			vurl="/web/vmware/details?productId=${productId}&rPId=${rPId}&downloadGroup=${vchoice}"
-			vmwaremi $vchoice $vurl
+			# reset as we may have some old ones hanging about
+			pkgs=''
+			vurl="/web/vmware/details?productId=${productId}&rPId=${rPId}&downloadGroup=${choice}"
+			choice=`echo $choice |sed 's/-/_/g'`
+			vmwaremi $choice $vurl
+			# reset currchoice as well
+			currchoice=$choice
+			# reset asso's as well
+			getasso
+			# reset path for 'back' to work
+			getpath
+			addpath
 		fi
 	fi
 }
@@ -621,7 +630,6 @@ function vmwaremi()
 		$((x++)) 2> /dev/null
 	done
 	getouterrndir $ich
-	mval="_dlg_${ich}.xhtml"
 }
 
 function vmwaremenu2() {
@@ -643,6 +651,9 @@ function vmwaremenu2() {
 		debugecho "DEBUG: vurl => $vurl"
 		if [ $alpha -eq 1 ]
 		then
+			# ordering problem, so put here
+			rPId=`echo $vurl  | cut -d\& -f3 | cut -d= -f2`
+			productId=`echo $vurl  | cut -d\& -f2 | cut -d= -f2`
 			vmwaremi $ach $vurl
 		else
 			if [ ! -e ${rcdir}/_dlg_${ach}.xhtml ] || [ $doreset -eq 1 ]
@@ -831,7 +842,7 @@ function getouterrndir() {
 				rndir="srm50"
 				;;
 			ESXI*)
-				if [ $v -gt 60 ]
+				if [ $v -lt 60 ]
 				then
 					rndir="esx/${v:0:2}"
 				else
@@ -1052,19 +1063,29 @@ function getasso() {
 	oss=""
 	oem=""
 	assomiss=0
-	if [ $domyvmware -eq 1 ] #&& [ ! -e dlg_${choice}.xhtml ]
+	sc=$choice
+	if [ $# -eq 1 ]
 	then
-		vmwaremenu2
+		# this overrides all defaults
+		sc=$1
+		oemlist=''
+		dtslist=''
+		osslist=''
+	else
+		if [ $domyvmware -eq 1 ] #&& [ ! -e dlg_${choice}.xhtml ]
+		then
+			vmwaremenu2
+		fi
 	fi
-	if [ -e _dlg_${choice}.xhtml ]
+	if [ -e _dlg_${sc}.xhtml ]
 	then
 		assomiss=1
 		# Get ASSO from my vmware bits
-		asso=`xmllint --html --xpath "//div[@class=\"activitiesLog\"]" _dlg_${choice}.xhtml 2>/dev/null |grep secondary | cut -d= -f3 | cut -d\& -f 1 | sed 's/-/_/g'`
+		asso=`xmllint --html --xpath "//div[@class=\"activitiesLog\"]" _dlg_${sc}.xhtml 2>/dev/null |grep secondary | cut -d= -f3 | cut -d\& -f 1 | sed 's/-/_/g'`
 		moreasso="_dlg"
-	elif [ -e dlg_${choice}.xhtml ]
+	elif [ -e dlg_${sc}.xhtml ]
 	then
-		asso=`xml_grep --html --text_only '*[@title="associated-channels"]' dlg_${choice}.xhtml  2>/dev/null| sed 's/,//g'|sed 's/dlg_//g'`
+		asso=`xml_grep --html --text_only '*[@title="associated-channels"]' dlg_${sc}.xhtml  2>/dev/null| sed 's/,//g'|sed 's/dlg_//g'`
 		moreasso="dlg"
 	fi
 	debugecho "DEBUG: moreasso => $moreasso"
@@ -1072,8 +1093,8 @@ function getasso() {
 	then
 		# sometimes things exist that are not in asso lists
 		# sometimes they use similar version numbers
-		rchoice=`echo $choice | sed 's/U/*U/'` 
-		for x in `ls ${moreasso}*${rchoice}_*.xhtml 2>/dev/null | grep -v ${moreasso}_${choice}.xhtml | grep -v VCENTER`
+		rchoice=`echo $sc | sed 's/U/*U/'` 
+		for x in `ls ${moreasso}*${rchoice}_*.xhtml 2>/dev/null | grep -v ${moreasso}_${sc}.xhtml | grep -v VCENTER`
 		do
 			y=`echo $x | sed 's/\.xhtml//'|sed "s/${moreasso}_//"`
 			# only list all asso if dodlg != 1
@@ -1093,7 +1114,7 @@ function getasso() {
 		then
 			continue
 		fi
-		# debugecho "$choice: $x"
+		# debugecho "$sc: $x"
 		# sometimes files do not exist!
 		if [ -e dlg_${x}.xhtml ]
 		then
@@ -1143,7 +1164,7 @@ function getasso() {
 	debugecho "DEBUG: dtslist => $dtslist"
 	debugecho "DEBUG: osslist => $osslist"
 	debugecho "DEBUG: assomissing => $assomissing"
-	debugecho "DEBUG: $choice => $mypkg"
+	debugecho "DEBUG: $sc => $mypkg"
 }
 
 function vsmnpkgs() {
@@ -1267,7 +1288,10 @@ function load_vsmrc() {
 function save_vsmrc() {
 	if [ Z"$vsmrc" != Z"" ]
 	then
-		colorecho "Saving to $vsmrc"
+		if [ $noheader -eq 0 ]
+		then
+			colorecho "Saving to $vsmrc"
+		fi
 		echo -n '' > $vsmrc
 		if [ $domyvmware -eq 1 ] && [ Z"$mchoice" != Z"" ]
 		then
@@ -1449,53 +1473,57 @@ function menu2() {
 		if [ $alpha -eq 1 ]
 		then
 			vmwarecv
+			mval="_dlg_${choice}.xhtml"
 		fi
 	#fi
-	npkg=""
-	f=`echo $mval |sed 's/\.xhtml//' | sed 's/-/_/g' | sed 's/^_//'`
-	for x in $pkgs
-	do
-		if [ ! -e "${repo}/${f}/${x}" ] && [ ! -e "${repo}/${f}/${x}.gz" ]
-		then
-			if [ Z"$npkg" = Z"" ]
-			then
-				npkg="${BOLD}${x}${NB}"	
-			else
-				npkg="$npkg ${BOLD}${x}${NB}"
-			fi
-		else
-			if [ Z"$npkg" = Z"" ]
-			then
-				npkg="$x"
-			else
-				npkg="$npkg $x"
-			fi
-		fi
-	done
-	debugecho "MENU2: $1 $2 $3 $4"
-	export COLUMNS=30
-	select choice in All Minimum_Required $all $npkg $2 $3 $4 Back Exit
-	do
-		if [ Z"$choice" != Z"" ]
-		then
-			stripcolor
-			if [ $choice = "Exit" ]
-			then
-				rm -f ${cdir}/$vpat
-				exit
-			fi
-			break
-		else
-			echo -n "Please enter a valid numeric number:"
-		fi
-	done
 	if [ $choice != "Back" ]
 	then
-		addpath
-	fi
-	if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
-	then
-		doprogress=1
+		npkg=""
+		f=`echo $mval |sed 's/\.xhtml//' | sed 's/-/_/g' | sed 's/^_//'`
+		for x in $pkgs
+		do
+			if [ ! -e "${repo}/${f}/${x}" ] && [ ! -e "${repo}/${f}/${x}.gz" ]
+			then
+				if [ Z"$npkg" = Z"" ]
+				then
+					npkg="${BOLD}${x}${NB}${NC}"	
+				else
+					npkg="$npkg ${BOLD}${x}${NB}${NC}"
+				fi
+			else
+				if [ Z"$npkg" = Z"" ]
+				then
+					npkg="$x"
+				else
+					npkg="$npkg $x"
+				fi
+			fi
+		done
+		debugecho "MENU2: $mval $2 $3 $4"
+		export COLUMNS=30
+		select choice in All Minimum_Required $all $npkg $2 $3 $4 Back Exit
+		do
+			if [ Z"$choice" != Z"" ]
+			then
+				stripcolor
+				if [ $choice = "Exit" ]
+				then
+					rm -f ${cdir}/$vpat
+					exit
+				fi
+				break
+			else
+				echo -n "Please enter a valid numeric number:"
+			fi
+		done
+		if [ $choice != "Back" ]
+		then
+			addpath
+		fi
+		if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
+		then
+			doprogress=1
+		fi
 	fi
 }
 
@@ -1680,10 +1708,11 @@ function getvsm() {
 			rnnot=1
 		fi
 	fi
-	if [ $debugv -eq 2 ]
+	if [ $debugv -ge 2 ]
 	then
-		#echo "$lchoice|$rndir|$rndll" | sed 's/\.vmware\.com//'
+		echo ""
 		echo "$prevchoice $currchoice $tchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
+		echo ""
 	fi
 	if [ $dovsmit -eq 1 ]
 	then
@@ -1703,6 +1732,12 @@ function getvsm() {
 				then
 					eurl=`python -c "import urllib, sys; print urllib.unquote(sys.argv[1])" $lurl`
 					debugecho "DEBUG: eurl => $eurl"
+					if [ $debugv -ge 1 ]
+					then
+						echo ""
+						echo "$prevchoice $currchoice $tchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
+						echo ""
+					fi
 					diddownload=0
 					if [ $dryrun -eq 0 ]
 					then
@@ -1725,12 +1760,6 @@ function getvsm() {
 							echo "DEBUGV: url => $url" 
 						fi
 					else
-						if [ $debugv -ge 1 ]
-						then
-							echo ""
-							echo "$prevchoice $currchoice $tchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
-							echo ""
-						fi
 						if [ $doshacheck -eq 1 ]
 						then
 							shadownload=1
@@ -1789,7 +1818,7 @@ function version() {
 
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
+	echo "$0 [-c|--check] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-nh|--noheader] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
 	echo "	-c|--check - do sha256 check against download"
 	echo "	--dlg - download specific package by name or part of name (regex)"
 	echo "	--dlgl - list all packages by name or part of name (regex)"
@@ -1804,6 +1833,7 @@ function usage() {
 	echo "	-m|--myvmware - get missing suite and packages from My VMware"
 	echo "		Deprecated: Now the default, the argument does nothing any more."
 	echo "	-mr - reset just the My VMware information, implies -m"
+	echo "	-nh|--noheader - leave off the header bits"
 	echo "	-nq|--noquiet - disable quiet mode"
 	echo "	-ns|--nostore - do not store credential data and remove if exists"
 	echo "	-nc|--nocolor - do not output with color"
@@ -1990,6 +2020,8 @@ wget --help | grep -q '\--show-progress' && \
 
 #
 # Default settings
+rPId=''
+productId=''
 dodebug=0
 diddownload=0
 doforce=0
@@ -2045,6 +2077,7 @@ doprogress=0
 myprogress=0
 doquiet=0
 doshacheck=0
+noheader=0
 domre=0
 myq=0
 dodlglist=0
@@ -2104,6 +2137,9 @@ do
 			;;
 		-ns|--nostore)
 			nostore=1
+			;;
+		-nh|--noheader)
+			noheader=1
 			;;
 		-d|--dryrun)
 			dryrun=1
@@ -2251,37 +2287,38 @@ then
 fi
 
 getvdat
-
-colorecho "Using the following options:"
-echo "	Version:	$VERSIONID"
-echo "	Data Version:	`grep vsm.data $vdat|cut -d' ' -f 3|sed 's/vsm.data.//'`"
-if [ $debugv -eq 1 ]
+if [ $noheader -eq 0 ]
 then
-	echo "	VSM Data:	$vdat"
+	colorecho "Using the following options:"
+	echo "	Version:	$VERSIONID"
+	echo "	Data Version:	`grep vsm.data $vdat|cut -d' ' -f 3|sed 's/vsm.data.//'`"
+	if [ $debugv -eq 1 ]
+	then
+		echo "	VSM Data:	$vdat"
+	fi
+	if [ Z"$username" != Z"" ]
+	then
+		echo "	Username:		$username"
+		echo "	Save Credentials:	$nostore"
+	fi
+	echo "	OS Mode:        $theos"
+	echo "	VSM XML Dir:	$cdir"
+	echo "	Repo Dir:	$repo"
+	echo "	Dryrun:		$dryrun"
+	echo "	Force Download:	$doforce"
+	echo "	Checksum:	$doshacheck"
+	echo "	Reset XML Dir:	$doreset"
+	#echo "	Get Latest:	$dolatest"
+	echo "	My VMware:	$domyvmware"
+	if [ $myfav -eq 1 ]
+	then
+		echo "	Favorite: $favorite"
+	fi
+	if [ $myfav -eq 2 ]
+	then
+		echo "	Favorite: $fav"
+	fi
 fi
-if [ Z"$username" != Z"" ]
-then
-	echo "	Username:		$username"
-	echo "	Save Credentials:	$nostore"
-fi
-echo "	OS Mode:        $theos"
-echo "	VSM XML Dir:	$cdir"
-echo "	Repo Dir:	$repo"
-echo "	Dryrun:		$dryrun"
-echo "	Force Download:	$doforce"
-echo "	Checksum:	$doshacheck"
-echo "	Reset XML Dir:	$doreset"
-#echo "	Get Latest:	$dolatest"
-echo "	My VMware:	$domyvmware"
-if [ $myfav -eq 1 ]
-then
-	echo "	Favorite: $favorite"
-fi
-if [ $myfav -eq 2 ]
-then
-	echo "	Favorite: $fav"
-fi
-
 
 rcdir="${cdir}/depot.vmware.com/PROD/channel"
 cd $cdir
@@ -2312,14 +2349,23 @@ then
 		echo -n $auth > .credstore
 		chmod 600 .credstore
 	fi
-	echo "	Use credstore:	0"
+	if [ $noheader -eq 0 ]
+	then
+		echo "	Use credstore:	0"
+	fi
 else
-	echo "	Use credstore:	1"
+	if [ $noheader -eq 0 ]
+	then
+		echo "	Use credstore:	1"
+	fi
 	auth=`cat .credstore`
 fi
-if [ $dovex -eq 1 ]
+if [ $noheader -eq 0 ]
 then
-	colorecho "	vExpert Mode:   1"
+	if [ $dovex -eq 1 ]
+	then
+		colorecho "	vExpert Mode:   1"
+	fi
 fi
 
 # save a copy of the .vsmrc and continue
@@ -2477,9 +2523,10 @@ then
 	# Find the file
 	if [ $dodlglist -eq 0 ]
 	then
-		mytf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sort -k6 -V | tail -1`
+		myaf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sed 's/VCL_VSP..._//' | cut -d' ' -f2,6  | sed 's/\(\w\)_\(.* \)/\1\2/' | sed 's/U/0U/g' | sort -u -k1 -V | sed 's/0U/U/g' | cut -d' ' -f2|tail -1`
+		mytf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$myaf" | tail -1` 
 	else
-		uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sort -k6 -V | cut -d' ' -f6
+		uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sed 's/VCL_VSP..._//' | cut -d' ' -f2,6  | sed 's/\(\w\)_\(.* \)/\1\2/' | sed 's/U/0U/g' | sort -u -k1 -V | sed 's/0U/U/g'
 		exit
 	fi
 	debugecho "mytf => $mytf"
@@ -2859,6 +2906,12 @@ do
 									if [ $err -eq 0 ]
 									then
 										colorecho "All $currchoice already downloaded!"
+										if [ $dodlg -eq 1 ]
+										then
+											# Just exist, got package
+											rm -f ${cdir}/$vpat
+											exit
+										fi
 									fi
 								fi
 							fi
