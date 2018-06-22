@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.6.8"
+VERSIONID="4.6.9"
 
 # args: stmt error
 function colorecho() {
@@ -1573,7 +1573,8 @@ function getvsmparams() {
 			href=`echo $fdata | sed 's/href/\nhref/' |grep href | cut -d\" -f2`
 			durl=''
 		else
-			ndata=`echo $fdata | cut -d\" -f 6 | sed 's/amp;//g'| sed 's/[\&\?=]/ /g'`
+			#ndata=`echo $fdata | cut -d\" -f 6 | sed 's/amp;//g'| sed 's/[\&\?=]/ /g'`
+			ndata=`echo $fdata | cut -d\" -f 6 | sed 's/amp;//g'| sed 's/[\&\?]/ /g'`
 			#debugecho "DEBUG: ndata => $ndata"
 			if [ Z"$size" != Z"" ]
 			then
@@ -1588,22 +1589,31 @@ function getvsmparams() {
 				fi
 				size=`printf '%d\n' "$size" 2>/dev/null`
 			fi
-			dlgcode=`echo $ndata | cut -d' ' -f3`
+			for nx in `echo $ndata | sed 's/^\.//' | sed 's#/group/vmware/details##'`; do t=`echo $nx| cut -d= -f1`; s=`echo $nx|cut -d= -f2`; eval "$t=$s"; done
+			dlgcode=$downloadGroup
+			#dlgcode=`echo $ndata | cut -d' ' -f3`
 			#productID=`echo $ndata | cut -d' ' -f5`
 			#fileID=`echo $ndata | cut -d' ' -f9`
 			#tagID=''
 			#hashkey=`echo $ndata | cut -d' ' -f11`
-			downloaduuid=`echo $ndata | cut -d ' ' -f13`
+			#downloaduuid=`echo $ndata | cut -d ' ' -f13`
+			downloaduuid=$uuId
 			#if [ Z"$vers" = Z"" ]
 			#then
 			#	vers=$pver
 			#fi
-			
 			if [ Z"$dlgcode" = Z"VRLI-451-VCENTER" ]
 			then
 				dlgcode="VRLI-451"
 			fi
-			dtr="{\"sourcefilesize\":\"$size\",\"dlgcode\":\"$dlgcode\",\"languagecode\":\"en\",\"source\":\"vswa\",\"downloadtype\":\"manual\",\"eula\":\"Y\",\"downloaduuid\":\"$downloaduuid\",\"purchased\":\"Y\",\"dlgtype\":\"Product+Binaries\",\"productversion\":\"$pver\"}"
+			# what type of download again?
+			dtcode=`echo $dlgcode | sed 's/DT_//'`
+			dlgtype="Product+Binaries"
+			if [ Z"$dtcode" != Z"$dlgcode" ]
+			then
+				dlgtype="Drivers+Tools"
+			fi
+			dtr="{\"sourcefilesize\":\"$size\",\"dlgcode\":\"$dlgcode\",\"languagecode\":\"en\",\"source\":\"DOWNLOADS\",\"downloadtype\":\"manual\",\"eula\":\"Y\",\"downloaduuid\":\"$downloaduuid\",\"purchased\":\"Y\",\"dlgtype\":\"$dlgtype\",\"productversion\":\"$pver\"}"
 			debugecho "DEBUG: drparams => $dtr"
 			drparams=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $dtr`
 			debugecho "DEBUG: drparams => $drparams"
