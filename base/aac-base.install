@@ -134,6 +134,17 @@ function startsrv() {
 	fi
 }
 
+function stopsrv() {
+	if [ $VERSION_ID -gt 6 ]
+	then
+		systemctl stop $1 >& /dev/null
+		systemctl disable $1 >& /dev/null
+	else
+		service $1 stop
+		chkconfig $1 off
+	fi
+}
+
 function tz() {
 	echo "Checking Timezone settings"
 	if [ -e /usr/bin/yum ]

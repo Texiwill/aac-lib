@@ -5,255 +5,101 @@
 # DNSCrypt Proxy for CentOS/RHEL 7 using DNSMasq
 
 function dnscrypt_version() {
-	echo "1.0.1"
+	echo "2.0.0"
 }
 
 function dnscrypt() {
-	echo "Installing or Updating DNS-Crypt"
+	echo "Installing or Updating DNS-Crypt 2.x using 1.1.1.1 with DoH"
 
-	PROD="dnsmasq haveged bind-utils lsof libtool-ltdl GeoIP"
-	DEVEL="gcc cpp glibc-devel glibc-headers kernel-headers mpfr libmpc libsodium-devel wget bzip2 automake libtool-ltdl-devel unzip"
+	INSTALL="dnsmasq haveged bind-utils lsof libtool-ltdl GeoIP"
+	DINSTALL="dnsmasq haveged bind9utils lsof libtdl7 geoip-bin geoip-database"
+	DEVEL=""
 
 	# Install needed RPMS
-	echo $RPMLIST | grep haveged > /dev/null
-	if [ $? != 0 ]
+	checkdep havged
+	if [ $needdep != 0 ]
 	then
-		yum -y install $PROD
+		installdep
 	fi
 
 	# Start haveged to get entropy
 	startsrv haveged
 
 	# download and compile and install
-	buildit=0
-	which dnscrypt-proxy > /dev/null
-	if [ $? = 1 ]
+	latest=`wget -O - https://github.com/jedisct1/dnscrypt-proxy/releases/latest | grep linux_x86_64 | head -1 |cut -d\" -f 2`
+	file=`basename $latest`
+	wget -O /tmp/$file https://github.com/$latest
+	if [ ! -e /tmp/$file ]
 	then
-		buildit=1
-	else
-		v=`curl -sLk https://download.dnscrypt.org/dnscrypt-proxy | awk -F\" '{print $2}' |egrep -v "sig|csv" |grep .tar.bz2 | awk -F- '{print $3}' | sed 's/\.tar.bz2//' | sort -n|tail -1`
-		dnscript-proxy --version | grep $v > /dev/null
-		if [ $? = 1 ]
-		then
-			buildit=1
-		fi
+		colorecho "$0: Missing $file file" 1
+		exit
 	fi
-	if [ $buildit -eq 1 ]
-	then
-		yum -y install $DEVEL
 
-		#wget https://download.dnscrypt.org/dnscrypt-proxy/LATEST.tar.bz2
-		#tar -xjf LATEST.tar.bz2
-		wget -O master.zip https://github.com/dyne/dnscrypt-proxy/archive/master.zip
-		unzip master.zip
-		cd dnscrypt-proxy*
-		./autogen.sh
-		./configure
-		make
-		make install
-		# to get everything really need to do it again for some reason
-		make install
-		# This is not copied but necessary
-		cat contrib/dnscrypt-update-resolvers.sh|sed 's#RESOLVERS_URL=.*$#RESOLVERS_URL="https://raw.githubusercontent.com/dyne/dnscrypt-proxy/master/dnscrypt-resolvers.csv"#' > /usr/local/bin/dnscrypt-update-resolvers.sh
-	
-		cd ..
-		# remove development bits
-		# security risk to leave these around
-		rm -rf dnscrypt-proxy* LATEST.tar.bz2
-		rpm -e $DEVEL
-	
-		# now configure
-		DNSCRYPTCONF=/usr/local/etc/dnscrypt-proxy.conf
-		# Daemonize
-		# use only online resolvers
-		# listen on 127.0.0.1:5553
-		sed 's%^Daemonize no%Daemonize yes%' $DNSCRYPTCONF | sed 's%# ResolversList /usr/local/share/dnscrypt-proxy/dnscrypt-resolvers.csv%ResolversList /usr/local/share/dnscrypt-proxy/dnscrypt-online-resolvers.csv%' | sed 's%# LocalAddress 127.0.0.1:53%LocalAddress 127.0.0.2:5553%'  > /tmp/dnscrypt-proxy.conf
-		cp /tmp/dnscrypt-proxy.conf $DNSCRYPTCONF
+	# setup
+	mkdir -p /opt/dnscrypt-proxy
+	tar -xzf /tmp/$file
+	mv linux-x86_64/* /opt/dnscrypt-proxy
+	rm -rf linux-x86_64
+
+	# config for 1.1.1.1
+	cd /opt/dnscrypt-proxy
+	if [ ! -e public-resolvers.md ]
+	then
+		wget -O /tmp/public-resolvers.md http://download.dnscrypt.info/resolvers-list/v2/public-resolvers.md
+		mv /tmp/public-resolvers.md .
 	fi
-	
-	#
-	# Now DNSMASQ
-	if [ ! -e /etc/dnsmasq.d/02-dnscrypt.conf ]
-	then
-		echo "server=127.0.0.2#5553" > /etc/dnsmasq.d/02-dnscrypt.conf
-		echo "cache-size=3000" >> /etc/dnsmasq.d/02-dnscrypt.conf
-	fi
-	
-	#
-	# use our resolvers-check
-	# TODO:
-	# -- pick +/- 1-2 hours off TZ or closest.
-	# -- use IPV6 only if IPV6 address is set
-	# -- if logging enabled then disable NO_LOGS?
-	
-	# resolverscheck.sh, this resolvers-check will select 
-	# based on NO_LOGS, IPV4, and country codes.
-	if [ ! -e /usr/local/bin/resolvers-check.sh ]
-	then
-		cat << EOF > /usr/local/bin/resolvers-check.sh
-#! /bin/sh
 
-RESOLVERS_LIST=dnscrypt-resolvers.csv
-ONLINE_RESOLVERS_LIST=dnscrypt-online-resolvers.csv
-DNSCRYPT_PROXY=/usr/local/sbin/dnscrypt-proxy
-MARGIN=720
-CSV_FILE="${RESOLVERS_LIST}"
-TCP_ONLY=""
-COUNTRY="US|CA"
-IPV4_ONLY="yes"
-NO_LOGS="yes"
+	# redo as fallback_resolver format may have changed
+	sed "/# server_names/a \\server_names = ['cloudflare', 'cloudflare-ipv6']" example-dnscrypt-proxy.toml | sed "s/^listen_addresses = \['127.0.0.1:53', '\[::1\]:53'\]/listen_addresses = ['0.0.0.0:53']/" | sed "s/^fallback_resolver = '9.9.9.9:53'/fallback_resolver = '1.0.0.1:53'/" > dnscrypt-proxy.toml
 
-tmpfile=$(mktemp .${ONLINE_RESOLVERS_LIST}.XXXXXXXXXXXX) || exit 1
-trap "rm -f ${tmpfile}" EXIT
-
-if which csvlint > /dev/null; then
-  csvlint "$RESOLVERS_LIST" || echo "*** Invalid CSV file ***" >&2
-fi
-
-if [ $(cut -d, -f1 $RESOLVERS_LIST | sort | uniq -d | wc -l) -gt 0 ]; then
-  echo "Duplicate resolver name" >&2
-  exit 1
-fi
-
-if [ $(cut -d, -f2 $RESOLVERS_LIST | sort | uniq -d | wc -l) -gt 0 ]; then
-  echo "Duplicate resolver long name" >&2
-  exit 1
-fi
-
-exec < "$RESOLVERS_LIST"
-exec > "$tmpfile"
-
-read header
-echo "$header" | egrep -q '^Name,' || echo "*** Invalid CSV file ***" >&2
-
-echo "$header"
-
-res=0
-while read line; do
-  if [ "x${IPV4_ONLY}" != "x" ]; then
-    n=$(echo "$line" | egrep -c ',\[[0-9a-fA-F:]+\](:[0-9]+)?,')
-    if [ $n -ne 0 ]; then
-      continue
-    fi
-  fi
-  resolver_name=$(echo "$line" | cut -d, -f1)
-  doeval=1
-
-  if [ "x${COUNTRY}" != "x" ]; then
-    ip=$(echo "$line" | gawk -vFPAT='[^,]*|"[^"]*"' '{print $11}'|awk '{n=split($0,v,":"); if (n > 1) { print v[1] } else { print $0 }}')
-    /usr/bin/geoiplookup $ip |egrep $COUNTRY >& /dev/null
-    if [ $? -eq 0 ]; then
-	doeval=1
-    else
-        doeval=0
-    fi
-  fi
-  if [ $doeval -eq 1 ]; then
-    logs=$(echo "$line" | gawk -vFPAT='[^,]*|"[^"]*"' '{print $9}')
-    if [ "x${NO_LOGS}" = "x$logs" ]; then
-      doeval=1
-    else
-      doeval=0
-    fi
-  fi
-  if [ $doeval -eq 1 ]; then
-  	eval "${DNSCRYPT_PROXY} ${TCP_ONLY} -L ${CSV_FILE} -R ${resolver_name} -t ${MARGIN} -m 1 "
-  	if [ $? -eq 0 ]; then
-    	   echo "$line"
-    	   echo "+ ${resolver_name} - OK" >&2
-  	else
-    	   echo "- ${resolver_name} - Failed" >&2
-    	   res=1
-  	fi
-   fi
-done
-
-mv -f "$tmpfile" "$ONLINE_RESOLVERS_LIST"
-
-exit $res
+	# point local
+	cat > /etc/resolv.conf << EOF
+# Generated by NetworkManager
+nameserver 127.0.0.1
+options edns0 single-request-reopen
 EOF
-	fi
 
-	# Now dnscrypt.cron
-	if [ ! -e /etc/cron.daily/dnscrypt.cron ]
+	# reset rc.local just in cases
+	if [ -e /etc/rc.d/rc.local ]
 	then
-		cat << EOF > /etc/cron.daily/dnscrypt.cron
-#!/bin/sh
+		cat > /etc/rc.d/rc.local << EOF
+#!/bin/bash
+# THIS FILE IS ADDED FOR COMPATIBILITY PURPOSES
+#
+# It is highly advisable to create own systemd services or udev rules
+# to run scripts during boot instead of using this file.
+#
+# In contrast to previous versions due to parallel execution during boot
+# this script will NOT be run after all other services.
+#
+# Please note that you must run 'chmod +x /etc/rc.d/rc.local' to ensure
+# that this script will be executed during boot.
 
-cd /usr/local/share/dnscrypt-proxy
-
-# update the resolvers
-/usr/local/bin/dnscrypt-update-resolvers.sh
-
-# extract CA/US with no logging
-/usr/local/bin/resolvers-check.sh
-
-# clean up stray 'Netherlands from my CA/US checking. This is optional
-grep -v 'Netherlands' dnscrypt-online-resolvers.csv > t
-mv t dnscrypt-online-resolvers.csv
-
-# now restart
-pkill dnscrypt-proxy
-/usr/local/sbin/dnscrypt-proxy /usr/local/etc/dnscrypt-proxy.conf
+touch /var/lock/subsys/local
 EOF
+		chmod +x /etc/rc.d/rc.local
 	fi
 
-	# Now rc.local to run on boot
-	grep dnscrypt-proxy /etc/rc.d/rc.local > /dev/null
-	if [ $? != 0 ]
+	# kill older services
+	stopsrv dnsmasq
+	pkill -9 dnscyrpt
+	# Remove old DNScrypt proxy if there
+	if [ -e /etc/cron.daily/dnscrypt.cron ]
 	then
-		cat << EOF >> /etc/rc.d/rc.local
-# DNSCrypt
-sleep 10
-/usr/local/sbin/dnscrypt-proxy /usr/local/etc/dnscrypt-proxy.conf
-EOF
+		rm /etc/cron.daily/dnscrypt.cron
 	fi
 
-	# Now the security bits allow 53 in
-	firewall-cmd --list-ports --zone=public |grep 53/udp
-	if [ $? != 0 ]
-	then
-		firewall-cmd --permanent --zone=public --add-port=53/tcp
-		firewall-cmd --permanent --zone=public --add-port=53/udp
-		firewall-cmd --reload
-	fi
-
-	# Change Resolv.conf
-	grep "nameserver 127.0.0.1" /etc/resolv.conf > /dev/null
-	if [ $? != 0 ]
-	then
-		echo "nameserver 172.0.0.1" > /etc/resolv.conf
-	fi
-
-	# change dnsmasq.service
-	grep "--dns-forward-max" /usr/lib/systemd/system/dnsmasq.service
-	if [ $? != 0 ]
-	then
-		awk '/-k/{k=1;printf "%s --dns-forward-max=1024\n",$0;} k==0{print $0;} {k=0};' /usr/lib/systemd/system/dnsmasq.service > /tmp/dnsmasq.service
-		cp /tmp/dnsmasq.service /usr/lib/systemd/system/dnsmasq.service
-		systemctl daemon-reload
-	fi
-
-	# Does not seem to be any selinux setup required
-	semanage port -a -t dns_port_t -p tcp 5553
-	semanage port -a -t dnssec_port_t -p tcp 5553
-
-	# Start DNSMASQ
-	startsrv dnsmasq
-
-	# Start DNSCrypt if we rebuilt
-	if [ $buildit -eq 1 ]
-	then
-		/etc/cron.daily/dnscrypt.cron
-	fi
-
+	# install and start newer services
+	./dnscrypt-proxy -service install
+	startsrv dnscrypt-proxy
+	#./dnscrypt-proxy -service start
 
 	if [ $CREATEREPO -eq 1 ]
 	then
-		ver=`/usr/local/sbin/dnscrypt-proxy --version |head -1 |awk '{print $2}'`
-		fpm -s dir -t rpm -n dnscrypt-proxy -v $ver /usr/local/share/dnscrypt-proxy /usr/local/share/doc/dnscrypt-proxy /usr/local/sbin/dnscrypt-proxy /usr/local/bin/*resolvers*.sh /etc/cron.daily/dnscrypt-proxy.cron /etc/rc.d/rc.local
+		ver=`/opt/dnscrypt-proxy/dnscrypt-proxy -version`
+		fpm -s dir -t rpm -n dnscrypt-proxy -v $ver /opt/dnscrypt-proxy /etc/rc.d/rc.local
 	fi
 
-	echo "DNSCrypt Proxy Host setup completed"
+	echo "DNSCrypt Proxy 2.0 using 1.1.1.1 DoH setup completed"
 }
 

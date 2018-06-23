@@ -80,30 +80,24 @@ must run as a regular user. Hence, the need for the --user and --home options.
 Installs the base AAC setup. This is mostly setting timezones and ensuring wget and other useful tools are available.
 
 #### dnscrypt
-Installs and compiles DNScrypt. After install, the compilers, and other
-tools are removed. This configure dnsmasq and dnscrypt to make a DNS
-server. It is up to you to set firewall rules to route all port 53 items
-to this DNS Crypt server.
-
-In addition, it installs a script that changes the DNS crypt server used
-daily based on some basic rules. Such as Country, Style, etc.
+Installs DNScrypt 2.x and sets it up for use of 1.1.1.1 via DNS over HTTPS.
 
 #### powercli
 Installs Powershell, VMware PowerCLI, and VMware PowerNSX onto any RPM
 based Linux distribution.
 
 #### vcli
-Installs vSphere CLI using vsm to download the latest file.
+Installs vSphere CLI using LinuxVSM to download the latest file.
 
 #### ovftool
-Installs ovftool using vsm to download the latest file.
+Installs ovftool using LinuxVSM to download the latest file.
 
 #### vma
 Installs vsm, powercli, ovftool, and vcli to create a vSphere Management
 Appliance. 
 
 #### vsm
-Install a port of VMware's Software Manager to Linux.
+Install a port of VMware's Software Manager to Linux - LinuxVSM.
 
 #### puppetbase
 Installs the Puppet 4.x agents for use with a Puppet Server.
@@ -117,6 +111,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+2.0.0 DNSCRYPT: Update to 2.x
+
 1.1.1 OVFTOOL: Support for Debian and latest LinuxVSM
 
 1.7.1 Base: Support for --user
