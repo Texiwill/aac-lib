@@ -9,7 +9,7 @@
 # Target: CentOS/RHEL 7
 #
 ###
-VERSION="1.7.2"
+VERSION="1.7.3"
 
 function version() {
 	echo "$0 version is $VERSION"
@@ -73,6 +73,7 @@ function checkdep() {
 		fi
 	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 	then
+		# to remove dep use 'apt-get purge $dep' so dpkg works
 		dpkg -s $dep >& /dev/null
 		if [ $? -ne 0 ]
 		then
@@ -86,17 +87,22 @@ function checkdep() {
 }
 
 function installdep() {
+	installopts=""
+	if [ Z"$1" != Z"" ]
+	then
+		installopts=$1
+	fi
 	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
 	then
-		yum -y install $INSTALL $DEVEL
+		yum -y $installopts install $INSTALL $DEVEL
 	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 	then
 		which apt-get >& /dev/null
 		if [ $? -eq 0 ]
 		then
-			apt-get install -y $DINSTALL $DDEVEL
+			apt-get install -y $installopts $DINSTALL $DDEVEL
 		else
-			apt install -y $DINSTALL $DDEVEL
+			apt install -y $installopts $DINSTALL $DDEVEL
 		fi
 	fi
 }
@@ -146,24 +152,29 @@ function stopsrv() {
 }
 
 function tz() {
-	echo "Checking Timezone settings"
+	echo "Updating Repos"
 	if [ -e /usr/bin/yum ]
 	then
-		yum -q makecache fast
-	fi
-	checkdep ntp
-	if [ $needdep -eq 1 ]
+		yum -q clean all >& /dev/null
+		yum -q makecache fast >& /dev/null
+	elif [ -e /usr/bin/apt-get ]
 	then
-		echo "Install/update ntp"
-		INSTALL=ntp
-		DINSTALL=$INSTALL
-		installdep
+		apt-get update
 	fi
 	checkdep wget
 	if [ $needdep -eq 1 ]
 	then
 		echo "Install/update wget"
 		INSTALL=wget
+		DINSTALL=$INSTALL
+		installdep
+	fi
+	echo "Checking Timezone settings"
+	checkdep ntp
+	if [ $needdep -eq 1 ]
+	then
+		echo "Install/update ntp"
+		INSTALL=ntp
 		DINSTALL=$INSTALL
 		installdep
 	fi
@@ -232,11 +243,11 @@ function selinux() {
 
 function fixselinux() {
 	echo "Reset SELinux after installs"
-	restorecon -R -v /dev
+	restorecon -R -v /dev >& /dev/null
 	if [ -e /etc/puppet ]
 	then
-		restorecon -R -v /etc/puppet
-		restorecon -R -v /var/lib/puppet
+		restorecon -R -v /etc/puppet >& /dev/null
+		restorecon -R -v /var/lib/puppet >& /dev/null
 	fi
 }
 

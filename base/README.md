@@ -83,8 +83,7 @@ Installs the base AAC setup. This is mostly setting timezones and ensuring wget 
 Installs DNScrypt 2.x and sets it up for use of 1.1.1.1 via DNS over HTTPS.
 
 #### powercli
-Installs Powershell, VMware PowerCLI, and VMware PowerNSX onto any RPM
-based Linux distribution.
+Installs Powershell and VMware PowerCLI
 
 #### vcli
 Installs vSphere CLI using LinuxVSM to download the latest file.
@@ -111,6 +110,10 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.6.0 PowerCLI: Support for PowerCLI 10.x and Latest PowerShell + Debian
+
+1.7.3 Base: Changes to package management and error output
+
 2.0.0 DNSCRYPT: Update to 2.x
 
 1.1.1 OVFTOOL: Support for Debian and latest LinuxVSM

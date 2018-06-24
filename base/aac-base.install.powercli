@@ -10,175 +10,142 @@
 #
 ###
 function powercli_version() {
-	echo "1.5.0"
+	echo "1.6.0"
 }
 
 function powercli() {
-	INSTALL="unzip zip sshpass"
-	DEVEL="rpm-build redhat-rpm-config gcc cpp glibc-devel glibc-headers kernel-headers mpfr libmpc bzip2 automake openssl-devel autoconf dwz elfutils keyutils-libs-devel krb5-devel libcom_err-devel libkadm5 libselinux-devel libsepol-devel libverto-devel m4 patch pcre-devel perl-Data-Dumper perl-Test-Harness perl-Thread-Queue perl-srpm-macros zlib-devel groff libidn-devel libssh2-devel nss-devel openldap-devel stunnel perl-Digest-MD5 valgrind" 
-	basedir='https://github.com'
+	INSTALL="powershell"
+	DINSTALL="powershell"
+	DEVEL=""
+	installopts=""
 
-	# Centos7 version
-	CURL="http://vault.centos.org/7.3.1611/os/Source/SPackages/curl-7.29.0-35.el7.centos.src.rpm"
-	if [ $VERSION_ID -lt 7 ]
+	# Get Repo
+	prod="repo"
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
 	then
-		# Centos 6 Version
-		CURL="http://vault.centos.org/6.9/os/Source/SPackages/curl-7.19.7-52.el6.src.rpm"
+		tgtdir="/etc/yum.repos.d"
+		myos="rhel"
+	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
+	then
+		tgtdir="/etc/apt/sources.list.d"
+		myos=$theos
+		prod="list"
 	fi
-
-	PDIR=/tmp/powershell.$$
-	mkdir -p $PDIR 2> /dev/null
-	cd $PDIR
-
-	echo "Check if Curl supports OpenSSL"
-	curl --version |grep OpenSSL > /dev/null
-	if [ $? != 0 ]
+	if [ ! -e ${tgtdir}/microsoft.${prod} ]
 	then
-		echo "Need OpenSSL: Overriding default CURL"
-		#setup the environment to build
-		if [ -e ~/rpmbuild ]
+		wget -O microsoft.${prod} https://packages.microsoft.com/config/${myos}/${VERSION_ID}/prod.${prod}
+		mv microsoft.${prod} ${tgtdir}
+
+		if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
 		then
-			mv ~/rpmbuild ~/rpmbuild.orig
-		fi
-		mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-		echo '%_topdir %(echo $HOME)/rpmbuild' > ~/.rpmmacros
-
-		# Get Curl
-		wget $CURL
-		rpm -ivh `basename $CURL`
-
-		# modify the spec
-		cd ~/rpmbuild/SPECS
-		sed 's/libssh2 \\/libssh2/' curl.spec | sed 's/--without-ssl --with-nss//' > t.curl.spec
-	
-		# Install DEVS
-		yum -y install $INSTALL $DEVEL
-
-		# Build Curl with modified spec
-		rpmbuild -ba t.curl.spec
-
-
-		###
-		# Add to REPO, do not install
-		###
-		if [ $CREATEREPO -eq 1 ]
+			# reset because this may not be there
+			yum -q clean all >& /dev/null
+			yum -q makecache >& /dev/null
+		elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 		then
-			# save in repo
-			createrepo `ls ~/rpmbuild/RPMS/x86_64|sed 's%^%~/rpmbuild/RPMS/x86_64/%'`
-		else
-			# Override Curl and install all but debug info
-			rpm --force -Uvh `ls ~/rpmbuild/RPMS/x86_64|grep -v debuginfo|sed 's%^%~/rpmbuild/RPMS/x86_64/%'`
-		fi
-
-		# Remove DEVS
-		rm -rf ~/rpmbuild
-		rpm -e $DEVEL
-
-		# restore original enviro if it exists
-		if [ -e ~/rpmbuild.orig ]
-		then
-			mv ~/rpmbuild.orig ~/rpmbuild
-		fi
-		cd $PDIR
-	fi	
-
-	echo "Checking for Latest Powershell"
-	# Get the latest name
-	rpmdir=`curl -sL $basedir/PowerShell/PowerShell/releases/|grep alpha|grep x86_64.rpm | grep href | awk -F= '{print $2}' |awk '{print $1}'|sed 's/"//g'|sed 's/\n//g'|head -1`
-	
-	# Do we really need to get it
-	rpm=`basename $rpmdir`
-	file=`echo ${basedir}${rpmdir} | sed 's/ //g'`
-	
-	if [ $CREATEREPO -eq 1 ]
-	then
-		if [ `checkrepo $rpm` -eq 0 ]
-		then
-			wget $file
-			createrepo $rpm
-		fi
-	else
-		# slower but gets the line we need, not just a 'check'
-		inst=`rpm -qa|grep -i powershell`
-		if [ "${inst}.rpm" != "$rpm" ]
-		then
-			echo -e "Downloading $rpm from\n $file"
-			wget $file
-
-			# Not installed with this version either update or install
-			yumcmd="update"
-			yummsg="Updating $rpm"
-			if [ Z"$inst" = Z"" ]
+			checkdep apt-transport-https
+			if [ $needdep != 0 ]
 			then
-				yumcmd="install"
-				yummsg="Installing $rpm"
+				DINSTALL="apt-transport-https"
+				installdep
 			fi
-			echo $yummsg
-			yum $yumcmd -y $rpm
-		else
-			# nothing needed, log and go on
-			echo "$rpm already installed."
+			apt-get update
+			DINSTALL="powershell libcurl3 liblttng-ust-ctl2 liblttng-ust0 libunwind8 liburcu4"
+			wget -O microsoft.key https://packages.microsoft.com/keys/microsoft.asc
+			# this may not 'verify'
+			apt-key add microsoft.key
+			installopts="--allow-unauthenticated"
 		fi
 	fi
-	
-	# now get the latest PowerNSX
-	if [ ! -e /usr/local/share/powershell/Modules/PowerNSX/PowerNSX.psm1 ]
+
+	doupdate=0
+	checkdep powershell
+	if [ $needdep != 0 ]
 	then
-		echo "Installing PowerNSX"
-		# Install PowerNSX
-		wget https://github.com/vmware/powernsx/archive/master.zip
-		unzip master.zip
-		mkdir -p /usr/local/share/powershell/Modules/PowerNSX
-		cp -r powernsx-master/PowerNSX.psm1 powernsx-master/PowerNSX.psd1 /usr/local/share/powershell/Modules/PowerNSX
-		cp -r powernsx-master/tools /usr/local/share/powershell
-	
-		echo "Installing PowerCLI"
-		# Install PowerCLI
-		pcli=`curl -sk https://labs.vmware.com/flings/powercli-core | grep zip | awk -F= '{print $4}'|awk -F\" '{print $2}'`
-		wget $pcli
-		unzip PowerCLI_Core.zip
-		(cd /usr/local/share/powershell/Modules; unzip $PDIR/PowerCLI.ViCore.zip)
-		(cd /usr/local/share/powershell/Modules; unzip $PDIR/PowerCLI.Vds.zip)
+		installdep $installopts
+		doupdate=1
+	else
+		# Do we have a new version of powershell?
+		if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
+		then
+			v=`yum list powershell  |awk '{print $2}' | tail -1`
+			rpm -q powershell-${v} >& /dev/null
+			if [ $? -ne 0 ]
+			then
+				#install or update
+				yum -y $installopts update powershell
+				doupdate=1
+			fi
+		fi
+	fi
+
+	if [ ! -e /etc/profile.d/powershell.sh ] || [ $doupdate -eq 1 ]
+	then
+		echo "Setting Profile for Powershell"
+		v=`ls -1 /opt/microsoft/powershell | tail -1`
+		echo "export PSModulePath=/opt/microsoft/powershell/${v}:/usr/local/share/powershell/Modules" > /etc/profile.d/powershell.sh
+		echo "setenv PSModulePath /opt/microsoft/powershell/${v}:/usr/local/share/powershell/Modules" > /etc/profile.d/powershell.csh
+		. /etc/profile.d/powershell.sh
+	else
+		. /etc/profile.d/powershell.sh
+	fi
+	if [ $doupdate -eq 1 ]
+	then
+		# get bits first
+		if [ -e /usr/bin/pwsh ]
+		then
+			echo "Installing PowerCLI"
+			pwsh << EOF
+Install-Module -Name VMware.PowerCLI -Scope AllUsers
+A
+EOF
+#Not working with PowerCLI 10.x
+#Install-Module -Name PowerNSX -Scope AllUsers
+#A
+			clear
+		fi
 		cat << EOF > /usr/local/share/powershell/Start-PowerCLI.ps1
 \$a = (Get-Host).PrivateData
 \$b = get-psreadlineoption | select ErrorBackgroundColor
 \$clear = \$b.ErrorBackgroundColor
 \$black= 'black'
 if (\$clear -eq 'black') { \$black='white' }
-$a.WarningForegroundColor = $black
+\$a.WarningForegroundColor = \$black
 
 'command','number','operator','member','parameter','string','type','variable','keyword' |
 foreach { set-psreadlineoption \$_ \$black \$clear }
+Get-module -ListAvailable VMware* | ForEach-Object {try { Import-module \$_ } catch { }}
+
+\$productName = "vSphere PowerCLI"
+\$productShortName = "PowerCLI"
+\$CustomInitScriptName = "Initialize-PowerCLIEnvironment_Custom.ps1"
+\$currentDir = Split-Path \$MyInvocation.MyCommand.Path
+\$CustomInitScript = Join-Path \$currentDir \$CustomInitScriptName
+
+# Update PowerCLI version after snap-in load
+\$version = (Get-Module -Name 'VMware.VimAutomation.Cis.Core').Version
+\$windowTitle = "VMware \$productName {0}.{1}.{2} Build {3} " -f \$version.Major, \$version.Minor, \$version.Build, \$version.Revision
+\$host.ui.RawUI.WindowTitle = "\$windowTitle"
+# Launch text
+write-host "          Welcome to VMware \$productName!"
+write-host ""
+write-host "Log in to a vCenter Server or ESX host:              " -NoNewLine
+write-host "Connect-VIServer" -foregroundcolor \$black
+write-host "To find out what commands are available, type:       " -NoNewLine
+write-host "Get-VICommand" -foregroundcolor \$black
+write-host "Once you've connected, display all virtual machines: " -NoNewLine
+write-host "Get-VM" -foregroundcolor \$black
+write-host ""
+write-host "       Copyright (C) VMware, Inc. All rights reserved."
+write-host ""
+write-host ""
 EOF
-		cat $PDIR/Start-PowerCLI.ps1 |sed 's/yellow/\$black/g' >> /usr/local/share/powershell/Start-PowerCLI.ps1
 		cat << EOF > /usr/local/bin/powercli
 #!/bin/sh
-powershell -NoExit -Command /usr/local/share/powershell/Start-PowerCLI.ps1
+/usr/bin/pwsh -NoExit -Command /usr/local/share/powershell/Start-PowerCLI.ps1
 EOF
 		chmod 755 /usr/local/bin/powercli
-	
-		echo "Setting Profile for Powershell"
-		# Set profile.d for PS containing PSModulePath
-		pfile=`rpm -ql powershell |head -1`
-		ppath=`dirname $pfile`
-		echo "# Module Path for Powershell" > /etc/profile.d/powershell.sh
-		echo "export PSModulePath=$ppath:/usr/local/share/powershell/Modules" >> /etc/profile.d/powershell.sh
-		echo "# Module Path for Powershell" > /etc/profile.d/powershell.csh
-		echo "setenv PSModulePath $ppath:/usr/local/share/powershell/Modules" >> /etc/profile.d/powershell.csh
-	else
-		# upgrade PowerNSX
-		echo "Updating PowerNSX"
-		powershell -Command 'Update-PowerNSX -branch master'
+		#rm /tmp/Start-PowerCLI.ps1
 	fi
-
-	if [ $CREATEREPO -eq 1 ]
-	then
-		ver=`grep ModuleVersion /usr/local/share/powershell/Modules/PowerNSX/PowerNSX.psd1 | awk -F\' '{print $2}'`
-		fpm -s dir -t rpm -n powercli -v $ver /usr/local/share/powershell /etc/profile.d/powershell.*
-		createrepo powercli-${ver}-*.x86-64.rpm
-	fi
-
-	cd $menu_pd
-	rm -rf $PDIR
 }
 
