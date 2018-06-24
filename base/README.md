@@ -83,7 +83,7 @@ Installs the base AAC setup. This is mostly setting timezones and ensuring wget 
 Installs DNScrypt 2.x and sets it up for use of 1.1.1.1 via DNS over HTTPS.
 
 #### powercli
-Installs Powershell and VMware PowerCLI
+Installs Powershell and VMware PowerCLI: run command 'powercli' to start
 
 #### vcli
 Installs vSphere CLI using LinuxVSM to download the latest file.
