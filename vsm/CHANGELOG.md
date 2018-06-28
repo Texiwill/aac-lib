@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.50 - DriversTools update
 - 1.0.49 - DriversTools update
 - 1.0.48 - ESXI67 CustomIso, DriverTools updates
 - 1.0.47 - DriversTools, Compatibility with 4.6.9
