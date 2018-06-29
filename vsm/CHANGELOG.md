@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.51 - VC670B, VC60U3F, VC65U2B, VC55U3I updates, DriversTools
 - 1.0.50 - DriversTools update
 - 1.0.49 - DriversTools update
 - 1.0.48 - ESXI67 CustomIso, DriverTools updates
