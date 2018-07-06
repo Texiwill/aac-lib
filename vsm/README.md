@@ -38,12 +38,13 @@ For example to set the time zone for London UK use:
 Here is an example run and help:
 ```
 $ /usr/local/bin/vsm.sh --help
-/usr/local/bin/vsm.sh [-c|--check] [--dlg|--dlgl search] [-d|--dryrun] [-f|--force] 
-[--fav favorite] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] 
-[-m|--myvmware] [-mr] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] 
-[--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] 
-[-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] 
-[-V|--version] [-y] [--debug] [--repo repopath] [--save]
+/usr/local/bin/vsm.sh [-c|--check] [--dlg|--dlgl search] [-d|--dryrun]
+[-f|--force] [--fav favorite] [--favorite] [-e|--exit] [-h|--help]
+[--historical] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore]
+[-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss]
+[-p|--password password] [--progress] [-q|--quiet] [-r|--reset]
+[-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y]
+[--debug] [--repo repopath] [--save]
     -c|--check - do sha256 check against download
     --dlg - download specific package by name or part of a name (regex)
     --dlgl - list package by name or part of a name (regex)
@@ -53,6 +54,8 @@ $ /usr/local/bin/vsm.sh --help
     --favorite - Download suite marked as favorite
     -e|--exit - reset and exit
     -h|--help - this help
+    --historical - display older versions when you select a package *
+                   saved to configuration file
     -l|--latest - substitute latest for each package instead of listed
         Deprecated: Now the default, the argument does nothing any more.
     -m|--myvmware - get missing suite and packages from My VMware. 
@@ -63,6 +66,7 @@ $ /usr/local/bin/vsm.sh --help
     -p|--password - specify password
     --progress - show progress of downloads (only makes sense with -q)
     -q|--quiet - be less verbose
+                 saved to configuration file
     -r|--reset - reset vsmdir - Not as useful as it once was -mr is much more
 	useful
     -u|--username - specify username
@@ -180,7 +184,15 @@ Saving to /home/user/.vsmrc
 #? 14
 Favorite: Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
 Saving to /home/user/.vsmrc
-#? 5
+#? 5 (Shows only if --historical in use)
+1) ESXI65U2
+2) ESXI65U1
+3) ESXI650D
+4) ESXI650
+5) ESXI650A
+6) Back
+7) Exit
+#? 1
  1) All
  2) Minimum_Required
  3) All_Plus_OpenSource

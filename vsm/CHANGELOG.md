@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.54 - DriversTools update, Compatibility with 4.7.0
 - 1.0.53 - DriversTools update
 - 1.0.52 - DriversTools update
 - 1.0.51 - VC670B, VC60U3F, VC65U2B, VC55U3I updates, DriversTools
@@ -66,6 +67,11 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.7.0 - Added --historical option to see and possibly download older
+	versions of packages (Thanks to Alex Lopez @ivirtualex) and 
+	fixed a bug with credentials (Thanks to Michelle Laverick 
+	@m_laverick)
+
 4.6.9 - Change to parsing for potentially missing data
 
 4.6.8 - Update for older versions, README update for Examples
@@ -111,7 +117,7 @@ for more items.
 
 4.5.1 - Fixed --dlg error and added some missing data. Datafile 1.0.1 now
         Special thanks to Alex Lopez (@ivirtualex) and 
-	Mike Laverick (@m_laverick)
+	Michelle Laverick (@m_laverick)
 
 4.5.0 - Rewrite to better allow updates, --dlg to work, sha256/sha1 sums, and improved MacOS support, not to mention improvements in performance
 

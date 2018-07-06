@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.6.9"
+VERSIONID="4.7.0"
 
 # args: stmt error
 function colorecho() {
@@ -649,7 +649,7 @@ function vmwaremenu2() {
 		# will not work for dooss so need to know we are doing this
 		vurl=`egrep "$vsme" ${rcdir}/${mname}.xhtml 2>/dev/null |grep -v OSS | head -1 | sed 's/<a href/\n<a href/' | grep href | cut -d \" -f 2 | sed 's#https://my\.vmware\.com##'`
 		debugecho "DEBUG: vurl => $vurl"
-		if [ $alpha -eq 1 ]
+		if [ $historical -eq 1 ]
 		then
 			# ordering problem, so put here
 			rPId=`echo $vurl  | cut -d\& -f3 | cut -d= -f2`
@@ -1320,6 +1320,7 @@ function save_vsmrc() {
 			echo "myprogress=$doprogress" >> $vsmrc
 			echo "doshacheck=$doshacheck" >> $vsmrc
 			echo "dovex=$dovex" >> $vsmrc
+			echo "historical=$historical" >> $vsmrc
 			echo "domyvmware=$domyvmware" >> $vsmrc
 		fi
 	fi
@@ -1470,7 +1471,7 @@ function menu2() {
 	#else
 		vmwaremenu2
 		# Put find 'sub-versions' of releases
-		if [ $alpha -eq 1 ]
+		if [ $historical -eq 1 ]
 		then
 			vmwarecv
 			mval="_dlg_${choice}.xhtml"
@@ -1828,7 +1829,7 @@ function version() {
 
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [-e|--exit] [-h|--help] [-l|--latest] [-m|--myvmware] [-mr] [-nh|--noheader] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
+	echo "$0 [-c|--check] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [-e|--exit] [-h|--help] [--historical] [-l|--latest] [-m|--myvmware] [-mr] [-nh|--noheader] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
 	echo "	-c|--check - do sha256 check against download"
 	echo "	--dlg - download specific package by name or part of name (regex)"
 	echo "	--dlgl - list all packages by name or part of name (regex)"
@@ -1838,6 +1839,7 @@ function usage() {
 	echo "	--favorite - download suite marked as favorite"
 	echo "	-e|--exit - reset and exit"
 	echo "	-h|--help - this help"
+	echo "	--historical - display older versions when you select a package"
 	echo "	-l|--latest - substitute latest for each package instead of listed"
 	echo "		Deprecated: Now the default, the argument does nothing any more."
 	echo "	-m|--myvmware - get missing suite and packages from My VMware"
@@ -2041,7 +2043,7 @@ nostore=0
 doexit=0
 dryrun=0
 dosave=0
-alpha=0
+historical=0
 beta=0
 mydts=-1
 myoss=-1
@@ -2190,8 +2192,8 @@ do
 		--save)
 			dosave=1
 			;;
-		--alpha)
-			alpha=1
+		--historical)
+			historical=1
 			;;
 		--beta)
 			beta=1
@@ -2336,10 +2338,13 @@ cd $cdir
 # if we say to no store then remove!
 if [ $nostore -eq 1 ]
 then
-	rm .credstore
+	if [ -e .credstore ]
+	then
+		rm .credstore
+	fi
 fi
 
-if [ ! -e .credstore ]
+if [ ! -e .credstore ] || [ $nostore -eq 1 ]
 then
 	if [ Z"$username" = Z"" ]
 	then
