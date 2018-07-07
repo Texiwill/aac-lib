@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.55 - DriversTools Update, Compatibility with 4.7.1
 - 1.0.54 - DriversTools update, Compatibility with 4.7.0
 - 1.0.53 - DriversTools update
 - 1.0.52 - DriversTools update
@@ -67,6 +68,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.7.1 - Fixed --historical bugs, lists were not cleared and improper parsing
+
 4.7.0 - Added --historical option to see and possibly download older
 	versions of packages (Thanks to Alex Lopez @ivirtualex) and 
 	fixed a bug with credentials (Thanks to Michelle Laverick 

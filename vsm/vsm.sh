@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.7.0"
+VERSIONID="4.7.1"
 
 # args: stmt error
 function colorecho() {
@@ -319,14 +319,14 @@ function findmissing() {
 				fi
 				echo $missname | grep vmware_vrealize_network_insight >& /dev/null
 				pli=$?
-				if [ $beta -eq 1 ] && [ $pli -eq 1 ]
+				if [ $nbeta1 -eq 1 ] && [ $pli -eq 1 ]
 				then
 					tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g" |egrep -v hidden | sort -u` 
 				else
 					if [ Z"$pmiss" != Z"" ]
 					then
 						tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g"|egrep -v $pmiss |egrep -v hidden | sort -u`
-					elif [ $beta -ne 1 ]
+					elif [ $nbeta1 -ne 1 ]
 					then
 						tver=`grep $myvmware ${rcdir}/${missname}.xhtml |awk '{print $2}' | awk -F\" '{print $2}' | sed 's#/web/vmware/info/slug##g' | sed "s#${myvmware}/##g" |egrep -v hidden | sort -u` 
 					fi
@@ -381,7 +381,7 @@ function getoutervmware() {
 		then
 			mywget ${rcdir}/${missname}.xhtml ${myvmware_root}${myvmware}
 		fi
-		if [ $beta -eq 1 ]
+		if [ $nbeta1 -eq 1 ]
 		then
 			mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/+/_/g' | sed 's/\&amp;/\&/g'`
 		else
@@ -591,6 +591,9 @@ function vmwarecv() {
 			# reset currchoice as well
 			currchoice=$choice
 			# reset asso's as well
+			oemlist=''
+			dtslist=''
+			osslist=''
 			getasso
 			# reset path for 'back' to work
 			getpath
@@ -654,6 +657,14 @@ function vmwaremenu2() {
 			# ordering problem, so put here
 			rPId=`echo $vurl  | cut -d\& -f3 | cut -d= -f2`
 			productId=`echo $vurl  | cut -d\& -f2 | cut -d= -f2`
+			if [ Z"$rPId" = Z"#x2f;" ]
+			then
+				# first convert
+				vurl=`echo $vurl | sed 's/&#x3a;/:/g' | sed 's/&#x2f;/\//g' | sed 's/&#x2e;/./g' | sed 's/&#x3f;/?/'|sed 's/&#x3d;/=/g'|sed 's/&#x26;/\&/g'`
+				vurl=`echo $vurl | sed "s/$ach/$vsme/"`
+				rPId=`echo $vurl  | cut -d\& -f3 | cut -d= -f2`
+				productId=`echo $vurl  | cut -d\& -f2 | cut -d= -f2`
+			fi
 			vmwaremi $ach $vurl
 		else
 			if [ ! -e ${rcdir}/_dlg_${ach}.xhtml ] || [ $doreset -eq 1 ]
@@ -1406,7 +1417,7 @@ function menu() {
 			fi
 		fi
 	fi
-	if [ $beta -eq 1 ]
+	if [ $nbeta1 -eq 1 ]
 	then
 		domyvm=`echo ${myvmware}| awk -F/ '{print NF}'`
 		if [ $domyvm -eq 3 ]
@@ -2044,7 +2055,7 @@ doexit=0
 dryrun=0
 dosave=0
 historical=0
-beta=0
+nbeta1=1
 mydts=-1
 myoss=-1
 myoem=-1
@@ -2194,9 +2205,6 @@ do
 			;;
 		--historical)
 			historical=1
-			;;
-		--beta)
-			beta=1
 			;;
 		--debug)
 			debugv=1
@@ -2371,7 +2379,13 @@ then
 else
 	if [ $noheader -eq 0 ]
 	then
-		echo "	Use credstore:	1"
+		echo -n "	Use credstore:	"
+		if [ $nostore -eq 0 ]
+		then
+			echo '1'
+		else
+			echo '0'
+		fi
 	fi
 	auth=`cat .credstore`
 fi
