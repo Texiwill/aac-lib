@@ -43,8 +43,9 @@ $ /usr/local/bin/vsm.sh --help
 [--historical] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore]
 [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss]
 [-p|--password password] [--progress] [-q|--quiet] [-r|--reset]
-[-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y]
-[--debug] [--repo repopath] [--save]
+[-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version]
+[-y] [-z|--compress] [--debug] [--repo repopath] [--save] [--symlink]
+[--fixsymlink]
     -c|--check - do sha256 check against download
     --dlg - download specific package by name or part of a name (regex)
     --dlgl - list package by name or part of a name (regex)
@@ -68,12 +69,17 @@ $ /usr/local/bin/vsm.sh --help
     -q|--quiet - be less verbose
                  saved to configuration file
     -r|--reset - reset vsmdir - Not as useful as it once was -mr is much more
-	useful
+	         useful
+    --symlink - create symlinks for CustomIso, DriversTools, and 
+                OpenSource modules. Saved to configuration file
+    --fixsymlink - convert older repo to newer symlink style, implies --symlink
     -u|--username - specify username
     -v|--vsmdir path - set VSM directory
                        saved to configuration file
     -V|--version - version number
     -y - do not ask to continue
+    -z|--compress - compress files after download
+                    saved to configuration file
     --dts - include DriversTools in All-style downloads
             saved to configuration file
     --nodts - do not include DriversTools in All-style downloads

@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.7.1"
+VERSIONID="4.7.2"
 
 # args: stmt error
 function colorecho() {
@@ -1332,6 +1332,8 @@ function save_vsmrc() {
 			echo "doshacheck=$doshacheck" >> $vsmrc
 			echo "dovex=$dovex" >> $vsmrc
 			echo "historical=$historical" >> $vsmrc
+			echo "compress=$compress" >> $vsmrc
+			echo "symlink=$symlink" >> $vsmrc
 			echo "domyvmware=$domyvmware" >> $vsmrc
 		fi
 	fi
@@ -1646,9 +1648,15 @@ function getvsm() {
 	lchoice=$1
 	additional=$2
 	tchoice=$lchoice
+	dotdir=0
 	if [ Z"$3" != Z"" ]
 	then
 		tchoice=$3
+		if [ $symlink -eq 1 ]
+		then
+			tdir=`echo $tchoice | sed 's/-/_/g'`
+			dotdir=1
+		fi
 	fi
 	ldir=`echo $lchoice | sed 's/-/_/g'`
 
@@ -1661,13 +1669,26 @@ function getvsm() {
 		mkdir dlg_$ldir
 	fi
 	cd dlg_$ldir 
-	if [ Z"$additional" != Z"base" ] 
+	if [ Z"$additional" != Z"base" ]
 	then
 		if [ ! -e $additional ]
 		then
 			mkdir $additional
 		fi
 		cd $additional
+	fi
+	if [ $symlink -eq 1 ]
+	then
+		rdir=`pwd`
+	fi
+	if [ $symlink -eq 1 ] && [ $dotdir -eq 1 ]
+	then
+		cd "$repo"
+		if [ ! -e dlg_$tdir ]
+		then
+			mkdir -p $additional/dlg_$tdir
+		fi
+		cd $additional/dlg_$tdir
 	fi
 	debugecho "DEBUG: $currchoice: `pwd`"
 	dovsmit=1
@@ -1738,6 +1759,27 @@ function getvsm() {
 	fi
 	if [ $dovsmit -eq 1 ]
 	then
+		if [ $fixsymlink -eq 1 ]
+		then
+			if [ -f ${rdir}/${name} ]
+			then
+				rname=${rdir}/${name}
+			fi
+			if [ -f ${rdir}/${name}.gz ]
+			then
+				rname=${rdir}/${name}.gz
+			fi
+			# Move or Remove regular file if exists
+			if [ -f ${rname} ]
+			then
+				if [ ! -e $name ] && [ ! -e ${name}.gz ]
+				then
+					mv ${rname} .
+				else
+					rm ${rname}
+				fi
+			fi
+		fi
 		if  ([ ! -e ${name} ] && [ ! -e ${name}.gz ]) || [ $doforce -eq 1 ]
 		then 
 			if [ Z"$drparams" = Z"CART" ]
@@ -1825,6 +1867,30 @@ function getvsm() {
 				fi
 			fi
 		fi
+		if [ $compress -eq 1 ]
+		then
+			e=${name##*.}
+			if [ Z"$e" != Z"zip" ] && [ Z"$e" != Z"gz" ] || [ Z"$e" == Z"$name" ]
+			then
+				if [ ! -e ${name}.gz ]
+				then
+					echo -n "$name: gzip "
+					gzip $name
+					echo " ... done "
+				fi
+				name=${name}.gz
+			fi
+		fi
+		if [ $symlink -eq 1 ]
+		then
+			# now create as symlink if it does not already exist
+			if  [ ! -e ${rdir}/${name} ]
+			then 
+				echo -n "$name: symlink "
+				ln -s ../../$additional/dlg_$tdir/$name $rdir
+				echo " ... done "
+			fi
+		fi
 	fi
 	cd ${cdir}/depot.vmware.com/PROD/channel
 }
@@ -1840,7 +1906,7 @@ function version() {
 
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [-e|--exit] [-h|--help] [--historical] [-l|--latest] [-m|--myvmware] [-mr] [-nh|--noheader] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [--debug] [--repo repopath] [--save]"
+	echo "$0 [-c|--check] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [-e|--exit] [-h|--help] [--historical] [-l|--latest] [-m|--myvmware] [-mr] [-nh|--noheader] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save]"
 	echo "	-c|--check - do sha256 check against download"
 	echo "	--dlg - download specific package by name or part of name (regex)"
 	echo "	--dlgl - list all packages by name or part of name (regex)"
@@ -1868,6 +1934,7 @@ function usage() {
 	echo "	-v|--vsmdir path - set VSM directory - saved to configuration file"
 	echo "	-V|--version - version number"
 	echo "	-y - do not ask to continue"
+	echo "	-z|--compress - compress files that can be compressed"
 	echo "	--dts - include DriversTools in All-style downloads"
 	echo "		    saved to configuration file"
 	echo "	--nodts - do not include DriversTools in All-style downloads"
@@ -2055,6 +2122,10 @@ doexit=0
 dryrun=0
 dosave=0
 historical=0
+compress=0
+beta=0
+symlink=0
+fixsymlink=0
 nbeta1=1
 mydts=-1
 myoss=-1
@@ -2203,6 +2274,16 @@ do
 		--save)
 			dosave=1
 			;;
+		--beta)
+			beta=1
+			;;
+		--symlink)
+			symlink=1
+			;;
+		--fixsymlink)
+			fixsymlink=1
+			symlink=1
+			;;
 		--historical)
 			historical=1
 			;;
@@ -2266,6 +2347,9 @@ do
 			;;
 		-V|--version)
 			version
+			;;
+		-z|--compress)
+			compress=1
 			;;
 		*)
 			usage
