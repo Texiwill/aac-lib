@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.7.3"
+VERSIONID="4.7.4"
 
 # args: stmt error
 function colorecho() {
@@ -1884,7 +1884,7 @@ function getvsm() {
 		if [ $symlink -eq 1 ]
 		then
 			# now create as symlink if it does not already exist
-			if  [ ! -e ${rdir}/${name} ]
+			if  [ ! -e ${rdir}/${name} ] && [ -e $name ]
 			then 
 				echo -n "$name: symlink "
 				ln -s ../../$additional/dlg_$tdir/$name $rdir
