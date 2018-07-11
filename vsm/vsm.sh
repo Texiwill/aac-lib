@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.7.2"
+VERSIONID="4.7.3"
 
 # args: stmt error
 function colorecho() {
@@ -1759,7 +1759,7 @@ function getvsm() {
 	fi
 	if [ $dovsmit -eq 1 ]
 	then
-		if [ $fixsymlink -eq 1 ]
+		if [ $fixsymlink -eq 1 ] && [ $dotdir -eq 1 ]
 		then
 			if [ -f ${rdir}/${name} ]
 			then
@@ -1770,7 +1770,7 @@ function getvsm() {
 				rname=${rdir}/${name}.gz
 			fi
 			# Move or Remove regular file if exists
-			if [ -f ${rname} ]
+			if [ ! -L ${rname} ]
 			then
 				if [ ! -e $name ] && [ ! -e ${name}.gz ]
 				then
