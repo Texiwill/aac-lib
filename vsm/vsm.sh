@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.7.4"
+VERSIONID="4.7.5"
 
 # args: stmt error
 function colorecho() {
@@ -751,6 +751,9 @@ function getouterrndir() {
 		fi
 		debugecho "DEBUG: v => $v"
 		case "$lchoice" in
+			VCOPS*)
+				rndir='vcops'
+				;;
 			VRSLCM*)
 				# special case VIC, VROPS, VC
 				# Note VRSLCM_?? => VRSLCM10
@@ -780,6 +783,19 @@ function getouterrndir() {
 					rndir="vmtools/${v}"
 				else
 					rndir="vmtools"
+				fi
+				;;
+			VROVA*)
+				rndir="vi"
+				;;
+			VDP*)
+				rndir="vdp/${v:0:2}"
+				;;
+			APPHA*)
+				rndir="APPHA_${v}"
+				if [ $v -lt 111 ]
+				then
+					rndir="vin/570"
 				fi
 				;;
 			NSX_V_*_TOOLS)
@@ -833,6 +849,9 @@ function getouterrndir() {
 				;;
 			VC67*)
 				rndir="vc/67"
+				;;
+			VC60*)
+				rndir="vi/60"
 				;;
 			VC*)
 				rndir="vi"
@@ -1872,7 +1891,7 @@ function getvsm() {
 			e=${name##*.}
 			if [ Z"$e" != Z"zip" ] && [ Z"$e" != Z"gz" ] || [ Z"$e" == Z"$name" ]
 			then
-				if [ ! -e ${name}.gz ]
+				if [ ! -e ${name}.gz ] && [ -e ${name} ]
 				then
 					echo -n "$name: gzip "
 					gzip $name
@@ -1906,7 +1925,7 @@ function version() {
 
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [-e|--exit] [-h|--help] [--historical] [-l|--latest] [-m|--myvmware] [-mr] [-nh|--noheader] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save]"
+	echo "$0 [-c|--check] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-l|--latest] [-m|--myvmware] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save]"
 	echo "	-c|--check - do sha256 check against download"
 	echo "	--dlg - download specific package by name or part of name (regex)"
 	echo "	--dlgl - list all packages by name or part of name (regex)"
@@ -1914,9 +1933,11 @@ function usage() {
 	echo "	-f|--force - force download of packages"
 	echo "	--fav favorite - specify favorite on command line"
 	echo "	--favorite - download suite marked as favorite"
+	echo "	--fixsymlink - convert old repo to symlink based repo"
 	echo "	-e|--exit - reset and exit"
 	echo "	-h|--help - this help"
 	echo "	--historical - display older versions when you select a package"
+	echo "	--nohistorical - disable --historical"
 	echo "	-l|--latest - substitute latest for each package instead of listed"
 	echo "		Deprecated: Now the default, the argument does nothing any more."
 	echo "	-m|--myvmware - get missing suite and packages from My VMware"
@@ -1930,6 +1951,8 @@ function usage() {
 	echo "	--progress - show progress for OEM, OSS, and DriverTools"
 	echo "	-q|--quiet - be less verbose"
 	echo "	-r|--reset - reset VSM repoi - Not as useful as it once was"
+	echo "	--symlink - use space saving symlinks"
+	echo "	--nosymlink - disable --symlink mode"
 	echo "	-u|--username - specify username"
 	echo "	-v|--vsmdir path - set VSM directory - saved to configuration file"
 	echo "	-V|--version - version number"
@@ -2280,12 +2303,18 @@ do
 		--symlink)
 			symlink=1
 			;;
+		--nosymlink)
+			symlink=0
+			;;
 		--fixsymlink)
 			fixsymlink=1
 			symlink=1
 			;;
 		--historical)
 			historical=1
+			;;
+		--nohistorical)
+			historical=0
 			;;
 		--debug)
 			debugv=1
@@ -2411,6 +2440,8 @@ then
 	echo "	Dryrun:		$dryrun"
 	echo "	Force Download:	$doforce"
 	echo "	Checksum:	$doshacheck"
+	echo "	Historical Mode:$historical"
+	echo "	Symlink Mode:	$symlink"
 	echo "	Reset XML Dir:	$doreset"
 	#echo "	Get Latest:	$dolatest"
 	echo "	My VMware:	$domyvmware"

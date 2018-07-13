@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.59 - DriversTools Update, Compatibility with 4.7.5
 - 1.0.58 - DriversTools Update, Compatibility with 4.7.4
 - 1.0.57 - DriversTools Update, Compatibility with 4.7.3
 - 1.0.56 - DriversTools Update, Compatibility with 4.7.2
@@ -71,6 +72,9 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.7.5 - Changes to add more existing packages. Fix to reporting, 
+	and gzip protections
+
 4.7.4 - One more fix to --fixsymlink, do not link if Link already exist
 
 4.7.3 - Fix to --fixsymlink, it over corrected
