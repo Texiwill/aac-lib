@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.7.5"
+VERSIONID="4.7.6"
 
 # args: stmt error
 function colorecho() {
@@ -722,7 +722,7 @@ function getproddata() {
 	fi
 	#debugecho "DEBUG: vers => $vers ; prod => $prod"
 	eprod=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$prod" 2>/dev/null`
-	prod=$eprod
+	prod=`echo $eprod|sed 's/%205%3A%20Private%20Cloud%20Computing%2C%20Server%20and%20Data%20Center%20Virtualization//'`
 	debugecho "DEBUG: vers => $vers ; prod => $prod"
 }
 
@@ -776,6 +776,9 @@ function getouterrndir() {
 				else
 					rndir="VDDK"
 				fi
+				;;
+			VSP5[01]0_VDDK*)
+				rndir="VDDK"
 				;;
 			VMTOOLS*)
 				if [ $v -gt 1017 ]
@@ -1889,7 +1892,7 @@ function getvsm() {
 		if [ $compress -eq 1 ]
 		then
 			e=${name##*.}
-			if [ Z"$e" != Z"zip" ] && [ Z"$e" != Z"gz" ] || [ Z"$e" == Z"$name" ]
+			if [ Z"$e" != Z"zip" ] && [ Z"$e" != Z"ZIP" ] && [ Z"$e" != Z"gz" ] || [ Z"$e" == Z"$name" ]
 			then
 				if [ ! -e ${name}.gz ] && [ -e ${name} ]
 				then
