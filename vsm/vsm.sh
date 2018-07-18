@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.7.6"
+VERSIONID="4.7.7"
 
 # args: stmt error
 function colorecho() {
@@ -1173,7 +1173,7 @@ function getasso() {
 			fi
 			oem="CustomIso"
 		else
-			echo $x | egrep "OSS|OSL|OPENSOURCE" > /dev/null
+			echo $x | egrep "OSS|OSL|OPENSOURCE|OS_L|OS_S" > /dev/null
 			if [ $? -eq 0 ]
 			then
 				if [ Z"$osslist" = Z"" ]
@@ -1612,7 +1612,7 @@ function getvsmparams() {
 			#ndata=`echo $fdata | cut -d\" -f 6 | sed 's/amp;//g'| sed 's/[\&\?=]/ /g'`
 			ndata=`echo $fdata | cut -d\" -f 6 | sed 's/amp;//g'| sed 's/[\&\?]/ /g'`
 			#debugecho "DEBUG: ndata => $ndata"
-			if [ Z"$size" != Z"" ]
+			if [ "$size" -eq "$size" ] 2>/dev/null
 			then
 				size=`echo "$size *1024"|bc` # KB
 				if [ Z"$units" = Z"MB" ] || [ Z"$units" = Z"GB" ] || [ Z"$units" = Z"G" ] || [ Z"$units" = Z"M" ]
@@ -1764,7 +1764,7 @@ function getvsm() {
 	rnnot=0
 	if [ Z"$rndll" = Z"" ] || [ Z"$rndir" = Z"" ] || [ Z"$rndir" = Z"$name" ]
 	then
-		if [ $debugv -ge 1 ]
+		if [ $debugv -ge 1 ] && [ $dovsmit -eq 1 ]
 		then
 			echo ""
 			echo "DEBUGV: name => $name" 
@@ -1811,8 +1811,16 @@ function getvsm() {
 				lurl=`wget --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $url 2>&1 | grep Location | awk '{print $2}'`
 			fi
 			debugecho "DEBUG: lurl => $lurl"
+			doesxi5=0
+			# older way to download DriversTools, deprecated
+			echo $url | egrep 'DT-ESXI50|DT-ESXI51' >& /dev/null
+			if [ $? -eq 0 ]
+			then
+				doesxi5=1
+				lurl=$durl
+			fi
 			echo $lurl|grep -i blocked >& /dev/null
-			if [ $? -ne 0 ]
+			if [ $? -ne 0 ] || [ $doesxi5 -eq 1 ]
 			then
 				if [ Z"$lurl" != Z"" ]
 				then
@@ -1884,7 +1892,7 @@ function getvsm() {
 				if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 				then
 					echo -n "B"
-					else
+				else
 					colorecho "Blocked Redirect Error Getting $name" 1
 				fi
 			fi
