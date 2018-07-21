@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.64 - Package Updates
 - 1.0.63 - DriversTools Update plus some others
 - 1.0.62 - DriversTools Update, Compatibility with 4.7.7
 - 1.0.61 - DriversTools Update
@@ -76,6 +77,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.7.8 - Package parsing update
+
 4.7.7 - Slight changes to handle older files
 
 4.7.6 - More parsing updates, lots of DriversTools updates

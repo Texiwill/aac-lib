@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.7.7"
+VERSIONID="4.7.8"
 
 # args: stmt error
 function colorecho() {
@@ -917,7 +917,11 @@ function getouterrndir() {
 				rndir='view'
 				;;
 			VIEW*)
-				if [ $v -ge 740 ]
+				if [ $v -ge 750 ]
+				then
+					rntmp=`echo $linuxvdi | sed 's/LINUXVDI//g'|sed 's/CART/HZ/' |sed 's/__.*//'`
+					rndir="view/${rntmp}_${v}"
+				elif [ $v -ge 740 ]
 				then
 					rntmp=`echo $linuxvdi | sed 's/LINUXVDI/HZ/g'`
 					rndir="view/${rntmp}"
@@ -1802,8 +1806,11 @@ function getvsm() {
 				fi
 			fi
 		fi
-		if  ([ ! -e ${name} ] && [ ! -e ${name}.gz ]) || [ $doforce -eq 1 ]
+
+		debugecho "$name => $rname ($doforce)"
+		if  [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
 		then 
+			debugecho "$name missing"
 			if [ Z"$drparams" = Z"CART" ]
 			then
 				lurl=$url
