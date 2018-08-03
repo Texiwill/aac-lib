@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.66 - DriversTools
 - 1.0.65 - VC670C and other package updates
 - 1.0.64 - Package Updates
 - 1.0.63 - DriversTools Update plus some others
@@ -78,6 +79,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.7.9 - More compression code for --fixsymlinks
+
 4.7.8 - Package parsing update
 
 4.7.7 - Slight changes to handle older files

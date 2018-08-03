@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.7.8"
+VERSIONID="4.7.9"
 
 # args: stmt error
 function colorecho() {
@@ -732,6 +732,7 @@ function getouterrndir() {
 	rndir=''
 	like=''
 	likeforlike=''
+	osymdir=''
 	rndll='download2.vmware.com'
 	ornlin=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | grep "$lchoice|" |sort -V|tail -1`
  	orndir=`echo $ornlin | cut -d\| -f 2`
@@ -811,6 +812,13 @@ function getouterrndir() {
 				;;
 			NSX_V*)
 				rndir="nsx-V-610"
+				;;
+			NSX_T*)
+				rndir="NST-T210"
+				if [ $v -le 200 ]
+				then
+					rndir="NST-T"
+				fi
 				;;
 			VSPP_VCD*)
 				rndir="vcd"
@@ -1014,12 +1022,15 @@ function getouterrndir() {
 			UAG*)
 				if [ $v -eq 300 ]
 				then
+					osymdir="UAG"
 					rndir="view"
 				elif [ $v -eq 0 ] || [ $v -lt 321 ]
 				then
 					rndir="UAG_${v:0:2}"
+					osymdir="$rndir"
 				else
 					rndir="UAG_${v}"
+					osymdir="$rndir"
 				fi
 				;;
 			*"OSS")
@@ -1029,6 +1040,7 @@ function getouterrndir() {
 	fi
 	debugecho "orndir => $orndir"
 	debugecho "orndll => $orndll"
+	debugecho "osymdir => $osymdir"
 }
 
 function getinnerrndir() {
@@ -1059,11 +1071,34 @@ function getinnerrndir() {
 			rndir=$orndir
 			rndll=$orndll
 		fi
+		# override location for symlinks
+		if [ $symlink -eq 1 ]
+		then
+			symdir=''
+			case "$name" in
+				euc-access-point*)
+					symdir="UAG"
+					;;
+				euc-unified-access*)
+					if [ Z"$rndir" = Z"view" ]
+					then
+						symdir="UAG"
+					else
+						symdir="$rndir"
+					fi
+					;;
+			esac
+		fi
+		if [ Z"$osymdir" != Z"" ] && [ Z"$symdir" = Z"" ]
+		then
+			symdir=$osymdir
+		fi
 		if [ Z"$rndir" != Z"" ]
 		then
 			debugecho "DEBUG: like => $like"
 			debugecho "DEBUG: rndll => $rndll" 
 			debugecho "DEBUG: rndir => $rndir"
+			debugecho "DEBUG: symdir => $symdir"
 		fi
 	fi
 }
@@ -1684,6 +1719,21 @@ function getvsm() {
 			dotdir=1
 		fi
 	fi
+
+	debugecho "DEBUG: $currchoice $name"
+	if [ $menu2files -eq 1 ] || [ $domts -eq 1 ]
+	then
+		getinnerrndir $tchoice
+	fi
+
+	# fake symlink setup for large duplicate files
+	if [ Z"$symdir" != Z"" ] && [ $symlink -eq 1 ]
+	then
+		dotdir=1
+		additional="Additional"
+		tdir="$symdir"
+		debugecho "DEBUG: tdir => $additional $tdir ($dotdir)"
+	fi
 	ldir=`echo $lchoice | sed 's/-/_/g'`
 
 	# this gets the repo items
@@ -1695,7 +1745,8 @@ function getvsm() {
 		mkdir dlg_$ldir
 	fi
 	cd dlg_$ldir 
-	if [ Z"$additional" != Z"base" ]
+	# do not make for Additional
+	if [ Z"$additional" != Z"base" ] && [ Z"$additional" != Z"Additional" ]
 	then
 		if [ ! -e $additional ]
 		then
@@ -1736,11 +1787,6 @@ function getvsm() {
 		fi
 	fi
 	
-	debugecho "DEBUG: $currchoice $name"
-	if [ $menu2files -eq 1 ] || [ $domts -eq 1 ]
-	then
-		getinnerrndir $tchoice
-	fi
 	#echo "Download $name to `pwd`?"
 	#read c
 	getvsmparams
@@ -1806,7 +1852,6 @@ function getvsm() {
 				fi
 			fi
 		fi
-
 		debugecho "$name => $rname ($doforce)"
 		if  [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
 		then 
@@ -1924,7 +1969,12 @@ function getvsm() {
 			if  [ ! -e ${rdir}/${name} ] && [ -e $name ]
 			then 
 				echo -n "$name: symlink "
-				ln -s ../../$additional/dlg_$tdir/$name $rdir
+				if [ Z"$additional" = Z"Additional" ]
+				then
+					ln -s ../$additional/dlg_$tdir/$name $rdir
+				else
+					ln -s ../../$additional/dlg_$tdir/$name $rdir
+				fi
 				echo " ... done "
 			fi
 		fi
@@ -2166,6 +2216,8 @@ historical=0
 compress=0
 beta=0
 symlink=0
+symdir=''
+osymdir=''
 fixsymlink=0
 nbeta1=1
 mydts=-1
