@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.69 - VC670D Update
 - 1.0.68 - 5.5U3B DriversTools Update
 - 1.0.67 - DriversTools Updates
 - 1.0.66 - DriversTools
