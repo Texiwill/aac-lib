@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.7.9"
+VERSIONID="4.8.0"
 
 # args: stmt error
 function colorecho() {
@@ -1294,7 +1294,7 @@ function vsmpkgs() {
 	if [ $choice = "Desktop_End_User_Computing" ]
 	then
 		# need to get this
-		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro"
+		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro Desktop_End_User_Computing_VMware_unified_Access_Gateway"
 		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 	elif [ $choice = "Networking_Security" ]
 	then
@@ -1761,7 +1761,7 @@ function getvsm() {
 	if [ $symlink -eq 1 ] && [ $dotdir -eq 1 ]
 	then
 		cd "$repo"
-		if [ ! -e dlg_$tdir ]
+		if [ ! -e dlg_$tdir ] || [ Z"$additional" = Z"Additional" ]
 		then
 			mkdir -p $additional/dlg_$tdir
 		fi

@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.72 - DriversTools Update Compatibility with 4.8
 - 1.0.71 - DriversTools Update for ESXi 6.7, 6.0
 - 1.0.70 - VC65U2C Update
 - 1.0.69 - VC670D Update
@@ -84,6 +85,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.8.0 - DriversTool and small parsing update for shared big files
+
 4.7.9 - More compression code for --fixsymlinks
 
 4.7.8 - Package parsing update
