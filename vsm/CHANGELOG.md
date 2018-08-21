@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.73 - DriversTools Updates
 - 1.0.72 - DriversTools Update Compatibility with 4.8
 - 1.0.71 - DriversTools Update for ESXi 6.7, 6.0
 - 1.0.70 - VC65U2C Update
