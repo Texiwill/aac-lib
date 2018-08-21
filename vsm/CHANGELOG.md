@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.74 - DriversTools Update, Compatibility with 4.8.1
 - 1.0.73 - DriversTools Updates
 - 1.0.72 - DriversTools Update Compatibility with 4.8
 - 1.0.71 - DriversTools Update for ESXi 6.7, 6.0
@@ -86,6 +87,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.8.1 - Fixed NSX parsing issue
+
 4.8.0 - DriversTool and small parsing update for shared big files
 
 4.7.9 - More compression code for --fixsymlinks
