@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.8.0"
+VERSIONID="4.8.1"
 
 # args: stmt error
 function colorecho() {
@@ -809,6 +809,9 @@ function getouterrndir() {
 				else
 					rndir="nsx-V-610"
 				fi
+				;;
+			NSXV*)
+				rndir="NSX-V-610"
 				;;
 			NSX_V*)
 				rndir="nsx-V-610"
