@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.78 - DriversTools/Custom ISO Update
 - 1.0.77 - DriversTools Updates
 - 1.0.76 - DriversTools Update
 - 1.0.75 - Correction to DriversTools Update
