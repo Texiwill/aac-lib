@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.79 - DriversTools for 6.5
 - 1.0.78 - DriversTools/Custom ISO Update
 - 1.0.77 - DriversTools Updates
 - 1.0.76 - DriversTools Update
@@ -91,6 +92,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.8.2 - Fixed 67 download parser
+
 4.8.1 - Fixed NSX parsing issue
 
 4.8.0 - DriversTool and small parsing update for shared big files

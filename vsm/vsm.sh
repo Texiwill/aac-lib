@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.8.1"
+VERSIONID="4.8.2"
 
 # args: stmt error
 function colorecho() {
@@ -895,6 +895,10 @@ function getouterrndir() {
 				;;
 			OEM*)
 				rndir="vi"
+				if [ $v -ge 67 ]
+				then
+					rndir="vi/$v"
+				fi
 				;;
 			DT*)
 				rndll="download3.vmware.com"
