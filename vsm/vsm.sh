@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.8.2"
+VERSIONID="4.8.3"
 
 # args: stmt error
 function colorecho() {
@@ -73,8 +73,8 @@ findfavpaths()
 {
 	pchoice=$1
 	# find paths
-	vc=`echo $pchoice | sed 's/[a-Z_]\+\([0-9]_[0-9]\|[0-9]\+\).*/\1/'`
-	tc=`echo $pchoice | tr '[:upper:]' '[:lower:]'|sed 's/\([0-9]\)_\([a-z_]\+\)/\1 \2/'|sed 's/_/./g'`
+	vc=`echo $pchoice | sed 's/[a-Z_]\+\([0-9]_[0-9x]\|[0-9]\+\).*/\1/'`
+	tc=`echo $pchoice | tr '[:upper:]' '[:lower:]'|sed 's/\([0-9]_[0-9x]\|[0-9]\)_\([a-z_]\+\)/\1 \2/'|sed 's/_/./g'`
 	dc=`echo $tc | cut -d' ' -f1`
 	dc="${dc%?}?"
 	ec=`echo $tc | cut -d' ' -f2 | sed 's/\./_/g'`
@@ -102,7 +102,7 @@ findfavpaths()
 	vf=`dirname $myfm`
 	myfm="$vf/$vc"
 	myfvmware="${myfm}/${ec}"
-	tf=`echo $fv | cut -d\" -f2 | sed 's/ /_/g'`
+	tf=`echo $fv | cut -d\" -f2 | sed 's/ /_/g'|sed 's/-/_/g'`
 	# rebuild mchoice path
 	li=`xml_grep --text_only '//*/a' ${rcdir}/root.xhtml`
 	for x in $li Infrastructure_Operations_Management Desktop_End_User_Computing Networking_Security
