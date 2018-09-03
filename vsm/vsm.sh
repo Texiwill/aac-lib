@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.8.3"
+VERSIONID="4.8.4"
 
 # args: stmt error
 function colorecho() {
@@ -1173,7 +1173,7 @@ function getasso() {
 		# sometimes things exist that are not in asso lists
 		# sometimes they use similar version numbers
 		rchoice=`echo $sc | sed 's/U/*U/'` 
-		for x in `ls ${moreasso}*${rchoice}_*.xhtml 2>/dev/null | grep -v ${moreasso}_${sc}.xhtml | grep -v VCENTER`
+		for x in `ls ${moreasso}*${rchoice}_*.xhtml 2>/dev/null | grep -v ${moreasso}_${sc}.xhtml | egrep -v 'VCENTER|NSX'`
 		do
 			y=`echo $x | sed 's/\.xhtml//'|sed "s/${moreasso}_//"`
 			# only list all asso if dodlg != 1
