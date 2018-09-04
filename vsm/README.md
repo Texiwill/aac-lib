@@ -278,7 +278,7 @@ and contains the following to download all of vSphere 6.5 Enterprise Plus,
 vSphere 6.7 Enterprise Plus, and all of VMware vRealize Suite 2017.
 ```
 # ensure vsm is not running, should take 30m not 24 hours.
-pkill -9 vsm
+pkill -9 vsm.sh
 # now autoupdate repo
 /usr/local/bin/vsm.sh -mr -c -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
 /usr/local/bin/vsm.sh -c -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Enterprise_Plus
