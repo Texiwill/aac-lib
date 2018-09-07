@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.83 - DriversTools Updates
 - 1.0.82 - Compatibility with 4.8.4
 - 1.0.81 - Compatibility with 4.8.3
 - 1.0.80 - DriversTools for 6.7/6.5/6.0
