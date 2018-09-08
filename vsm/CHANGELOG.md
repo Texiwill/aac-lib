@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.84 - DriversTools, Compatibility with 4.8.5
 - 1.0.83 - DriversTools Updates
 - 1.0.82 - Compatibility with 4.8.4
 - 1.0.81 - Compatibility with 4.8.3
@@ -96,6 +97,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.8.5 - Missing Package group
+
 4.8.4 - Fix to package name parsing for NSX
 
 4.8.3 - Fix to --fav parsing

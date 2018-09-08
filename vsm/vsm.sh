@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.8.4"
+VERSIONID="4.8.5"
 
 # args: stmt error
 function colorecho() {
@@ -196,10 +196,18 @@ function mywget() {
 			wgprogress=0
 		fi
 	fi
+	ua='VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2'
+	ck='cookies.txt'
+	if [ Z"$hd" = Z"pcookies" ]
+	then
+		ua=$oaua
+		ck='pcookies.txt'
+		hd="--progress=bar:force --header='Referer: $mypatches_ref'" 
+	fi
 	if [ Z"$1" = "-" ]
 	then
 		# getting pre-url
-		lurl=`wget --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' -O - $hr 2>&1 | grep Location | awk '{print $2}'`
+		lurl=`wget --max-redirect 0 --load-cookies $cdir/$ck --header="User-Agent: $ua" -O - $hr 2>&1 | grep Location | awk '{print $2}'`
 		err=${PIPESTATUS[0]}
 	else
 		debugecho "doquiet => $doquiet : $doprogress : $indomenu2 : $wgprogress"
@@ -211,10 +219,10 @@ function mywget() {
 			fi
 			if [ $wgprogress -eq 1 ]
 			then
-				wget $_PROGRESS_OPT --progress=bar:force $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr 2>&1 | progressfilt 
+				wget $_PROGRESS_OPT --progress=bar:force $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
 				err=${PIPESTATUS[0]}
 			else
-				wget $_PROGRESS_OPT $hd --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr >& /dev/null
+				wget $_PROGRESS_OPT $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
 				err=${PIPESTATUS[0]}
 			fi
 			if [ $doprogress -eq 1 ] && [ $indomenu2 -eq 1 ]
@@ -222,11 +230,14 @@ function mywget() {
 				echo -n "+"
 			fi
 		else
-			wget $_PROGRESS_OPT $hd --progress=bar:force --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $ou $hr # 2>&1 | progressfilt
+			wget $_PROGRESS_OPT $hd --progress=bar:force --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
 			err=${PIPESTATUS[0]}
 		fi
 	fi
-	wgeterror $err
+	if [ Z"$ck" != Z"pcookies.txt" ]
+	then
+		wgeterror $err
+	fi
 }
 
 function addpath() {
@@ -1240,6 +1251,14 @@ function getasso() {
 			fi
 		fi
 	done
+	if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ]
+	then
+		get_product_patches $sc
+		if [ -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ]
+		then
+			patcnt=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml |grep download | sed 's/[,"]//g'|wc -l`
+		fi
+	fi
 	debugecho "DEBUG: dtslist => $dtslist"
 	debugecho "DEBUG: osslist => $osslist"
 	debugecho "DEBUG: assomissing => $assomissing"
@@ -1329,7 +1348,7 @@ function vsmpkgs() {
 			pkgs="Infrastructure_Operations_Management_VMware_vRealize_Automation Infrastructure_Operations_Management_VMware_vRealize_Network_Insight Infrastructure_Operations_Management_VMware_vRealize_Suite"
 			if [ $dovex -eq 1 ]
 			then
-				pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack Infrastructure_Operations_Management_VMware_Site_Recovery_Manager"
+				pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack Infrastructure_Operations_Management_VMware_Site_Recovery_Manager Infrastructure_Operations_Management_VMware_vCenter_Converter_Standalone"
 				# Infrastructure_Operations_Management_VMware_vRealize_Operations"
 				# Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager
 				pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
@@ -1540,11 +1559,16 @@ function menu() {
 function menu2() {
 	mval=$1
 	all=""
+	pat=''
 	#doprogress=0
 	debugecho "MENU2: $mval"
 	if [ Z"$2" = Z"OpenSource" ]
 	then
 		all="All_Plus_OpenSource"
+	fi
+	if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ] && [ $patcnt -gt 0 ]
+	then
+		pat='Patches'
 	fi
 	#if [ -e $1 ]
 	#then
@@ -1583,7 +1607,7 @@ function menu2() {
 		done
 		debugecho "MENU2: $mval $2 $3 $4"
 		export COLUMNS=30
-		select choice in All Minimum_Required $all $npkg $2 $3 $4 Back Exit
+		select choice in All Minimum_Required $all $npkg $2 $3 $4 $pat Back Exit
 		do
 			if [ Z"$choice" != Z"" ]
 			then
@@ -1594,6 +1618,7 @@ function menu2() {
 					exit
 				fi
 				break
+
 			else
 				echo -n "Please enter a valid numeric number:"
 			fi
@@ -1709,6 +1734,161 @@ function getvsmparams() {
 		fi
 		debugecho "DEBUG: durl => $durl"
 		#durl=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $sdu`
+	fi
+}
+
+function compress_file() {
+	name=$1
+	if [ $compress -eq 1 ]
+	then
+		e=${name##*.}
+		if [ Z"$e" != Z"zip" ] && [ Z"$e" != Z"ZIP" ] && [ Z"$e" != Z"gz" ] || [ Z"$e" == Z"$f" ]
+		then
+			if [ ! -e ${name}.gz ] && [ -e ${name} ]
+			then
+				echo -n "$name: gzip "
+				gzip $name
+				echo " ... done "
+			fi
+			name=${name}.gz
+		fi
+	fi
+} 
+
+function oauth_login() {
+	# Get creds
+	oauth=`echo $auth | base64 -d`
+	rd=(`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$oauth" 2>/dev/null|sed 's/%3A/ /'`)
+	pd="vmware=login&username=${rd[0]}&password=${rd[1]}"
+
+	# Login
+	bcmtx=`wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location|tail -1|awk '{print $2}'`
+	wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bcmtx >& /dev/null
+	wget -O - $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bcmtx" $myvmware_oauth >& /dev/null
+}
+
+function get_patch_list() {
+	# do not get if not there already
+	if [ ! -e $rcdir/_patches.xhtml ] && [ ! -e $cdir/pcookies.txt ]
+	then
+		# Patch Cookies
+		wget -O - $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bcmtx" $mypatches_ref >& /dev/null
+		# Patch List
+		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --load-cookies $cdir/pcookies.txt --post-data='' --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" 'https://my.vmware.com//group/vmware/patch?p_p_id=PatchDownloadSearchPortlet_WAR_itofflinePatch&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=loadPatchSearchPage&p_p_cacheability=cacheLevelPage&p_p_col_id=column-6&p_p_col_pos=1&p_p_col_count=2' >& /dev/null
+	fi
+}
+
+function get_product_patches() {
+	sc=$1
+
+	ppr=`echo $sc | sed 's/\([A-Z]\+\)[0-9][0-9A-Z]\+/\1/'`
+	if [ Z"$ppr" = Z"ESXI" ] || [ Z"$ppr" = Z"VC" ]
+	then
+		if [ $ppr = "ESXI" ]
+		then
+			ppr="ESXi"
+		fi
+		ppv=`echo $v | sed 's/.\{1\}/&./g' | sed 's/\.$//'`
+		# patches only work for VC/ESXi
+		if [ ! -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ]
+		then
+			## First get index
+			pin=`jq .[].prodList[].name ${rcdir}/_patches.xhtml | awk "/$ppr/{print NR-1}"`
+			## Get 'productName'
+			pnn=`jq ".[].prodList[${pin}].name" ${rcdir}/_patches.xhtml`
+			## Get 'product'
+			pvn=`jq ".[].prodList[${pin}].value" ${rcdir}/_patches.xhtml`
+	
+			# Get 'Details'
+			pini=`jq ".[].prodList[${pin}].versions[].name" ${rcdir}/_patches.xhtml |awk "/$ppv/{print NR-1}"`
+			pinv=`jq ".[].prodList[${pin}].versions[${pini}].value" ${rcdir}/_patches.xhtml`
+			prt=`jq ".[].prodList[${pin}].versions[${pini}].resultType" ${rcdir}/_patches.xhtml`
+
+			# Patch Data per version
+			pd=`echo "product=${pvn}&productName=${pnn}&version=${pinv}&versionName=${ppv}&resultType=${prt}&releasedate=YYYY-MM-DD&severity=All+Severities&category=All+Categories&classify=All+Classifications&releasenumber=Enter+Release+Name&buildnumber=Enter+Build+Number&bulletinnumber=Enter+Bulletin+Number&dependency=true" |sed 's/"//g' | sed 's/ /+/g'`
+			wget -O ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml --load-cookies $cdir/pcookies.txt --post-data="$pd" --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" 'https://my.vmware.com/group/vmware/patch?p_p_id=PatchDownloadSearchPortlet_WAR_itofflinePatch&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getPatchData&p_p_cacheability=cacheLevelPage&p_p_col_id=column-6&p_p_col_pos=1&p_p_col_count=2' >& /dev/null
+		fi
+
+	else
+		debugecho "Cannot get patches for $ppr"
+	fi
+}
+
+function download_patches() {
+	sc=$1
+	if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ]
+	then
+		ppr=`echo $sc | sed 's/\([A-Z]\+\)[0-9][0-9A-Z]\+/\1/'`
+		if [ Z"$ppr" = Z"ESXI" ] || [ Z"$ppr" = Z"VC" ]
+		then
+			dnr=1
+			if [ $ppr = "ESXI" ]
+			then
+				ppr="ESXi"
+				dnr=5
+			fi
+			ppv=`echo $v | sed 's/.\{1\}/&./g' | sed 's/\.$//'`
+			if [ -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ]
+			then
+				ldir=`echo $sc | sed 's/-/_/g'`
+				cd "$repo"
+				if [ ! -e dlg_$ldir ]
+				then
+					mkdir dlg_$ldir
+				fi
+				cd dlg_$ldir 
+				if [ ! -e Patches ]
+				then
+					mkdir Patches
+				fi
+				cd Patches
+				
+				# Download links as array
+				darr=(`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | awk "/download/{print NR-$dnr}"`)
+				downloads=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml |grep download | sed 's/[,"]//g'`
+				#jq .[] ${rcdir}/${prod}_patchlist.xhtml |grep download
+				d=0
+				for x in $downloads
+				do
+					if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+					then
+						echo -n "."
+					fi
+					y=`echo $x | cut -d\? -f 1`
+					f=`basename $y`
+					echo $f
+					if  [ ! -e ${f} ] && [ ! -e ${f}.gz ] || [ $doforce -eq 1 ]
+					then
+						if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+						then
+							echo -n "p"
+						fi
+						mywget $f "$x" 'pcookies' 1
+						if [ $doshacheck -eq 1 ]
+						then
+							cks=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | sed -n "${darr[$d]}p" | cut -d^ -f2 | sed 's/",//'`
+							echo ${darr[$d]}
+							echo -n "$f: check "
+							shc=`sha1sum $f|cut -d' ' -f 1`
+							if [ Z"$shc" != Z"$cks" ]
+							then
+								shafail="${shafail}
+	${f}"
+								colorecho "failed" 1
+							else
+								echo "passed"
+							fi
+						fi
+						name=$f
+						compress_file $name
+					fi
+					((d++))
+				done
+				echo ""
+				colorecho "Patches to $repo/dlg_$currchoice/Patches"
+				cd ${cdir}/depot.vmware.com/PROD/channel
+			fi
+		fi
 	fi
 }
 
@@ -1956,20 +2136,7 @@ function getvsm() {
 				fi
 			fi
 		fi
-		if [ $compress -eq 1 ]
-		then
-			e=${name##*.}
-			if [ Z"$e" != Z"zip" ] && [ Z"$e" != Z"ZIP" ] && [ Z"$e" != Z"gz" ] || [ Z"$e" == Z"$name" ]
-			then
-				if [ ! -e ${name}.gz ] && [ -e ${name} ]
-				then
-					echo -n "$name: gzip "
-					gzip $name
-					echo " ... done "
-				fi
-				name=${name}.gz
-			fi
-		fi
+		compress_file $name
 		if [ $symlink -eq 1 ]
 		then
 			# now create as symlink if it does not already exist
@@ -2246,6 +2413,8 @@ mypkg=""
 mydlg=""
 dodlg=0
 dovex=0
+dopatch=0
+patcnt=0
 # general
 mchoice="root"
 pver=''
@@ -2362,6 +2531,12 @@ do
 			;;
 		--vexpertx)
 			dovex=1
+			;;
+		--patches)
+			if [ $dovex -eq 1 ]
+			then
+				dopatch=1
+			fi
 			;;
 		-v|--vsmdir)
 			cdir=$2
@@ -2717,6 +2892,22 @@ fi
 # Present the list
 cd depot.vmware.com/PROD/channel
 
+# Patches
+mypatches_ref='https://my.vmware.com/group/vmware/patch'
+myvmware_login='https://my.vmware.com/web/vmware/login'
+myvmware_oauth='https://my.vmware.com/oam/server/auth_cred_submit'
+oaua='Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
+ppr=''
+ppv=''
+if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ]
+then
+	rm -f $cdir/pcookies.txt _*patch*.xhtml >& /dev/null
+	colorecho "	Patches:	1"
+	oauth_login
+	# One time
+	get_patch_list
+fi
+
 # start of history
 mlist=0
 myvmware_root="https://my.vmware.com/web/vmware/info/slug"
@@ -2937,6 +3128,7 @@ do
 						dooss=0
 						dodts=0
 						dodat=0
+						dopat=0
 						myall=0
 						mychoice=""
 						currchoice=$choice;
@@ -2964,6 +3156,7 @@ do
 								dodts=1
 								dodat=1
 								myall=1
+								dopat=1
 								;;
 							"Minimum_Required")
 								dodat=1
@@ -2975,9 +3168,13 @@ do
 								dodts=1
 								dodat=1
 								myall=1
+								dopat=1
 								;;
 							"CustomIso")
 								dooem=1
+								;;
+							"Patches")
+								dopat=1
 								;;
 							"OpenSource")
 								dooss=1
@@ -3001,6 +3198,7 @@ do
 							dodts=1
 							dodat=1
 							myall=1
+							dopat=1
 							domenu2=0
 						fi
 						if [ $doall -eq 2 ]
@@ -3010,6 +3208,7 @@ do
 							dodts=1
 							dodat=1
 							myall=1
+							dopat=1
 							domenu2=0
 						fi
 						if [ $doall -eq 3 ]
@@ -3019,6 +3218,7 @@ do
 							dodts=0
 							dodat=1
 							myall=1
+							dopat=1
 							domenu2=0
 						fi
 						if [ $dodlg -eq 1 ]
@@ -3135,6 +3335,16 @@ do
 										fi
 									fi
 								fi
+							fi
+						fi
+						# Do patches if necessary
+						if [ $dopat -eq 1 ]
+						then
+							if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ]
+							then
+								get_product_patches $currchoice
+								download_patches $currchoice
+								patcnt=0
 							fi
 						fi
 			
