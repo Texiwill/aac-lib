@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.8.7"
+VERSIONID="4.8.8"
 
 # args: stmt error
 function colorecho() {
@@ -160,7 +160,7 @@ function wgeterror() {
 		colorecho "File Error: $name (disk full, etc.)" 1
 		;;
 	4)
-		colorecho "Network Error Getting $name" 1
+		#colorecho "Network Error Getting $name" 1
 		;;
 	5)
 		colorecho "SSL Error Getting $name" 1
@@ -211,8 +211,6 @@ function mywget() {
 		err=${PIPESTATUS[0]}
 	else
 		debugecho "doquiet => $doquiet : $doprogress : $indomenu2 : $wgprogress"
-		# just in case we are not at beginning of line
-		echo ""
 		if [ $doquiet -eq 1 ]
 		then
 			if [ $doprogress -eq 1 ] && [ $indomenu2 -eq 1 ]
@@ -1915,6 +1913,8 @@ function download_patches() {
 						then
 							echo -n "p"
 						fi
+						# just in case we are not at beginning of line
+						echo ""
 						mywget $f "$x" 'pcookies' 1
 						if [ $doshacheck -eq 1 ]
 						then
@@ -2149,6 +2149,8 @@ function getvsm() {
 					diddownload=0
 					if [ $dryrun -eq 0 ]
 					then
+						# just in case we are not at beginning of line
+						echo ""
 						mywget $name $eurl "--progress=bar:force" 1
 					else
 						mywget $name $eurl "--spider --progress=bar:force" 1
