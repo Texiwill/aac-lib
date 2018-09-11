@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.88 - Compatibility with 4.8.9
 - 1.0.87 - Compatibility with 4.8.8
 - 1.0.86 - Compatibility with 4.8.7
 - 1.0.85 - DrviersTools, Compatibility with 4.8.6
@@ -100,6 +101,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.8.9 - Backed-out UA change
+
 4.8.8 - Fix to Networking Error take #2
 
 4.8.7 - Fix to Network Error

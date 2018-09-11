@@ -7,13 +7,13 @@ AAC Library of Tools
 Linux Version of VMware Software Manager
 
 ### Description
-A Linux and slightly more intelligent version of VSM for Linux. It ignores
+A slightly more intelligent version of VSM for Linux and MacOS. It ignores
 missing definition files that cause the VMware version to stop working. It
-also finds ones not in the definitions yet. It is also possible to find
+also finds packages not in the definitions yet. It is also possible to find
 the latest of every package.
 
 As of v4.0.0 LinuxVSM now uses the My VMware mode by default. This
-implies that previously out of date items are not up to date once more.
+implies that previously out of date items are now up to date once more.
 
 Also, you should know that Code Stream is a license ontop of VRA, and
 VRA is already in LinuxVSM.
