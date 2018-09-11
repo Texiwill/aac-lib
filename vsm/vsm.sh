@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.8.5"
+VERSIONID="4.8.6"
 
 # args: stmt error
 function colorecho() {
@@ -137,7 +137,7 @@ progressfilt ()
 				count=0
 			else
 				((count++))
-				if ((count > 1))
+				if ((count > 2))
 				then
 					flag=true
 				fi
@@ -202,7 +202,7 @@ function mywget() {
 	then
 		ua=$oaua
 		ck='pcookies.txt'
-		hd="--progress=bar:force --header='Referer: $mypatches_ref'" 
+		hd="--header='Referer: $mypatches_ref'" 
 	fi
 	if [ Z"$1" = "-" ]
 	then
@@ -1737,6 +1737,29 @@ function getvsmparams() {
 	fi
 }
 
+function shacheck_file() {
+	fn=$1
+	if [ $doshacheck -eq 1 ]
+	then
+		shadownload=1
+		echo -n "$fn: check "
+		if [ Z"$sha" = Z"sha256sum" ]
+		then
+			ck=`sha256sum $fn|cut -d' ' -f 1`
+		else
+			ck=`sha1sum $fn|cut -d' ' -f 1`
+		fi
+		if [ Z"$ck" != Z"$sha256" ]
+		then
+			shafail="${shafail}
+	${fn}"
+			colorecho "failed" 1
+		else
+			echo "passed"
+		fi
+	fi
+}
+
 function compress_file() {
 	name=$1
 	if [ $compress -eq 1 ]
@@ -1755,21 +1778,39 @@ function compress_file() {
 	fi
 } 
 
+need_login=0
+inpatch_dl=0
 function oauth_login() {
-	# Get creds
-	oauth=`echo $auth | base64 -d`
-	rd=(`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$oauth" 2>/dev/null|sed 's/%3A/ /'`)
-	pd="vmware=login&username=${rd[0]}&password=${rd[1]}"
+	dl=$1
+	z=`date +"%s"`
+	test_login=$(($z-$need_login))
+	debugecho "OL: $test_login $need_login"
+	if [ $test_login -ge 900 ]
+	then
+		need_login=$z
+		# Get creds
+		oauth=`echo $auth | base64 -d`
+		rd=(`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$oauth" 2>/dev/null|sed 's/%3A/ /'`)
+		pd="vmware=login&username=${rd[0]}&password=${rd[1]}"
 
-	# Login
-	bcmtx=`wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location|tail -1|awk '{print $2}'`
-	wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bcmtx >& /dev/null
-	wget -O - $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bcmtx" $myvmware_oauth >& /dev/null
+		# Login
+		bcmtx=`wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location|tail -1|awk '{print $2}'`
+		wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bcmtx >& /dev/null
+		wget -O - $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bcmtx" $myvmware_oauth >& /dev/null
+		# force new cookies
+		rm -f $cdir/pcookies.txt >& /dev/null
+		rm -f $rcdir/_*patch*.xhtml >& /dev/null
+		get_patch_list
+		if [ $dl -eq 1 ]
+		then
+			inpatch_dl=1
+		fi
+	fi
 }
 
 function get_patch_list() {
 	# do not get if not there already
-	if [ ! -e $rcdir/_patches.xhtml ] && [ ! -e $cdir/pcookies.txt ]
+	if [ ! -e $rcdir/_patches.xhtml ] || [ ! -e $cdir/pcookies.txt ]
 	then
 		# Patch Cookies
 		wget -O - $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bcmtx" $mypatches_ref >& /dev/null
@@ -1784,13 +1825,18 @@ function get_product_patches() {
 	ppr=`echo $sc | sed 's/\([A-Z]\+\)[0-9][0-9A-Z]\+/\1/'`
 	if [ Z"$ppr" = Z"ESXI" ] || [ Z"$ppr" = Z"VC" ]
 	then
+		oauth_login 0
 		if [ $ppr = "ESXI" ]
 		then
 			ppr="ESXi"
 		fi
 		ppv=`echo $v | sed 's/.\{1\}/&./g' | sed 's/\.$//'`
+		if [ ${#ppv} -eq 3 ]
+		then
+			ppv="${ppv}.0"
+		fi
 		# patches only work for VC/ESXi
-		if [ ! -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ]
+		if [ ! -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ] || [ $inpatch_dl -eq 1 ]
 		then
 			## First get index
 			pin=`jq .[].prodList[].name ${rcdir}/_patches.xhtml | awk "/$ppr/{print NR-1}"`
@@ -1801,11 +1847,13 @@ function get_product_patches() {
 	
 			# Get 'Details'
 			pini=`jq ".[].prodList[${pin}].versions[].name" ${rcdir}/_patches.xhtml |awk "/$ppv/{print NR-1}"`
+			pnam=`jq ".[].prodList[${pin}].versions[${pini}].name" ${rcdir}/_patches.xhtml`
 			pinv=`jq ".[].prodList[${pin}].versions[${pini}].value" ${rcdir}/_patches.xhtml`
 			prt=`jq ".[].prodList[${pin}].versions[${pini}].resultType" ${rcdir}/_patches.xhtml`
 
 			# Patch Data per version
-			pd=`echo "product=${pvn}&productName=${pnn}&version=${pinv}&versionName=${ppv}&resultType=${prt}&releasedate=YYYY-MM-DD&severity=All+Severities&category=All+Categories&classify=All+Classifications&releasenumber=Enter+Release+Name&buildnumber=Enter+Build+Number&bulletinnumber=Enter+Bulletin+Number&dependency=true" |sed 's/"//g' | sed 's/ /+/g'`
+			pd=`echo "product=${pvn}&productName=${pnn}&version=${pinv}&versionName=${pnam}&resultType=${prt}&releasedate=YYYY-MM-DD&severity=All+Severities&category=All+Categories&classify=All+Classifications&releasenumber=Enter+Release+Name&buildnumber=Enter+Build+Number&bulletinnumber=Enter+Bulletin+Number&dependency=true" |sed 's/"//g' | sed 's/ /+/g'`
+			#echo $pd
 			wget -O ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml --load-cookies $cdir/pcookies.txt --post-data="$pd" --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" 'https://my.vmware.com/group/vmware/patch?p_p_id=PatchDownloadSearchPortlet_WAR_itofflinePatch&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getPatchData&p_p_cacheability=cacheLevelPage&p_p_col_id=column-6&p_p_col_pos=1&p_p_col_count=2' >& /dev/null
 		fi
 
@@ -1828,35 +1876,37 @@ function download_patches() {
 				dnr=5
 			fi
 			ppv=`echo $v | sed 's/.\{1\}/&./g' | sed 's/\.$//'`
+			if [ ${#ppv} -eq 3 ]
+			then
+				ppv="${ppv}.0"
+			fi
 			if [ -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ]
 			then
-				ldir=`echo $sc | sed 's/-/_/g'`
-				cd "$repo"
-				if [ ! -e dlg_$ldir ]
-				then
-					mkdir dlg_$ldir
-				fi
-				cd dlg_$ldir 
-				if [ ! -e Patches ]
-				then
-					mkdir Patches
-				fi
-				cd Patches
+				gotodir $sc "Patches" ${ppr}${ppv}
 				
 				# Download links as array
 				darr=(`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | awk "/download/{print NR-$dnr}"`)
 				downloads=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml |grep download | sed 's/[,"]//g'`
 				#jq .[] ${rcdir}/${prod}_patchlist.xhtml |grep download
 				d=0
+				inpatch_dl=0
 				for x in $downloads
 				do
+					# this causes a 'break'
+					# need to restart download_patches
+					oauth_login 1
+					if [ $inpatch_dl -eq 1 ]
+					then
+						break
+					fi
 					if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 					then
 						echo -n "."
 					fi
 					y=`echo $x | cut -d\? -f 1`
 					f=`basename $y`
-					echo $f
+					name=$f
+					#echo `pwd` $f
 					if  [ ! -e ${f} ] && [ ! -e ${f}.gz ] || [ $doforce -eq 1 ]
 					then
 						if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
@@ -1866,37 +1916,32 @@ function download_patches() {
 						mywget $f "$x" 'pcookies' 1
 						if [ $doshacheck -eq 1 ]
 						then
-							cks=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | sed -n "${darr[$d]}p" | cut -d^ -f2 | sed 's/",//'`
-							echo ${darr[$d]}
-							echo -n "$f: check "
-							shc=`sha1sum $f|cut -d' ' -f 1`
-							if [ Z"$shc" != Z"$cks" ]
-							then
-								shafail="${shafail}
-	${f}"
-								colorecho "failed" 1
-							else
-								echo "passed"
-							fi
+							sha256=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | sed -n "${darr[$d]}p" | cut -d^ -f2 | sed 's/",//'`
+							#echo ${darr[$d]}
+							sha='sha1sum'
+							shacheck_file $f
 						fi
-						name=$f
 						compress_file $name
 					fi
+					mksymlink $name
 					((d++))
+					inpatch_dl=0
 				done
-				echo ""
-				colorecho "Patches to $repo/dlg_$currchoice/Patches"
+				if [ $inpatch_dl -eq 0 ]
+				then
+					echo ""
+					colorecho "Patches to $repo/dlg_$currchoice/Patches"
+				fi
 				cd ${cdir}/depot.vmware.com/PROD/channel
 			fi
 		fi
 	fi
 }
 
-function getvsm() {
+function gotodir() {
 	lchoice=$1
 	additional=$2
 	tchoice=$lchoice
-	dotdir=0
 	if [ Z"$3" != Z"" ]
 	then
 		tchoice=$3
@@ -1954,6 +1999,34 @@ function getvsm() {
 		fi
 		cd $additional/dlg_$tdir
 	fi
+}
+
+function mksymlink() {
+	fn=$1
+	if [ $symlink -eq 1 ]
+	then
+		# now create as symlink if it does not already exist
+		if  [ ! -e ${rdir}/${fn} ] && [ -e $fn ]
+		then 
+			echo -n "$fn: symlink "
+			if [ Z"$additional" = Z"Additional" ]
+			then
+				ln -s ../$additional/dlg_$tdir/$fn $rdir
+			else
+				ln -s ../../$additional/dlg_$tdir/$fn $rdir
+			fi
+			echo " ... done "
+		fi
+	fi
+}
+
+function getvsm() {
+	lchoice=$1
+	additional=$2
+	tchoice=$lchoice
+	dotdir=0
+
+	gotodir $1 $2 $3
 	debugecho "DEBUG: $currchoice: `pwd`"
 	dovsmit=1
 
@@ -2096,21 +2169,7 @@ function getvsm() {
 						if [ $doshacheck -eq 1 ]
 						then
 							shadownload=1
-							echo -n "$name: check "
-							if [ Z"$sha" = Z"sha256sum" ]
-							then
-								sc=`sha256sum $name|cut -d' ' -f 1`
-							else
-								sc=`sha1sum $name|cut -d' ' -f 1`
-							fi
-							if [ Z"$sc" != Z"$sha256" ]
-							then
-								shafail="${shafail}
-	${name}"
-								colorecho "failed" 1
-							else
-								echo "passed"
-							fi
+							shacheck_file $name
 						fi
 						diddownload=1
 					fi
@@ -2137,21 +2196,7 @@ function getvsm() {
 			fi
 		fi
 		compress_file $name
-		if [ $symlink -eq 1 ]
-		then
-			# now create as symlink if it does not already exist
-			if  [ ! -e ${rdir}/${name} ] && [ -e $name ]
-			then 
-				echo -n "$name: symlink "
-				if [ Z"$additional" = Z"Additional" ]
-				then
-					ln -s ../$additional/dlg_$tdir/$name $rdir
-				else
-					ln -s ../../$additional/dlg_$tdir/$name $rdir
-				fi
-				echo " ... done "
-			fi
-		fi
+		mksymlink $name
 	fi
 	cd ${cdir}/depot.vmware.com/PROD/channel
 }
@@ -2902,10 +2947,10 @@ ppv=''
 if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ]
 then
 	rm -f $cdir/pcookies.txt _*patch*.xhtml >& /dev/null
-	colorecho "	Patches:	1"
-	oauth_login
-	# One time
+	colorecho "	Oauth:	1"
+	oauth_login 0
 	get_patch_list
+	colorecho "	Patches:	1"
 fi
 
 # start of history
@@ -2935,7 +2980,7 @@ then
 	# Find the file
 	if [ $dodlglist -eq 0 ]
 	then
-		myaf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sed 's/VCL_VSP..._//' | cut -d' ' -f2,6  | sed 's/\(\w\)_\(.* \)/\1\2/' | sed 's/U/0U/g' | sort -u -k1 -V | sed 's/0U/U/g' | cut -d' ' -f2|tail -1`
+		myaf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sed 's/VCL_VSP..._//' | cut -d' ' -f2,6  | sed 's/\(\w\)_\(.* \)/\1\2/' | sed 's/U/0U/g' | sort -u -k1 -V | sed 's/0U/U/g' | cut -d' ' -f2|sort -V|tail -1`
 		mytf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$myaf" | tail -1` 
 	else
 		uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sed 's/VCL_VSP..._//' | cut -d' ' -f2,6  | sed 's/\(\w\)_\(.* \)/\1\2/' | sed 's/U/0U/g' | sort -u -k1 -V | sed 's/0U/U/g'
@@ -3342,8 +3387,11 @@ do
 						then
 							if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ]
 							then
-								get_product_patches $currchoice
-								download_patches $currchoice
+								while : ; do
+									get_product_patches $currchoice
+									download_patches $currchoice
+									[[ $inpatch_dl -eq 1 ]] || break;
+								done
 								patcnt=0
 							fi
 						fi
