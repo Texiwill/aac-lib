@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.8.6"
+VERSIONID="4.8.7"
 
 # args: stmt error
 function colorecho() {
@@ -196,21 +196,23 @@ function mywget() {
 			wgprogress=0
 		fi
 	fi
-	ua='VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2'
+	ua="--header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2'"
 	ck='cookies.txt'
 	if [ Z"$hd" = Z"pcookies" ]
 	then
-		ua=$oaua
+		ua="--header='User-Agent: $oaua'"
 		ck='pcookies.txt'
 		hd="--header='Referer: $mypatches_ref'" 
 	fi
 	if [ Z"$1" = "-" ]
 	then
 		# getting pre-url
-		lurl=`wget --max-redirect 0 --load-cookies $cdir/$ck --header="User-Agent: $ua" -O - $hr 2>&1 | grep Location | awk '{print $2}'`
+		lurl=`wget --max-redirect 0 --load-cookies $cdir/$ck $ua -O - $hr 2>&1 | grep Location | awk '{print $2}'`
 		err=${PIPESTATUS[0]}
 	else
 		debugecho "doquiet => $doquiet : $doprogress : $indomenu2 : $wgprogress"
+		# just in case we are not at beginning of line
+		echo ""
 		if [ $doquiet -eq 1 ]
 		then
 			if [ $doprogress -eq 1 ] && [ $indomenu2 -eq 1 ]
@@ -219,10 +221,10 @@ function mywget() {
 			fi
 			if [ $wgprogress -eq 1 ]
 			then
-				wget $_PROGRESS_OPT --progress=bar:force $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
+				wget $_PROGRESS_OPT --progress=bar:force $hd --load-cookies $cdir/$ck $ua $ou $hr 2>&1 | progressfilt 
 				err=${PIPESTATUS[0]}
 			else
-				wget $_PROGRESS_OPT $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
+				wget $_PROGRESS_OPT $hd --load-cookies $cdir/$ck $ua $ou $hr >& /dev/null
 				err=${PIPESTATUS[0]}
 			fi
 			if [ $doprogress -eq 1 ] && [ $indomenu2 -eq 1 ]
@@ -230,7 +232,7 @@ function mywget() {
 				echo -n "+"
 			fi
 		else
-			wget $_PROGRESS_OPT $hd --progress=bar:force --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
+			wget $_PROGRESS_OPT $hd --progress=bar:force --load-cookies $cdir/$ck $ua $ou $hr # 2>&1 | progressfilt
 			err=${PIPESTATUS[0]}
 		fi
 	fi
@@ -2927,11 +2929,11 @@ then
 	# Parse JSON
 	cat ${rcdir}/downloads.xhtml | jq '.[][].proList[]|.name,.actions[]'| tr '\n' ' ' | sed 's/} {/}\n{/g' | sed 's/} "/}\n"/g' | sed 's/" {/"\n{/g' |egrep '^"|Download Product'|tr '\n' ' '|sed 's/} "/}\n"/g' > ${rcdir}/_downloads.xhtml
 
-	if [ $err -ne 0 ]
-	then
-		rm -f ${cdir}/$vpat
-		exit $err
-	fi
+	#if [ $err -ne 0 ]
+	#then
+	#	rm -f ${cdir}/$vpat
+	#	exit $err
+	#fi
 fi
 
 # Present the list

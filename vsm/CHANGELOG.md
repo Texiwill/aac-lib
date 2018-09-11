@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.86 - Compatibility with 4.8.7
 - 1.0.85 - DrviersTools, Compatibility with 4.8.6
 - 1.0.84 - DriversTools, Compatibility with 4.8.5
 - 1.0.83 - DriversTools Updates
@@ -98,6 +99,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+4.8.7 - Fix to Network Error
+
 4.8.6 - Fix to --dlg and code reorg
 
 4.8.5 - Missing Package group
