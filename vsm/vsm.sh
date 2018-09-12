@@ -13,7 +13,7 @@
 #
 # vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.8.9"
+VERSIONID="4.9.0"
 
 # args: stmt error
 function colorecho() {
@@ -114,7 +114,6 @@ findfavpaths()
 			mfchoice="$mfchoice/${x}/${x}_${tf}"
 			t=`echo $pchoice | sed "s#${x}_${tf}##" | tr '[:upper:]' '[:lower:]'|sed "s/_$ec//g"|sed 's/^_//'`
 			mfchoice="$mfchoice/${x}_${tf}_${t}/$pchoice"
-			break
 		fi
 	done
 }
@@ -1903,25 +1902,26 @@ function download_patches() {
 					then
 						echo -n "."
 					fi
+					x=`echo $x | cut -d\! -f 1`
 					y=`echo $x | cut -d\? -f 1`
 					f=`basename $y`
 					name=$f
-					#echo `pwd` $f
-					if  [ ! -e ${f} ] && [ ! -e ${f}.gz ] || [ $doforce -eq 1 ]
+					if  [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
 					then
+						#echo `pwd` $name
 						if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 						then
 							echo -n "p"
 						fi
 						# just in case we are not at beginning of line
 						echo ""
-						mywget $f "$x" 'pcookies' 1
+						mywget $name "$x" 'pcookies' 1
 						if [ $doshacheck -eq 1 ]
 						then
 							sha256=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | sed -n "${darr[$d]}p" | cut -d^ -f2 | sed 's/",//'`
 							#echo ${darr[$d]}
 							sha='sha1sum'
-							shacheck_file $f
+							shacheck_file $name
 						fi
 						compress_file $name
 					fi
@@ -2178,6 +2178,9 @@ function getvsm() {
 						diddownload=1
 					fi
 				else
+					# oauth_login
+					# reget file
+					# get download url
 					if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 					then
 						echo -n "E"
@@ -3375,7 +3378,13 @@ do
 								else
 									if [ $err -eq 0 ]
 									then
-										colorecho "All $currchoice already downloaded!"
+										e=''
+										if [ $debug -gt 0 ]
+										then
+										
+											e="to $repo/dlg_$currchoice."
+										fi
+										colorecho "All $currchoice already downloaded $e"
 										if [ $dodlg -eq 1 ]
 										then
 											# Just exist, got package
