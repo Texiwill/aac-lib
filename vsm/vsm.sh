@@ -3379,9 +3379,8 @@ do
 									if [ $err -eq 0 ]
 									then
 										e=''
-										if [ $debug -gt 0 ]
+										if [ $debugv -gt 0 ]
 										then
-										
 											e="to $repo/dlg_$currchoice."
 										fi
 										colorecho "All $currchoice already downloaded $e"
