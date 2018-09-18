@@ -35,6 +35,11 @@ For example to set the time zone for London UK use:
 	./install.sh 'Europe/London'
 ```
 
+For example to automatically pick up the time zone use:
+```
+	./install.sh `timedatectl status | grep "zone" | sed -e 's/^[ ]*Time zone: \(.*\) (.*)$/\1/g'`
+```
+
 Here is an example run and help:
 ```
 $ /usr/local/bin/vsm.sh --help
