@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.92 - Package Updates
 - 1.0.91 - DriversTools and Package updates
 - 1.0.90 - DriversTools, VC Updates
 - 1.0.89 - DriversTools, Compatibility with 4.9.0
