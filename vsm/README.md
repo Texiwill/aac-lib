@@ -46,8 +46,8 @@ $ /usr/local/bin/vsm.sh --help
 /usr/local/bin/vsm.sh [-c|--check] [--dlg|--dlgl search] [-d|--dryrun]
 [-f|--force] [--fav favorite] [--favorite] [-e|--exit] [-h|--help]
 [--historical] [-l|--latest] [-m|--myvmware] [-mr] [-ns|--nostore]
-[-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss]
-[-p|--password password] [--progress] [-q|--quiet] [-r|--reset]
+[-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth]
+[-p|--password password] [--patches] [--progress] [-q|--quiet] [-r|--reset]
 [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version]
 [-y] [-z|--compress] [--debug] [--repo repopath] [--save] [--symlink]
 [--fixsymlink]
@@ -69,6 +69,7 @@ $ /usr/local/bin/vsm.sh --help
     -mr - reset just My VMware information, implies -m
     -ns|--nostore - do not store credential data and remove if exists
     -nc|--nocolor - do not output with color
+    --oauth - Use Oauth login method
     -p|--password - specify password
     --progress - show progress of downloads (only makes sense with -q)
     -q|--quiet - be less verbose
@@ -268,42 +269,24 @@ script for the appropriate lines for your own update.sh)
 cp $HOME/aac-base/update.sh /etc/cron.daily
 ```
 
-The following line starts VSM download at 6AM. You would add using the command `crontab -e`:
+The following line starts VSM download at 6AM. You would add using the
+command `crontab -e`:
 ```
 0 6 * * * /usr/local/bin/vsm.sh -c -y -mr --favorite
 ```
 
-The following line starts VSM download at 6AM for multiple favorites. You would add using the command `crontab -e`:
+The following line starts VSM download at 6AM for multiple favorites. You
+would add using the command `crontab -e`:
 ```
-0 6 * * * ~/bin/vsm-favorites.sh
+0 6 * * * ~/bin/vsm_favorites.sh
 ```
 
-Where vsm-favorites.sh exists off your home directory in the bin directory
-and contains the following to download all of vSphere 6.5 Enterprise Plus,
-vSphere 6.7 Enterprise Plus, and all of VMware vRealize Suite 2017.
-```
-# ensure vsm is not running, should take 30m not 24 hours.
-pkill -9 vsm.sh
-# now autoupdate repo
-/usr/local/bin/vsm.sh -mr -c -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
-/usr/local/bin/vsm.sh -c -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Enterprise_Plus
-/usr/local/bin/vsm.sh -c -y -q --progress --fav Infrastructure_Operations_Management_VMware_vRealize_Suite_2017_Enterprise
-```
+Where vsm_favorites.sh is taken from the tools directory herein. Please
+modify for your favorites.
+
 ### Use Case/Examples
-
-Download all install isos for a given release version. 
-
-The first line lists all available items for a given regex. The inner
-part of the loop will download them. Note that some files result in
-downloads the other options result in data not found. The most current
-of each release will download in this fashion, data from VMware makes
-historical versions harder to download.
-```
-for x in `/usr/local/bin/vsm.sh -y -nh --dlgl $1 | grep $2 | cut -d' ' -f2`
-do
-	/usr/local/bin/vsm.sh -y -nh --dlg $x
-done
-```
+See the tools directory and its README.md to see all examples of using
+LinuxVSM in scripts
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add

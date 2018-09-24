@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.93 - Compatibility with 5.0.0
 - 1.0.92 - Package Updates
 - 1.0.91 - DriversTools and Package updates
 - 1.0.90 - DriversTools, VC Updates
@@ -105,6 +106,10 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.0.0 - Updated parsing of package locations and new options for login
+
+4.9.0 - Fixed Error
+
 4.8.9 - Backed-out UA change
 
 4.8.8 - Fix to Networking Error take #2

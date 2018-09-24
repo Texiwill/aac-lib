@@ -1,4 +1,5 @@
 #!/bin/bash
+# vim: set tabstop=4 shiftwidth=4:
 #
 # Copyright (c) AstroArch Consulting, Inc.  2017,2018
 # All rights reserved
@@ -11,9 +12,8 @@
 # Requires:
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
-# vim: tabstop=4 shiftwidth=4
 
-VERSIONID="4.9.0"
+VERSIONID="5.0.0"
 
 # args: stmt error
 function colorecho() {
@@ -73,8 +73,8 @@ findfavpaths()
 {
 	pchoice=$1
 	# find paths
-	vc=`echo $pchoice | sed 's/[a-Z_]\+\([0-9]_[0-9x]\|[0-9]\+\).*/\1/'`
-	tc=`echo $pchoice | tr '[:upper:]' '[:lower:]'|sed 's/\([0-9]_[0-9x]\|[0-9]\)_\([a-z_]\+\)/\1 \2/'|sed 's/_/./g'`
+	vc=`echo $pchoice | sed 's/[a-z_]\+\([0-9]_[0-9x]\|[0-9]\+\).*/\1/i'`
+	tc=`echo $pchoice | tr '[:upper:]' '[:lower:]'|sed 's/\([0-9]_[0-9x]\|[0-9]\)_\([a-z_]\+\)/\1 \2/i'|sed 's/_/./g'`
 	dc=`echo $tc | cut -d' ' -f1`
 	dc="${dc%?}?"
 	ec=`echo $tc | cut -d' ' -f2 | sed 's/\./_/g'`
@@ -181,6 +181,7 @@ function mywget() {
 	hr=$2
 	hd=$3
 	err=0
+	lasturl=$hr
 	wgprogress=$doprogress
 	if [ Z"$1" != Z" " ]
 	then
@@ -218,11 +219,17 @@ function mywget() {
 			fi
 			if [ $wgprogress -eq 1 ]
 			then
-				wget $_PROGRESS_OPT --progress=bar:force $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
-				err=${PIPESTATUS[0]}
+				if [ ${#_PROGRESS_OPT} -eq 0 ]
+				then
+					wget $_PROGRESS_OPT --progress=bar:force $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
+					err=${PIPESTATUS[0]}
+				else
+					wget $_PROGRESS_OPT --progress=bar:force $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr
+					err=$?
+				fi
 			else
 				wget $_PROGRESS_OPT $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
-				err=${PIPESTATUS[0]}
+				err=$?
 			fi
 			if [ $doprogress -eq 1 ] && [ $indomenu2 -eq 1 ]
 			then
@@ -230,7 +237,7 @@ function mywget() {
 			fi
 		else
 			wget $_PROGRESS_OPT $hd --progress=bar:force --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
-			err=${PIPESTATUS[0]}
+			err=$?
 		fi
 	fi
 	if [ Z"$ck" != Z"pcookies.txt" ]
@@ -273,7 +280,6 @@ function getchoice() {
 
 function findmissing() {
 	# Fake Suites
-	reget=0
 	if [ Z"$myvmware" != Z"" ]
 	then
 		myusenurl=''
@@ -288,6 +294,11 @@ function findmissing() {
 				*)
 					myname=`egrep "${myvmware}[/\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 2|sed 's/Software-Defined/Software_Defined/'`
 					myver=`egrep "${myvmware}[/\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 14`
+					#if [ ${PIPESTATUS[0]} -eq 1 ]
+					#then
+					#	v=`basename $myvmware`
+					#	myver=`egrep "${v}[/\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 14`
+					#fi
 					myver=`basename $myver`
 					pkgs=`echo "${choice}_${myver}" | sed 's/[ \.]/_/g'`
 					debugecho "calc pkg => $pkgs"
@@ -305,6 +316,7 @@ function findmissing() {
 	domyvm=`echo ${myvmware}/${spkg} | sed 's:/$::' |awk -F/ '{print NF}'`
 	if [ $domyvm -eq 4 ]
 	then
+		lasturl="${myvmware_root}${myvmware}/$spkg"
 		pmiss=`echo $tpkg | sed 's/ /|/g'`
 		myvmware=`echo $myvmware | sed 's#//#/#'`
 		missname=`echo $myvmware | sed 's#/#_#g'`
@@ -355,6 +367,7 @@ function findmissing() {
 					fi
 				fi
 				#debugecho "N: $usenurl"
+				lasturl="https://my.vmware.com${usenurl}"
 				if [ ! -e ${rcdir}/${missname}_1.xhtml ] || [ $doreset -eq 1 ]
 				then
 					mywget ${rcdir}/${missname}_1.xhtml "https://my.vmware.com${usenurl}"
@@ -736,6 +749,23 @@ function getproddata() {
 	debugecho "DEBUG: vers => $vers ; prod => $prod"
 }
 
+function uag_test() {
+	vv=$1
+
+	if [ $vv -eq 300 ]
+	then
+		osymdir="UAG"
+		rndir="view"
+	elif [ $vv -eq 0 ] || [ $vv -lt 321 ]
+	then
+		rndir="UAG_${vv:0:2}"
+		osymdir="$rndir"
+	else
+		rndir="UAG_${vv}"
+		osymdir="$rndir"
+	fi
+}
+
 function getouterrndir() {
 	lchoice=$1
 	rndll=''
@@ -788,6 +818,9 @@ function getouterrndir() {
 					rndir="VDDK"
 				fi
 				;;
+			SKYLINE*)
+				rndir="skyline"
+				;;
 			VSP5[01]0_VDDK*)
 				rndir="VDDK"
 				;;
@@ -798,6 +831,26 @@ function getouterrndir() {
 				else
 					rndir="vmtools"
 				fi
+				;;
+			VRBC*)
+				rndir="vRB700"
+				if [ $v -lt 700 ]
+				then
+					rndir="itbm"
+				fi
+				;;
+			VCF*)
+				rndir="vi/vcf${v}"
+				if [ ${v} -le 231 ]
+				then
+					rndir="vi"
+				fi
+				;;
+			VRA*)
+				rndir="vcac"
+				;;
+			UMS*)
+				rndir="usagemetering"
 				;;
 			VROVA*)
 				rndir="vi"
@@ -827,10 +880,30 @@ function getouterrndir() {
 				rndir="nsx-V-610"
 				;;
 			NSX_T*)
-				rndir="NST-T210"
-				if [ $v -le 200 ]
+				e=''
+				s=''
+				le=`echo $lchoice | awk -F_ '{print $NF}'`
+				sdk=`echo $lchoice | cut -d_ -f 4`
+				if [ Z"$le" = Z"LE" ]
+				then
+					e='-LE'
+				fi
+				
+				if [ $v -gt 210 ]
+				then
+					rndir="NST-T${v}${e}"
+				elif [ $v -le 200 ]
 				then
 					rndir="NST-T"
+				fi
+				if [ Z"$sdk" = Z"SDK" ]
+				then
+					dk=`echo $lchoice | cut -d_ -f 5 | tr [:upper:] [:lower:]`
+					rndir="NST-T/${dk}${v}"
+					if [ Z"$le" = Z"LE" ]
+					then
+						rndir="NST-T/${dk}${v}-le"
+					fi
 				fi
 				;;
 			VSPP_VCD*)
@@ -1011,7 +1084,8 @@ function getouterrndir() {
 				fi
 				;;
 			VIDM*)
-				rndir="VIDM_ONPREM_${v:0:2}"
+				v=`echo $v | sed 's/.\{1\}/&./g' | sed 's/\.$//'`
+				rndir="VIDM_ONPREM_${v}"
 				;;
 			FUS*)
 				rndll='download3.vmware.com'
@@ -1037,18 +1111,7 @@ function getouterrndir() {
 				fi
 				;;
 			UAG*)
-				if [ $v -eq 300 ]
-				then
-					osymdir="UAG"
-					rndir="view"
-				elif [ $v -eq 0 ] || [ $v -lt 321 ]
-				then
-					rndir="UAG_${v:0:2}"
-					osymdir="$rndir"
-				else
-					rndir="UAG_${v}"
-					osymdir="$rndir"
-				fi
+				uag_test $v
 				;;
 			*"OSS")
 				rndir="opensource"
@@ -1092,17 +1155,15 @@ function getinnerrndir() {
 		if [ $symlink -eq 1 ]
 		then
 			symdir=''
+			_v=`echo $name | sed 's/[a-z-]\+-\([0-9]\.[0-9]\.[0-9]\).*/\1/' | sed 's/\.0$//' |sed 's/\.//g'`
 			case "$name" in
 				euc-access-point*)
-					symdir="UAG"
+					uag_test $_v
+					symdir=$rndir
 					;;
 				euc-unified-access*)
-					if [ Z"$rndir" = Z"view" ]
-					then
-						symdir="UAG"
-					else
-						symdir="$rndir"
-					fi
+					uag_test $_v
+					symdir=$rndir
 					;;
 			esac
 		fi
@@ -1123,21 +1184,26 @@ function getinnerrndir() {
 function getvsmdata() {
 	cchoice=$1
 	xx=$2
+	be='_dlg'
+	if [ Z"$3" != Z"" ]
+	then
+		be=$3
+	fi
 	if [ $menu2files -eq 0 ] || [ $domts -eq 1 ]
 	then
-		data=`xmllint --html --xpath "(//*/li[@class=\"depot-content\"])[$xx]" dlg_${cchoice}.xhtml 2>/dev/null`
+		data=`xmllint --html --xpath "(//*/li[@class=\"depot-content\"])[$xx]" $rcdir/dlg_${cchoice}.xhtml 2>/dev/null`
 		name=`echo $data|xml_grep --html --text_only '//*/a' 2>/dev/null`
 	else
-		pver=`grep selected=\"selected\" _dlg_${cchoice}.xhtml 2> /dev/null | head -1 | cut -d\" -f2 | sed 's/[[:space:]]\+$//'| sed 's/ /+/g'`
+		pver=`grep selected=\"selected\" ${rcdir}/${be}_${cchoice}.xhtml 2> /dev/null | head -1 | cut -d\" -f2 | sed 's/[[:space:]]\+$//'| sed 's/ /+/g'`
 		if [ ${PIPESTATUS[0]} -ne 0 ]
 		then
-			pver=`xmllint --html --xpath "//tr" _dlg_${cchoice}.xhtml  2> /dev/null  | tr '\n' ' ' |sed 's/<\/tr>/<\/tr>\n/' |head -1 |sed 's/<t[hd]>//g' |sed 's/<\/t[hd]>//g' |awk '{print $3}'| sed 's/[[:space:]]\+$//'| sed 's/ /+/g'`
+			pver=`xmllint --html --xpath "//tr" ${rcdir}/${be}_${cchoice}.xhtml  2> /dev/null  | tr '\n' ' ' |sed 's/<\/tr>/<\/tr>\n/' |head -1 |sed 's/<t[hd]>//g' |sed 's/<\/t[hd]>//g' |awk '{print $3}'| sed 's/[[:space:]]\+$//'| sed 's/ /+/g'`
 		fi
 		if [ Z"$pver" = Z"" ]
 		then
 			pver=$vers
 		fi
-		data=`xmllint --html --xpath "(//td[@class=\"filename\"])[$xx]" _dlg_${cchoice}.xhtml 2> /dev/null`
+		data=`xmllint --html --xpath "(//td[@class=\"filename\"])[$xx]" ${rcdir}/${be}_${cchoice}.xhtml 2> /dev/null`
 		name=`echo $data|sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g' | grep fileNameHolder | cut -d '>' -f 2 | sed 's/ //g'`
 	fi
 	debugecho "DEBUG: name => $name"
@@ -1319,7 +1385,7 @@ function vsmpkgs() {
 	if [ $choice = "Desktop_End_User_Computing" ]
 	then
 		# need to get this
-		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro Desktop_End_User_Computing_VMware_unified_Access_Gateway"
+		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro Desktop_End_User_Computing_VMware_Unified_Access_Gateway"
 		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 	elif [ $choice = "Networking_Security" ]
 	then
@@ -1338,7 +1404,7 @@ function vsmpkgs() {
 			pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite Datacenter_Cloud_Infrastructure_VMware_vSphere_with_Operations_Management"
 			if [ $dovex -eq 1 ]
 			then
-				pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_vCloud_Director"
+				pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_vCloud_Director Datacenter_Cloud_Infrastructure_VMware_Skyline_Collector Datacenter_Cloud_Infrastructure_VMware_vCloud_Usage_Meter Datacenter_Cloud_Infrastructure_VMware_Cloud_Foundation"
 			fi
 			pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 			mversions=''
@@ -1389,7 +1455,7 @@ function save_vsmrc() {
 		then
 			colorecho "Saving to $vsmrc"
 		fi
-		echo -n '' > $vsmrc
+		#echo '' > $vsmrc
 		if [ $domyvmware -eq 1 ] && [ Z"$mchoice" != Z"" ]
 		then
 			if [ ! -e ${rcdir}/${favorite}.xhtml ]
@@ -1399,10 +1465,10 @@ function save_vsmrc() {
 		fi
 		if [ Z"$mchoice" = Z"root" ]
 		then
-			echo "mfchoice='$mfchoice'" >> $vsmrc
+			echo "mfchoice='$mfchoice'" > $vsmrc
 			echo "myfvmware='$myfvmware'" >> $vsmrc
 		else
-			echo "mfchoice='$mchoice'" >> $vsmrc
+			echo "mfchoice='$mchoice'" > $vsmrc
 			echo "myfvmware='$myvmware'" >> $vsmrc
 		fi
 		echo "favorite='$favorite'" >> $vsmrc
@@ -1761,7 +1827,7 @@ function shacheck_file() {
 
 function compress_file() {
 	name=$1
-	if [ $compress -eq 1 ]
+	if [ $compress -eq 1 ] && [ ${#name} -gt 0 ]
 	then
 		e=${name##*.}
 		if [ Z"$e" != Z"zip" ] && [ Z"$e" != Z"ZIP" ] && [ Z"$e" != Z"gz" ] || [ Z"$e" == Z"$f" ]
@@ -1780,29 +1846,39 @@ function compress_file() {
 need_login=0
 inpatch_dl=0
 function oauth_login() {
-	dl=$1
-	z=`date +"%s"`
-	test_login=$(($z-$need_login))
-	debugecho "OL: $test_login $need_login"
-	if [ $test_login -ge 900 ]
+	if [ $dooauth -eq 1 ]
 	then
-		need_login=$z
-		# Get creds
-		oauth=`echo $auth | base64 -d`
-		rd=(`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$oauth" 2>/dev/null|sed 's/%3A/ /'`)
-		pd="vmware=login&username=${rd[0]}&password=${rd[1]}"
-
-		# Login
-		bcmtx=`wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location|tail -1|awk '{print $2}'`
-		wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bcmtx >& /dev/null
-		wget -O - $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bcmtx" $myvmware_oauth >& /dev/null
-		# force new cookies
-		rm -f $cdir/pcookies.txt >& /dev/null
-		rm -f $rcdir/_*patch*.xhtml >& /dev/null
-		get_patch_list
-		if [ $dl -eq 1 ]
+		dl=$1
+		z=`date +"%s"`
+		test_login=$(($z-$need_login))
+		debugecho "OL: $test_login $need_login"
+		if [ $test_login -ge 900 ]
 		then
-			inpatch_dl=1
+			need_login=$z
+			# Get creds
+			oauth=`echo $auth | base64 --decode`
+			rd=(`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$oauth" 2>/dev/null|sed 's/%3A/ /'`)
+			pd="vmware=login&username=${rd[0]}&password=${rd[1]}"
+	
+			# Login
+			bcmtx=`wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location|tail -1|awk '{print $2}'`
+			wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bcmtx >& /dev/null
+			wget -O - $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bcmtx" $myvmware_oauth 2>&1 | grep AUTH-ERR >& /dev/null
+        	oauth_err=$?
+			# force new cookies
+			if [ -e $cdir/pcookies.txt ]
+			then
+				rm -f $cdir/pcookies.txt >& /dev/null
+			fi
+			if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ] && [ $oauth_err -eq 1 ]
+			then
+				rm -f $rcdir/_*patch*.xhtml >& /dev/null
+				get_patch_list
+				if [ $dl -eq 1 ]
+				then
+					inpatch_dl=1
+				fi
+			fi
 		fi
 	fi
 }
@@ -1815,6 +1891,62 @@ function get_patch_list() {
 		wget -O - $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bcmtx" $mypatches_ref >& /dev/null
 		# Patch List
 		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --load-cookies $cdir/pcookies.txt --post-data='' --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" 'https://my.vmware.com//group/vmware/patch?p_p_id=PatchDownloadSearchPortlet_WAR_itofflinePatch&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=loadPatchSearchPage&p_p_cacheability=cacheLevelPage&p_p_col_id=column-6&p_p_col_pos=1&p_p_col_count=2' >& /dev/null
+	fi
+}
+
+function oauth_get_latest() {
+	hr=$1
+	ou=$2
+
+	if [ $dooauth -eq 1 ]
+	then
+		oauth_login
+		debugecho "$vurl $ou"
+
+		# no cookies start again
+		if [ ! -e $cdir/pcookies.txt ]
+		then
+			wget -O - $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bcmtx" $mydl_ref >& /dev/null
+		fi
+		if [ -e $rcdir/_l_${ou}.xhtml ]
+		then
+			rm -f $rcdir/_l_${ou}.xhtml
+		fi
+		# ISSUE: For some reason this may not get me something to download
+		# - VCF for example, could vurl be wrong?
+		wget -O $rcdir/_l_${ou}.xhtml $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $mydl_ref" https://my.vmware.com$vurl >& /dev/null
+		# now reparse latest for info
+		getvsmdata $ou $lastcnt '_l'
+
+		# if name is not there then getvsmdata failed
+		if [ ${#name} -gt 0 ]
+		then
+			code=`echo $data | sed 's/ /\n/g' | egrep 'getDownload|checkEulaAndPerform' | head -1 | cut -d\( -f 2 | cut -d\) -f 1`
+			dlgGroupCode=`echo $code|cut -d, -f1`
+			dlFileId=`echo $code|cut -d, -f2`
+			baseStr=`echo $code|cut -d, -f3`
+			hashkey=`echo $code|cut -d, -f4`
+			isEulaA=`echo $code|cut -d, -f5`
+			tagId=`echo $code|cut -d, -f6`
+			prodId=`echo $code|cut -d, -f7`
+			uuId=`echo $code|cut -d, -f8`
+			dlURL=`grep downloadFilesURL $rcdir/_l_${ou}.xhtml|cut -d\" -f6`
+			dlURL="$dlURL&downloadFileId=${dlFileId}&vmware=downloadBinary&baseStr=${baseStr}&hashKey=${hashkey}&productId=${prodId}&tagId=${tagId}&uuId=${uuId}&downloadGroupCode=${dlgGroupCode}"
+			dlURL=`echo $dlURL | sed "s/'//g"`
+			lurl=`wget -O - --post-data='' --load-cookies $cdir/pcookies.txt --header="User-Agent: $oaua" --header="Referer: https://my.vmware.com$vurl" $dlURL 2>&1 | grep downloadUrl | cut -d\" -f4`
+			debugecho "OL: lurl => $lurl"
+
+			# compute rndll, rndir
+			if [ ${#lurl} -gt 0 ]
+			then
+				rndll=`echo $lurl | cut -d/ -f3`
+				rndir=`echo $lurl | cut -d\? -f1 | sed 's#https://download.\.vmware\.com/software/##'`
+				if [ ${#rndir} -ne 0 ]
+				then
+					rndir=`dirname $rndir`
+				fi
+			fi
+		fi
 	fi
 }
 
@@ -1862,6 +1994,7 @@ function get_product_patches() {
 }
 
 function download_patches() {
+	l_lasturl=$lasturl
 	sc=$1
 	if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ]
 	then
@@ -1938,6 +2071,7 @@ function download_patches() {
 			fi
 		fi
 	fi
+	lasturl=$l_lasturl
 }
 
 function gotodir() {
@@ -2027,6 +2161,7 @@ function getvsm() {
 	additional=$2
 	tchoice=$lchoice
 	dotdir=0
+	l_lasturl=$lasturl
 
 	gotodir $1 $2 $3
 	debugecho "DEBUG: $currchoice: `pwd`"
@@ -2091,6 +2226,11 @@ function getvsm() {
 		echo "$prevchoice $currchoice $tchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
 		echo ""
 	fi
+	# sometimes bad download bits
+	if [ ${#name} -eq 0 ]
+	then
+		dovsmit=0
+	fi
 	if [ $dovsmit -eq 1 ]
 	then
 		if [ $fixsymlink -eq 1 ] && [ $dotdir -eq 1 ]
@@ -2133,20 +2273,34 @@ function getvsm() {
 				doesxi5=1
 				lurl=$durl
 			fi
+			doeurl=1
 			echo $lurl|grep -i blocked >& /dev/null
 			if [ $? -ne 0 ] || [ $doesxi5 -eq 1 ]
 			then
-				if [ Z"$lurl" != Z"" ]
+				if [ Z"$lurl" = Z"" ] && [ $dooauth -eq 1 ]
 				then
-					eurl=`python -c "import urllib, sys; print urllib.unquote(sys.argv[1])" $lurl`
+					# changes lurl
+					if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+					then
+						echo -n "o"
+					fi
+					oauth_get_latest $l_lasturl $tchoice
+					doeurl=0
+				fi
+				if [ ${#lurl} -gt 0 ]
+				then
+					if [ $doeurl -eq 1 ]
+					then
+						eurl=`python -c "import urllib, sys; print urllib.unquote(sys.argv[1])" $lurl`
+					else
+						eurl=$lurl
+					fi
 					debugecho "DEBUG: eurl => $eurl"
+					diddownload=0
 					if [ $debugv -ge 1 ]
 					then
-						echo ""
-						echo "$prevchoice $currchoice $tchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
-						echo ""
+						echo "Getting $name ..."
 					fi
-					diddownload=0
 					if [ $dryrun -eq 0 ]
 					then
 						# just in case we are not at beginning of line
@@ -2155,10 +2309,36 @@ function getvsm() {
 					else
 						mywget $name $eurl "--spider --progress=bar:force" 1
 					fi
-					# echo if error remove file
+					# Let's try Auth
+					if [ $err -ne 0 ] && [ $dooauth -eq 1 ]
+					then
+						# changes lurl
+						if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+						then
+							echo -n "o"
+						fi
+						oauth_get_latest $l_lasturl $tchoice
+						if [ ${#lurl} -gt 0 ]
+						then
+							if [ $dryrun -eq 0 ]
+							then
+								# just in case we are not at beginning of line
+								echo ""
+								mywget $name $lurl "--progress=bar:force" 1
+							else
+								mywget $name $lurl "--spider --progress=bar:force" 1
+							fi
+						fi
+					fi
+					if [ $debugv -ge 1 ]
+					then
+						echo ""
+						echo "$prevchoice $currchoice $tchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
+						echo ""
+					fi
 					if [ $err -ne 0 ]
 					then
-						if [ $dryrun -eq 0 ]
+						if [ $dryrun -eq 0 ] && [ -e $name ]
 						then
 							rm $name
 						fi
@@ -2178,9 +2358,6 @@ function getvsm() {
 						diddownload=1
 					fi
 				else
-					# oauth_login
-					# reget file
-					# get download url
 					if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 					then
 						echo -n "E"
@@ -2202,10 +2379,14 @@ function getvsm() {
 				fi
 			fi
 		fi
-		compress_file $name
-		mksymlink $name
+		if [ -e $name ] || [ -e ${name}.gz ]
+		then
+			compress_file $name
+			mksymlink $name
+		fi
 	fi
 	cd ${cdir}/depot.vmware.com/PROD/channel
+	lasturl=$l_lasturl
 }
 
 function version() {
@@ -2219,7 +2400,7 @@ function version() {
 
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-l|--latest] [-m|--myvmware] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save]"
+	echo "$0 [-c|--check] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-l|--latest] [-m|--myvmware] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save]"
 	echo "	-c|--check - do sha256 check against download"
 	echo "	--dlg - download specific package by name or part of name (regex)"
 	echo "	--dlgl - list all packages by name or part of name (regex)"
@@ -2344,10 +2525,21 @@ function checkdep() {
 			fi
 		elif [ Z"$dep" = Z"jq" ] || [ Z"$dep" = Z"wget" ] || [ Z"$dep" = Z"gnu-sed" ]
 		then
-			brew list | grep $dep >& /dev/null
+			z=$dep
+			if [ Z"$z" = Z"gnu-sed" ]
+			then
+				z="sed"
+			fi
+			which $z  >& /dev/null
 			if [ $? -eq 1 ]
 			then
-				echo "Missing Dependency $dep"
+				t="Not in PATH"
+				brew list | grep $dep >& /dev/null
+				if [ $? -eq 1 ]
+				then
+					t="Not Installed"
+				fi
+				echo "$t Dependency $dep"
 				needdep=1
 			fi
 		elif [ Z"$dep" = Z"urllib2" ]
@@ -2373,9 +2565,6 @@ function checkdep() {
 	fi
 }
 
-# set language to English
-LANG=en_US.utf8
-export LANG
 # check dependencies
 theos=''
 docolor=1
@@ -2394,6 +2583,9 @@ then
 	alias sha256sum="`which shasum` -a 256"
 	alias sha1sum="`which shasum`"
 else
+	# set language to English
+	LANG=en_US.utf8
+	export LANG
 	checkdep python-urllib3
 	checkdep libxml2
 	checkdep sharutils
@@ -2422,7 +2614,7 @@ then
 fi
 
 # latest wget does things differently
-wget --help | grep -q '\--show-progress' && \
+wget --help | grep -q -- '--show-progress' && \
    _PROGRESS_OPT="-q --show-progress" || _PROGRESS_OPT=""
 
 #
@@ -2466,6 +2658,9 @@ mydlg=""
 dodlg=0
 dovex=0
 dopatch=0
+dooauth=0
+lasturl=''
+lastcnt=0
 patcnt=0
 # general
 mchoice="root"
@@ -2584,7 +2779,11 @@ do
 		--vexpertx)
 			dovex=1
 			;;
+		--oauth)
+			dooauth=1
+			;;
 		--patches)
+			dooauth=1
 			if [ $dovex -eq 1 ]
 			then
 				dopatch=1
@@ -2945,17 +3144,29 @@ fi
 cd depot.vmware.com/PROD/channel
 
 # Patches
+oauth_err=0
+mydl_ref='https://my.vmware.com/group/vmware/downloads#tab1'
 mypatches_ref='https://my.vmware.com/group/vmware/patch'
 myvmware_login='https://my.vmware.com/web/vmware/login'
 myvmware_oauth='https://my.vmware.com/oam/server/auth_cred_submit'
 oaua='Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
 ppr=''
 ppv=''
+if [ $dooauth -eq 1 ]
+then
+	oauth_login 0
+	if [ $oauth_err -eq 1 ]
+	then
+		colorecho "	Oauth:		1"
+	else
+		colorecho "	Oauth:		Error" 1
+		dooauth=0
+		dopatch=0
+	fi
+fi
 if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ]
 then
 	rm -f $cdir/pcookies.txt _*patch*.xhtml >& /dev/null
-	colorecho "	Oauth:		1"
-	oauth_login 0
 	get_patch_list
 	colorecho "	Patches:	1"
 fi
@@ -2987,10 +3198,10 @@ then
 	# Find the file
 	if [ $dodlglist -eq 0 ]
 	then
-		myaf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sed 's/VCL_VSP..._//' | cut -d' ' -f2,6  | sed 's/\(\w\)_\(.* \)/\1\2/' | sed 's/U/0U/g' | sort -u -k1 -V | sed 's/0U/U/g' | cut -d' ' -f2|sort -V|tail -1`
+		myaf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sed 's/VCL_VSP..._//' | cut -d' ' -f2,6  | sed 's/\(\w\)_\(.* \)/\1\2/' | sed 's/U/0U/g' | sort -u -k1 -V | sed 's/0U/U/g' | cut -d' ' -f2|egrep -v 'OSS|open[-_]source' |sort -V|tail -1 `
 		mytf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$myaf" | tail -1` 
 	else
-		uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sed 's/VCL_VSP..._//' | cut -d' ' -f2,6  | sed 's/\(\w\)_\(.* \)/\1\2/' | sed 's/U/0U/g' | sort -u -k1 -V | sed 's/0U/U/g'
+		uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sed 's/VCL_VSP..._//' | cut -d' ' -f2,6  | sed 's/\(\w\)_\(.* \)/\1\2/' | sed 's/U/0U/g' | cut -d' ' -f2|egrep -v 'OSS|open[-_]source' |sort -V
 		exit
 	fi
 	debugecho "mytf => $mytf"
@@ -3306,20 +3517,20 @@ do
 							getvsmcnt $currchoice
 							cnt=$?
 							debugecho "DEBUG: detected $cnt $mychoice => $mypkg"
-							x=1
+							lastcnt=1
 							xignore=0
 							if [ $dodlg -eq 1 ] && [ Z"$mypkg" != Z"$currchoice" ]
 							then
 								xignore=1
-								x=$cnt
+								lastcnt=$cnt
 							fi
-							while [ $x -le $cnt ]
+							while [ $lastcnt -le $cnt ]
 							do
 								if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
 								then
 									echo -n "."
 								fi
-								getvsmdata $currchoice $x
+								getvsmdata $currchoice $lastcnt
 								# only do the selected
 								doit=0
 								if [ $dodlg -eq 1 ]
@@ -3364,7 +3575,7 @@ do
 									fi
 								fi
 								# out to dev null seems to be required
-								$((x++)) 2> /dev/null
+								$((lastcnt++)) 2> /dev/null
 							done
 							if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
 							then
@@ -3445,18 +3656,18 @@ do
 									debugecho "DEBUG $y: $choice: $o => $mypkg"
 									getvsmcnt $o
 									cnt=$?
-									x=1
+									lastcnt=1
 									if [ $dodlg -eq 1 ] && [ Z"$mypkg" != Z"$o" ]
 									then
 										if [ $xignore -ne 0 ]
 										then
 											xignore=1
 										fi
-										x=$cnt
+										lastcnt=$cnt
 									fi
-									while [ $x -le $cnt ]
+									while [ $lastcnt -le $cnt ]
 									do
-										getvsmdata $o $x
+										getvsmdata $o $lastcnt
 										doit=0
 										if [ $dodlg -eq 1 ]
 										then
@@ -3493,7 +3704,7 @@ do
 												exit
 											fi
 										fi
-										let x=$x+1
+										let lastcnt=$lastcnt+1
 									done
 								done
 								if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
