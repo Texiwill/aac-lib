@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.95 - Compatibility with 5.0.1
 - 1.0.94 - Package Updates, Seems cleanup effort removed too much
 - 1.0.93 - Compatibility with 5.0.0
 - 1.0.92 - Package Updates
@@ -107,6 +108,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.0.1 - Updated --oauth option to work with additional packages
+
 5.0.0 - Updated parsing of package locations and new options for login
 
 4.9.0 - Fixed Error

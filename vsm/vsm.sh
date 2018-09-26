@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.0.0"
+VERSIONID="5.0.1"
 
 # args: stmt error
 function colorecho() {
@@ -1185,6 +1185,7 @@ function getvsmdata() {
 	cchoice=$1
 	xx=$2
 	be='_dlg'
+	debugecho $cchoice $xx $be
 	if [ Z"$3" != Z"" ]
 	then
 		be=$3
@@ -1918,6 +1919,8 @@ function oauth_get_latest() {
 		# now reparse latest for info
 		getvsmdata $ou $lastcnt '_l'
 
+		debugecho $name
+		debugecho $data
 		# if name is not there then getvsmdata failed
 		if [ ${#name} -gt 0 ]
 		then
@@ -1926,10 +1929,21 @@ function oauth_get_latest() {
 			dlFileId=`echo $code|cut -d, -f2`
 			baseStr=`echo $code|cut -d, -f3`
 			hashkey=`echo $code|cut -d, -f4`
-			isEulaA=`echo $code|cut -d, -f5`
-			tagId=`echo $code|cut -d, -f6`
-			prodId=`echo $code|cut -d, -f7`
-			uuId=`echo $code|cut -d, -f8`
+			echo $data | sed 's/ /\n/g' | grep 'checkEulaAndPerform' >& /dev/null
+			if [ $? -eq 0 ]
+			then
+				# checkEulaAccepted
+				isEulaA='true'
+				tagId=`echo $code|cut -d, -f5`
+				prodId=`echo $code|cut -d, -f6`
+				uuId=`echo $code|cut -d, -f7`
+			else
+				# getDownload
+				isEulaA=`echo $code|cut -d, -f5`
+				tagId=`echo $code|cut -d, -f6`
+				prodId=`echo $code|cut -d, -f7`
+				uuId=`echo $code|cut -d, -f8`
+			fi
 			dlURL=`grep downloadFilesURL $rcdir/_l_${ou}.xhtml|cut -d\" -f6`
 			dlURL="$dlURL&downloadFileId=${dlFileId}&vmware=downloadBinary&baseStr=${baseStr}&hashKey=${hashkey}&productId=${prodId}&tagId=${tagId}&uuId=${uuId}&downloadGroupCode=${dlgGroupCode}"
 			dlURL=`echo $dlURL | sed "s/'//g"`
@@ -2379,7 +2393,7 @@ function getvsm() {
 				fi
 			fi
 		fi
-		if [ -e $name ] || [ -e ${name}.gz ]
+		if [ -e $name ] || [ -e ${name}.gz ] || [ $doforce -eq 1 ]
 		then
 			compress_file $name
 			mksymlink $name
