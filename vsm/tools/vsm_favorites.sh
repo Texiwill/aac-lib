@@ -20,10 +20,10 @@ fi
 # kill any running LinuxVSM
 pkill -9 vsm.sh
 
-$vsm -mr -y --debug -q --patches --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Enterprise_Plus
-$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
-$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_0_Enterprise_Plus
-$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_5_5_Enterprise_Plus
+$vsm -mr -y --debug -q --oauth --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Enterprise_Plus
+$vsm -y --debug --oauth --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
+$vsm -y --debug --oauth --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_0_Enterprise_Plus
+$vsm -y --debug --oauth --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_5_5_Enterprise_Plus
 $vsm -y --debug --oauth --fav Networking_Security_VMware_NSX_T_Data_Center_2_x_VMware_NSX_Data_Center_Enterprise_Plus
 $vsm -y --debug --oauth --fav Desktop_End_User_Computing_VMware_Horizon_7_6_Horizon_7_Enterprise_Edition
 $vsm -y --debug --oauth --fav Infrastructure_Operations_Management_VMware_vRealize_Suite_2018_Enterprise
