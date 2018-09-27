@@ -19,6 +19,17 @@ Download all packages and patches specified by Suite names using new space savin
 
 Usage: ./vsm_favorites.sh >& results & tail -f results
 
+## vami.sh
+Create a VAMI repo suitable for sharing via NGINX
+
+### Description 
+Checks for NGINX and provides how to link in the VAMI repo. Can also be
+used with Apache.
+
+Usage: ./vami.sh [-t|--target tgtName] [-f|--force][-d|--debug][-h|--help]
+	Uses LinuxVSM repo as target unless tgtName specified.
+
+
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.
