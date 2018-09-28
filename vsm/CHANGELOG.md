@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.0.96 - Missing some files in index, related to 1.0.94 issues
 - 1.0.95 - Compatibility with 5.0.1
 - 1.0.94 - Package Updates, Seems cleanup effort removed too much
 - 1.0.93 - Compatibility with 5.0.0
