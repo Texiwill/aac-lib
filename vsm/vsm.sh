@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.0.1"
+VERSIONID="5.0.2"
 
 # args: stmt error
 function colorecho() {
@@ -2075,6 +2075,11 @@ function download_patches() {
 					mksymlink $name
 					((d++))
 					inpatch_dl=0
+					# get latest unless history set
+					if [ $historical -eq 0 ]
+					then
+						break
+					fi
 				done
 				if [ $inpatch_dl -eq 0 ]
 				then
