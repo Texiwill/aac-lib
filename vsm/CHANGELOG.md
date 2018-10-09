@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.0  - DriversTools Updates
 - 1.0.99 - DriversTools Updates
 - 1.0.98 - DriversTools Updates
 - 1.0.97 - DriversTools Updates, Compatibility with 5.0.2
