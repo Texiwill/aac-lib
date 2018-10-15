@@ -47,6 +47,7 @@ echo "export PATH=\$PATH:`find $HOME -name xml_grep -print |head -1 2>/dev/null`
 sudo wget -O /usr/local/bin/vsm.sh https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
 sudo chmod +x /usr/local/bin/vsm.sh
 ```
+* Start a new shell or kill the one you are using and start over. Now the PATH should be set properly for everything installed.
 
 ### Update
 To keep vsm and your repository updated to the latest release/downloads
