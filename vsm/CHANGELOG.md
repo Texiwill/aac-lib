@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.1  - Compatibility with 5.0.3
 - 1.1.0  - DriversTools Updates
 - 1.0.99 - DriversTools Updates
 - 1.0.98 - DriversTools Updates
@@ -113,6 +114,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.0.3 - Fixed an issue using oauth fallback for certain content.
+
 5.0.2 - Fixed a historical download issue
 
 5.0.1 - Updated --oauth option to work with additional packages

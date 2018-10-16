@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.0.2"
+VERSIONID="5.0.3"
 
 # args: stmt error
 function colorecho() {
@@ -217,7 +217,7 @@ function mywget() {
 			then
 				echo -n "+"
 			fi
-			if [ $wgprogress -eq 1 ]
+			if [ Z"$wgprogress" = Z"1" ]
 			then
 				if [ ${#_PROGRESS_OPT} -eq 0 ]
 				then
@@ -286,24 +286,21 @@ function findmissing() {
 		domyvm=`echo ${myvmware}| awk -F/ '{print NF}'`
 		if [ $domyvm -gt 2 ]
 		then
-			case "$choice" in
-				Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager)
-					pkgs='Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager_5_8_4'
-					myusenurl='/group/vmware/details?downloadGroup=VCM-584&productId=542'
-					;;
-				*)
-					myname=`egrep "${myvmware}[/\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 2|sed 's/Software-Defined/Software_Defined/'`
-					myver=`egrep "${myvmware}[/\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 14`
-					#if [ ${PIPESTATUS[0]} -eq 1 ]
-					#then
-					#	v=`basename $myvmware`
-					#	myver=`egrep "${v}[/\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 14`
-					#fi
-					myver=`basename $myver`
-					pkgs=`echo "${choice}_${myver}" | sed 's/[ \.]/_/g'`
-					debugecho "calc pkg => $pkgs"
-					;;
-			esac
+			oauthonly=0
+			if [ Z"$choice" = Z"Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager" ]
+			then
+					oauthonly=1
+			fi
+			myname=`egrep "${myvmware}[ /\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 2|sed 's/Software-Defined/Software_Defined/'`
+			myver=`egrep "${myvmware}[ /\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 14`
+			#if [ ${PIPESTATUS[0]} -eq 1 ]
+			#then
+			#	v=`basename $myvmware`
+			#	myver=`egrep "${v}[/\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 14`
+			#fi
+			myver=`basename $myver`
+			pkgs=`echo "${choice}_${myver}" | sed 's/[ \.]/_/g'`
+			debugecho "calc pkg => $pkgs"
 		fi
 	fi
 	tpkg=`echo $pkgs | tr '[:upper:]' '[:lower:]'`
@@ -323,7 +320,7 @@ function findmissing() {
 		debugecho "DEBUG: $myvmware => $missname"
 		if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ] && [ Z"$myusenurl" = Z"" ]
 		then
-			mywget ${rcdir}/${missname}.xhtml ${myvmware_root}${myvmware}/$spkg 
+			mywget ${rcdir}/${missname}.xhtml ${myvmware_root}${myvmware}/$spkg
 			grep -i "Unable to Complete Your Request" ${rcdir}/${missname}.xhtml >& /dev/null
 			err=$?
 		else
@@ -445,7 +442,7 @@ function getinnervmware() {
 	if [ Z"$usenurl" != Z"" ]
 	then
 		#debugecho "N: $usenurl"
-		ver=`echo $choice | sed 's/\.//g'| sed 's/.*_\([0-9]\+\)$/\1/'`
+		ver=`echo $choice | sed 's/\.//g'| sed 's/.*_\([0-9]\+_[0-9x]\+\)$/\1/'`
 		# not a good test :(
 		if [ Z"$ver" != Z"$choice" ]
 		then
@@ -673,7 +670,7 @@ function vmwaremenu2() {
 		vsme=`echo $ach | sed 's/_/[-_]/g'`
 		debugecho "DEBUG: vsme => $vsme"
 		# will not work for dooss so need to know we are doing this
-		vurl=`egrep "$vsme" ${rcdir}/${mname}.xhtml 2>/dev/null |grep -v OSS | head -1 | sed 's/<a href/\n<a href/' | grep href | cut -d \" -f 2 | sed 's#https://my\.vmware\.com##'`
+		vurl=`egrep "${vsme}[&\"]" ${rcdir}/${mname}.xhtml 2>/dev/null |grep -v OSS | head -1 | sed 's/<a href/\n<a href/' | grep href | cut -d \" -f 2 | sed 's#https://my\.vmware\.com##'`
 		debugecho "DEBUG: vurl => $vurl"
 		if [ $historical -eq 1 ]
 		then
@@ -1415,8 +1412,11 @@ function vsmpkgs() {
 			if [ $dovex -eq 1 ]
 			then
 				pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack Infrastructure_Operations_Management_VMware_Site_Recovery_Manager Infrastructure_Operations_Management_VMware_vCenter_Converter_Standalone"
+				if [ $dooauth -eq 1 ]
+				then
+					pkgs="$pkgs Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager"
+				fi
 				# Infrastructure_Operations_Management_VMware_vRealize_Operations"
-				# Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager
 				pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 			fi
 			mversions=''
@@ -1901,7 +1901,7 @@ function oauth_get_latest() {
 
 	if [ $dooauth -eq 1 ]
 	then
-		oauth_login
+		oauth_login 0
 		debugecho "$vurl $ou"
 
 		# no cookies start again
@@ -1915,6 +1915,7 @@ function oauth_get_latest() {
 		fi
 		# ISSUE: For some reason this may not get me something to download
 		# - VCF for example, could vurl be wrong?
+		vurl=`echo $vurl |sed 's#https://my.vmware.com##'`
 		wget -O $rcdir/_l_${ou}.xhtml $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $mydl_ref" https://my.vmware.com$vurl >& /dev/null
 		# now reparse latest for info
 		getvsmdata $ou $lastcnt '_l'
@@ -2269,7 +2270,10 @@ function getvsm() {
 				then
 					mv ${rname} .
 				else
-					rm ${rname}
+					if [ -e $rname ]
+					then
+						rm ${rname}
+					fi
 				fi
 			fi
 		fi
@@ -2277,12 +2281,17 @@ function getvsm() {
 		if  [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
 		then 
 			debugecho "$name missing"
-			if [ Z"$drparams" = Z"CART" ]
+			lurl=''
+			if [ $oauthonly -eq 0 ]
 			then
-				lurl=$url
-			else
-				lurl=`wget --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $url 2>&1 | grep Location | awk '{print $2}'`
+				if [ Z"$drparams" = Z"CART" ]
+				then
+					lurl=$url
+				else
+					lurl=`wget --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $url 2>&1 | grep Location | awk '{print $2}'`
+				fi
 			fi
+			debugecho "DEBUG: oauthonly => $oauthonly"
 			debugecho "DEBUG: lurl => $lurl"
 			doesxi5=0
 			# older way to download DriversTools, deprecated
@@ -2293,9 +2302,16 @@ function getvsm() {
 				lurl=$durl
 			fi
 			doeurl=1
+			blocked=0
 			echo $lurl|grep -i blocked >& /dev/null
-			if [ $? -ne 0 ] || [ $doesxi5 -eq 1 ]
+			if [ $? -eq 0 ]
 			then
+				blocked=1
+				lurl=''
+			fi
+			debugecho "DEBUG: lurl => $lurl"
+			#if [ $? -ne 0 ] || [ $doesxi5 -eq 1 ]
+			#then
 				if [ Z"$lurl" = Z"" ] && [ $dooauth -eq 1 ]
 				then
 					# changes lurl
@@ -2324,10 +2340,8 @@ function getvsm() {
 					then
 						# just in case we are not at beginning of line
 						echo ""
-						mywget $name $eurl "--progress=bar:force" 1
-					else
-						mywget $name $eurl "--spider --progress=bar:force" 1
 					fi
+					mywget $name $eurl '--progress=bar:force' 1
 					# Let's try Auth
 					if [ $err -ne 0 ] && [ $dooauth -eq 1 ]
 					then
@@ -2343,10 +2357,8 @@ function getvsm() {
 							then
 								# just in case we are not at beginning of line
 								echo ""
-								mywget $name $lurl "--progress=bar:force" 1
-							else
-								mywget $name $lurl "--spider --progress=bar:force" 1
 							fi
+							mywget $name $lurl "--progress=bar:force" 1
 						fi
 					fi
 					if [ $debugv -ge 1 ]
@@ -2379,24 +2391,34 @@ function getvsm() {
 				else
 					if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 					then
-						echo -n "E"
+						if [ $blocked -eq 1 ]
+						then
+							echo -n "B"
+						else
+							echo -n "E"
+						fi
 						if [ $debugv -eq 1 ]
 						then
 							echo ""
 							echo "DEBUGV: url => $url" 
 						fi
 					else
-						colorecho "No Redirect Error Getting $name" 1
+						if [ $blocked -eq 1 ]
+						then
+							colorecho "Blocked Redirect Error Getting $name" 1
+						else
+							colorecho "No Redirect Error Getting $name" 1
+						fi
 					fi
 				fi
-			else
-				if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
-				then
-					echo -n "B"
-				else
-					colorecho "Blocked Redirect Error Getting $name" 1
-				fi
-			fi
+			#else
+			#	if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+			#	then
+			#		echo -n "B"
+			#	else
+			#		colorecho "Blocked Redirect Error Getting $name" 1
+			#	fi
+			#fi
 		fi
 		if [ -e $name ] || [ -e ${name}.gz ] || [ $doforce -eq 1 ]
 		then
@@ -2678,6 +2700,7 @@ dodlg=0
 dovex=0
 dopatch=0
 dooauth=0
+oauthonly=0
 lasturl=''
 lastcnt=0
 patcnt=0
