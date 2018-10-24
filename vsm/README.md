@@ -69,7 +69,9 @@ $ /usr/local/bin/vsm.sh --help
     -mr - reset just My VMware information, implies -m
     -ns|--nostore - do not store credential data and remove if exists
     -nc|--nocolor - do not output with color
-    --oauth - Use Oauth login method
+    --oauth - Fall back to Oauth login method. If you have access in 
+              My VMware, then will download if VSM method fails. If no 
+              access, no download.
     -p|--password - specify password
     --progress - show progress of downloads (only makes sense with -q)
     -q|--quiet - be less verbose
@@ -289,5 +291,25 @@ See the tools directory and its README.md to see all examples of using
 LinuxVSM in scripts
 
 ### Support
+
+#### Frequently Asked Questions
+* I receive a "Credential Error Getting" error
+
+This has three solutions, one is not solvable except by VMware. 
+
+1. If your My VMware account has not been used recently or has no entitlements or trials, it is possible that your VMware Software Manager entitlement has been removed or is not working. You can verify this by using the VMware provided VMware Software Manager on a Windows system and attempt to login. If that works, then it is one of the other issues.
+
+2. If your DNS server is acting up, you may get Credential errors, check that DNS is working.
+
+3. Your credential may be incorrect. Remove your "VSM XML Dir", usually /tmp/vsm (rm /tmp/vsm)  and start over.
+
+* I receive a "Network Error Getting" error
+
+This is usually a sign that DNS is not working or the site is
+unavailable. Verify you can reach https://my.vmware.com to verify the
+site and DNS. Occassionally VMware does maintenance that causes issues. Or
+the DNS server you are working is not working correctly.
+
+#### Email
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.

@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.0.3"
+VERSIONID="5.0.4"
 
 # args: stmt error
 function colorecho() {
@@ -442,7 +442,7 @@ function getinnervmware() {
 	if [ Z"$usenurl" != Z"" ]
 	then
 		#debugecho "N: $usenurl"
-		ver=`echo $choice | sed 's/\.//g'| sed 's/.*_\([0-9]\+_[0-9x]\+\)$/\1/'`
+		ver=`echo $choice | sed 's/.*_\([0-9]\+[\._][\.0-9x]\+\)$/\1/' | sed 's/\.//g'`
 		# not a good test :(
 		if [ Z"$ver" != Z"$choice" ]
 		then
@@ -668,12 +668,16 @@ function vmwaremenu2() {
 	then
 		pkgs=''
 		vsme=`echo $ach | sed 's/_/[-_]/g'`
+		if [ $dodlg -eq 1 ]
+		then
+			vsme=`echo $ach | sed 's/_/[-_]/g'|sed 's/[0-9]$/./'`
+		fi
 		debugecho "DEBUG: vsme => $vsme"
 		# will not work for dooss so need to know we are doing this
 		vurl=`egrep "${vsme}[&\"]" ${rcdir}/${mname}.xhtml 2>/dev/null |grep -v OSS | head -1 | sed 's/<a href/\n<a href/' | grep href | cut -d \" -f 2 | sed 's#https://my\.vmware\.com##'`
 		debugecho "DEBUG: vurl => $vurl"
-		if [ $historical -eq 1 ]
-		then
+		#if [ $historical -eq 1 ]
+		#then
 			# ordering problem, so put here
 			rPId=`echo $vurl  | cut -d\& -f3 | cut -d= -f2`
 			productId=`echo $vurl  | cut -d\& -f2 | cut -d= -f2`
@@ -684,36 +688,47 @@ function vmwaremenu2() {
 				vurl=`echo $vurl | sed "s/$ach/$vsme/"`
 				rPId=`echo $vurl  | cut -d\& -f3 | cut -d= -f2`
 				productId=`echo $vurl  | cut -d\& -f2 | cut -d= -f2`
+			else
+				if [ $dodlg -eq 1 ]
+				then
+					vsme=`echo $ach | sed 's/_/[-_]/g'`
+					dlGroup=`echo $vurl  | cut -d\& -f1 | cut -d= -f2`
+					echo $dlGroup | grep $vsme 2>/dev/null
+					if [ $? -eq 1 ]
+					then
+						vurl=`echo $vurl | sed "s/$dlGroup/$ach/"`
+					fi
+				fi
 			fi
 			vmwaremi $ach $vurl
-		else
-			if [ ! -e ${rcdir}/_dlg_${ach}.xhtml ] || [ $doreset -eq 1 ]
-			then
-				if [ Z"$vurl" != Z"" ]
-				then
-					mywget ${rcdir}/_dlg_${ach}.xhtml "https://my.vmware.com${vurl}"
-				fi
-			fi
+		#else
+		#	if [ ! -e ${rcdir}/_dlg_${ach}.xhtml ] || [ $doreset -eq 1 ]
+		#	then
+		#		if [ Z"$vurl" != Z"" ]
+		#		then
+		#			mywget ${rcdir}/_dlg_${ach}.xhtml "https://my.vmware.com${vurl}"
+		#		fi
+		#	fi
 
 			# parse data
-			menu2files=1
-			getvsmcnt $ach
-			cnt=$?
-			debugecho "DEBUG: menu2files => $menu2files"
-			x=1
-			while [ $x -le $cnt ]
-			do
-				getvsmdata $ach $x
-				if [ Z"$pkgs" = Z"" ]
-				then
-					pkgs=$name
-				else
-					pkgs="$pkgs $name"
-				fi
-				$((x++)) 2> /dev/null
-			done
-			getouterrndir $ach
-		fi
+		#	menu2files=1
+		#	getvsmcnt $ach
+		#	cnt=$?
+		#	debugecho "DEBUG: menu2files => $menu2files"
+		#	x=1
+		#	while [ $x -le $cnt ]
+		#	do
+		#		getvsmdata $ach $x
+		#		if [ Z"$pkgs" = Z"" ]
+		#		then
+		#			pkgs=$name
+		#		else
+		#			pkgs="$pkgs $name"
+		#		fi
+		#		$((x++)) 2> /dev/null
+		#	done
+		#	getouterrndir $ach
+		# fi
 	fi
 }
 
@@ -1099,6 +1114,9 @@ function getouterrndir() {
 			VRNI*)
 				rndir="vrni"
 				;;
+			VCM*)
+				oauthonly=1
+				;;
 			VRLI*)
 				if [ $v -eq 450 ]
 				then
@@ -1227,7 +1245,7 @@ function getasso() {
 	else
 		if [ $domyvmware -eq 1 ] #&& [ ! -e dlg_${choice}.xhtml ]
 		then
-			vmwaremenu2
+			vmwaremenu2 $currchoice
 		fi
 	fi
 	if [ -e _dlg_${sc}.xhtml ]
@@ -1862,9 +1880,9 @@ function oauth_login() {
 			pd="vmware=login&username=${rd[0]}&password=${rd[1]}"
 	
 			# Login
-			bcmtx=`wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location|tail -1|awk '{print $2}'`
-			wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bcmtx >& /dev/null
-			wget -O - $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bcmtx" $myvmware_oauth 2>&1 | grep AUTH-ERR >& /dev/null
+			bmctx=`wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location| grep bmctx= | tail -1|awk '{print $2}'`
+			wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bmctx >& /dev/null
+			wget -O - $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $myvmware_oauth 2>&1 | grep AUTH-ERR >& /dev/null
         	oauth_err=$?
 			# force new cookies
 			if [ -e $cdir/pcookies.txt ]
@@ -1889,7 +1907,7 @@ function get_patch_list() {
 	if [ ! -e $rcdir/_patches.xhtml ] || [ ! -e $cdir/pcookies.txt ]
 	then
 		# Patch Cookies
-		wget -O - $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bcmtx" $mypatches_ref >& /dev/null
+		wget -O - $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $mypatches_ref >& /dev/null
 		# Patch List
 		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --load-cookies $cdir/pcookies.txt --post-data='' --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" 'https://my.vmware.com//group/vmware/patch?p_p_id=PatchDownloadSearchPortlet_WAR_itofflinePatch&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=loadPatchSearchPage&p_p_cacheability=cacheLevelPage&p_p_col_id=column-6&p_p_col_pos=1&p_p_col_count=2' >& /dev/null
 	fi
@@ -1907,7 +1925,7 @@ function oauth_get_latest() {
 		# no cookies start again
 		if [ ! -e $cdir/pcookies.txt ]
 		then
-			wget -O - $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bcmtx" $mydl_ref >& /dev/null
+			wget -O - $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $mydl_ref >& /dev/null
 		fi
 		if [ -e $rcdir/_l_${ou}.xhtml ]
 		then
@@ -2314,6 +2332,7 @@ function getvsm() {
 			#then
 				if [ Z"$lurl" = Z"" ] && [ $dooauth -eq 1 ]
 				then
+					debugecho "DEBUG: lurl && dooauth"
 					# changes lurl
 					if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 					then
@@ -2544,8 +2563,7 @@ function checkdep() {
 			echo "Missing Dependency $dep"
 			needdep=1
 		fi
-	fi
-	if [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
+	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 	then
 		dpkg -s $dep >& /dev/null
 		if [ $? -eq 1 ]
@@ -2553,8 +2571,7 @@ function checkdep() {
 			echo "Missing Dependency $dep"
 			needdep=1
 		fi
-	fi
-	if [ Z"$theos" = Z"macos" ]
+	elif [ Z"$theos" = Z"macos" ]
 	then
 		if [ Z"$dep" = Z"xcodebuild" ]
 		then
@@ -2599,10 +2616,28 @@ function checkdep() {
 				needdep=1
 			fi
 		fi
-	fi
-	if [ Z"$theos" = Z"unknown" ]
+	elif [ Z"$theos" = Z"unknown" ]
 	then
-		colorecho "Cannot Check Dependency $dep." 1
+		if [ Z"$dep" = Z"libxml2" ]
+		then
+			# ignore
+			ignore=1
+		elif [ Z"$dep" = Z"python-urllib3" ]
+		then
+			python -c "help('modules')" 2>/dev/null | grep urllib3 >& /dev/null
+			if [ $? -eq 1 ]
+			then
+				echo "Missing Dependency $dep"
+				needdep=1
+			fi
+		else
+			which $dep  >& /dev/null
+			if [ $? -eq 1 ]
+			then
+				echo "Missing Dependency $dep"
+				needdep=1
+			fi
+		fi
 	fi
 }
 
@@ -2643,6 +2678,9 @@ then
 	checkdep xml-twig-tools
 	checkdep libxml2-utils
 	checkdep ncurses-base
+else
+	checkdep xml_grep
+	checkdep tput
 fi
 checkdep bc
 checkdep jq
@@ -2733,6 +2771,7 @@ noheader=0
 domre=0
 myq=0
 dodlglist=0
+doignore=0
 # onscreen colors
 RED=`tput setaf 1`
 PURPLE=`tput setaf 5`
@@ -2762,6 +2801,9 @@ do
 			;;
 		-h|--help)
 			usage
+			;;
+		-i|--ignore)
+			doignore=1
 			;;
 		-l|--latest)
 			dolatest=0
@@ -3090,10 +3132,13 @@ debugecho "DEBUG: Auth request"
 # Auth as VSM
 wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies cookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="Authorization: Basic $auth" --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/ >& /dev/null
 err=$?
-wgeterror $err
-if [ $err -ne 0 ]
+if [ $doignore -eq 0 ]
 then
-	exit $err
+	wgeterror $err
+	if [ $err -ne 0 ]
+	then
+		exit $err
+	fi
 fi
 chmod 600 cookies.txt
 
@@ -3259,6 +3304,7 @@ then
 		prevchoice=`echo $mytf | cut -d' ' -f1`
 	fi
 	echo "Working $mydlg and found $files within $mypkg..."
+	choice=$mypkg
 	findfavpaths $prevchoice
 
 	# now we run through all the prevchoices
