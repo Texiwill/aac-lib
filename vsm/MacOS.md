@@ -58,11 +58,10 @@ currently marked favorite. Note 'user' is your username.
 Be sure to Mark a release as your favorite! If you do not, this does
 not work. The 'Mark' menu item does this.
 
-I added these lines to a script within /etc/cron.daily (which usually
-runs at 3AM):
+I added these lines using 'sudo crontab -e' to run at 3AM every day:
 ```
-wget -O /usr/local/bin/vsm.sh https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
-chmod +x /usr/local/bin/vsm.sh
+0 3 * * * wget -O /usr/local/bin/vsm.sh https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
+0 3 * * * chmod +x /usr/local/bin/vsm.sh
 ```
 
 The following line starts VSM download at 6AM. You would add using the
