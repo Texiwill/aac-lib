@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.3  - Compatibility with 5.0.5, DriversTools Updates
 - 1.1.2  - Compatibility with 5.0.4, DriversTools Updates
 - 1.1.1  - Compatibility with 5.0.3
 - 1.1.0  - DriversTools Updates
@@ -115,6 +116,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.0.5 - Slight fixes for vSphere Platinum support
+
 5.0.4 - --dlg fixes due to --oauth additions. More DriversTools available
         when using --oauth.
 
