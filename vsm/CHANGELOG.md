@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.4  - VIC/DriversTools Updates
 - 1.1.3  - Compatibility with 5.0.5, DriversTools Updates
 - 1.1.2  - Compatibility with 5.0.4, DriversTools Updates
 - 1.1.1  - Compatibility with 5.0.3
