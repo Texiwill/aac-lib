@@ -310,6 +310,14 @@ unavailable. Verify you can reach https://my.vmware.com to verify the
 site and DNS. Occassionally VMware does maintenance that causes issues. Or
 the DNS server you are working is not working correctly.
 
+* On What operating systems will LinuxVSM run?
+
+  * RHEL 6/7, Centos 6/7, Fedora 14/19
+  * Debian 9.x, Ubuntu 17.10 (or higher)
+  * MacOS High Siera, MacOS Mojave
+  * Embedded Ubuntu within Windows 10 (community tested - @magneet_nl)
+  * ArchLinux (community tested - @WikiITWizard)
+
 #### Email
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.
