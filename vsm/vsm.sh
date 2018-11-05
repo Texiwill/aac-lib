@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.0.5"
+VERSIONID="5.0.6"
 
 # args: stmt error
 function colorecho() {
@@ -2463,8 +2463,9 @@ function version() {
 
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-l|--latest] [-m|--myvmware] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save]"
+	echo "$0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-l|--latest] [-m|--myvmware] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save]"
 	echo "	-c|--check - do sha256 check against download"
+	echo "	--clean - remove all temporary files and exit"
 	echo "	--dlg - download specific package by name or part of name (regex)"
 	echo "	--dlgl - list all packages by name or part of name (regex)"
 	echo "	-d|--dryrun - dryrun, do not download"
@@ -2709,6 +2710,7 @@ doforce=0
 dolatest=0
 doreset=0
 nostore=0
+cleanall=0
 doexit=0
 dryrun=0
 dosave=0
@@ -2916,7 +2918,14 @@ do
 			dodebug=1
 			;;
 		--mre)
-			domre=1;
+			domre=1
+			;;
+		--clean)
+			cleanall=1
+			domre=1
+			doreset=1
+			remyvmware=1
+			domyvmware=1
 			;;
 		--dts)
 			mydts=1
@@ -3048,13 +3057,44 @@ fi
 rcdir="${cdir}/depot.vmware.com/PROD/channel"
 cd $cdir
 
+# Cleanup old data if any
+rm -f cookies.txt index.html.* 2>/dev/null
+if [ $domre -eq 1 ]
+then
+	doreset=$domre
+	rm -rf ${cdir}/vpat*.txt
+fi
+
+if [ ! -e depot.vmware.com/PROD/channel/root.xhtml ]
+then
+	doreset=1
+fi
+
+# Delete all My VMware files! So we can start new
+if [ $remyvmware -eq 1 ]
+then
+	rm -rf ${rcdir}/_*
+fi
+
+if [ $doreset -eq 1 ]
+then
+	rm -rf ${rcdir}/*
+fi
+
 # if we say to no store then remove!
-if [ $nostore -eq 1 ]
+if [ $nostore -eq 1 ] || [ $cleanall -eq 1 ]
 then
 	if [ -e .credstore ]
 	then
 		rm .credstore
 	fi
+fi
+
+# remove all and clean up
+if [ $cleanall -eq 1 ]
+then
+	colorecho "Removed all Temporary Files"
+	exit
 fi
 
 if [ ! -e .credstore ] || [ $nostore -eq 1 ]
@@ -3115,20 +3155,6 @@ then
 	then
 		exit
 	fi
-fi
-
-# Cleanup old data if any
-rm -f cookies.txt index.html.* 2>/dev/null
-
-if [ ! -e depot.vmware.com/PROD/channel/root.xhtml ]
-then
-	doreset=1
-fi
-
-# Delete all My VMware files! So we can start new
-if [ $remyvmware -eq 1 ]
-then
-	rm -rf ${rcdir}/_*
 fi
 
 debugecho "DEBUG: Auth request"
@@ -3192,11 +3218,6 @@ then
 	doquiet=$doqr
 fi
 
-if [ $domre -eq 1 ]
-then
-	doreset=$domre
-	rm -rf ${cdir}/vpat*.txt
-fi
 
 vpat=.vpat$$.txt
 vpas=`head -1 $vdat | cut -d ' ' -f 3` 
