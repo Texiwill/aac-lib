@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.0.6"
+VERSIONID="5.0.7"
 
 # args: stmt error
 function colorecho() {
@@ -1303,7 +1303,7 @@ function getasso() {
 				continue
 			fi
 		fi
-		echo $x | grep OEM > /dev/null
+		echo $x | grep ^OEM > /dev/null
 		if [ $? -eq 0 ]
 		then
 			if [ Z"$oemlist" = Z"" ]
