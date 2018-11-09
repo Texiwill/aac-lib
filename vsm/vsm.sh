@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.0.7"
+VERSIONID="5.0.8"
 
 # args: stmt error
 function colorecho() {
@@ -364,6 +364,7 @@ function findmissing() {
 					fi
 				fi
 				#debugecho "N: $usenurl"
+				usenurl=`echo $usenurl |sed 's#https://my.vmware.com##'`
 				lasturl="https://my.vmware.com${usenurl}"
 				if [ ! -e ${rcdir}/${missname}_1.xhtml ] || [ $doreset -eq 1 ]
 				then
