@@ -12,19 +12,20 @@
 . ./aac-base.install.vsm
 
 function vcli_version() {
-	echo "1.5.4"
+	echo "1.5.5"
 }
 
 function vcli() {
 	vsm
 
 	INSTALL="openssl-devel perl-Archive-Zip perl-Class-Data-Inheritable perl-Class-MethodMaker perl-Compress-Raw-Zlib perl-Compress-Zlib perl-Convert-ASN1 perl-Crypt-OpenSSL-RSA perl-Crypt-SSLeay perl-Crypt-OpenSSL-X509 perl-Data-Dump perl-Data-Dumper perl-HTML-Parser perl-IO-Compress perl-IO-Compress perl-URI uuid-perl perl-XML-NamespaceSupport perl-XML-LibXML perl-Socket6"
+#perl-Module-Build-Tiny perl-Time-Piece perl-Path-Class perl-LWP-Protocol-https perl-Text-Template perl-IO-Socket-INET6
 	DINSTALL="libssl-dev libarchive-zip-perl libclass-data-inheritable-perl libclass-methodmaker-perl libcompress-raw-zlib-perl libperl5.24 libconvert-asn1-perl libcrypt-openssl-rsa-perl libcrypt-openssl-x509-perl libdata-dump-perl libhtml-parser-perl liburi-perl libuuid-perl libxml-namespacesupport-perl libxml-libxml-perl libsocket6-perl libcrypt-ssleay-perl"
 	DEVEL=""
 
 	t=/tmp/d$$
 	# added force so we always know where it is
-	su -l -c "/usr/local/bin/vsm.sh -y -f -ns --dlg CLI\.\*\.x86_64.tar.gz" $myuser | tee $t
+	su -l -c "/usr/local/bin/vsm.sh -y -f -ns --dlg CLI-6.5\.\*\.x86_64.tar.gz" $myuser | tee $t
 	file=`grep Local $t | awk -F: '{print $2}'`
 	rm -rf $t
 
@@ -53,6 +54,7 @@ function vcli() {
 
 	# Run installer
 	cd $PDIR
+	export PAGER='/bin/cat'
 	./vmware-install.pl << EOF
 
 yes
