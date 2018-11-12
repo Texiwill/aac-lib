@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.8  - Compatibility with 5.0.9, DriversTools Updates
 - 1.1.7  - Compatibility with 5.0.8, OEM/DriversTools Updates
 - 1.1.6  - Compatibility with 5.0.7, DriversTools Updates
 - 1.1.5  - Compatibility with 5.0.6, DriversTools Updates
@@ -120,6 +121,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.0.9 - Finished fixing URL bug.
+
 5.0.8 - Fixed bug where URL was incorrectly created
 
 5.0.7 - Fixed CustomIso detection to only include ISOS

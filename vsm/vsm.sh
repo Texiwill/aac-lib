@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.0.8"
+VERSIONID="5.0.9"
 
 # args: stmt error
 function colorecho() {
@@ -473,6 +473,7 @@ function getinnervmware() {
 		#	fi
 			if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ]
 			then
+				nurl=`echo $nurl |sed 's#https://my.vmware.com##'`
 				mywget ${rcdir}/${missname}.xhtml "https://my.vmware.com${nurl}"
 			fi
 			vsmnpkgs 1
@@ -632,6 +633,7 @@ function vmwaremi()
 	then
 		if [ Z"$iurl" != Z"" ]
 		then
+			iurl=`echo $iurl |sed 's#https://my.vmware.com##'`
 			mywget ${rcdir}/_dlg_${ich}.xhtml "https://my.vmware.com${iurl}"
 		fi
 	fi
@@ -1913,7 +1915,7 @@ function get_patch_list() {
 		# Patch Cookies
 		wget -O - $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $mypatches_ref >& /dev/null
 		# Patch List
-		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --load-cookies $cdir/pcookies.txt --post-data='' --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" 'https://my.vmware.com//group/vmware/patch?p_p_id=PatchDownloadSearchPortlet_WAR_itofflinePatch&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=loadPatchSearchPage&p_p_cacheability=cacheLevelPage&p_p_col_id=column-6&p_p_col_pos=1&p_p_col_count=2' >& /dev/null
+		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --load-cookies $cdir/pcookies.txt --post-data='' --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" 'https://my.vmware.com/group/vmware/patch?p_p_id=PatchDownloadSearchPortlet_WAR_itofflinePatch&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=loadPatchSearchPage&p_p_cacheability=cacheLevelPage&p_p_col_id=column-6&p_p_col_pos=1&p_p_col_count=2' >& /dev/null
 	fi
 }
 
@@ -1970,6 +1972,7 @@ function oauth_get_latest() {
 			dlURL=`grep downloadFilesURL $rcdir/_l_${ou}.xhtml|cut -d\" -f6`
 			dlURL="$dlURL&downloadFileId=${dlFileId}&vmware=downloadBinary&baseStr=${baseStr}&hashKey=${hashkey}&productId=${prodId}&tagId=${tagId}&uuId=${uuId}&downloadGroupCode=${dlgGroupCode}"
 			dlURL=`echo $dlURL | sed "s/'//g"`
+			vurl=`echo $vurl |sed 's#https://my.vmware.com##'`
 			lurl=`wget -O - --post-data='' --load-cookies $cdir/pcookies.txt --header="User-Agent: $oaua" --header="Referer: https://my.vmware.com$vurl" $dlURL 2>&1 | grep downloadUrl | cut -d\" -f4`
 			debugecho "OL: lurl => $lurl"
 
