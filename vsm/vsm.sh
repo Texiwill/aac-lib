@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.0.9"
+VERSIONID="5.1.0"
 
 # args: stmt error
 function colorecho() {
@@ -931,7 +931,10 @@ function getouterrndir() {
 				rndir="vcandr"
 				;;
 			VIO*)
-				if [ $v -ge 400 ]
+				if [ $v -ge 500 ]
+				then
+					rndir='VIO/5.0'
+				elif [ $v -ge 400 ]
 				then
 					rndir='VIO'
 				else
