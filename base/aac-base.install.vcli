@@ -12,24 +12,24 @@
 . ./aac-base.install.vsm
 
 function vcli_version() {
-	echo "1.5.5"
+	echo "1.5.7"
 }
 
 function vcli() {
 	vsm
 
-	INSTALL="openssl-devel perl-Archive-Zip perl-Class-Data-Inheritable perl-Class-MethodMaker perl-Compress-Raw-Zlib perl-Compress-Zlib perl-Convert-ASN1 perl-Crypt-OpenSSL-RSA perl-Crypt-SSLeay perl-Crypt-OpenSSL-X509 perl-Data-Dump perl-Data-Dumper perl-HTML-Parser perl-IO-Compress perl-IO-Compress perl-URI uuid-perl perl-XML-NamespaceSupport perl-XML-LibXML perl-Socket6"
-#perl-Module-Build-Tiny perl-Time-Piece perl-Path-Class perl-LWP-Protocol-https perl-Text-Template perl-IO-Socket-INET6
+	INSTALL="openssl-devel perl-Archive-Zip perl-Class-Data-Inheritable perl-Class-MethodMaker perl-Compress-Raw-Zlib perl-Compress-Zlib perl-Convert-ASN1 perl-Crypt-OpenSSL-RSA perl-Crypt-SSLeay perl-Crypt-OpenSSL-X509 perl-Data-Dump perl-Data-Dumper perl-HTML-Parser perl-IO-Compress perl-IO-Compress perl-URI uuid-perl perl-XML-NamespaceSupport perl-XML-LibXML perl-Socket6 perl-Text-Template perl-Time-Piece perl-Path-Class perl-LWP-Protocol-https perl-IO-Socket-INET6 perl-Net-INET6Glue"
 	DINSTALL="libssl-dev libarchive-zip-perl libclass-data-inheritable-perl libclass-methodmaker-perl libcompress-raw-zlib-perl libperl5.24 libconvert-asn1-perl libcrypt-openssl-rsa-perl libcrypt-openssl-x509-perl libdata-dump-perl libhtml-parser-perl liburi-perl libuuid-perl libxml-namespacesupport-perl libxml-libxml-perl libsocket6-perl libcrypt-ssleay-perl"
-	DEVEL=""
+	DEVEL="gcc make cpp libmpc mpfr perl-YAML libuuid-devel perl-Module-Build"
 
 	t=/tmp/d$$
 	# added force so we always know where it is
-	su -l -c "/usr/local/bin/vsm.sh -y -f -ns --dlg CLI-6.5\.\*\.x86_64.tar.gz" $myuser | tee $t
+	su -l -c "/usr/local/bin/vsm.sh -y -f -ns --dlg CLI\.\*\.x86_64.tar.gz" $myuser | tee $t
 	file=`grep Local $t | awk -F: '{print $2}'`
 	rm -rf $t
 
 	# Check for .tar.gz
+	v=`echo $file | awk -F- '{print $4}'|sed 's/\.//g'`
 	if [ Z"$file" != Z"" ] && [ -e $file ]
 	then
 		tar -xzf $file
@@ -52,8 +52,15 @@ function vcli() {
 	# Install RPMS
 	installdep
 
-	# Run installer
 	cd $PDIR
+	# special install items
+	if [ $v -ge 670 ]
+	then
+		INSTALL=$INSTALL67
+		installdep
+	fi
+
+	# Run installer
 	export PAGER='/bin/cat'
 	./vmware-install.pl << EOF
 
@@ -62,7 +69,10 @@ yes
 /usr/bin
 EOF
 	cd ..
+
+	# cleanup
 	rm -rf vmware-vsphere-cli-distrib /tmp/vsm
+	rpm -e --nodeps $DEVEL
 
 	cd $menu_pd
 }

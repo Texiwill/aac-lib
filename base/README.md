@@ -110,6 +110,10 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.5.4 vCLI: support for vCLI 6.7
+
+1.7.4 Base: Fixed issue with empty dependencies
+
 1.6.0 PowerCLI: Support for PowerCLI 10.x and Latest PowerShell + Debian
 
 1.7.3 Base: Changes to package management and error output

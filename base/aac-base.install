@@ -9,7 +9,7 @@
 # Target: CentOS/RHEL 7
 #
 ###
-VERSION="1.7.3"
+VERSION="1.7.4"
 
 function version() {
 	echo "$0 version is $VERSION"
@@ -94,15 +94,21 @@ function installdep() {
 	fi
 	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
 	then
-		yum -y $installopts install $INSTALL $DEVEL
+		if [ Z"$INSTALL" != Z"" ] || [ Z"$DEVEL" != Z"" ]
+		then
+			yum -y $installopts install $INSTALL $DEVEL
+		fi
 	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 	then
-		which apt-get >& /dev/null
-		if [ $? -eq 0 ]
+		if [ Z"$DINSTALL" != Z"" ] || [ Z"$DDEVEL" != Z"" ]
 		then
-			apt-get install -y $installopts $DINSTALL $DDEVEL
-		else
-			apt install -y $installopts $DINSTALL $DDEVEL
+			which apt-get >& /dev/null
+			if [ $? -eq 0 ]
+			then
+				apt-get install -y $installopts $DINSTALL $DDEVEL
+			else
+				apt install -y $installopts $DINSTALL $DDEVEL
+			fi
 		fi
 	fi
 }
