@@ -110,7 +110,9 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
-1.5.4 vCLI: support for vCLI 6.7
+1.5.7 vCLI: missing package dependency
+
+1.5.6 vCLI: support for vCLI 6.7
 
 1.7.4 Base: Fixed issue with empty dependencies
 
