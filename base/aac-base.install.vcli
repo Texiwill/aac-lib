@@ -20,7 +20,7 @@ function vcli() {
 
 	INSTALL="openssl-devel perl-Archive-Zip perl-Class-Data-Inheritable perl-Class-MethodMaker perl-Compress-Raw-Zlib perl-Compress-Zlib perl-Convert-ASN1 perl-Crypt-OpenSSL-RSA perl-Crypt-SSLeay perl-Crypt-OpenSSL-X509 perl-Data-Dump perl-Data-Dumper perl-HTML-Parser perl-IO-Compress perl-IO-Compress perl-URI uuid-perl perl-XML-NamespaceSupport perl-XML-LibXML perl-Socket6 perl-Text-Template perl-Time-Piece perl-Path-Class perl-LWP-Protocol-https perl-IO-Socket-INET6 perl-Net-INET6Glue perl-Try-Tiny"
 	DINSTALL="libssl-dev libarchive-zip-perl libclass-data-inheritable-perl libclass-methodmaker-perl libcompress-raw-zlib-perl libperl5.24 libconvert-asn1-perl libcrypt-openssl-rsa-perl libcrypt-openssl-x509-perl libdata-dump-perl libhtml-parser-perl liburi-perl libuuid-perl libxml-namespacesupport-perl libxml-libxml-perl libsocket6-perl libcrypt-ssleay-perl"
-	DEVEL="gcc make cpp libmpc mpfr perl-YAML libuuid-devel perl-Module-Build-Tiny perl-CPAN"
+	DEVEL="gcc make cpp libmpc mpfr perl-YAML libuuid-devel perl-Module-Build perl-CPAN"
 
 	t=/tmp/d$$
 	# added force so we always know where it is
@@ -29,7 +29,7 @@ function vcli() {
 	rm -rf $t
 
 	# Check for .tar.gz
-	v=`echo $file | awk -F- '{print $4}'|sed 's/\.//g'`
+	#v=`echo $file | awk -F- '{print $4}'|sed 's/\.//g'`
 	if [ Z"$file" != Z"" ] && [ -e $file ]
 	then
 		tar -xzf $file
@@ -54,11 +54,11 @@ function vcli() {
 
 	cd $PDIR
 	# special install items
-	if [ $v -ge 670 ]
-	then
-		INSTALL=$INSTALL67
-		installdep
-	fi
+	#if [ $v -ge 670 ]
+	#then
+	#	INSTALL=$INSTALL67
+	#	installdep
+	#fi
 
 	# Run installer
 	export PAGER='/bin/cat'
