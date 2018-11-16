@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.10 - NSX/CustomISO/DriversTools Updates
 - 1.1.9  - Compatibility with 5.1.0, DriversTools Updates
 - 1.1.8  - Compatibility with 5.0.9, DriversTools Updates
 - 1.1.7  - Compatibility with 5.0.8, OEM/DriversTools Updates
