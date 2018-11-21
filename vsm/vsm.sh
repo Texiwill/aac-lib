@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.1.0"
+VERSIONID="5.1.1"
 
 # args: stmt error
 function colorecho() {
@@ -924,6 +924,9 @@ function getouterrndir() {
 					fi
 				fi
 				;;
+			CLOUDPOD*)
+				rndir="cloudpod"
+				;;
 			VSPP_VCD*)
 				rndir="vcd"
 				;;
@@ -1429,7 +1432,7 @@ function vsmpkgs() {
 			pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite Datacenter_Cloud_Infrastructure_VMware_vSphere_with_Operations_Management"
 			if [ $dovex -eq 1 ]
 			then
-				pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_vCloud_Director Datacenter_Cloud_Infrastructure_VMware_Skyline_Collector Datacenter_Cloud_Infrastructure_VMware_vCloud_Usage_Meter Datacenter_Cloud_Infrastructure_VMware_Cloud_Foundation"
+				pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_vCloud_Director Datacenter_Cloud_Infrastructure_VMware_Skyline_Collector Datacenter_Cloud_Infrastructure_VMware_vCloud_Usage_Meter Datacenter_Cloud_Infrastructure_VMware_Cloud_Foundation Datacenter_Cloud_Infrastructure_VMware_Cloud_Provider_Pod"
 			fi
 			pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 			mversions=''
