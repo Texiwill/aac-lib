@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# Copyright (c) 2018 AstroArch Consulting, Inc. All rights reserved
+#
+# Dropbox for CentOS/RHEL 7 using Docker
+
+function dropbox_version() {
+	echo "1.0.0"
+}
+
+function dropbox() {
+	echo "Installing or Updating Dropbox in Docker"
+
+	INSTALL="docker cockpit-docker docker-forward-journald"
+	DINSTALL="docker"
+	DEVEL=""
+
+	# Remove existing integration of dropbox
+	checkdep nautilus-dropbox >& /dev/null
+	if [ $needdep -eq 0 ]
+	then
+		rpm -e nautilus-dropbox
+	fi
+
+	# install docker
+	installdep
+
+	# add a group
+	groupadd docker
+
+	# Start docker
+	startsrv docker
+
+	# Setup .bashrc
+	# Setup .bash_profile
+	cat << EOF > /etc/profile.d/dropbox.sh
+if [ "\$PS1" ]; then
+	alias dropbox="docker exec -it dropbox dropbox"
+	alias dropbox-start="docker run -d --restart=always --name=dropbox -v \$HOME/Dropbox:/dbox/Dropbox:z -v \$HOME/.dropbox:/dbox/.dropbox:z -e DBOX_UID=\`id -u\` -e DBOX_GID=\`id -g\` janeczku/dropbox"
+	# start Dropbox container
+	docker ps |grep dropbox >& /dev/null
+	if [ \$? -eq 1 ] && [ \`id -u\` != 0 ]
+	then
+		docker run -d --restart=always --name=dropbox -v \$HOME/Dropbox:/dbox/Dropbox:z -v \$HOME/.dropbox:/dbox/.dropbox:z -e DBOX_UID=\`id -u\` -e DBOX_GID=\`id -g\` janeczku/dropbox
+	fi
+fi
+EOF
+
+	# all users in wheel group
+	for x in `lid -g wheel -n`
+	do
+		usermod -a -G docker $x
+	done
+	
+
+	echo "Dropbox using Docker Installed/Updated"
+}
+

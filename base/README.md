@@ -82,6 +82,9 @@ Installs the base AAC setup. This is mostly setting timezones and ensuring wget 
 #### dnscrypt
 Installs DNScrypt 2.x and sets it up for use of 1.1.1.1 via DNS over HTTPS.
 
+#### dropbox
+Installs the Docker Container version of Dropbox for system wide use
+
 #### powercli
 Installs Powershell and VMware PowerCLI: run command 'powercli' to start
 
