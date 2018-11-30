@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.1.1"
+VERSIONID="5.1.2"
 
 # args: stmt error
 function colorecho() {
@@ -1260,13 +1260,14 @@ function getasso() {
 			vmwaremenu2 $currchoice
 		fi
 	fi
-	if [ -e _dlg_${sc}.xhtml ]
+	debugecho "DEBUG: $sc => `pwd`"
+	if [ -f _dlg_${sc}.xhtml ]
 	then
 		assomiss=1
 		# Get ASSO from my vmware bits
 		asso=`xmllint --html --xpath "//div[@class=\"activitiesLog\"]" _dlg_${sc}.xhtml 2>/dev/null |grep secondary | cut -d= -f3 | cut -d\& -f 1 | sed 's/-/_/g'`
 		moreasso="_dlg"
-	elif [ -e dlg_${sc}.xhtml ]
+	elif [ -f dlg_${sc}.xhtml ]
 	then
 		asso=`xml_grep --html --text_only '*[@title="associated-channels"]' dlg_${sc}.xhtml  2>/dev/null| sed 's/,//g'|sed 's/dlg_//g'`
 		moreasso="dlg"
