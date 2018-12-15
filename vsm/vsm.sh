@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.1.2"
+VERSIONID="5.1.3"
 
 # args: stmt error
 function colorecho() {
@@ -1260,7 +1260,9 @@ function getasso() {
 			vmwaremenu2 $currchoice
 		fi
 	fi
-	debugecho "DEBUG: $sc => `pwd`"
+	#curdir=`pwd`
+	#cd ${rcdir}
+	#debugecho "GA: `pwd;ls _dlg_${sc}.xhtml`"
 	if [ -f _dlg_${sc}.xhtml ]
 	then
 		assomiss=1
@@ -1353,6 +1355,7 @@ function getasso() {
 			patcnt=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml |grep download | sed 's/[,"]//g'|wc -l`
 		fi
 	fi
+	#cd ${curdir}
 	debugecho "DEBUG: dtslist => $dtslist"
 	debugecho "DEBUG: osslist => $osslist"
 	debugecho "DEBUG: assomissing => $assomissing"
@@ -3498,7 +3501,6 @@ do
 						#then
 						#	doprogress=0
 						#fi
-						getasso
 						if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
 						then
 							doprogress=1
@@ -3535,6 +3537,7 @@ do
 							# require myvmware data
 							vmwaremenu2
 						fi
+						getasso
 			
 						case $choice in
 							"All")

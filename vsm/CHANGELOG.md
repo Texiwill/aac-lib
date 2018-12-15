@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.17 - Compatibility with 5.1.3
 - 1.1.16 - DriversTools/CustomIso Updates
 - 1.1.15 - DriversTools/CustomIso Updates
 - 1.1.14 - CustomIso Updates
@@ -129,6 +130,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.1.3 - BugFix: Associated Files
+
 5.1.2 - Fixed test condition for associated files: CustomIso/DriversTools
 
 5.1.1 - Minor change to with downloading unknown bits
