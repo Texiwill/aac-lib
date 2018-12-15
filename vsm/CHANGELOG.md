@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.18 - DriversTools Updates
 - 1.1.17 - Compatibility with 5.1.3
 - 1.1.16 - DriversTools/CustomIso Updates
 - 1.1.15 - DriversTools/CustomIso Updates
