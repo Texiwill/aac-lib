@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.1.3"
+VERSIONID="5.1.4"
 
 # args: stmt error
 function colorecho() {
@@ -3521,6 +3521,7 @@ do
 						mychoice=""
 						currchoice=$choice;
 						menu2files=0;
+						getasso
 			
 						# do not show if ALL, choice set above!
 						if [ $doall -eq 0 ] && [ $dodlg -eq 0 ]
@@ -3536,8 +3537,8 @@ do
 							# if we do not show menu, we may still
 							# require myvmware data
 							vmwaremenu2
+							getasso
 						fi
-						getasso
 			
 						case $choice in
 							"All")
