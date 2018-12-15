@@ -52,6 +52,7 @@ $ /usr/local/bin/vsm.sh --help
 [-y] [-z|--compress] [--debug] [--repo repopath] [--save] [--symlink]
 [--fixsymlink]
     -c|--check - do sha256 check against download
+    --clean - remove all metadata including credential store
     --dlg - download specific package by name or part of a name (regex)
     --dlgl - list package by name or part of a name (regex)
     -d|--dryrun - dryrun, do not download
