@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.1.4"
+VERSIONID="5.1.5"
 
 # args: stmt error
 function colorecho() {
@@ -616,7 +616,7 @@ function vmwarecv() {
 			oemlist=''
 			dtslist=''
 			osslist=''
-			getasso
+			#getasso
 			# reset path for 'back' to work
 			getpath
 			addpath
@@ -1257,7 +1257,7 @@ function getasso() {
 	else
 		if [ $domyvmware -eq 1 ] #&& [ ! -e dlg_${choice}.xhtml ]
 		then
-			vmwaremenu2 $currchoice
+			vmwaremenu2 #$currchoice
 		fi
 	fi
 	#curdir=`pwd`
