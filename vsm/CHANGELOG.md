@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.21 - DriversTools/Compatibility with 5.1.6
 - 1.1.20 - Compatibility with 5.1.5
 - 1.1.19 - Compatibility with 5.1.4
 - 1.1.18 - DriversTools Updates
@@ -133,6 +134,9 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.1.6 - BugFix: In advertently showed Chrome Web Store links which are 
+	not possible to download on Linux.
+
 5.1.5 - BugFix: With Historical Mode DriversTools option did not always show up
 
 5.1.4 - BugFix: Associated Files take 2

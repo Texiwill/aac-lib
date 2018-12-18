@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.1.5"
+VERSIONID="5.1.6"
 
 # args: stmt error
 function colorecho() {
@@ -416,7 +416,7 @@ function getoutervmware() {
 		then
 			for x in $mversions
 			do
-				echo $x | egrep -iv "_UWP|_Android|_IOS|Windows_Store" >& /dev/null
+				echo $x | egrep -iv "_UWP|_Android|_IOS|Windows_Store|_Chrome" >& /dev/null
 				if [ $? -eq 0 ]
 				then
 					#a=`echo ${f}_${x} | sed "s/_\(.\)/_\u\1/g" | sed "s/^\(.\)/\u\1/g"`
