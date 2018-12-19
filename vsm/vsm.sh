@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.1.6"
+VERSIONID="5.1.7"
 
 # args: stmt error
 function colorecho() {
@@ -616,7 +616,7 @@ function vmwarecv() {
 			oemlist=''
 			dtslist=''
 			osslist=''
-			#getasso
+			getasso
 			# reset path for 'back' to work
 			getpath
 			addpath
@@ -1254,15 +1254,14 @@ function getasso() {
 		oemlist=''
 		dtslist=''
 		osslist=''
-	else
-		if [ $domyvmware -eq 1 ] #&& [ ! -e dlg_${choice}.xhtml ]
-		then
-			vmwaremenu2 #$currchoice
-		fi
+	fi
+	if [ $domyvmware -eq 1 ] #&& [ ! -e dlg_${choice}.xhtml ]
+	then
+		vmwaremenu2 $currchoice
 	fi
 	#curdir=`pwd`
 	#cd ${rcdir}
-	#debugecho "GA: `pwd;ls _dlg_${sc}.xhtml`"
+	debugecho "GA: $sc"
 	if [ -f _dlg_${sc}.xhtml ]
 	then
 		assomiss=1
@@ -1658,6 +1657,9 @@ function menu() {
 
 function menu2() {
 	mval=$1
+ 	voss=$2
+	voem=$3 
+	vdts=$4
 	all=""
 	pat=''
 	#doprogress=0
@@ -1679,6 +1681,9 @@ function menu2() {
 		if [ $historical -eq 1 ]
 		then
 			vmwarecv
+ 			voss=$oss
+			voem=$oem
+			vdts=$dts
 			mval="_dlg_${choice}.xhtml"
 		fi
 	#fi
@@ -1707,7 +1712,7 @@ function menu2() {
 		done
 		debugecho "MENU2: $mval $2 $3 $4"
 		export COLUMNS=30
-		select choice in All Minimum_Required $all $npkg $2 $3 $4 $pat Back Exit
+		select choice in All Minimum_Required $all $npkg $voss $voem $vdts $pat Back Exit
 		do
 			if [ Z"$choice" != Z"" ]
 			then
