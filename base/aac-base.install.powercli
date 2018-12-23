@@ -10,7 +10,7 @@
 #
 ###
 function powercli_version() {
-	echo "1.6.0"
+	echo "1.6.1"
 }
 
 function powercli() {
@@ -109,11 +109,34 @@ EOF
 \$b = get-psreadlineoption | select ErrorBackgroundColor
 \$clear = \$b.ErrorBackgroundColor
 \$black= 'black'
-if (\$clear -eq 'black') { \$black='white' }
-\$a.WarningForegroundColor = \$black
 
-'command','number','operator','member','parameter','string','type','variable','keyword' |
-foreach { set-psreadlineoption \$_ \$black \$clear }
+if (\$clear -eq 'black') { 
+	\$black='white' 
+	set-psreadlineoption -Colors @{ 
+	"Command" =  [ConsoleColor]::white
+	"Number" = [ConsoleColor]::white
+	"String" = [ConsoleColor]::white
+	"Operator" = [ConsoleColor]::white
+	"Member" = [ConsoleColor]::white
+	"Parameter" = [ConsoleColor]::white
+	"Type" = [ConsoleColor]::white
+	"Variable" = [ConsoleColor]::white
+	"Keyword" = [ConsoleColor]::white
+	}
+} else {
+	set-psreadlineoption -Colors @{ 
+	"Command" =  [ConsoleColor]::black
+	"Number" = [ConsoleColor]::black
+	"String" = [ConsoleColor]::black
+	"Operator" = [ConsoleColor]::black
+	"Member" = [ConsoleColor]::black
+	"Parameter" = [ConsoleColor]::black
+	"Type" = [ConsoleColor]::black
+	"Variable" = [ConsoleColor]::black
+	"Keyword" = [ConsoleColor]::black
+	}
+}
+\$a.WarningForegroundColor = \$black
 Get-module -ListAvailable VMware* | ForEach-Object {try { Import-module \$_ } catch { }}
 
 \$productName = "vSphere PowerCLI"
