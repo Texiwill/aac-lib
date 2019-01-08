@@ -1,7 +1,7 @@
 #!/bin/bash
 # vim: set tabstop=4 shiftwidth=4:
 #
-# Copyright (c) AstroArch Consulting, Inc.  2017,2018
+# Copyright (c) AstroArch Consulting, Inc.  2017-2019
 # All rights reserved
 #
 # A Linux version of VMware Software Manager (VSM) with some added intelligence
@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.1.7"
+VERSIONID="5.1.8"
 
 # args: stmt error
 function colorecho() {
@@ -1416,7 +1416,7 @@ function vsmpkgs() {
 	if [ $choice = "Desktop_End_User_Computing" ]
 	then
 		# need to get this
-		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro Desktop_End_User_Computing_VMware_Unified_Access_Gateway"
+		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro Desktop_End_User_Computing_VMware_Unified_Access_Gateway Desktop_End_User_Computing_VMware_Workspace_ONE"
 		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 	elif [ $choice = "Networking_Security" ]
 	then

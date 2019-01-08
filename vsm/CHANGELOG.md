@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.26 - DriversTools Updates/Compatibility with 5.1.8
 - 1.1.25 - DriversTools Updates
 - 1.1.24 - DriversTools Updates
 - 1.1.23 - DriversTools Updates/Skyline
@@ -138,6 +139,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.1.8 - BugFix: Missing Packages
+
 5.1.7 - BugFix: DriversTools not showing for Historical mode
 
 5.1.6 - BugFix: In advertently showed Chrome Web Store links which are 
