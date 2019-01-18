@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.1.9"
+VERSIONID="5.2.0"
 
 # args: stmt error
 function colorecho() {
@@ -1129,6 +1129,12 @@ function getouterrndir() {
 			VCM*)
 				oauthonly=1
 				;;
+			ASSURANCE*)
+				rndir='assurance'
+				;;
+			EXPERIENCE*)
+				rndir='assurance'
+				;;
 			VRLI*)
 				if [ $v -eq 450 ]
 				then
@@ -1432,10 +1438,10 @@ function vsmpkgs() {
 		fi
 		if [ $choice = "Datacenter_Cloud_Infrastructure" ]
 		then
-			pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite_Platinum Datacenter_Cloud_Infrastructure_VMware_vSphere_with_Operations_Management"
+			pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite Datacenter_Cloud_Infrastructure_VMware_vSphere_with_Operations_Management"
 			if [ $dovex -eq 1 ]
 			then
-				pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_vCloud_Director Datacenter_Cloud_Infrastructure_VMware_Skyline_Collector Datacenter_Cloud_Infrastructure_VMware_vCloud_Usage_Meter Datacenter_Cloud_Infrastructure_VMware_Cloud_Foundation Datacenter_Cloud_Infrastructure_VMware_Cloud_Provider_Pod"
+				pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_vCloud_Director Datacenter_Cloud_Infrastructure_VMware_Skyline_Collector Datacenter_Cloud_Infrastructure_VMware_vCloud_Usage_Meter Datacenter_Cloud_Infrastructure_VMware_Cloud_Foundation Datacenter_Cloud_Infrastructure_VMware_Cloud_Provider_Pod Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite_Platinum"
 			fi
 			pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 			mversions=''
@@ -1444,7 +1450,7 @@ function vsmpkgs() {
 			pkgs="Infrastructure_Operations_Management_VMware_vRealize_Automation Infrastructure_Operations_Management_VMware_vRealize_Network_Insight Infrastructure_Operations_Management_VMware_vRealize_Suite"
 			if [ $dovex -eq 1 ]
 			then
-				pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack Infrastructure_Operations_Management_VMware_Site_Recovery_Manager Infrastructure_Operations_Management_VMware_vCenter_Converter_Standalone"
+				pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack Infrastructure_Operations_Management_VMware_Site_Recovery_Manager Infrastructure_Operations_Management_VMware_vCenter_Converter_Standalone Infrastructure_Operations_Management_VMware_Smart_Assurance Infrastructure_Operations_Management_VMware_Smart_Experience"
 				if [ $dooauth -eq 1 ]
 				then
 					pkgs="$pkgs Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager"

@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.29 - DriversTools Updates/Compatibility with 5.2.0
 - 1.1.28 - Compatibility with 5.1.9
 - 1.1.27 - DriversTools Updates
 - 1.1.26 - DriversTools Updates/Compatibility with 5.1.8
@@ -141,7 +142,9 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
-5.1.9 - Added Some new Packages
+5.2.0 - BugFix: Missing Packages
+
+5.1.9 - BugFix: Missing Packages
 
 5.1.8 - BugFix: Missing Packages
 
