@@ -2670,49 +2670,60 @@ function checkdep() {
 	fi
 }
 
+function loop_deps() {
+	for item in $1
+	do
+		checkdep $item
+	done
+}
+
+
 # check dependencies
 theos=''
 docolor=1
 needdep=0
 debugv=0
 findos
+#Packages required by all OS
+all_checkdep="bc jq wget"
+#Packages required by MacOS
+macos_checkdep="$all_checkdep python xcodebuild xml_grep gnu-sed uudecode"
+#Packages required by all Linux Distros currently supported
+linux_checkdep="$all_checkdep libxml2 shareutils"
+#Packages required by Enterprise Linux and derivatives (including fedora)
+el_checkdep="perl-XML-Twig ncurses xml_grep tput"
+#Packages required by Fedora 
+fedora_checkdep="$linux_checkdep $el_checkdep python2 python2-urllib3"
+#Packages required by RedHat and derivatives 
+redhat_checkdep="$linux_checkdep $el_checkdep python python-urllib3"
+#Packages required by Debian and derivatives 
+debian_checkdep="$linux_checkdep python python-urllib3 xml-twig-tools libxml2-utils ncurses-base"
+
 if [ Z"$theos" = Z"macos" ]
 then
-	checkdep xcodebuild
-	checkdep xml_grep
 	#checkdep urllib2
-	checkdep gnu-sed
-	checkdep uudecode
 	alias sed=gsed
 	alias uudecode="`which uudecode` -p"
 	alias sha256sum="`which shasum` -a 256"
 	alias sha1sum="`which shasum`"
+	loop_deps $macos_checkdep
 else
 	# set language to English
 	LANG=en_US.utf8
 	export LANG
-	checkdep python-urllib3
-	checkdep libxml2
-	checkdep sharutils
+	loop_deps $linux_checkdep
 	alias uudecode="`which uudecode` -o -"
 fi
-checkdep wget
-checkdep python
-if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
+if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ]
 then
-	checkdep perl-XML-Twig
-	checkdep ncurses
+	loop_deps $redhat_checkdep
+elif [ Z"$theos" = Z"fedora" ]
+then
+	loop_deps $fedora_checkdep
 elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 then
-	checkdep xml-twig-tools
-	checkdep libxml2-utils
-	checkdep ncurses-base
-else
-	checkdep xml_grep
-	checkdep tput
+	loop_deps $debian_checkdep
 fi
-checkdep bc
-checkdep jq
 shopt -s expand_aliases
 
 if [ $needdep -eq 1 ]
