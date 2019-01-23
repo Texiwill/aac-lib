@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.2.0"
+VERSIONID="5.2.1"
 
 # args: stmt error
 function colorecho() {
@@ -1130,7 +1130,12 @@ function getouterrndir() {
 				oauthonly=1
 				;;
 			ASSURANCE*)
-				rndir='assurance'
+				if [ $v -ge 960 ]
+				then
+					rndir="assurance/${v}"
+				else
+					rndir='assurance'
+				fi
 				;;
 			EXPERIENCE*)
 				rndir='assurance'
