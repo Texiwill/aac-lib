@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.2.1"
+VERSIONID="5.2.2"
 
 # args: stmt error
 function colorecho() {
@@ -455,11 +455,12 @@ function getinnervmware() {
 				# Need to substitute versions if necessary
 				# This may catch appropriate items
 				debugecho "PLD => $pld"
-				if [ Z"$gver" != Z"$ver" ] && [ Z"$pld" = Z"VRNI" ]
-				then
-					gld=`echo $gld | sed "s/$gver/$ver/"`
-					usenurl=`echo $usenurl | sed "s/$gver/$ver/"`
-				fi
+				## Removed VRNI special case (no longer needed)
+				#if [ Z"$gver" != Z"$ver" ] && [ Z"$pld" = Z"VRNI" ]
+				#then
+				#	gld=`echo $gld | sed "s/$gver/$ver/"`
+				#	usenurl=`echo $usenurl | sed "s/$gver/$ver/"`
+				#fi
 				missname="_dlg_${gld}"
 				nurl=$usenurl
 				pkgs="${gld}"
