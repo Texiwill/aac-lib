@@ -10,6 +10,9 @@
 # LinuxVSM 
 #
 
+PATH=$PATH:/usr/local/bin
+export PATH
+
 # local overrides default path
 vsm=`which vsm.sh`
 if [ -e ./vsm.sh ]
