@@ -11,11 +11,13 @@
 ###
 
 function vsm_version() {
-	echo "1.7.1"
+	echo "1.7.2"
 }
 
 function vsm() {
-	INSTALL="wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc jq sharutils"
+	PYTHON="python python-urllib3"
+	FPYTHON="python2 python2-urllib3"
+	INSTALL="wget libxml2 perl-XML-Twig ncurses bc jq sharutils"
 	DINSTALL="wget python python-urllib3 libxml2 libxml2-utils xml-twig-tools ncurses-base bc jq sharutils"
 	DEVEL=""
 	DDEVEL=$DEVEL
@@ -36,6 +38,12 @@ function vsm() {
 	elif [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
 	then
 		checkdep perl-XML-Twig
+	fi
+	if [ Z"$theos" = Z"fedora" ]
+	then
+		INSTALL="$INSTALL $FPYTHON"
+	else
+		INSTALL="$INSTALL $PYTHON"
 	fi
 	a=$needdep
 	checkdep jq

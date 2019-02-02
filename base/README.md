@@ -113,6 +113,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.7.2 VSM: changes to accomodate fedora
+
 1.6.1 PowerCLI: changes to update
 
 1.5.7 vCLI: missing package dependency
