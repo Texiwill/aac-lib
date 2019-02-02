@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.2.2"
+VERSIONID="5.2.3"
 
 # args: stmt error
 function colorecho() {
@@ -2676,49 +2676,64 @@ function checkdep() {
 	fi
 }
 
+function loopdeps {
+	if [ Z"$1" != Z"" ]
+	then
+		for item in $1 
+		do 
+			checkdep $item
+		done
+	fi
+}
+
+function finddeps {
+	#Packages required by all OS
+	all_checkdep="bc jq wget"
+	#Packages required by MacOS
+	macos_checkdep="$all_checkdep python xcodebuild xml_grep gnu-sed uudecode"
+	#Packages required by all Linux Distros currently supported
+	linux_checkdep="$all_checkdep libxml2 shareutils"
+	#Packages required by Enterprise Linux and derivatives (including fedora)
+	el_checkdep="perl-XML-Twig ncurses xml_grep tput"
+	#Packages required by Fedora 
+	fedora_checkdep="$linux_checkdep $el_checkdep python2 python2-urllib3"
+	#Packages required by RedHat and derivatives 
+	redhat_checkdep="$linux_checkdep $el_checkdep python python-urllib3"
+	#Packages required by Debian and derivatives 
+	debian_checkdep="$linux_checkdep python python-urllib3 xml-twig-tools libxml2-utils ncurses-base"
+	if [ Z"$theos" = Z"macos" ]
+	then
+		loopdeps $macos_checkdep
+		alias sed=gsed
+		alias uudecode="`which uudecode` -p"
+		alias sha256sum="`which shasum` -a 256"
+		alias sha1sum="`which shasum`"
+	else
+		# set language to English
+		LANG=en_US.utf8
+		export LANG
+		loopdeps $linux_checkdep
+		alias uudecode="`which uudecode` -o -"
+	fi
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ]
+	then
+		loopdeps $redhat_checkdep
+	elif [ Z"$theos" = Z"fedora" ]
+	then
+		loopdeps $fedora_checkdep
+	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
+	then
+		loopdeps $debian_checkdep
+	fi
+}
+
 # check dependencies
 theos=''
 docolor=1
 needdep=0
 debugv=0
 findos
-if [ Z"$theos" = Z"macos" ]
-then
-	checkdep xcodebuild
-	checkdep xml_grep
-	#checkdep urllib2
-	checkdep gnu-sed
-	checkdep uudecode
-	alias sed=gsed
-	alias uudecode="`which uudecode` -p"
-	alias sha256sum="`which shasum` -a 256"
-	alias sha1sum="`which shasum`"
-else
-	# set language to English
-	LANG=en_US.utf8
-	export LANG
-	checkdep python-urllib3
-	checkdep libxml2
-	checkdep sharutils
-	alias uudecode="`which uudecode` -o -"
-fi
-checkdep wget
-checkdep python
-if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
-then
-	checkdep perl-XML-Twig
-	checkdep ncurses
-elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
-then
-	checkdep xml-twig-tools
-	checkdep libxml2-utils
-	checkdep ncurses-base
-else
-	checkdep xml_grep
-	checkdep tput
-fi
-checkdep bc
-checkdep jq
+finddeps
 shopt -s expand_aliases
 
 if [ $needdep -eq 1 ]
