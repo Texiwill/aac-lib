@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.2.3"
+VERSIONID="5.2.4"
 
 # args: stmt error
 function colorecho() {
@@ -116,6 +116,87 @@ findfavpaths()
 			mfchoice="$mfchoice/${x}_${tf}_${t}/$pchoice"
 		fi
 	done
+}
+
+handlecredstore ()
+{
+	# if we say to no store then remove!
+	if [ $nostore -eq 1 ] || [ $cleanall -eq 1 ]
+	then
+		if [ -e .credstore ]
+		then
+			rm .credstore
+		fi
+		if [ -e $HOME/.vsm/.key ]
+		then
+			rm $HOME/.vsm/.key
+		fi
+	fi
+
+	if [ ! -d $HOME/.vsm ]
+	then
+		mkdir $HOME/.vsm
+	fi
+	chmod 700 $HOME/.vsm
+
+	if [ $cleanall -ne 1 ]
+	then
+		if [ ! -e $HOME/.vsm/.key ]
+		then
+        	openssl rand -base64 64 | tr '\n' ':' > $HOME/.vsm/.key
+        	k=`cat $HOME/.vsm/.key`
+			if [ -e .credstore ]
+			then
+        		# 1st time so recreate credstore
+				auth=`cat .credstore`
+        		echo -n $auth | openssl enc -aes-256-cbc -k "$k" -a -salt -base64 > .credstore
+			fi
+		fi
+		if [ -e .credstore ]
+		then
+			chmod 600 .credstore
+		fi
+		chmod 600 $HOME/.vsm/.key
+		k=`cat $HOME/.vsm/.key`
+
+		if [ ! -e .credstore ] || [ $nostore -eq 1 ]
+		then
+			if [ Z"$username" = Z"" ]
+			then
+				echo -n "Enter My VMware Username: "
+				read username
+			fi
+			if [ Z"$password" = Z"" ]
+			then
+				echo -n "Enter My VMware Password: "
+				read -s password
+			fi
+		
+			auth=`echo -n "${username}:${password}" |base64`
+			if [ $nostore -eq 0 ]
+			then
+				# handle storing 'Basic Auth' for reuse
+        		echo -n $auth | openssl enc -aes-256-cbc -k $k -a -salt -base64 > .credstore
+				chmod 600 .credstore
+			fi
+			if [ $noheader -eq 0 ]
+			then
+				echo "	Use credstore:	0"
+			fi
+		else
+			if [ $noheader -eq 0 ]
+			then
+				echo -n "	Use credstore:	"
+				if [ $nostore -eq 0 ]
+				then
+					echo '1'
+				else
+					echo '0'
+				fi
+			fi
+			auth=`openssl enc -aes-256-cbc -d -in .credstore -base64 -salt -k $k`
+		fi
+	fi
 }
 
 progressfilt ()
@@ -3127,58 +3208,13 @@ then
 	rm -rf ${rcdir}/*
 fi
 
-# if we say to no store then remove!
-if [ $nostore -eq 1 ] || [ $cleanall -eq 1 ]
-then
-	if [ -e .credstore ]
-	then
-		rm .credstore
-	fi
-fi
+handlecredstore
 
 # remove all and clean up
 if [ $cleanall -eq 1 ]
 then
 	colorecho "Removed all Temporary Files"
 	exit
-fi
-
-if [ ! -e .credstore ] || [ $nostore -eq 1 ]
-then
-	if [ Z"$username" = Z"" ]
-	then
-		echo -n "Enter My VMware Username: "
-		read username
-	fi
-	if [ Z"$password" = Z"" ]
-	then
-		echo -n "Enter My VMware Password: "
-		read -s password
-	fi
-
-	auth=`echo -n "${username}:${password}" |base64`
-	if [ $nostore -eq 0 ]
-	then
-		# handle storing 'Basic Auth' for reuse
-		echo -n $auth > .credstore
-		chmod 600 .credstore
-	fi
-	if [ $noheader -eq 0 ]
-	then
-		echo "	Use credstore:	0"
-	fi
-else
-	if [ $noheader -eq 0 ]
-	then
-		echo -n "	Use credstore:	"
-		if [ $nostore -eq 0 ]
-		then
-			echo '1'
-		else
-			echo '0'
-		fi
-	fi
-	auth=`cat .credstore`
 fi
 if [ $noheader -eq 0 ]
 then

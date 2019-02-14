@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.36 - DriversTools Updates/Compatibility with 5.2.4
 - 1.1.35 - DriversTools Updates
 - 1.1.34 - DriversTools Updates
 - 1.1.33 - DriversTools Updates/Compatibility with 5.2.3
@@ -148,6 +149,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.2.4 - Encryption of temporary credential store
+
 5.2.3 - Merged dependency checking changes from tsborland.
 
 5.2.2 - Removed Package special case
