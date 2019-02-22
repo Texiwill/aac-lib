@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.2.4"
+VERSIONID="5.2.5"
 
 # args: stmt error
 function colorecho() {
@@ -485,9 +485,9 @@ function getoutervmware() {
 		fi
 		if [ $nbeta1 -eq 1 ]
 		then
-			mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/+/_/g' | sed 's/\&amp;/\&/g'`
+			mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/^+//'| sed 's/+/_/g' | sed 's/\&amp;/\&/g'`
 		else
-			mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/+/_/g'`
+			mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | sed 's/^+//'| awk '{print $11}'| sed 's/+/_/g'`
 		fi
 		#mc=`echo $mversions | wc -w`
 		#debugecho "mc => $mc"
@@ -571,10 +571,12 @@ function getinnervmware() {
 			ph=`echo $mchoice | awk -F\/ '{a=NF-1; print $a}'`
 		#fi
 		wh=`echo $wh | sed "s/$ph//" | sed 's/_/ /g'|sed 's/^ //'`
-		#debugecho "wh => :$wh:"
-		what="midProductColumn\">$wh"
+		debugecho "wh => :$wh:"
+		what="class=\"midProductColumn.*>$wh"
+		debugecho "what => :$what:"
 		swh=`echo $wh | sed 's/ /_/g'`
 		wend=`echo $mversions | sed "s/.*$swh //"|awk '{print $1}'|sed 's/_/ /g'`
+		debugecho "wend => :$wend:"
 		if [ Z"$wend" = Z"" ] || [ Z"$wend" = Z"$wh" ]
 		then
 			wend="section"
@@ -1513,7 +1515,7 @@ function vsmpkgs() {
 		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 	elif [ $choice = "Networking_Security" ]
 	then
-		pkgs="Networking_Security_VMware_NSX_Data_Center_for_vSphere Networking_Security_VMware_NSX_T_Data_Center Networking_Security_VMware_AppDefense_Plugin_for_Platinum_Edition"
+		pkgs="Networking_Security_VMware_NSX_Data_Center_for_vSphere Networking_Security_VMware_NSX_T_Data_Center Networking_Security_VMware_AppDefense_Plugin_for_Platinum_Edition Networking_Security_VMware_NSX_SD_WAN"
 	else
 		if [ Z"$pkgs" = Z"" ]
 		then
@@ -2321,11 +2323,11 @@ function getvsm() {
 	dovsmit=1
 
 	# EDGE from NSX downloaded as part of 'main' not dts
-	echo $tchoice | grep EDGE >& /dev/null
-	if [ $? -eq 0 ]
-	then
-		dovsmit=0
-	fi
+	#echo $tchoice | grep EDGE >& /dev/null
+	#if [ $? -eq 0 ]
+	#then
+	#	dovsmit=0
+	#fi
 	# open source when not selected!
 	if [ $additional != "OpenSource" ]
 	then

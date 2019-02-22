@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.39 - DriversTools Updates/Compatibility with 5.2.5
 - 1.1.38 - vSphere Updates
 - 1.1.37 - DriversTools Updates
 - 1.1.36 - DriversTools Updates/Compatibility with 5.2.4
@@ -151,6 +152,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.2.5 - Fixes for incorrect menu items for new packages
+
 5.2.4 - Encryption of temporary credential store
 
 5.2.3 - Merged dependency checking changes from tsborland.
