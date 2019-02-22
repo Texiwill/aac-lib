@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.2.5"
+VERSIONID="5.2.6"
 
 # args: stmt error
 function colorecho() {
@@ -977,6 +977,15 @@ function getouterrndir() {
 				;;
 			NSXV*)
 				rndir="NSX-V-610"
+				;;
+			NSX_SD_WAN*)
+				rndir="NSX-SD-WAN-GA"
+				;;
+			NSX_SD_WAN_CONT)
+				rndir="NSX-SD-WAN-CONT"
+				;;
+			NSX_SD_WAN_ORC)
+				rndir="NSX-SD-WAN-ORC"
 				;;
 			NSX_V*)
 				rndir="nsx-V-610"
