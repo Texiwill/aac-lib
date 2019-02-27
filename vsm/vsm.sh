@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.2.7"
+VERSIONID="5.2.8"
 
 # args: stmt error
 function colorecho() {
@@ -1524,7 +1524,7 @@ function vsmpkgs() {
 		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 	elif [ $choice = "Networking_Security" ]
 	then
-		pkgs="Networking_Security_VMware_NSX_Data_Center_for_vSphere Networking_Security_VMware_NSX_T_Data_Center Networking_Security_VMware_AppDefense_Plugin_for_Platinum_Edition Networking_Security_VMware_NSX_SD_WAN"
+		pkgs="Networking_Security_VMware_NSX_Data_Center_for_vSphere Networking_Security_VMware_NSX_T_Data_Center Networking_Security_VMware_AppDefense_Plugin_for_Platinum_Edition Networking_Security_VMware_SD_WAN"
 	else
 		if [ Z"$pkgs" = Z"" ]
 		then

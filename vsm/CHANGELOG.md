@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.42 - DriversTools Updates/Compatibility with 5.2.8
 - 1.1.41 - Compatibility with 5.2.7
 - 1.1.40 - DriversTools Updates/Compatibility with 5.2.6
 - 1.1.39 - DriversTools Updates/Compatibility with 5.2.5
@@ -154,6 +155,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.2.8 - DriversTools and Package naming change
+
 5.2.7 - Linux Mint support
 
 5.2.6 - Small bugfixes related to menu items for new packages
