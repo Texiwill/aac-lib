@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.2.6"
+VERSIONID="5.2.7"
 
 # args: stmt error
 function colorecho() {
@@ -2655,6 +2655,10 @@ function findos() {
 	then
 		. /etc/os-release
 		theos=`echo $ID | tr [:upper:] [:lower:]`
+		if [ Z"$theos" = Z"linuxmint" ]
+		then
+			theos=`echo $ID_LIKE | tr [:upper:] [:lower:]`
+		fi
 	elif [ -e /etc/centos-release ]
 	then
 		theos=`cut -d' ' -f1 < /etc/centos-release | tr [:upper:] [:lower:]`
@@ -2784,9 +2788,9 @@ function finddeps {
 	#Packages required by MacOS
 	macos_checkdep="$all_checkdep python xcodebuild xml_grep gnu-sed uudecode"
 	#Packages required by all Linux Distros currently supported
-	linux_checkdep="$all_checkdep libxml2 shareutils"
+	linux_checkdep="$all_checkdep libxml2 sharutils"
 	#Packages required by Enterprise Linux and derivatives (including fedora)
-	el_checkdep="perl-XML-Twig ncurses xml_grep tput"
+	el_checkdep="perl-XML-Twig ncurses"
 	#Packages required by Fedora 
 	fedora_checkdep="$linux_checkdep $el_checkdep python2 python2-urllib3"
 	#Packages required by RedHat and derivatives 
@@ -2795,7 +2799,7 @@ function finddeps {
 	debian_checkdep="$linux_checkdep python python-urllib3 xml-twig-tools libxml2-utils ncurses-base"
 	if [ Z"$theos" = Z"macos" ]
 	then
-		loopdeps $macos_checkdep
+		loopdeps "$macos_checkdep"
 		alias sed=gsed
 		alias uudecode="`which uudecode` -p"
 		alias sha256sum="`which shasum` -a 256"
@@ -2804,18 +2808,18 @@ function finddeps {
 		# set language to English
 		LANG=en_US.utf8
 		export LANG
-		loopdeps $linux_checkdep
+		loopdeps "$linux_checkdep"
 		alias uudecode="`which uudecode` -o -"
 	fi
 	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ]
 	then
-		loopdeps $redhat_checkdep
+		loopdeps "$redhat_checkdep"
 	elif [ Z"$theos" = Z"fedora" ]
 	then
-		loopdeps $fedora_checkdep
+		loopdeps "$fedora_checkdep"
 	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 	then
-		loopdeps $debian_checkdep
+		loopdeps "$debian_checkdep"
 	fi
 }
 
