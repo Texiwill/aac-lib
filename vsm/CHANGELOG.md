@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.44 - DriversTools Updates
 - 1.1.43 - DriversTools Updates
 - 1.1.42 - DriversTools Updates/Compatibility with 5.2.8
 - 1.1.41 - Compatibility with 5.2.7
