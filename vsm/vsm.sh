@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.2.8"
+VERSIONID="5.2.9"
 
 # args: stmt error
 function colorecho() {
@@ -1450,7 +1450,7 @@ function getasso() {
 			fi
 		fi
 	done
-	if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ]
+	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
 	then
 		get_product_patches $sc
 		if [ -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ]
@@ -1537,7 +1537,7 @@ function vsmpkgs() {
 		if [ $choice = "Datacenter_Cloud_Infrastructure" ]
 		then
 			pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite Datacenter_Cloud_Infrastructure_VMware_vSphere_with_Operations_Management"
-			if [ $dovex -eq 1 ]
+			if [ $dovexxi -eq 1 ]
 			then
 				pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_vCloud_Director Datacenter_Cloud_Infrastructure_VMware_Skyline_Collector Datacenter_Cloud_Infrastructure_VMware_vCloud_Usage_Meter Datacenter_Cloud_Infrastructure_VMware_Cloud_Foundation Datacenter_Cloud_Infrastructure_VMware_Cloud_Provider_Pod Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite_Platinum"
 			fi
@@ -1546,7 +1546,7 @@ function vsmpkgs() {
 		elif [ $choice = "Infrastructure_Operations_Management" ]
 		then
 			pkgs="Infrastructure_Operations_Management_VMware_vRealize_Automation Infrastructure_Operations_Management_VMware_vRealize_Network_Insight Infrastructure_Operations_Management_VMware_vRealize_Suite"
-			if [ $dovex -eq 1 ]
+			if [ $dovexxi -eq 1 ]
 			then
 				pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack Infrastructure_Operations_Management_VMware_Site_Recovery_Manager Infrastructure_Operations_Management_VMware_vCenter_Converter_Standalone Infrastructure_Operations_Management_VMware_Smart_Assurance Infrastructure_Operations_Management_VMware_Smart_Experience"
 				if [ $dooauth -eq 1 ]
@@ -1620,7 +1620,7 @@ function save_vsmrc() {
 			echo "myquiet=$doquiet" >> $vsmrc
 			echo "myprogress=$doprogress" >> $vsmrc
 			echo "doshacheck=$doshacheck" >> $vsmrc
-			echo "dovex=$dovex" >> $vsmrc
+			echo "dovexxi=$dovexxi" >> $vsmrc
 			echo "historical=$historical" >> $vsmrc
 			echo "compress=$compress" >> $vsmrc
 			echo "symlink=$symlink" >> $vsmrc
@@ -1690,7 +1690,7 @@ function menu() {
 			then
 				pkgs="$pkgs Infrastructure_Operations_Management"
 			fi
-			if [ $dovex -eq 1 ]
+			if [ $dovexxi -eq 1 ]
 			then
 				pkgs="$pkgs Desktop_End_User_Computing Networking_Security"
 			fi
@@ -1772,7 +1772,7 @@ function menu2() {
 	then
 		all="All_Plus_OpenSource"
 	fi
-	if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ] && [ $patcnt -gt 0 ]
+	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ] && [ $patcnt -gt 0 ]
 	then
 		pat='Patches'
 	fi
@@ -2014,7 +2014,7 @@ function oauth_login() {
 			then
 				rm -f $cdir/pcookies.txt >& /dev/null
 			fi
-			if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ] && [ $oauth_err -eq 1 ]
+			if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ] && [ $oauth_err -eq 1 ]
 			then
 				rm -f $rcdir/_*patch*.xhtml >& /dev/null
 				get_patch_list
@@ -2155,7 +2155,7 @@ function get_product_patches() {
 function download_patches() {
 	l_lasturl=$lasturl
 	sc=$1
-	if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ]
+	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
 	then
 		ppr=`echo $sc | sed 's/\([A-Z]\+\)[0-9][0-9A-Z]\+/\1/'`
 		if [ Z"$ppr" = Z"ESXI" ] || [ Z"$ppr" = Z"VC" ]
@@ -2882,7 +2882,7 @@ vsmrc=""
 mypkg=""
 mydlg=""
 dodlg=0
-dovex=0
+dovexxi=0
 dopatch=0
 dooauth=0
 oauthonly=0
@@ -3007,15 +3007,15 @@ do
 			dodlglist=1
 			shift
 			;;
-		--vexpertx)
-			dovex=1
+		--vexpertxi)
+			dovexxi=1
 			;;
 		--oauth)
 			dooauth=1
 			;;
 		--patches)
 			dooauth=1
-			if [ $dovex -eq 1 ]
+			if [ $dovexxi -eq 1 ]
 			then
 				dopatch=1
 			fi
@@ -3233,7 +3233,7 @@ then
 fi
 if [ $noheader -eq 0 ]
 then
-	if [ $dovex -eq 1 ]
+	if [ $dovexxi -eq 1 ]
 	then
 		colorecho "	vExpert Mode:   1"
 	fi
@@ -3372,7 +3372,7 @@ then
 		dopatch=0
 	fi
 fi
-if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ]
+if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
 then
 	rm -f $cdir/pcookies.txt _*patch*.xhtml >& /dev/null
 	get_patch_list
@@ -3818,7 +3818,7 @@ do
 						# Do patches if necessary
 						if [ $dopat -eq 1 ]
 						then
-							if [ $dopatch -eq 1 ] && [ $dovex -eq 1 ]
+							if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
 							then
 								while : ; do
 									get_product_patches $currchoice
