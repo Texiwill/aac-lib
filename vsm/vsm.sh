@@ -3010,6 +3010,9 @@ do
 		--vexpertx)
 			dovexxi=1
 			;;
+		--vexpertxi)
+			dovexxi=1
+			;;
 		--oauth)
 			dooauth=1
 			;;
