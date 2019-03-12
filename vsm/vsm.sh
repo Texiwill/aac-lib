@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.2.9"
+VERSIONID="5.3.0"
 
 # args: stmt error
 function colorecho() {
@@ -3007,7 +3007,7 @@ do
 			dodlglist=1
 			shift
 			;;
-		--vexpertxi)
+		--vexpertx)
 			dovexxi=1
 			;;
 		--oauth)
