@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.3.2"
+VERSIONID="5.3.3"
 
 # args: stmt error
 function colorecho() {
@@ -497,7 +497,7 @@ function getoutervmware() {
 		if [ $? -eq 0 ]
 		then
 			#contentTag=`grep 'Product Downloads' $rcdir/${missname}.xhtml  | sed 's/ /\n/g' |grep id | cut -d\" -f2`
-			mversions=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/${missname}.xhtml 2>/dev/null | grep longProductColumn |cut -d'>' -f3|cut -d'<' -f1 | sed 's/ /_/'`
+			mversions=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/${missname}.xhtml 2>/dev/null | grep longProductColumn |cut -d'>' -f3|cut -d'<' -f1 | sed 's/ /_/g'`
 			longProductColumn=1
 		else
 			if [ $nbeta1 -eq 1 ]
