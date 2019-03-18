@@ -15,6 +15,9 @@ the latest of every package.
 As of v4.0.0 LinuxVSM now uses the My VMware mode by default. This
 implies that previously out of date items are now up to date once more.
 
+As of v5.3.2 LinuxVSM now requires --oauth to be used to work properly. This
+is due to a change from VMware.
+
 Also, you should know that Code Stream is a license ontop of VRA, and
 VRA is already in LinuxVSM.
 
