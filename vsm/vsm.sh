@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.3.0"
+VERSIONID="5.3.2"
 
 # args: stmt error
 function colorecho() {
@@ -279,6 +279,11 @@ function mywget() {
 	fi
 	ua='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2'
 	ck='cookies.txt'
+	if [ -e $cdir/pcookies.txt ]
+	then
+		ua=$oaua
+		ck='pcookies.txt'
+	fi
 	if [ Z"$hd" = Z"pcookies" ]
 	then
 		ua=$oaua
@@ -444,6 +449,11 @@ function findmissing() {
 						usenurl=$myusenurl
 					fi
 				fi
+				if [ Z"$usenurl" = Z"" ]
+				then
+					colorecho "ERROR: No URL found!" 1
+					exit 1
+				fi
 				#debugecho "N: $usenurl"
 				usenurl=`echo $usenurl |sed 's#https://my.vmware.com##'`
 				lasturl="https://my.vmware.com${usenurl}"
@@ -483,11 +493,19 @@ function getoutervmware() {
 		then
 			mywget ${rcdir}/${missname}.xhtml ${myvmware_root}${myvmware}
 		fi
-		if [ $nbeta1 -eq 1 ]
+		grep 'class="longProductColumn"' $rcdir/${missname}.xhtml >& /dev/null
+		if [ $? -eq 0 ]
 		then
-			mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/^+//'| sed 's/+/_/g' | sed 's/\&amp;/\&/g'`
+			#contentTag=`grep 'Product Downloads' $rcdir/${missname}.xhtml  | sed 's/ /\n/g' |grep id | cut -d\" -f2`
+			mversions=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/${missname}.xhtml 2>/dev/null | grep longProductColumn |cut -d'>' -f3|cut -d'<' -f1 | sed 's/ /_/'`
+			longProductColumn=1
 		else
-			mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | sed 's/^+//'| awk '{print $11}'| sed 's/+/_/g'`
+			if [ $nbeta1 -eq 1 ]
+			then
+				mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/^+//'| sed 's/+/_/g' | sed 's/\&amp;/\&/g'`
+			else
+				mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | sed 's/^+//'| awk '{print $11}'| sed 's/+/_/g'`
+			fi
 		fi
 		#mc=`echo $mversions | wc -w`
 		#debugecho "mc => $mc"
@@ -567,31 +585,38 @@ function getinnervmware() {
 		#	ph=${mfavorite}
 		#	mversions=`xmllint --html --xpath "//tr[@class=\"clickable\"]" $rcdir/${missname}.xhtml 2>/dev/null | tr '\r\n' ' '|sed 's/[[:space:]]/+/g'| sed 's/<\/tr>/\n/g' |grep -v buttoncol | sed 's/[<>]/ /g' | awk '{print $11}'| sed 's/+/_/g'`
 		#else
+		if [ $longProductColumn -eq 1 ]
+		then
+			debugecho "longProductColumn"
+			pkgs=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/${missname}.xhtml 2>/dev/null | xmllint --html --xpath "(//tr[@class=\"more-details\"])[$longReply]" - 2>/dev/null | grep downloadGroup| grep buttoncol | sed 's/&amp;/ /g' |sed 's/=/ /g' | awk '{print $6}' | sed 's/-/_/g' | sort -u` #sed 's/^/dlg_/'|sed 's/-/_/g'|sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\+\).*$/\1/' | sort -u`
+			vsmnpkgs 1
+		else
 			wh=`basename $mchoice`
 			ph=`echo $mchoice | awk -F\/ '{a=NF-1; print $a}'`
-		#fi
-		wh=`echo $wh | sed "s/$ph//" | sed 's/_/ /g'|sed 's/^ //'`
-		debugecho "wh => :$wh:"
-		what="class=\"midProductColumn.*>$wh"
-		debugecho "what => :$what:"
-		swh=`echo $wh | sed 's/ /_/g'`
-		wend=`echo $mversions | sed "s/.*$swh //"|awk '{print $1}'|sed 's/_/ /g'`
-		debugecho "wend => :$wend:"
-		if [ Z"$wend" = Z"" ] || [ Z"$wend" = Z"$wh" ]
-		then
-			wend="section"
-		fi
-		mv=`echo $mversions | sed 's/ /|/g'|sed 's/_/ /g'`
-		debugecho "what => $what wend => $wend mv => $mv"
-		if [ $dolatest -eq 1 ]
-		then
-			# finds what is on filesystem there now including latest
-			pkgs=`egrep "downloadGroup|$mv" $rcdir/${missname}.xhtml | awk "/$what/,/$wend/"| egrep -v "$wh|buttoncol|$wend" |awk -F= '{print $3}'|awk -F\& '{print $1}'|sed 's/^/dlg_/'|sed 's/-/_/g'|sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\).*$/\1/' | sort -u`
-			vsmnpkgs
-		else
-			# lists what should be there ignoring filesystem
-			pkgs=`egrep "downloadGroup|$mv" $rcdir/${missname}.xhtml | awk "/$what/,/$wend/"| egrep -v "$wh|buttoncol|$wend" |awk -F= '{print $3}'|awk -F\& '{print $1}'|sed 's/-/_/g'| sort -u`
-			vsmnpkgs 1
+			#fi
+			wh=`echo $wh | sed "s/$ph//" | sed 's/_/ /g'|sed 's/^ //'`
+			debugecho "wh => :$wh:"
+			what="class=\"midProductColumn.*>$wh"
+			debugecho "what => :$what:"
+			swh=`echo $wh | sed 's/ /_/g'`
+			wend=`echo $mversions | sed "s/.*$swh //"|awk '{print $1}'|sed 's/_/ /g'`
+			debugecho "wend => :$wend:"
+			if [ Z"$wend" = Z"" ] || [ Z"$wend" = Z"$wh" ]
+			then
+				wend="section"
+			fi
+			mv=`echo $mversions | sed 's/ /|/g'|sed 's/_/ /g'`
+			debugecho "what => $what wend => $wend mv => $mv"
+			if [ $dolatest -eq 1 ]
+			then
+				# finds what is on filesystem there now including latest
+				pkgs=`egrep "downloadGroup|$mv" $rcdir/${missname}.xhtml | awk "/$what/,/$wend/"| egrep -v "$wh|buttoncol|$wend" |awk -F= '{print $3}'|awk -F\& '{print $1}'|sed 's/^/dlg_/'|sed 's/-/_/g'|sed 's/\(dlg_[a-Z_]\+[0-9][0-9]\).*$/\1/' | sort -u`
+				vsmnpkgs
+			else
+				# lists what should be there ignoring filesystem
+				pkgs=`egrep "downloadGroup|$mv" $rcdir/${missname}.xhtml | awk "/$what/,/$wend/"| egrep -v "$wh|buttoncol|$wend" |awk -F= '{print $3}'|awk -F\& '{print $1}'|sed 's/-/_/g'| sort -u`
+				vsmnpkgs 1
+			fi
 		fi
 	fi
 	dlg=1
@@ -1520,7 +1545,7 @@ function vsmpkgs() {
 	if [ $choice = "Desktop_End_User_Computing" ]
 	then
 		# need to get this
-		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro Desktop_End_User_Computing_VMware_Unified_Access_Gateway Desktop_End_User_Computing_VMware_Workspace_ONE"
+		pkgs="Desktop_End_User_Computing_VMware_Horizon Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro Desktop_End_User_Computing_VMware_Unified_Access_Gateway Desktop_End_User_Computing_VMware_Workspace_ONE Desktop_end_User_Computing_VMware_User_Environment_Manager"
 		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
 	elif [ $choice = "Networking_Security" ]
 	then
@@ -1676,6 +1701,7 @@ function menu() {
 		missing=""
 		missname=""
 		mversions=""
+		longProductColumn=0
 		back=""
 	fi
 	debugecho "MENU: $file $domenu2 $dlg"
@@ -1720,6 +1746,10 @@ function menu() {
 	export COLUMNS=20
 	select choice in $all $allm $alln $pkgs $mark $back Exit
 	do
+		if [ Z"$all" = Z"" ]
+		then
+			longReply=$REPLY
+		fi
 		if [ Z"$choice" != Z"" ]
 		then
 			## needed if we allow
@@ -2908,6 +2938,8 @@ assomissing=""
 missing=""
 missname=""
 mversions=""
+longProductColumn=0
+longReply=0
 fav=""
 midprod=1
 doprogress=0
@@ -3287,6 +3319,12 @@ then
 	doprogress=1
 fi
 
+# We should not use this here	
+if [ -e ${cdir}/pcookies.txt ]
+then
+	rm -f ${cdir}/pcookies.txt
+fi
+
 if [ $doreset -eq 1 ]
 then
 	colorecho "Reset Request"
@@ -3333,8 +3371,6 @@ then
 	colorecho "	Please update to latest version of LinuxVSM" 1
 	exit
 fi
-	
-
 
 if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
 then
@@ -3496,6 +3532,17 @@ do
 			mchoice=$mfchoice
 			myvmware=$myfvmware
 			getvmware #IV
+			i=0
+			for x in $mversions
+			do
+				let i=$i+1
+				echo $fav |grep $x >& /dev/null
+				if [ $? -eq 0 ]
+				then
+					longReply=$i
+				fi
+			done
+			debugecho "DEBUG: longReply => $longReply"
 		elif [ -e ${rcdir}/${favorite}.xhtml ]
 		then
 			favorites=$favorite
@@ -3541,7 +3588,7 @@ do
 				#   ensure 'selected' is in $choices so does this once
 				if [ $choice = "All" ] || [ $choice = "All_Plus_OpenSource" ] || [ $choice = "Minimum_Required" ]
 				then
-					if [ $myinnervm -eq 0 ]
+					if [ $myinnervm -eq 0 ] || [ $myfav -gt 0 ]
 					then
 						vsmpkgs ${prevchoice}.xhtml
 					fi
