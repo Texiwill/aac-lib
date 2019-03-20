@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.53 - DriversTools Updates/Compatibility with 5.3.4
 - 1.1.52 - Compatibility with 5.3.3
 - 1.1.51 - Compatibility with 5.3.2
 - 1.1.50 - DriversTools Updates/Compatibility with 5.3.1
@@ -165,6 +166,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.3.4 - Found the proper URL for pre-Major website change style capabilities
+
 5.3.3 - Major website change bug fix, could not parse multiple word names properly
 
 5.3.2 - Major Website change also to download vSphere need --oauth option

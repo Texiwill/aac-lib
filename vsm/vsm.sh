@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.3.3"
+VERSIONID="5.3.4"
 
 # args: stmt error
 function colorecho() {
@@ -279,13 +279,22 @@ function mywget() {
 	fi
 	ua='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2'
 	ck='cookies.txt'
-	if [ -e $cdir/pcookies.txt ]
-	then
-		ua=$oaua
-		ck='pcookies.txt'
-	fi
+	debugecho "cookies"
+	#if [ -e $cdir/ocookies.txt ]
+	#then
+	#	debugecho "Ocookies"
+	#	ua=$oaua
+	#	ck='ocookies.txt'
+	#fi
+	#if [ -e $cdir/pcookies.txt ]
+	#then
+	#	debugecho "Pcookies"
+	#	ua=$oaua
+	#	ck='pcookies.txt'
+	#fi
 	if [ Z"$hd" = Z"pcookies" ]
 	then
+		debugecho "Real Pcookies"
 		ua=$oaua
 		ck='pcookies.txt'
 		hd="--header='Referer: $mypatches_ref'" 
@@ -3324,6 +3333,10 @@ if [ -e ${cdir}/pcookies.txt ]
 then
 	rm -f ${cdir}/pcookies.txt
 fi
+if [ -e ${cdir}/ocookies.txt ]
+then
+	rm -f ${cdir}/ocookies.txt
+fi
 
 if [ $doreset -eq 1 ]
 then
@@ -3413,6 +3426,7 @@ then
 fi
 if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
 then
+	# force patch oauth
 	rm -f $cdir/pcookies.txt _*patch*.xhtml >& /dev/null
 	get_patch_list
 	colorecho "	Patches:	1"
@@ -3420,7 +3434,7 @@ fi
 
 # start of history
 mlist=0
-myvmware_root="https://my.vmware.com/web/vmware/info/slug"
+myvmware_root="https://my.vmware.com/en/web/vmware/info/slug"
 usenurl=""
 linuxvdi=""
 myvmware_ref="https://my.vmware.com/group/vmware/downloads#tab1"
