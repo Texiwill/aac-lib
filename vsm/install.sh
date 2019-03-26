@@ -1,6 +1,7 @@
 #!/bin/bash
 # Copyright (c) AstroArch Consulting, Inc.  2017,2018
 # All rights reserved
+# vim: tabstop=4 shiftwidth=4
 #
 # An installer for the Linux version of VMware Software Manager (VSM)
 # with some added intelligence the intelligence is around what to download
@@ -10,7 +11,6 @@
 # Requires:
 # wget 
 #
-# vim: tabstop=4 shiftwidth=4
 function findos() {
 	if [ -e /etc/os-release ]
 	then
@@ -33,6 +33,24 @@ function findos() {
 		theos="unknown"
 	fi
 }
+
+doit=1
+if [ Z"$1" != Z"" ]
+then
+	grep ${1}: /etc/passwd >& /dev/null
+	if [ $? -ne 0 ]
+	then
+		doit=0
+	fi
+else
+	doit=0
+fi
+if [ $doit -eq 0 ]
+then
+	echo "Error: Requires a valid non-root username as an argument"
+	echo "Usage: $0 username"
+	exit
+fi
 
 theos=''
 findos
