@@ -18,6 +18,9 @@ implies that previously out of date items are now up to date once more.
 As of v5.3.2 LinuxVSM now requires --oauth to be used to work properly. This
 is due to a change from VMware.
 
+As of 5.3.5 the --oauth option is deprecated as Oauth is forced to be
+used for all metadata downloads.
+
 Also, you should know that Code Stream is a license ontop of VRA, and
 VRA is already in LinuxVSM.
 
@@ -75,7 +78,8 @@ $ /usr/local/bin/vsm.sh --help
     -nc|--nocolor - do not output with color
     --oauth - Fall back to Oauth login method. If you have access in 
               My VMware, then will download if VSM method fails. If no 
-              access, no download.
+              access, no download. 
+              Deprecated: Now the default, the argument does nothing any more.
     -p|--password - specify password
     --progress - show progress of downloads (only makes sense with -q)
     -q|--quiet - be less verbose
