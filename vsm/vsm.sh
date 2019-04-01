@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.3.5"
+VERSIONID="5.3.6"
 
 # args: stmt error
 function colorecho() {
@@ -1948,6 +1948,9 @@ function oauth_login() {
 			then
 				rm -f $cdir/pcookies.txt >& /dev/null
 			fi
+			# Patch Cookies - seems needed for many things
+			wget -O ${rcdir}/patch.html $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $mypatches_ref >& /dev/null
+			patchUrl=`grep searchPageUrl: ${rcdir}/patch.html | cut -d\' -f 2`
 			if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ] && [ $oauth_err -eq 1 ]
 			then
 				rm -f $rcdir/_*patch*.xhtml >& /dev/null
@@ -1965,10 +1968,8 @@ function get_patch_list() {
 	# do not get if not there already
 	if [ ! -e $rcdir/_patches.xhtml ] || [ ! -e $cdir/pcookies.txt ]
 	then
-		# Patch Cookies
-		wget -O - $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $mypatches_ref >& /dev/null
 		# Patch List
-		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --load-cookies $cdir/pcookies.txt --post-data='' --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" 'https://my.vmware.com/group/vmware/patch?p_p_id=PatchDownloadSearchPortlet_WAR_itofflinePatch&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=loadPatchSearchPage&p_p_cacheability=cacheLevelPage&p_p_col_id=column-6&p_p_col_pos=1&p_p_col_count=2' >& /dev/null
+		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --load-cookies $cdir/pcookies.txt --post-data='' --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $patchUrl >& /dev/null
 	fi
 }
 
@@ -2034,9 +2035,15 @@ function oauth_get_latest() {
 				lurl=`wget -O - --post-data='' --load-cookies $cdir/pcookies.txt --header="User-Agent: $oaua" --header="Referer: https://my.vmware.com$vurl" $dlURL 2>&1 | grep downloadUrl | cut -d\" -f4`
 			else
 				lurl=`echo $data | sed 's/ /\n/g' | grep href | cut -d\" -f 2`
-				lurl="https://www.vmware.com$lurl"
+				if [ Z"$lurl" != Z"#" ]
+				then
+					lurl="https://www.vmware.com$lurl"
+				else
+					lurl=''
+				fi
 			fi
 			debugecho "OL: lurl => $lurl"
+				
 			# compute rndll, rndir
 			if [ ${#lurl} -gt 0 ]
 			then
@@ -3201,6 +3208,8 @@ then
 	wgeterror $err
 	if [ $err -ne 0 ]
 	then
+		colorecho "Authentication Failed, check credentials!" 1
+		rm -rf ${cdir}/.credstore
 		exit $err
 	fi
 fi
@@ -3279,21 +3288,6 @@ then
 	exit
 fi
 
-if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
-then
-	# Get JSON
-	mywget ${rcdir}/downloads.xhtml 'https://my.vmware.com/web/vmware/downloads?p_p_id=ProductIndexPortlet_WAR_itdownloadsportlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=allProducts&p_p_cacheability=cacheLevelPage&p_p_col_id=column-3&p_p_col_count=1'
-
-	# Parse JSON
-	cat ${rcdir}/downloads.xhtml | jq '.[][].proList[]|.name,.actions[]'| tr '\n' ' ' | sed 's/} {/}\n{/g' | sed 's/} "/}\n"/g' | sed 's/" {/"\n{/g' |egrep '^"|Download Product'|tr '\n' ' '|sed 's/} "/}\n"/g' > ${rcdir}/_downloads.xhtml
-
-	if [ $err -ne 0 ]
-	then
-		rm -f ${cdir}/$vpat
-		exit $err
-	fi
-fi
-
 # Present the list
 cd depot.vmware.com/PROD/channel
 
@@ -3308,6 +3302,7 @@ ppr=''
 ppv=''
 if [ $dooauth -eq 1 ]
 then
+	colorecho "	Authenticating... "
 	oauth_login 0
 	if [ $oauth_err -eq 1 ]
 	then
@@ -3321,14 +3316,38 @@ fi
 if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
 then
 	# force patch oauth
-	rm -f $cdir/pcookies.txt _*patch*.xhtml >& /dev/null
 	get_patch_list
 	colorecho "	Patches:	1"
 fi
 
+if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
+then
+	# Get JSON
+	mywget ${rcdir}/_h_downloads.html https://my.vmware.com/group/vmware/downloads
+	tab2url=`grep allProducts ${rcdir}/_h_downloads.html | cut -d\" -f4`
+
+	mywget ${rcdir}/_j_downloads.xhtml $tab2url
+
+	if [ ! -e ${rcdir}/_j_downloads.xhtml ]
+	then
+		colorecho "Error: Missing Key File" 1
+		exit;
+	fi
+
+	# Parse JSON
+	cat ${rcdir}/_j_downloads.xhtml | jq '.[][].proList[]|.name,.actions[]'| tr '\n' ' ' | sed 's/} {/}\n{/g' | sed 's/} "/}\n"/g' | sed 's/" {/"\n{/g' |egrep '^"|Download'|tr '\n' ' '|sed 's/} "/}\n"/g' > ${rcdir}/_downloads.xhtml
+
+	if [ $err -ne 0 ]
+	then
+		rm -f ${cdir}/$vpat
+		exit $err
+	fi
+fi
+
+
 # start of history
 mlist=0
-myvmware_root="https://my.vmware.com/en/web/vmware/info/slug"
+myvmware_root="https://my.vmware.com/group/vmware/info/slug"
 usenurl=""
 linuxvdi=""
 myvmware_ref="https://my.vmware.com/group/vmware/downloads#tab1"

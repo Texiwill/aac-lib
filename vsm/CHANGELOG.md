@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.55 - ESXI67, DriversTools, CustomIso/Compatibility with 5.3.6
 - 1.1.54 - DriversTools Updates/Compatibility with 5.3.5
 - 1.1.53 - DriversTools Updates/Compatibility with 5.3.4
 - 1.1.52 - Compatibility with 5.3.3
@@ -167,6 +168,8 @@ for more items.
 - 1.0.0 - Initial Release
 
 ### Changelog
+5.3.6 - Better implementation of Oauth, parsing, and removal of static urls
+
 5.3.5 - More updates due to Major website change. Many parsing issues fixed
 
 5.3.4 - Found the proper URL for pre-Major website change style capabilities
