@@ -34,21 +34,52 @@ function findos() {
 	fi
 }
 
+function usage()
+{
+	echo "$0 [-h|--help][-u|--user user][timezone]"
+}
+
+while [[ $# -gt 0 ]]
+do
+	key="$1"
+	case "$key" in
+		-h|--help)
+			usage
+			exit
+			;;
+		-u|--user) 
+			us=$2
+			shift
+			;;
+		*)
+			tz=$1
+			;;
+	esac
+	shift
+done
+
 doit=1
-if [ Z"$1" != Z"" ]
+if [ Z"$us" != Z"" ]
 then
-	grep ${1}: /etc/passwd >& /dev/null
+	grep ${us}: /etc/passwd >& /dev/null
 	if [ $? -ne 0 ]
 	then
 		doit=0
 	fi
 else
-	doit=0
+	# are we root?
+	us=`id -u`
+	if [ $us -eq 0 ]
+	then
+		doit=0
+	else
+		doit=1
+	fi
 fi
-if [ $doit -eq 0 ]
+if [ $us -eq 0 ] || [ Z"$us" = Z"root" ]
 then
 	echo "Error: Requires a valid non-root username as an argument"
-	echo "Usage: $0 username"
+	usage
 	exit
 fi
 
@@ -70,8 +101,14 @@ mkdir aac-base
 cd aac-base
 wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
 chmod +x aac-base.install
-./aac-base.install -u $1
-sudo ./aac-base.install -i vsm $1
+if [ Z"$us" != "" ]
+then
+	./aac-base.install -u --user $us $tz
+	sudo ./aac-base.install -i vsm --user $us $tz
+else
+	./aac-base.install $tz
+	sudo ./aac-base.install -i vsm $tz
+fi
 
 cat > update.sh << EOF
 cd $HOME/aac-base
