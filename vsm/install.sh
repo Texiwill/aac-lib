@@ -106,7 +106,7 @@ then
 	./aac-base.install -u --user $us $tz
 	sudo ./aac-base.install -i vsm --user $us $tz
 else
-	./aac-base.install $tz
+	./aac-base.install -u $tz
 	sudo ./aac-base.install -i vsm $tz
 fi
 
