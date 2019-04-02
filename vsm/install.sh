@@ -112,8 +112,8 @@ fi
 
 cat > update.sh << EOF
 cd $HOME/aac-base
-./aac-base.install -u $1
-./aac-base.install -i vsm $1
+./aac-base.install -u $tz
+./aac-base.install -i vsm $tz
 EOF
 chmod +x update.sh
 
