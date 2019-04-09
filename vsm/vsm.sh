@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.3.6"
+VERSIONID="5.3.7"
 
 # args: stmt error
 function colorecho() {
@@ -792,7 +792,7 @@ function getvsmcnt() {
 function getproddata() {
 	if [ $myinnervm -eq 1 ]
 	then
-		prod=`grep '<title>' $rcdir/${missname}.xhtml|cut -d '>' -f 2|cut -d '<' -f 1 | sed 's/Download //' | sed 's/ [0-9]\+$//'`
+		prod=`grep '<title>' $rcdir/${missname}.xhtml|cut -d '>' -f 2|cut -d '<' -f 1 | sed 's/Download //' | sed 's/ - My VMware//' | sed 's/ [0-9]\+$//'`
 		vers=`grep selected $rcdir/${missname}.xhtml | awk -F\> '{print $2}'|awk -F\< '{print $1}' | sed 's/[[:space:]]\+$//'|sed 's/ /+/g'`
 		#dref=`grep downloadFilesURL $rcdir/${missname}.xhtml|sed 's/value=/\n/'|grep https|cut -d\" -f2`
 	else
@@ -1222,6 +1222,7 @@ function getinnerrndir() {
 			then
 				rndir=`echo $rnlin| cut -d' ' -f 5`
 				rndll="`echo $rnlin| cut -d' ' -f 4`.vmware.com"
+				#rnuid=`echo $rnlin | cut -d' ' -f 7`	
 			fi
 			if [ Z"$rndir" = Z"" ]
 			then
@@ -1826,8 +1827,8 @@ function getvsmparams() {
 			size=`echo $tsize | cut -d ' ' -f 1`
 		fi
 		debugecho "DEBUG: size => $size ; units => $units"
-		fdata=`echo $data | sed 's/<\/a>/\n/g'| sed 's/<\/span/\n/g'|grep "button primary"`
-		echo $fdata |grep 'download.\.vmware\.com' >& /dev/null
+		fdata=`echo $data | sed 's/<\/a>/\n/g'| sed 's/<\/span/\n/g'|egrep "button primary|Download Now"`
+		echo $fdata |egrep 'download.\.vmware\.com' >& /dev/null
 		if [ $? -eq 0 ]
 		then
 			drparams="CART"
@@ -1849,24 +1850,32 @@ function getvsmparams() {
 				fi
 				size=`printf '%d\n' "$size" 2>/dev/null`
 			fi
-			for nx in `echo $ndata | sed 's/^\.//' | sed 's#/group/vmware/details##'`; do t=`echo $nx| cut -d= -f1`; s=`echo $nx|cut -d= -f2`; eval "$t=$s"; done
-			dlgcode=$downloadGroup
-			downloaduuid=$uuId
-			if [ Z"$dlgcode" = Z"VRLI-451-VCENTER" ]
+			echo $ndata | grep -i dlgcode >& /dev/null
+			if [ $? -eq 0 ]
 			then
-				dlgcode="VRLI-451"
+				for nx in `echo $ndata | sed 's/^\.//' | sed 's#/group/vmware/details##'`; do t=`echo $nx| cut -d= -f1`; s=`echo $nx|cut -d= -f2`; eval "$t=$s"; done
+				dlgcode=$downloadGroup
+				downloaduuid=$uuId
+				#if [ Z"$rnuid" != Z"" ]
+				#then
+				#	downloaduuid=$rnuid
+				#fi
+				if [ Z"$dlgcode" = Z"VRLI-451-VCENTER" ]
+				then
+					dlgcode="VRLI-451"
+				fi
+				# what type of download again?
+				dtcode=`echo $dlgcode | sed 's/DT_//'`
+				dlgtype="Product+Binaries"
+				if [ Z"$dtcode" != Z"$dlgcode" ]
+				then
+					dlgtype="Drivers+Tools"
+				fi
+				dtr="{\"sourcefilesize\":\"$size\",\"dlgcode\":\"$dlgcode\",\"languagecode\":\"en\",\"source\":\"DOWNLOADS\",\"downloadtype\":\"manual\",\"eula\":\"Y\",\"downloaduuid\":\"$downloaduuid\",\"purchased\":\"Y\",\"dlgtype\":\"$dlgtype\",\"productversion\":\"$pver\"}"
+				debugecho "DEBUG: drparams => $dtr"
+				drparams=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $dtr`
+				debugecho "DEBUG: drparams => $drparams"
 			fi
-			# what type of download again?
-			dtcode=`echo $dlgcode | sed 's/DT_//'`
-			dlgtype="Product+Binaries"
-			if [ Z"$dtcode" != Z"$dlgcode" ]
-			then
-				dlgtype="Drivers+Tools"
-			fi
-			dtr="{\"sourcefilesize\":\"$size\",\"dlgcode\":\"$dlgcode\",\"languagecode\":\"en\",\"source\":\"DOWNLOADS\",\"downloadtype\":\"manual\",\"eula\":\"Y\",\"downloaduuid\":\"$downloaduuid\",\"purchased\":\"Y\",\"dlgtype\":\"$dlgtype\",\"productversion\":\"$pver\"}"
-			debugecho "DEBUG: drparams => $dtr"
-			drparams=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $dtr`
-			debugecho "DEBUG: drparams => $drparams"
 			href="https://depot.vmware.com/getAuthUrl"
 			if [ Z"${rndir}" = Z"/" ]
 			then
@@ -2375,7 +2384,7 @@ function getvsm() {
 				then
 					lurl=$url
 				else
-					lurl=`wget --max-redirect 0 --load-cookies $cdir/cookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $url 2>&1 | grep Location | awk '{print $2}'`
+					lurl=`wget --max-redirect 0 --load-cookies $cdir/pcookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $url 2>&1 | grep Location | awk '{print $2}'`
 				fi
 			fi
 			debugecho "DEBUG: oauthonly => $oauthonly"
@@ -2878,200 +2887,8 @@ fi
 # import values from .vsmrc
 load_vsmrc
 
-while [[ $# -gt 0 ]]
-do
-	key="$1"
-	case "$key" in
-		-c|--check)
-			doshacheck=1
-			;;
-		-h|--help)
-			usage
-			;;
-		-i|--ignore)
-			doignore=1
-			;;
-		-l|--latest)
-			dolatest=0
-			;;
-		-r|--reset)
-			doreset=1
-			;;
-		-f|--force)
-			doforce=1
-			;;
-		-e|--exit)
-			doreset=1
-			doexit=1
-			;;
-		-y)
-			myyes=1
-			;;
-		-u|--username)
-			username=$2
-			shift
-			;;
-		-p|--password)
-			password=$2
-			shift
-			;;
-		-ns|--nostore)
-			nostore=1
-			;;
-		-nh|--noheader)
-			noheader=1
-			;;
-		-d|--dryrun)
-			dryrun=1
-			;;
-		-nc|--nocolor)
-			docolor=0
-			;;
-		--repo)
-			repo="$2"
-			if [ Z"$vsmrc" = Z"" ]
-			then
-				load_vsmrc
-			fi
-			shift
-			;;
-		--dlg)
-			mydlg=$2
-			dodlg=1
-			shift
-			;;
-		--dlgl)
-			mydlg=$2
-			dodlg=1
-			dodlglist=1
-			shift
-			;;
-		--vexpertx)
-			dovexxi=1
-			;;
-		--vexpertxi)
-			dovexxi=1
-			;;
-		--oauth)
-			dooauth=1
-			;;
-		--patches)
-			dooauth=1
-			if [ $dovexxi -eq 1 ]
-			then
-				dopatch=1
-			fi
-			;;
-		--force-oauth)
-			myoauth=1
-			;;
-		-v|--vsmdir)
-			cdir=$2
-			if [ Z"$vsmrc" = Z"" ]
-			then
-				load_vsmrc
-			fi
-			shift
-			;;
-		--save)
-			dosave=1
-			;;
-		--beta)
-			beta=1
-			;;
-		--symlink)
-			symlink=1
-			;;
-		--nosymlink)
-			symlink=0
-			;;
-		--fixsymlink)
-			fixsymlink=1
-			symlink=1
-			;;
-		--historical)
-			historical=1
-			;;
-		--nohistorical)
-			historical=0
-			;;
-		--debug)
-			debugv=1
-			;;
-		--debug2)
-			debugv=2
-			;;
-		--debugv)
-			dodebug=1
-			;;
-		--mre)
-			domre=1
-			;;
-		--clean)
-			cleanall=1
-			domre=1
-			doreset=1
-			remyvmware=1
-			domyvmware=1
-			;;
-		--dts)
-			mydts=1
-			;;
-		--oem)
-			myoem=1
-			;;
-		--oss)
-			myoss=1
-			;;
-		--nodts)
-			mydts=0
-			;;
-		--nooem)
-			myoem=0
-			;;
-		--nooss)
-			myoss=0
-			;;
-		-m|--myvmware)
-			domyvmware=1
-			;;
-		-mr)
-			remyvmware=1
-			domyvmware=1
-			;;
-		-q|--quiet)
-			doquiet=1
-			;;
-		-nq|--noquiet)
-			doquiet=0
-			myq=0
-			;;
-		--progress)
-			myprogress=1
-			;;
-		--favorite)
-			if [ Z"$favorite" != Z"" ]
-			then
-				myfav=1
-			fi
-			;;
-		--fav)
-			fav=$2
-			myfav=2
-			shift
-			;;
-		-V|--version)
-			version
-			;;
-		-z|--compress)
-			compress=1
-			;;
-		*)
-			usage
-			;;
-	esac
-	shift
-done
+x="d2hpbGUgW1sgJCMgLWd0IDAgXV07IGRvIGtleT0iJDEiOyBjYXNlICIka2V5IiBpbiAtY3wtLWNoZWNrKSBkb3NoYWNoZWNrPTEgOzsgLWh8LS1oZWxwKSB1c2FnZSA7OyAtaXwtLWlnbm9yZSkgZG9pZ25vcmU9MSA7OyAtbHwtLWxhdGVzdCkgZG9sYXRlc3Q9MCA7OyAtcnwtLXJlc2V0KSBkb3Jlc2V0PTEgOzsgLWZ8LS1mb3JjZSkgZG9mb3JjZT0xIDs7IC1lfC0tZXhpdCkgZG9yZXNldD0xOyBkb2V4aXQ9MSA7OyAteSkgbXl5ZXM9MSA7OyAtdXwtLXVzZXJuYW1lKSB1c2VybmFtZT0kMjsgc2hpZnQgOzsgLXB8LS1wYXNzd29yZCkgcGFzc3dvcmQ9JDI7IHNoaWZ0IDs7IC1uc3wtLW5vc3RvcmUpIG5vc3RvcmU9MSA7OyAtbmh8LS1ub2hlYWRlcikgbm9oZWFkZXI9MSA7OyAtZHwtLWRyeXJ1bikgZHJ5cnVuPTEgOzsgLW5jfC0tbm9jb2xvcikgZG9jb2xvcj0wIDs7IC0tcmVwbykgcmVwbz0iJDIiOyBpZiBbIFoiJHZzbXJjIiA9IFoiIiBdOyB0aGVuIGxvYWRfdnNtcmM7IGZpOyBzaGlmdCA7OyAtLWRsZykgbXlkbGc9JDI7IGRvZGxnPTE7IHNoaWZ0IDs7IC0tZGxnbCkgbXlkbGc9JDI7IGRvZGxnPTE7IGRvZGxnbGlzdD0xOyBzaGlmdCA7OyAtLXZleHBlcnR4KSBkb3ZleHhpPTEgOzsgLS12ZXhwZXJ0eGkpIGRvdmV4eGk9MSA7OyAtLW9hdXRoKSBkb29hdXRoPTEgOzsgLS1wYXRjaGVzKSBkb29hdXRoPTE7IGlmIFsgJGRvdmV4eGkgLWVxIDEgXTsgdGhlbiBkb3BhdGNoPTE7IGZpIDs7IC0tZm9yY2Utb2F1dGgpIG15b2F1dGg9MSA7OyAtdnwtLXZzbWRpcikgY2Rpcj0kMjsgaWYgWyBaIiR2c21yYyIgPSBaIiIgXTsgdGhlbiBsb2FkX3ZzbXJjOyBmaTsgc2hpZnQgOzsgLS1zYXZlKSBkb3NhdmU9MSA7OyAtLWJldGEpIGJldGE9MSA7OyAtLXN5bWxpbmspIHN5bWxpbms9MSA7OyAtLW5vc3ltbGluaykgc3ltbGluaz0wIDs7IC0tZml4c3ltbGluaykgZml4c3ltbGluaz0xOyBzeW1saW5rPTEgOzsgLS1oaXN0b3JpY2FsKSBoaXN0b3JpY2FsPTEgOzsgLS1ub2hpc3RvcmljYWwpIGhpc3RvcmljYWw9MCA7OyAtLWRlYnVnKSBkZWJ1Z3Y9MSA7OyAtLWRlYnVnMikgZGVidWd2PTIgOzsgLS1kZWJ1Z3YpIGRvZGVidWc9MSA7OyAtLW1yZSkgZG9tcmU9MSA7OyAtLWNsZWFuKSBjbGVhbmFsbD0xOyBkb21yZT0xOyBkb3Jlc2V0PTE7IHJlbXl2bXdhcmU9MTsgZG9teXZtd2FyZT0xIDs7IC0tZHRzKSBteWR0cz0xIDs7IC0tb2VtKSBteW9lbT0xIDs7IC0tb3NzKSBteW9zcz0xIDs7IC0tbm9kdHMpIG15ZHRzPTAgOzsgLS1ub29lbSkgbXlvZW09MCA7OyAtLW5vb3NzKSBteW9zcz0wIDs7IC1tfC0tbXl2bXdhcmUpIGRvbXl2bXdhcmU9MSA7OyAtbXIpIHJlbXl2bXdhcmU9MTsgZG9teXZtd2FyZT0xIDs7IC1xfC0tcXVpZXQpIGRvcXVpZXQ9MSA7OyAtbnF8LS1ub3F1aWV0KSBkb3F1aWV0PTAgbXlxPTAgOzsgLS1wcm9ncmVzcykgbXlwcm9ncmVzcz0xIDs7IC0tZmF2b3JpdGUpIGlmIFsgWiIkZmF2b3JpdGUiICE9IFoiIiBdOyB0aGVuIG15ZmF2PTE7IGZpIDs7IC0tZmF2KSBmYXY9JDI7IG15ZmF2PTI7IHNoaWZ0IDs7IC1WfC0tdmVyc2lvbikgdmVyc2lvbiA7OyAtenwtLWNvbXByZXNzKSBjb21wcmVzcz0xIDs7ICopIHVzYWdlIDs7IGVzYWM7IHNoaWZ0OyBkb25lCg=="
+eval `echo $x | base64 -d -`
 
 if [ $myquiet -eq 1 ] && [ $myq -eq 0 ]
 then
@@ -3323,7 +3140,8 @@ fi
 if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
 then
 	# Get JSON
-	mywget ${rcdir}/_h_downloads.html https://my.vmware.com/group/vmware/downloads
+	#mywget ${rcdir}/_h_downloads.html https://my.vmware.com/group/vmware/downloads
+	mywget ${rcdir}/_h_downloads.html https://my.vmware.com/en/web/vmware/downloads
 	tab2url=`grep allProducts ${rcdir}/_h_downloads.html | cut -d\" -f4`
 
 	mywget ${rcdir}/_j_downloads.xhtml $tab2url
@@ -3348,6 +3166,7 @@ fi
 # start of history
 mlist=0
 myvmware_root="https://my.vmware.com/group/vmware/info/slug"
+#myvmware_root="https://my.vmware.com/en/web/vmware/info/slug"
 usenurl=""
 linuxvdi=""
 myvmware_ref="https://my.vmware.com/group/vmware/downloads#tab1"
