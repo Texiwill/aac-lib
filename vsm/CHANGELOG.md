@@ -11,6 +11,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Data file Changelog
+- 1.1.58 - ESXI67U2 et al
 - 1.1.57 - Compatibility with 5.3.7
 - 1.1.56 - DriversTools/CustomIso updates
 - 1.1.55 - ESXI67, DriversTools, CustomIso/Compatibility with 5.3.6
