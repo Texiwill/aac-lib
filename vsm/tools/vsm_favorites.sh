@@ -10,9 +10,6 @@
 # LinuxVSM 
 #
 
-PATH=$PATH:/usr/local/bin
-export PATH
-
 # local overrides default path
 vsm=`which vsm.sh`
 if [ -e ./vsm.sh ]
@@ -20,10 +17,11 @@ then
 	vsm='./vsm.sh'
 fi
 
-# kill any running LinuxVSM
-pkill -9 vsm.sh
-
 $vsm -mr -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Enterprise_Plus
+$vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Platinum
 $vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
 $vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_0_Enterprise_Plus
 $vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_5_5_Enterprise_Plus
+$vsm -y --fav Networking_Security_VMware_NSX_T_Data_Center_2_x_VMware_NSX_Data_Center_Enterprise_Plus
+$vsm -y --fav Desktop_End_User_Computing_VMware_Horizon_7_8_Horizon_7_Enterprise_Edition
+$vsm -y --fav Infrastructure_Operations_Management_VMware_vRealize_Suite_2018_Enterprise

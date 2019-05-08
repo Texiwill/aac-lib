@@ -10,167 +10,12 @@ Linux Version of VMware Software Manager
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
-### Data file Changelog
-- 1.1.58 - ESXI67U2 et al
-- 1.1.57 - Compatibility with 5.3.7
-- 1.1.56 - DriversTools/CustomIso updates
-- 1.1.55 - ESXI67, DriversTools, CustomIso/Compatibility with 5.3.6
-- 1.1.54 - DriversTools Updates/Compatibility with 5.3.5
-- 1.1.53 - DriversTools Updates/Compatibility with 5.3.4
-- 1.1.52 - Compatibility with 5.3.3
-- 1.1.51 - Compatibility with 5.3.2
-- 1.1.50 - DriversTools Updates/Compatibility with 5.3.1
-- 1.1.49 - DriversTools Updates
-- 1.1.48 - DriversTools Updates
-- 1.1.47 - DriversTools Updates
-- 1.1.46 - Compatibility with 5.3.0
-- 1.1.45 - Compatibility with 5.2.9
-- 1.1.44 - DriversTools Updates
-- 1.1.43 - DriversTools Updates
-- 1.1.42 - DriversTools Updates/Compatibility with 5.2.8
-- 1.1.41 - Compatibility with 5.2.7
-- 1.1.40 - DriversTools Updates/Compatibility with 5.2.6
-- 1.1.39 - DriversTools Updates/Compatibility with 5.2.5
-- 1.1.38 - vSphere Updates
-- 1.1.37 - DriversTools Updates
-- 1.1.36 - DriversTools Updates/Compatibility with 5.2.4
-- 1.1.35 - DriversTools Updates
-- 1.1.34 - DriversTools Updates
-- 1.1.33 - DriversTools Updates/Compatibility with 5.2.3
-- 1.1.32 - DriversTools Updates
-- 1.1.31 - DriversTools Updates/Compatibility with 5.2.2
-- 1.1.30 - DriversTools Updates/Compatibility with 5.2.1
-- 1.1.29 - DriversTools Updates/Compatibility with 5.2.0
-- 1.1.28 - Compatibility with 5.1.9
-- 1.1.27 - DriversTools Updates
-- 1.1.26 - DriversTools Updates/Compatibility with 5.1.8
-- 1.1.25 - DriversTools Updates
-- 1.1.24 - DriversTools Updates
-- 1.1.23 - DriversTools Updates/Skyline
-- 1.1.22 - DriversTools/Compatibility with 5.1.7
-- 1.1.21 - DriversTools/Compatibility with 5.1.6
-- 1.1.20 - Compatibility with 5.1.5
-- 1.1.19 - Compatibility with 5.1.4
-- 1.1.18 - DriversTools Updates
-- 1.1.17 - Compatibility with 5.1.3
-- 1.1.16 - DriversTools/CustomIso Updates
-- 1.1.15 - DriversTools/CustomIso Updates
-- 1.1.14 - CustomIso Updates
-- 1.1.13 - DriversTools/CustomIso Updates
-- 1.1.12 - DriversTools Updates
-- 1.1.11 - Compatibility with 5.1.1, DriversTools Updates
-- 1.1.10 - NSX/CustomISO/DriversTools Updates
-- 1.1.9  - Compatibility with 5.1.0, DriversTools Updates
-- 1.1.8  - Compatibility with 5.0.9, DriversTools Updates
-- 1.1.7  - Compatibility with 5.0.8, OEM/DriversTools Updates
-- 1.1.6  - Compatibility with 5.0.7, DriversTools Updates
-- 1.1.5  - Compatibility with 5.0.6, DriversTools Updates
-- 1.1.4  - VIC/DriversTools Updates
-- 1.1.3  - Compatibility with 5.0.5, DriversTools Updates
-- 1.1.2  - Compatibility with 5.0.4, DriversTools Updates
-- 1.1.1  - Compatibility with 5.0.3
-- 1.1.0  - DriversTools Updates
-- 1.0.99 - DriversTools Updates
-- 1.0.98 - DriversTools Updates
-- 1.0.97 - DriversTools Updates, Compatibility with 5.0.2
-- 1.0.96 - Missing some files in index, related to 1.0.94 issues
-- 1.0.95 - Compatibility with 5.0.1
-- 1.0.94 - Package Updates, Seems cleanup effort removed too much
-- 1.0.93 - Compatibility with 5.0.0
-- 1.0.92 - Package Updates
-- 1.0.91 - DriversTools and Package updates
-- 1.0.90 - DriversTools, VC Updates
-- 1.0.89 - DriversTools, Compatibility with 4.9.0
-- 1.0.88 - Compatibility with 4.8.9
-- 1.0.87 - Compatibility with 4.8.8
-- 1.0.86 - Compatibility with 4.8.7
-- 1.0.85 - DrviersTools, Compatibility with 4.8.6
-- 1.0.84 - DriversTools, Compatibility with 4.8.5
-- 1.0.83 - DriversTools Updates
-- 1.0.82 - Compatibility with 4.8.4
-- 1.0.81 - Compatibility with 4.8.3
-- 1.0.80 - DriversTools for 6.7/6.5/6.0
-- 1.0.79 - DriversTools for 6.5
-- 1.0.78 - DriversTools/Custom ISO Update
-- 1.0.77 - DriversTools Updates
-- 1.0.76 - DriversTools Update
-- 1.0.75 - Correction to DriversTools Update
-- 1.0.74 - DriversTools Update, Compatibility with 4.8.1
-- 1.0.73 - DriversTools Updates
-- 1.0.72 - DriversTools Update Compatibility with 4.8
-- 1.0.71 - DriversTools Update for ESXi 6.7, 6.0
-- 1.0.70 - VC65U2C Update
-- 1.0.69 - VC670D Update
-- 1.0.68 - 5.5U3B DriversTools Update
-- 1.0.67 - DriversTools Updates
-- 1.0.66 - DriversTools
-- 1.0.65 - VC670C and other package updates
-- 1.0.64 - Package Updates
-- 1.0.63 - DriversTools Update plus some others
-- 1.0.62 - DriversTools Update, Compatibility with 4.7.7
-- 1.0.61 - DriversTools Update
-- 1.0.60 - DriversTools Update, Compatibility with 4.7.6
-- 1.0.59 - DriversTools Update, Compatibility with 4.7.5
-- 1.0.58 - DriversTools Update, Compatibility with 4.7.4
-- 1.0.57 - DriversTools Update, Compatibility with 4.7.3
-- 1.0.56 - DriversTools Update, Compatibility with 4.7.2
-- 1.0.55 - DriversTools Update, Compatibility with 4.7.1
-- 1.0.54 - DriversTools update, Compatibility with 4.7.0
-- 1.0.53 - DriversTools update
-- 1.0.52 - DriversTools update
-- 1.0.51 - VC670B, VC60U3F, VC65U2B, VC55U3I updates, DriversTools
-- 1.0.50 - DriversTools update
-- 1.0.49 - DriversTools update
-- 1.0.48 - ESXI67 CustomIso, DriverTools updates
-- 1.0.47 - DriversTools, Compatibility with 4.6.9
-- 1.0.46 - DriversTools, Compatibility with 4.6.8
-- 1.0.45 - DriversTools, Compatibility with 4.6.7
-- 1.0.44 - DriversTools, Compatibility with 4.6.6
-- 1.0.43 - DriversTools, compatibility with 4.6.5
-- 1.0.42 - DriversTools, VRLI 4.6.1
-- 1.0.41 - Compatibility with 4.6.4
-- 1.0.40 - Updates for DriversTools
-- 1.0.39 - Updates of DriversTools, CustomIso, and others
-- 1.0.38 - Updates for NSXV-641
-- 1.0.37 - Updates for VC670A, note VDDK packages will not download via VSM
-- 1.0.36 - Updates for VC670A
-- 1.0.35 - Updates for 6.0 DriversTools, 6.5U2 CustomIso
-- 1.0.34 - Updates to VR81
-- 1.0.33 - Updates for 6.7 DriversTools
-- 1.0.32 - Updates for 6.5U2 DriversTools
-- 1.0.31 - Updates for DriversTools & 4.6.2 compatibility
-- 1.0.30 - Updates for 6.0 DriversTools
-- 1.0.29 - 4.6.1 compatibility
-- 1.0.28 - Updates for 6.7 and other DriversTools
-- 1.0.27 - Updates for 6.7 DriversTools
-- 1.0.26 - 4.6.0 compatibility
-- 1.0.25 - More DriversTools updates w/duplicate deletions that caused issues
-- 1.0.24 - More DriversTools updates
-- 1.0.23 - Fix for DriversTools
-- 1.0.22 - ESXI65U2 Updates
-- 1.0.21 - 4.5.9 compatibility
-- 1.0.20 - 4.5.8 compatibility
-- 1.0.19 - latest updates and 4.5.7 compatibility
-- 1.0.18 - latest updates and 4.5.6 compatibility
-- 1.0.17 - vSphere DriversTools Updates, VMware Tools Updates
-- 1.0.16 - ovftool duplicates
-- 1.0.15 - vSphere DriversTools Updates
-- 1.0.14 - latest updates and 4.5.5 compatibility
-- 1.0.13 - Updates for VR81
-- 1.0.12 - Several smaller updates for 6.5, Converter, etc.
-- 1.0.11 - VR81 Update
-- 1.0.9 - vSphere 6.7
-- 1.0.8 - New Drivers
-- 1.0.7 - Keep up with 4.5.3
-- 1.0.6 - Keep up with 4.5.2
-- 1.0.5 - Updates for 6.5/6.0 new drivers
-- 1.0.4 - Updates for vRealize Updates
-- 1.0.3 - Updates for 6.0 new drivers
-- 1.0.2 - Updates for 6.0 new drivers
-- 1.0.1 - added support for new packages and fixed missing files
-- 1.0.0 - Initial Release
-
 ### Changelog
+6.0.0 - 100% My VMware, note if you do not have entitlements you cannot 
+        download the packages. That is a My VMware change. Also, there is no
+	longer a datafile, there is a seed file and a way to rebuild or add
+	to that seed file now available.
+
 5.3.7 - Fix to pick up proper download urls for some tools
 
 5.3.6 - Better implementation of Oauth, parsing, and removal of static urls
@@ -486,3 +331,4 @@ the latest of a specific major version. I.e. 60 vs 65
 Product Downloads were being placed into CustomIso and DriverTools.
 
 0.9.3 - Initial public launch
+

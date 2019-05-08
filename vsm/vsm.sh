@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="5.3.7"
+VERSIONID="6.0.0"
 
 # args: stmt error
 function colorecho() {
@@ -51,89 +51,6 @@ function shaecho() {
 	shafail=''
 }
 
-function getvdat() {
-	vdat=`pwd`/vsm.data
-	if [ ! -e $vdat ]
-	then
-		vdat=$cdir/vsm.data
-		mywget $vdat https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.data >& /dev/null
-		if [ $err -ne 0 ]
-		then
-			rm -rf $vdat
-		fi
-	fi
-	if [ ! -e $vdat ]
-	then
-		colorecho "VSM cannot run without its data file." 1
-		exit
-	fi
-}
-
-function getlongreply()
-{
-		tst=$1
-		i=0
-		for x in $mversions
-		do
-			let i=$i+1
-			echo $tst |grep $x >& /dev/null
-			if [ $? -eq 0 ]
-			then
-				longReply=$i
-			fi
-		done
-		debugecho "DEBUG: longReply => $longReply"
-}
-
-function findfavpaths()
-{
-	pchoice=$1
-	# find paths
-	vc=`echo $pchoice | sed 's/[a-z_]\+\([0-9]_[0-9x]\|[0-9]\+\).*/\1/i'`
-	tc=`echo $pchoice | tr '[:upper:]' '[:lower:]'|sed 's/\([0-9]_[0-9x]\|[0-9]\)_\([a-z_]\+\)/\1 \2/i'|sed 's/_/./g'`
-	dc=`echo $tc | cut -d' ' -f1`
-	dc="${dc%?}?"
-	ec=`echo $tc | cut -d' ' -f2 | sed 's/\./_/g'`
-	# rebuild myvmware path
-	fv=`egrep "$dc" ${rcdir}/_downloads.xhtml | sort -V | tail -1`
-	dvc=''
-	if [ ${#fv} -eq 0 ]
-	then
-		debugecho "DC: Finding Alternative"
-		dvc=`echo $vc | sed 's/_/./g'`
-		dc=`echo $tc | cut -d' ' -f1 | sed "s/\.$dvc//"`
-		ec=`echo $tc | cut -d' ' -f2 | sed 's/\./_/g'`
-		# rebuild myvmware path
-		fv=`egrep "$dc" ${rcdir}/_downloads.xhtml | sort -V | tail -1`
-		if [ ${#fv} -eq 0 ]
-		then
-			debugecho "dc => $dc"
-			colorecho "No Downloads Reference Found for $mydlg" 1
-			rm -f ${cdir}/$vpat
-			exit
-		fi
-	fi
-	mfchoice='root'
-	myfm=`echo $fv | cut -d\" -f14 | sed 's#./info/slug##'`
-	vf=`dirname $myfm`
-	myfm="$vf/$vc"
-	myfvmware="${myfm}/${ec}"
-	tf=`echo $fv | cut -d\" -f2 | sed 's/ /_/g'|sed 's/-/_/g'`
-	# rebuild mchoice path
-	li=`xml_grep --text_only '//*/a' ${rcdir}/root.xhtml`
-	for x in $li Infrastructure_Operations_Management Desktop_End_User_Computing Networking_Security
-	do
-		t=`echo $pchoice | sed "s#${x}_##"`
-		#echo "$x => $t"
-		if [ Z"$t" != Z"${pchoice}" ]
-		then
-			mfchoice="$mfchoice/${x}/${x}_${tf}"
-			t=`echo $pchoice | sed "s#${x}_${tf}##" | tr '[:upper:]' '[:lower:]'|sed "s/_$ec//g"|sed 's/^_//'`
-			mfchoice="$mfchoice/${x}_${tf}_${t}/$pchoice"
-		fi
-	done
-}
-
 function handlecredstore ()
 {
 	# if we say to no store then remove!
@@ -157,6 +74,12 @@ function handlecredstore ()
 
 	if [ $cleanall -ne 1 ]
 	then
+		pbkdf2=''
+		openssl enc --help 2>&1 | grep pbkdf2 >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			pbkdf2='-pbkdf2 -iter 1000'
+		fi
 		if [ ! -e $HOME/.vsm/.key ]
 		then
         	openssl rand -base64 64 | tr '\n' ':' > $HOME/.vsm/.key
@@ -165,7 +88,7 @@ function handlecredstore ()
 			then
         		# 1st time so recreate credstore
 				auth=`cat .credstore`
-        		echo -n $auth | openssl enc -aes-256-cbc -k "$k" -a -salt -base64 > .credstore
+        		echo -n $auth | openssl enc $pbkdf2 -aes-256-cbc -k "$k" -a -salt -base64 > .credstore
 			fi
 		fi
 		if [ -e .credstore ]
@@ -192,7 +115,7 @@ function handlecredstore ()
 			if [ $nostore -eq 0 ]
 			then
 				# handle storing 'Basic Auth' for reuse
-        		echo -n $auth | openssl enc -aes-256-cbc -k $k -a -salt -base64 > .credstore
+        		echo -n $auth | openssl enc $pbkdf2 -aes-256-cbc -k $k -a -salt -base64 > .credstore
 				chmod 600 .credstore
 			fi
 			if [ $noheader -eq 0 ]
@@ -210,7 +133,7 @@ function handlecredstore ()
 					echo '0'
 				fi
 			fi
-			auth=`openssl enc -aes-256-cbc -d -in .credstore -base64 -salt -k $k`
+			auth=`openssl enc $pbkdf2 -aes-256-cbc -d -in .credstore -base64 -salt -k $k`
 		fi
 	fi
 }
@@ -273,12 +196,29 @@ function wgeterror() {
 	esac
 }
 
+function findCk()
+{
+	ua='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2'
+	ck='cookies.txt'
+	if [ -e $cdir/ocookies.txt ] && [ $myoauth -eq 1 ]
+	then
+		debugecho "Ocookies"
+		ua=$oaua
+		ck='ocookies.txt'
+	fi
+	if [ -e $cdir/pcookies.txt ] && [ $myoauth -eq 1 ]
+	then
+		debugecho "Pcookies"
+		ua=$oaua
+		ck='pcookies.txt'
+	fi
+}
+
 function mywget() {
 	ou=$1
 	hr=$2
 	hd=$3
 	err=0
-	lasturl=$hr
 	wgprogress=$doprogress
 	if [ Z"$1" != Z" " ]
 	then
@@ -293,24 +233,10 @@ function mywget() {
 			wgprogress=0
 		fi
 	fi
-	ua='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2'
-	ck='cookies.txt'
 	debugecho "cookies"
 	if [ $myoauth -eq 1 ] || [ Z"$hd" = Z"pcookies" ] && [ $need_login -ne 0 ]
 	then
 		oauth_login 0
-	fi
-	if [ -e $cdir/ocookies.txt ] && [ $myoauth -eq 1 ]
-	then
-		debugecho "Ocookies"
-		ua=$oaua
-		ck='ocookies.txt'
-	fi
-	if [ -e $cdir/pcookies.txt ] && [ $myoauth -eq 1 ]
-	then
-		debugecho "Pcookies"
-		ua=$oaua
-		ck='pcookies.txt'
 	fi
 	if [ Z"$hd" = Z"pcookies" ]
 	then
@@ -319,19 +245,23 @@ function mywget() {
 		ck='pcookies.txt'
 		hd="--header='Referer: $mypatches_ref'" 
 	fi
+	if [ $debugv -ge 2 ]
+	then
+		echo "ck => $ck"
+	fi
 	if [ Z"$1" = "-" ]
 	then
 		# getting pre-url
 		lurl=`wget --max-redirect 0 --load-cookies $cdir/$ck --header="User-Agent: $ua" -O - $hr 2>&1 | grep Location | awk '{print $2}'`
 		err=${PIPESTATUS[0]}
 	else
-		debugecho "doquiet => $doquiet : $doprogress : $indomenu2 : $wgprogress"
+		debugecho "doquiet => $doquiet : $doprogress : $wgprogress"
 		if [ $doquiet -eq 1 ]
 		then
-			if [ $doprogress -eq 1 ] && [ $indomenu2 -eq 1 ]
-			then
-				echo -n "+"
-			fi
+			#if [ $doprogress -eq 1 ]
+			#then
+			#	echo -n "+"
+			#fi
 			if [ Z"$wgprogress" = Z"1" ]
 			then
 				if [ ${#_PROGRESS_OPT} -eq 0 ]
@@ -346,10 +276,10 @@ function mywget() {
 				wget $_PROGRESS_OPT $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
 				err=$?
 			fi
-			if [ $doprogress -eq 1 ] && [ $indomenu2 -eq 1 ]
-			then
-				echo -n "+"
-			fi
+			#if [ $doprogress -eq 1 ]
+			#then
+			#	echo -n "+"
+			#fi
 		else
 			wget $_PROGRESS_OPT $hd --progress=bar:force --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
 			err=$?
@@ -359,1167 +289,6 @@ function mywget() {
 	then
 		wgeterror $err
 	fi
-}
-
-function addpath() {
-	mchoice="$mchoice/$choice"
-
-	# need to strip first strings from 'Choice' So split on / and remove
-	mychoice=`echo "$choice" | tr '[:upper:]' '[:lower:]'`
-	for x in `echo $myvmware | sed 's#/# #g'`
-	do
-		mychoice=`echo $mychoice | sed "s/${x}_//"`
-	done
-	myvmware="$myvmware/$mychoice"
-	debugecho "DEBUG: MyV: $myvmware"
-	debugecho "DEBUG: MC: $mchoice"
-}
-
-function getpath() {
-	mchoice=`dirname "$mchoice" 2>/dev/null`
-	if [ Z"$myvmware" != Z"" ]
-	then
-		myvmware=`dirname "$myvmware" 2>/dev/null`
-	fi
-	if [ Z"$myvmware" = Z"" ]
-	then
-		myvmware="."
-	fi
-	debugecho "DEBUG: $mchoice"
-}
-
-function getchoice() {
-	choice=`basename $mchoice`
-}
-
-
-function findmissing() {
-	# Fake Suites
-	if [ Z"$myvmware" != Z"" ]
-	then
-		myusenurl=''
-		domyvm=`echo ${myvmware}| awk -F/ '{print NF}'`
-		if [ $domyvm -gt 2 ]
-		then
-			oauthonly=0
-			myname=`egrep "${myvmware}[ /\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 2|sed 's/Software-Defined/Software_Defined/'`
-			myver=`egrep "${myvmware}[ /\"]" ${rcdir}/_downloads.xhtml | cut -d\" -f 14`
-			myver=`basename $myver`
-			pkgs=`echo "${choice}_${myver}" | sed 's/[ \.]/_/g'`
-			debugecho "calc pkg => $pkgs"
-		fi
-	fi
-	tpkg=`echo $pkgs | tr '[:upper:]' '[:lower:]'`
-	# Fake xhtml
-	for x in `echo $myvmware | sed 's#/# #g'`
-	do
-		tpkg=`echo $tpkg | sed "s/${x}_//g"`
-	done
-	spkg=`echo $tpkg | awk '{print $1}'`
-	domyvm=`echo ${myvmware}/${spkg} | sed 's:/$::' |awk -F/ '{print NF}'`
-	if [ $domyvm -eq 4 ]
-	then
-		lasturl="${myvmware_root}${myvmware}/$spkg"
-		pmiss=`echo $tpkg | sed 's/ /|/g'`
-		myvmware=`echo $myvmware | sed 's#//#/#'`
-		missname=`echo $myvmware | sed 's#/#_#g'`
-		debugecho "DEBUG: $myvmware => $missname"
-		if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ] && [ Z"$myusenurl" = Z"" ]
-		then
-			mywget ${rcdir}/${missname}.xhtml ${myvmware_root}${myvmware}/$spkg
-			grep -i "Unable to Complete Your Request" ${rcdir}/${missname}.xhtml >& /dev/null
-			err=$?
-		else
-			err=1
-		fi
-		if [ $err -ne 0 ]
-		then
-			tver=""
-			if [ -e ${rcdir}/${missname}.xhtml ]
-			then
-				tver=`xmllint --html --xpath "//div[@class=\"versionList\"]" ${rcdir}/$missname.xhtml 2>/dev/null |grep option |cut -d'>' -f 2|cut -d'<' -f1|sed 's/\./_/g'|sort -V`
-				# no options, just 1 version
-				if [ Z"$tver" = Z"" ]
-				then
-					tver=`xmllint --html --xpath "//div[@class=\"versionList\"]" ${rcdir}/$missname.xhtml 2>/dev/null |tr -d '\n\t' |cut -d'>' -f 2|cut -d'<' -f1|sed 's/\./_/g'|sort -V`
-				fi
-			fi
-			# missing pkg entries
-			if [ Z"$tver" = Z"" ]
-			then
-				if [ Z"$usenurl" = Z"" ]
-				then
-					if [ Z"$myusenurl" = Z"" ]
-					then
-						usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | sed 's/href=/\nhref=/g' | grep href | grep -v OSS | cut -d\" -f 2 | head -1`
-					else
-						usenurl=$myusenurl
-					fi
-				fi
-				if [ Z"$usenurl" = Z"" ]
-				then
-					colorecho "ERROR: No URL found!" 1
-					exit 1
-				fi
-				#debugecho "N: $usenurl"
-				usenurl=`echo $usenurl |sed 's#https://my.vmware.com##'`
-				lasturl="https://my.vmware.com${usenurl}"
-				if [ ! -e ${rcdir}/${missname}_1.xhtml ] || [ $doreset -eq 1 ]
-				then
-					mywget ${rcdir}/${missname}_1.xhtml "https://my.vmware.com${usenurl}"
-				fi
-				# Now we need to get the versions
-				tver=`grep downloadGroupId ${rcdir}/${missname}_1.xhtml | cut -d\" -f2 | sed 's/\./_/g' | sort -V`
-				# pkgs change completely
-				pkgs=""
-			fi
-			if [ Z"$tver" != Z"" ]
-			then
-				mc=`basename $mchoice`
-				debugecho "DEBUG: Missing from $mc is $tver"
-				for x in $tver
-				do
-					pkgs="$pkgs ${mc}_$x"
-				done
-				pkgs=`echo $pkgs | tr ' ' '\n' | sort -rV`
-				missing=`echo $tver | sed 's/ /|/g'`
-			fi
-		else
-			colorecho "My VMware Site issue request could not be completed" 1
-		fi
-	fi
-}
-
-function getoutervmware() {
-	debugecho "DEBUG: $myvmware $choice $missing"
-	if [ Z"$usenurl" = Z"" ]
-	then
-		spkg=`echo $choice | awk -F_ '{print $NF}'`
-		missname=`echo ${myvmware} | sed 's/\//_/g'`
-		if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ]
-		then
-			mywget ${rcdir}/${missname}.xhtml ${myvmware_root}${myvmware}
-		fi
-		grep 'class="longProductColumn"' $rcdir/${missname}.xhtml >& /dev/null
-		if [ $? -eq 0 ]
-		then
-			#contentTag=`grep 'Product Downloads' $rcdir/${missname}.xhtml  | sed 's/ /\n/g' |grep id | cut -d\" -f2`
-			mversions=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/${missname}.xhtml 2>/dev/null | grep longProductColumn |cut -d'>' -f3|cut -d'<' -f1 | sed 's/[ -]/_/g'`
-			longProductColumn=1
-		else
-			mversions=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/${missname}.xhtml 2>/dev/null | xmllint --html --xpath "//tr[@class=\"clickable\"]" - 2>/dev/null|grep ProductColumn | cut -d '>' -f2 |cut -d '<' -f1|sed 's/[ -]/_/g'`
-		fi
-		#mc=`echo $mversions | wc -w`
-		#debugecho "mc => $mc"
-		f=`basename $mchoice`
-		pkgs=""
-		if [ Z"$mversions" != Z"" ]
-		then
-			for x in $mversions
-			do
-				echo $x | egrep -iv "_ARM|_UWP|_Android|_IOS|Windows_Store|_Chrome" >& /dev/null
-				if [ $? -eq 0 ]
-				then
-					pkgs="$pkgs ${f}_${x}"
-				fi
-			done
-		else
-			grep 'class="midProductColumn"' $rcdir/${missname}.xhtml >& /dev/null
-			if [ $? -eq 0 ]
-			then
-				if [ Z"$usenurl" = Z"" ]
-				then
-					usenurl=`grep "Go to Downloads" ${rcdir}/${missname}.xhtml | grep -v OSS | cut -d\" -f 4 | head -1`
-				fi
-				midprod=1
-			fi
-		fi
-	fi
-}
-
-function getinnervmware() {
-	# need to set $dlg here
-	debugecho "IV: $choice $missname $mversions"
-	if [ Z"$usenurl" != Z"" ]
-	then
-		#debugecho "N: $usenurl"
-		ver=`echo $choice | sed 's/.*_\([0-9]\+[\._][\.0-9x]\+\)$/\1/' | sed 's/[\._]//g'`
-		# not a good test :(
-		if [ Z"$ver" != Z"$choice" ]
-		then
-		#	if [ ${#ver} -lt 3 ]
-		#	then
-				gld=`echo $usenurl | cut -d= -f 2 |cut -d\& -f1|sed 's/-/_/g'`
-				pld=`echo $gld | sed 's/\([A-Z]\+\)_[0-9]\+/\1/'`
-				gver=`echo $gld | sed 's/.*_\([0-9]\+\)$/\1/'`
-				# Need to substitute versions if necessary
-				# This may catch appropriate items
-				debugecho "PLD => $pld"
-				missname="_dlg_${gld}"
-				nurl=$usenurl
-				pkgs="${gld}"
-			if [ ! -e ${rcdir}/${missname}.xhtml ] || [ $doreset -eq 1 ]
-			then
-				nurl=`echo $nurl |sed 's#https://my.vmware.com##'`
-				mywget ${rcdir}/${missname}.xhtml "https://my.vmware.com${nurl}"
-			fi
-			vsmnpkgs 1
-		fi
-	else
-		tabc=1
-		#if [ Z"$om" = Z"DriversTools" ]; then tabc=2; fi
-		#if [ Z"$om" = Z"OpenSource" ]; then tabc=3; fi
-		#if [ Z"$om" = Z"CustomIso" ]; then tabc=4; fi
-		echo $missname |grep horizon_clients >& /dev/null
-		if [ $? -eq 0 ]; then getlongreply $choice; fi
-		pkgs=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[$tabc]" $rcdir/${missname}.xhtml 2>/dev/null | xmllint --html --xpath "(//tr[@class=\"more-details\"])[$longReply]" - 2>/dev/null | sed 's/"buttoncol"//' | grep downloadGroup| sed 's/&amp;/ /g' |sed 's/\?/ /g' | sed 's/ /\n/g'|grep downloadGroup | cut -d= -f2 | sed 's/-/_/g' | sort -u`
-		vsmnpkgs 1
-	fi
-	dlg=1
-	myinnervm=1
-	debugecho "DEBUG: $myvmware $vers $prod"
-}
-
-function getvmware() {
-	if [ $domyvmware -eq 1 ]
-	then
-		debugecho "DEBUG: FM: ${missing} ${mversions}"
-		if [ Z"$missing" = Z"" ]
-		then
-			myinnervm=0
-			# Get missing suite versons
-			debugecho "DEBUG: do FM"
-			findmissing
-		else
-			if [ Z"$mversions" = Z"" ] && [ Z"$usenurl" = Z"" ] && [ $midprod -eq 0 ]
-			then
-				myinnervm=0
-				# Get versions of suites
-				debugecho "DEBUG: do OV"
-				getoutervmware
-				if [ $midprod -eq 1 ]
-				then
-					getinnervmware
-				fi
-			else
-				# associate packages
-				debugecho "DEBUG: do IV"
-				getinnervmware
-			fi
-		fi
-	fi
-}
-function backvmware() {
-	if [ $domyvmware -eq 1 ]
-	then
-		mversions=""
-		if [ $dlg -ne 2 ] || [ Z"$usenurl" != Z"" ]
-		then
-			mversions=""
-			missing=""
-			usenurl=""
-			midprod=0
-		fi
-	fi
-}
-
-function vmwarecv() {
-	debugecho "CV: $choice $missname $mversions"
-	prodlist=`grep downloadGroupId $rcdir/_dlg_${choice}.xhtml | cut -d\" -f6`
-	if [ Z"$prodlist" != Z"" ]
-	then
-		npkg=""
-		for x in $prodlist
-		do
-			# dirs use _ not -
-			y=`echo $x|sed 's/-/_/g'`
-			if [ ! -e "${repo}/dlg_${y}" ]
-			then
-				if [ Z"$npkg" = Z"" ]
-				then
-					npkg="${BOLD}${TEAL}${x}${NB}${NC}"	
-				else
-					npkg="$npkg ${BOLD}${TEAL}${x}${NB}${NC}"
-				fi
-			else
-				if [ Z"$npkg" = Z"" ]
-				then
-					npkg="$x"
-				else
-					npkg="$npkg $x"
-				fi
-			fi
-		done
-		debugecho "CV: $choice $missname $mversions"
-		# Select a different $ach by new $vurl
-		export COLUMNS=10
-		select choice in $npkg Back Exit
-		do
-			if [ Z"$choice" != Z"" ]
-			then
-				stripcolor
-				if [ $choice = "Exit" ]
-				then
-					rm -f ${cdir}/$vpat
-					exit
-				fi
-				break
-			else
-				echo -n "Please enter a valid numeric number:"
-			fi
-		done
-		if [ Z"$choice" != Z"Back" ]
-		then
-			# reset as we may have some old ones hanging about
-			pkgs=''
-			vurl="/web/vmware/details?productId=${productId}&rPId=${rPId}&downloadGroup=${choice}"
-			choice=`echo $choice |sed 's/-/_/g'`
-			vmwaremi $choice $vurl
-			# reset currchoice as well
-			currchoice=$choice
-			# reset asso's as well
-			oemlist=''
-			dtslist=''
-			osslist=''
-			getasso
-			# reset path for 'back' to work
-			getpath
-			addpath
-		fi
-	fi
-}
-
-function vmwaremi()
-{
-	ich=$1
-	iurl=$2
-	debugecho "DEBUG: $ich vurl => $vurl"
-	if [ ! -e ${rcdir}/_dlg_${ich}.xhtml ] || [ $doreset -eq 1 ]
-	then
-		if [ Z"$iurl" != Z"" ]
-		then
-			iurl=`echo $iurl |sed 's#https://my.vmware.com##'`
-			mywget ${rcdir}/_dlg_${ich}.xhtml "https://my.vmware.com${iurl}"
-		fi
-	fi
-
-	# parse data
-	menu2files=1
-	getvsmcnt $ich
-	cnt=$?
-	debugecho "DEBUG: menu2files => $menu2files"
-	x=1
-	while [ $x -le $cnt ]
-	do
-		getvsmdata $ich $x
-		if [ Z"$pkgs" = Z"" ]
-		then
-			pkgs=$name
-		else
-			pkgs="$pkgs $name"
-		fi
-		$((x++)) 2> /dev/null
-	done
-	getouterrndir $ich
-}
-
-function vmwaremenu2() {
-	ach=$choice
-	mname=$missname
-	if [ Z"$1" != Z"" ]
-	then
-		ach=$1
-		mname="_dlg_$currchoice"
-	fi
-	debugecho "vmwaremenu2: $domyvmware $ach $mname"
-	if [ $domyvmware -eq 1 ] #&& [ ! -e ${rcdir}/dlg_${ach}.xhtml ]
-	then
-		pkgs=''
-		vsme=`echo $ach | sed 's/_/[-_]/g'`
-		if [ $dodlg -eq 1 ]
-		then
-			vsme=`echo $ach | sed 's/_/[-_]/g'|sed 's/[0-9]$/./'`
-		fi
-		debugecho "DEBUG: vsme => $vsme"
-		# will not work for dooss so need to know we are doing this
-		tabc=1
-		if [ Z"$om" = Z"DriversTools" ]; then tabc=2; fi
-		if [ Z"$om" = Z"CustomIso" ]; then tabc=3; fi
-		if [ Z"$om" = Z"OpenSource" ]; then tabc=4; fi
-		if [ $tabc -eq 1 ]
-		then
-			xmllint --html --xpath "(//div[@class=\"tabContent\"])[$tabc]" $rcdir/${missname}.xhtml 2>/dev/null | grep more-details >& /dev/null
-			if [ $? -eq 0 ]
-			then
-				vurl=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[$tabc]" $rcdir/${missname}.xhtml 2>/dev/null | xmllint --html --xpath "(//tr[@class=\"more-details\"])[$longReply]" - 2>/dev/null | egrep "${vsme}[&\"]" | grep -v OSS | sed 's/"buttoncol"//' | head -1 | grep href | cut -d \" -f 2 | sed 's#https://my\.vmware\.com##' | sed 's/amp;//g'`
-			else
-				vurl=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[$tabc]" $rcdir/${missname}.xhtml 2>/dev/null | xmllint --html --xpath "(//td[@class=\"filename\"])[$longReply]" - 2>/dev/null | egrep "${vsme}[&\"]" | grep -v OSS | sed 's/"buttoncol"//' | head -1 | grep href | cut -d \" -f 2 | sed 's#https://my\.vmware\.com##' | sed 's/amp;//g'`
-			fi
-		else
-			vurl=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[$tabc]" $rcdir/${missname}.xhtml 2>/dev/null | egrep "${vsme}[&\"]" | grep -v OSS | sed 's/"buttoncol"//' | head -1 | grep href | cut -d \" -f 2 | sed 's#https://my\.vmware\.com##' | sed 's/amp;//g'`
-		fi
-		debugecho "DEBUG: vurl => $vurl"
-		# ordering problem, so put here
-		for x in `echo $vurl | sed 's/amp;//g' | cut -d\? -f 2 | cut -d\" -f1 | sed 's/&/ /g'`; do y=`echo $x| cut -d= -f1`; z=`echo $x | cut -d= -f2`; eval "$y=$z"; done
-		debugecho "rPId=$rPId productId=$productId downloadGroup=$downloadGroup"
-		if [ $dodlg -eq 1 ]
-		then
-			vsme=`echo $ach | sed 's/_/[-_]/g'`
-			dlGroup=$downloadGroup
-			echo $dlGroup | grep $vsme 2>/dev/null
-			if [ $? -eq 1 ]
-			then
-				vurl=`echo $vurl | sed "s/$dlGroup/$ach/"`
-			fi
-		fi
-		vmwaremi $ach $vurl
-	fi
-}
-
-function getvsmcnt() {
-	cchoice=$1
-	if [ $menu2files -eq 0 ] || [ $domts -eq 1 ]
-	then
-		cnt=`xml_grep --html --pretty_print --cond '//*/[@class="depot-content"]' $rcdir/dlg_${cchoice}.xhtml 2>/dev/null  |grep display-order | wc -l`
-	else
-		cnt=`xmllint --html --xpath "//td[@class=\"filename\"]" ${rcdir}/_dlg_${cchoice}.xhtml 2> /dev/null | grep fileNameHolder | wc -l`
-	fi
-	debugecho "DEBUG: getvsmcnt => $cnt"
-	#let cnt=$cnt+1
-	return $cnt
-}
-
-function getproddata() {
-	if [ $myinnervm -eq 1 ]
-	then
-		prod=`grep '<title>' $rcdir/${missname}.xhtml|cut -d '>' -f 2|cut -d '<' -f 1 | sed 's/Download //' | sed 's/ - My VMware//' | sed 's/ [0-9]\+$//'`
-		vers=`grep selected $rcdir/${missname}.xhtml | awk -F\> '{print $2}'|awk -F\< '{print $1}' | sed 's/[[:space:]]\+$//'|sed 's/ /+/g'`
-		#dref=`grep downloadFilesURL $rcdir/${missname}.xhtml|sed 's/value=/\n/'|grep https|cut -d\" -f2`
-	else
-		prod=`xml_grep --html --text_only '*[@title="prod"]' ${prevchoice}.xhtml 2>/dev/null`
-		vers=`xml_grep --html --text_only '*[@title="version"]' ${prevchoice}.xhtml 2>/dev/null`
-	fi
-	#debugecho "DEBUG: vers => $vers ; prod => $prod"
-	eprod=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$prod" 2>/dev/null`
-	prod=`echo $eprod|sed 's/%205%3A%20Private%20Cloud%20Computing%2C%20Server%20and%20Data%20Center%20Virtualization//'`
-	debugecho "DEBUG: vers => $vers ; prod => $prod"
-}
-
-function uag_test() {
-	vv=$1
-
-	if [ $vv -eq 300 ]
-	then
-		osymdir="UAG"
-		rndir="view"
-	elif [ $vv -eq 0 ] || [ $vv -lt 321 ]
-	then
-		rndir="UAG_${vv:0:2}"
-		osymdir="$rndir"
-	else
-		rndir="UAG_${vv}"
-		osymdir="$rndir"
-	fi
-}
-
-function getouterrndir() {
-	lchoice=$1
-	rndll=''
-	rndir=''
-	like=''
-	likeforlike=''
-	osymdir=''
-	rndll='download2.vmware.com'
-	ornlin=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | grep "$lchoice|" |sort -V|tail -1`
- 	orndir=`echo $ornlin | cut -d\| -f 2`
- 	orndll="`echo $ornlin | cut -d\| -f 3`.vmware.com"
-	if [ Z"$orndir" = Z"" ]
-	then
-		echo $lchoice  | egrep '_[0-9]|-[0-9]' >& /dev/null
-		if [ $? -eq 0 ]
-		then
-			v=`echo ${lchoice} | sed 's/[0-9A-Z]\+[-_]\([0-9]\+\).*$/\1/' 2>/dev/null | awk -F_ '{print $NF}'`
-		else
-			v=`echo ${lchoice} | sed 's/[A-Z]\+\([0-9]\+\).*$/\1/' 2>/dev/null | awk -F_ '{print $NF}'`
-		fi
-		if [ Z"$v" = Z"$lchoice" ]
-		then
-			v=0
-		fi
-		debugecho "DEBUG: v => $v"
-		case "$lchoice" in
-			VCOPS*)
-				rndir='vcops'
-				;;
-			VRSLCM*)
-				# special case VIC, VROPS, VC
-				# Note VRSLCM_?? => VRSLCM10
-				rndir='VRSLCM10'
-				;;
-			VS_PERL_SDK*)
-				e=`echo $lchoice | sed "s/VS_PERL_SDK${v}//" | tr [:upper:] [:lower:]`
-				if [ Z"$e" != Z"" ]
-				then
-					rndir="vsphere${v}/perlsdk/${v}${e}"
-				else
-					rndir="vsphere${v}/perlsdk"
-				fi
-				;;
-			VDDK*)
-				if [ $v -ge 652 ]
-				then
-					e=`echo $lchoice | awk -F_ '{print $NF}'`
-					rndir="VDDK/$v/$e"
-				else
-					rndir="VDDK"
-				fi
-				;;
-			SKYLINE*)
-				rndir="skyline"
-				;;
-			VSP5[01]0_VDDK*)
-				rndir="VDDK"
-				;;
-			VMTOOLS*)
-				if [ $v -gt 1017 ]
-				then
-					rndir="vmtools/${v}"
-				else
-					rndir="vmtools"
-				fi
-				;;
-			VRBC*)
-				rndir="vRB700"
-				if [ $v -lt 700 ]
-				then
-					rndir="itbm"
-				fi
-				;;
-			VCF*)
-				rndir="vi/vcf${v}"
-				if [ ${v} -le 231 ]
-				then
-					rndir="vi"
-				fi
-				;;
-			VRA*)
-				rndir="vcac"
-				;;
-			UMS*)
-				rndir="usagemetering"
-				;;
-			VROVA*)
-				rndir="vi"
-				;;
-			VDP*)
-				rndir="vdp/${v:0:2}"
-				;;
-			APPHA*)
-				rndir="APPHA_${v}"
-				if [ $v -lt 111 ]
-				then
-					rndir="vin/570"
-				fi
-				;;
-			APPDEFENSE*)
-				rndir="APPDEFENSE-${v}"
-				;;
-			NSX_V_*_TOOLS)
-				if [ $v -gt 612 ]
-				then
-					rndir="nsx-V-${v}"
-				else
-					rndir="nsx-V-610"
-				fi
-				;;
-			NSXV*)
-				rndir="NSX-V-610"
-				;;
-			NSX_SD_WAN*)
-				rndir="NSX-SD-WAN-GA"
-				;;
-			NSX_SD_WAN_CONT)
-				rndir="NSX-SD-WAN-CONT"
-				;;
-			NSX_SD_WAN_ORC)
-				rndir="NSX-SD-WAN-ORC"
-				;;
-			NSX_V*)
-				rndir="nsx-V-610"
-				;;
-			NSX_T*)
-				e=''
-				s=''
-				le=`echo $lchoice | awk -F_ '{print $NF}'`
-				sdk=`echo $lchoice | cut -d_ -f 4`
-				if [ Z"$le" = Z"LE" ]
-				then
-					e='-LE'
-				fi
-				
-				if [ $v -gt 210 ]
-				then
-					rndir="NST-T${v}${e}"
-				elif [ $v -le 200 ]
-				then
-					rndir="NST-T"
-				fi
-				if [ Z"$sdk" = Z"SDK" ]
-				then
-					dk=`echo $lchoice | cut -d_ -f 5 | tr [:upper:] [:lower:]`
-					rndir="NST-T/${dk}${v}"
-					if [ Z"$le" = Z"LE" ]
-					then
-						rndir="NST-T/${dk}${v}-le"
-					fi
-				fi
-				;;
-			CLOUDPOD*)
-				rndir="cloudpod"
-				;;
-			VSPP_VCD*)
-				rndir="vcd"
-				;;
-			CX*)
-				rndir="vcandr"
-				;;
-			VIO*)
-				if [ $v -ge 500 ]
-				then
-					rndir='VIO/5.0'
-				elif [ $v -ge 400 ]
-				then
-					rndir='VIO'
-				else
-					rndir='VIO_3'
-				fi
-				;;
-			LINUXVDI*)
-				if [ $v -ge 740 ]
-				then
-					rntmp=`echo $lchoice | sed 's/LINUXVDI/HZ/g'`
-					rndir="view/${rntmp}"
-				elif [ $v -ge 730 ]
-				then
-					rndir='view/HZ18FQ4'
-				else
-					rndir='view'
-				fi
-				;;
-			VROPS*)
-				m="${lchoice//[^[:digit:]]/}"
-				rndir="vrops${m}"
-				;;
-			VC55*)
-				rndir="vi/55"
-				;;
-			VC65*)
-				n=`echo $lchoice | sed 's/VC[0-9][0-9]//' | tr [:upper:] [:lower:]`
-				m=`echo $lchoice | sed 's/VC//' | sed "s/$n//i"`
-				rndir="vc/$m/$n"
-				;;
-			VC67*)
-				rndir="vc/67"
-				;;
-			VC60*)
-				rndir="vi/60"
-				;;
-			VC*)
-				rndir="vi"
-				;;
-			HCS*)
-				rndir="AppVolumes"
-				;;
-			VR[0123456789]*)
-				rndir="vr50"
-				;;
-			ZONES10*)
-				rndir="vi"
-				;;
-			SRM_SRA81*)
-				rndir="srm810"
-				;;
-			SRM*)
-				rndir="srm50"
-				;;
-			ESXI*)
-				if [ $v -lt 60 ]
-				then
-					rndir="esx/${v:0:2}"
-				else
-					rndir="vi/${v:0:2}"
-				fi
-				;;
-			OEM*)
-				rndir="vi"
-				if [ $v -ge 67 ]
-				then
-					rndir="vi/$v"
-				fi
-				;;
-			DT*)
-				rndll="download3.vmware.com"
-				;;
-			VIC*)
-				m="${lchoice//[^[:digit:]]/}"
-				m=`echo $m | sed -e 's/\(.\)/\1\./g' |sed 's/\.$//'`
-				rndir="vic${m}"
-				;;
-			VVD*)
-				if [ ${v} -gt 200 ]
-				then
-					rndir="vvd/${v}"
-				else
-					rndir="vvd"
-				fi
-				;;
-			CART*|VIEWCLIENT*)
-				rndll='download3.vmware.com'
-				rntmp=`echo $lchoice | cut -d_ -f 1`
-				rndir="view/viewclients/${rntmp}"
-				;;
-			HZNWS*)
-				rndir='HZNWS20'
-				;;
-			VIEWCRT*)
-				#rndll='download3.vmware.com'
-				rndir="view/viewclients"
-				;;
-			VIEWLINUX*)
-				rndir='view'
-				;;
-			VIEW*)
-				if [ $v -ge 750 ]
-				then
-					rntmp=`echo $linuxvdi | sed 's/LINUXVDI//g'|sed 's/CART/HZ/' |sed 's/__.*//'`
-					rndir="view/${rntmp}_${v}"
-				elif [ $v -ge 740 ]
-				then
-					rntmp=`echo $linuxvdi | sed 's/LINUXVDI/HZ/g'`
-					rndir="view/${rntmp}"
-				elif [ $v -ge 730 ]
-				then
-					rndir="view/HZ18FQ4"
-				elif [ $v -eq 625 ]
-				then
-					rndir="view624"
-				else
-					rndir="view"
-				fi
-				;;
-			HVRO*)
-				rndir='HvCOplugin'
-				;;
-			THIN*)
-				rns=`echo $lchoice | sed 's/THIN_//'`
-				rntmp=`echo $lchoice | sed 's/THIN_//' | sed 's/\([0-9]0[1-9]\).*$/\1/'|sed 's/\([0-9][1-9]\).*$/\1/'`
-				if [ $rns -gt 520 ]
-				then
-					rntmp="${rntmp}/$rns"
-				fi
-				rndir="thin/${rntmp}"
-				;;
-			UEM*)
-				rndir='UEM'
-				;;
-			MIRAGE*)
-				if [ $v -gt 540 ]
-				then
-					rntmp=`echo $lchoice | sed 's/MIRAGE_//'|sed 's/_TOOLS//'`
-					rndir="mirage/${rntmp}"
-				else
-					rndir="mirage"
-				fi
-				;;
-			AV_*)
-				if [ $v -ge 2132 ]
-				then
-					rndir="AppVolumes/${v}"
-				else
-					rndir='AppVolumes'
-				fi
-				;;
-			V4H*)
-				if [ $v -gt 650 ]
-				then
-					rntmp=`echo $lchoice | sed 's/_GA//g' | tr [:upper:] [:lower:]`
-					rndir="vcops/${rntmp}"
-				else
-					rndir="vcops"
-				fi
-				;;
-			V4PA*)
-				if [ $v -gt 650 ]
-				then
-					rntmp=`echo $lchoice | sed 's/_GA//g' | tr [:upper:] [:lower:]`
-					rndir="v4pa/${rntmp}"
-				else
-					rndir="v4pa"
-				fi
-				;;
-			VIDM*)
-				v=`echo $v | sed 's/.\{1\}/&./g' | sed 's/\.$//'`
-				rndir="VIDM_ONPREM_${v}"
-				;;
-			FUS*)
-				rndll='download3.vmware.com'
-				rndir='fusion/file'
-				;;
-			WKST*)
-				rndll='download3.vmware.com'
-				rndir='wkst/file'
-				;;
-			VIDM_ONPREM*)
-				rntmp=`echo $lchoice | sed 's/[0-9]//g'`
-				rndir="${rntmp}${pver}"
-				;;
-			VRNI*)
-				rndir="vrni"
-				;;
-			VCM*)
-				myoauth=1
-				;;
-			ASSURANCE*)
-				if [ $v -ge 960 ]
-				then
-					rndir="assurance/${v}"
-				else
-					rndir='assurance'
-				fi
-				;;
-			EXPERIENCE*)
-				rndir='assurance'
-				;;
-			VRLI*)
-				if [ $v -eq 450 ]
-				then
-					rndir='strata1'
-				else
-					rndir='strata'
-				fi
-				;;
-			UAG*)
-				uag_test $v
-				;;
-			*"OSS")
-				rndir="opensource"
-				;;
-		esac
-	fi
-	debugecho "orndir => $orndir"
-	debugecho "orndll => $orndll"
-	debugecho "osymdir => $osymdir"
-}
-
-function getinnerrndir() {
-	if [ $domyvmware -eq 1 ]
-	then
-		if [ Z"$orndir" = Z"" ]
-		then
-			#debugecho "DEBUG: ename => $ename"
-			rnlin=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null| fgrep $name | sort -k6 -V|tail -1`
-			if [ ${#rnlin} -ne 0 ]
-			then
-				rndir=`echo $rnlin| cut -d' ' -f 5`
-				rndll="`echo $rnlin| cut -d' ' -f 4`.vmware.com"
-				#rnuid=`echo $rnlin | cut -d' ' -f 7`	
-			fi
-			if [ Z"$rndir" = Z"" ]
-			then
-				if [ -e _dlg_${lchoice}.xhtml ]
-				then
-					rndir=`grep "Release Notes" _dlg_${lchoice}.xhtml| cut -d\" -f2| cut -d/ -f6,7`
-				fi
-			fi
-		else
-			rndir=$orndir
-			rndll=$orndll
-		fi
-		# override location for symlinks
-		if [ $symlink -eq 1 ]
-		then
-			symdir=''
-			_v=`echo $name | sed 's/[a-z-]\+-\([0-9]\.[0-9]\.[0-9]\).*/\1/' | sed 's/\.0$//' |sed 's/\.//g'`
-			case "$name" in
-				euc-access-point*)
-					uag_test $_v
-					symdir=$rndir
-					;;
-				euc-unified-access*)
-					uag_test $_v
-					symdir=$rndir
-					;;
-			esac
-		fi
-		if [ Z"$osymdir" != Z"" ] && [ Z"$symdir" = Z"" ]
-		then
-			symdir=$osymdir
-		fi
-		if [ Z"$rndir" != Z"" ]
-		then
-			debugecho "DEBUG: like => $like"
-			debugecho "DEBUG: rndll => $rndll" 
-			debugecho "DEBUG: rndir => $rndir"
-			debugecho "DEBUG: symdir => $symdir"
-		fi
-	fi
-}
-
-function getvsmdata() {
-	cchoice=$1
-	xx=$2
-	be='_dlg'
-	debugecho $cchoice $xx $be
-	if [ Z"$3" != Z"" ]
-	then
-		be=$3
-	fi
-	if [ $menu2files -eq 0 ] || [ $domts -eq 1 ]
-	then
-		data=`xmllint --html --xpath "(//*/li[@class=\"depot-content\"])[$xx]" $rcdir/dlg_${cchoice}.xhtml 2>/dev/null`
-		name=`echo $data|xml_grep --html --text_only '//*/a' 2>/dev/null`
-	else
-		pver=`grep selected=\"selected\" ${rcdir}/${be}_${cchoice}.xhtml 2> /dev/null | head -1 | cut -d\" -f2 | sed 's/[[:space:]]\+$//'| sed 's/ /+/g'`
-		if [ ${PIPESTATUS[0]} -ne 0 ]
-		then
-			pver=`xmllint --html --xpath "//tr" ${rcdir}/${be}_${cchoice}.xhtml  2> /dev/null  | tr '\n' ' ' |sed 's/<\/tr>/<\/tr>\n/' |head -1 |sed 's/<t[hd]>//g' |sed 's/<\/t[hd]>//g' |awk '{print $3}'| sed 's/[[:space:]]\+$//'| sed 's/ /+/g'`
-		fi
-		if [ Z"$pver" = Z"" ]
-		then
-			pver=$vers
-		fi
-		data=`xmllint --html --xpath "(//td[@class=\"filename\"])[$xx]" ${rcdir}/${be}_${cchoice}.xhtml 2> /dev/null`
-		name=`echo $data|sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g' | grep fileNameHolder | cut -d '>' -f 2 | sed 's/ //g'`
-	fi
-	debugecho "DEBUG: name => $name"
-	#debugecho "DEBUG: data => $data"
-}
-
-function getasso() {
-	asso=""
-	moreasso=""
-	preasso=""
-	assomissing=""
-	dts=""
-	oss=""
-	oem=""
-	assomiss=0
-	sc=$choice
-	if [ $# -eq 1 ]
-	then
-		# this overrides all defaults
-		sc=$1
-		oemlist=''
-		dtslist=''
-		osslist=''
-	fi
-	if [ $domyvmware -eq 1 ] #&& [ ! -e dlg_${choice}.xhtml ]
-	then
-		vmwaremenu2 $currchoice
-	fi
-	#curdir=`pwd`
-	#cd ${rcdir}
-	debugecho "GA: $sc"
-	if [ -f _dlg_${sc}.xhtml ]
-	then
-		assomiss=1
-		# Get ASSO from my vmware bits
-		for tabc in 2 3 4
-		do
-			tasso=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[$tabc]" $rcdir/_dlg_${sc}.xhtml 2>/dev/null | sed 's/"buttoncol"//' | grep downloadGroup| sed 's/&amp;/ /g' |sed 's/\?/ /g' | sed 's/ /\n/g'|grep downloadGroup | cut -d= -f2 | sed 's/-/_/g'`
-			asso="$asso $tasso"
-		done
-		moreasso="_dlg"
-	elif [ -f dlg_${sc}.xhtml ]
-	then
-		asso=`xml_grep --html --text_only '*[@title="associated-channels"]' dlg_${sc}.xhtml  2>/dev/null| sed 's/,//g'|sed 's/dlg_//g'`
-		moreasso="dlg"
-	fi
-	debugecho "DEBUG: moreasso => $moreasso"
-	if [ Z"$moreasso" != Z"" ]
-	then
-		# sometimes things exist that are not in asso lists
-		# sometimes they use similar version numbers
-		rchoice=`echo $sc | sed 's/U/*U/'` 
-		for x in `ls ${moreasso}*${rchoice}_*.xhtml 2>/dev/null | grep -v ${moreasso}_${sc}.xhtml | egrep -v 'VCENTER|NSX'`
-		do
-			y=`echo $x | sed 's/\.xhtml//'|sed "s/${moreasso}_//"`
-			# only list all asso if dodlg != 1
-			if [ Z"$asso" = Z"" ]
-			then
-				asso=$y
-			else
-				asso="$asso $y"
-			fi
-		done
-	fi
-
-	# Now go through asso list and split into parts
-	for x in $asso
-	do
-		if [ $dodlg -eq 1 ] && [ Z"$x" != Z"$mypkg" ]
-		then
-			continue
-		fi
-		# debugecho "$sc: $x"
-		# sometimes files do not exist!
-		if [ -e dlg_${x}.xhtml ]
-		then
-			preasso="dlg_"
-		else
-			if [ $assomiss -eq 1 ]
-			then
-				preasso="_dlg_"
-				assomissing="$assomissing $x"
-			else
-				wouldassomiss=1
-				continue
-			fi
-		fi
-		echo $x | grep ^OEM > /dev/null
-		if [ $? -eq 0 ]
-		then
-			if [ Z"$oemlist" = Z"" ]
-			then
-				oemlist="${preasso}$x"
-			else
-				oemlist="$oemlist ${preasso}$x"
-			fi
-			oem="CustomIso"
-		else
-			echo $x | egrep "OSS|OSL|OPENSOURCE|OS_L|OS_S" > /dev/null
-			if [ $? -eq 0 ]
-			then
-				if [ Z"$osslist" = Z"" ]
-				then
-					osslist="${preasso}$x"
-				else
-					osslist="$osslist ${preasso}$x"
-				fi
-				oss="OpenSource"
-			else
-				if [ Z"$dtslist" = Z"" ]
-				then
-					dtslist="${preasso}$x"
-				else
-					dtslist="$dtslist ${preasso}$x"
-				fi
-				dts="DriversTools"
-			fi
-		fi
-	done
-	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
-	then
-		get_product_patches $sc
-		if [ -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ]
-		then
-			patcnt=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml |grep download | sed 's/[,"]//g'|wc -l`
-		fi
-	fi
-	#cd ${curdir}
-	debugecho "DEBUG: dtslist => $dtslist"
-	debugecho "DEBUG: osslist => $osslist"
-	debugecho "DEBUG: assomissing => $assomissing"
-	debugecho "DEBUG: $sc => $mypkg"
-}
-
-function vsmnpkgs() {
-	dim=0
-	if [ Z"$1" != Z"" ]
-	then
-		dim=$1
-	fi
-	npkg=""
-	for x in $pkgs
-	do
-		l=${#x}
-		$((l++)) 2> /dev/null
-		e=$((l+1))
-		# ignore VCENTER is a special case
-		if [ $dim -eq 0 ]
-		then
-			# find latest
-			a=`ls ${x}* 2>/dev/null| grep -v 'OSS' | sed 's/\.xhtml//' | sed 's/U/0U/' | sort -rn -k1.${l},1.${e} | sort -n | sed 's/0U/U/' | egrep -v 'VCENTER|PLUGIN|SDK|OSL' | tail -1 | sed 's/dlg_//'`
-		else
-			# find available
-			xy=`echo $x | sed 's/-/_/g'`
-			if [ $dodlg -eq 1 ] && [ Z"$choice" != Z"$xy" ]
-			then
-				continue
-			fi
-			a=${xy}
-			if [ ! -e _dlg_${xy}.xhtml ] && [ -d "${repo}/dlg_${xy}" ]
-			then
-				a="${TEAL}${x}${NC}"
-			elif [ ! -d ${repo}/dlg_${xy} ]
-			then
-				a="${BOLD}${TEAL}${x}${NC}"
-			fi
-		fi
-		if [ Z"$npkg" = Z"" ]
-		then
-			npkg=$a
-		else
-			npkg="${npkg} ${a}"
-		fi
-	done
-	pkgs=$npkg
-}
-
-function vsmpkgs() {
-	file=$1
-	pkgs=""
-	if [ $choice = "Desktop_End_User_Computing" ]
-	then
-		# need to get this
-		pkgs="Desktop_End_User_Computing_VMware_Horizon_Clients Desktop_End_User_Computing_VMware_Fusion Desktop_End_User_Computing_VMware_Workstation_Pro Desktop_End_User_Computing_VMware_Unified_Access_Gateway Desktop_End_User_Computing_VMware_Workspace_ONE Desktop_end_User_Computing_VMware_User_Environment_Manager"
-		if [ $dooauth -eq 1 ]
-		then
-			pkgs="$pkgs Desktop_End_User_Computing_VMware_Horizon"
-		fi
-		pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
-	elif [ $choice = "Networking_Security" ]
-	then
-		pkgs="Networking_Security_VMware_NSX_Data_Center_for_vSphere Networking_Security_VMware_NSX_T_Data_Center Networking_Security_VMware_AppDefense_Plugin_for_Platinum_Edition Networking_Security_VMware_SD_WAN"
-	else
-		if [ Z"$pkgs" = Z"" ]
-		then
-			if [ -e $file ]
-			then
-				pkgs=`xml_grep --text_only '//*/a' $file  2>/dev/null| sed 's/dlg_//' | sed 's/\.xhtml//' | sed 's/,//g' `
-			fi
-			getvmware 
-		fi
-		if [ $choice = "Datacenter_Cloud_Infrastructure" ]
-		then
-			if [ $dooauth -eq 1 ]
-			then
-				pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_Validated_Design_for_Software_Defined_Data_Center Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite"
-				# Datacenter_Cloud_Infrastructure_VMware_vSphere_with_Operations_Management
-			fi
-			if [ $dovexxi -eq 1 ]
-			then
-				pkgs="$pkgs Datacenter_Cloud_Infrastructure_VMware_vCloud_Director Datacenter_Cloud_Infrastructure_VMware_Skyline_Collector Datacenter_Cloud_Infrastructure_VMware_vCloud_Usage_Meter Datacenter_Cloud_Infrastructure_VMware_Cloud_Foundation Datacenter_Cloud_Infrastructure_VMware_Cloud_Provider_Pod Datacenter_Cloud_Infrastructure_VMware_vCloud_Suite_Platinum"
-			fi
-			pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
-			mversions=''
-		elif [ $choice = "Infrastructure_Operations_Management" ]
-		then
-			pkgs="Infrastructure_Operations_Management_VMware_vRealize_Automation Infrastructure_Operations_Management_VMware_vRealize_Network_Insight Infrastructure_Operations_Management_VMware_vRealize_Suite"
-			if [ $dovexxi -eq 1 ]
-			then
-				pkgs="$pkgs Infrastructure_Operations_Management_VMware_Integrated_OpenStack Infrastructure_Operations_Management_VMware_Site_Recovery_Manager Infrastructure_Operations_Management_VMware_vCenter_Converter_Standalone Infrastructure_Operations_Management_VMware_Smart_Assurance Infrastructure_Operations_Management_VMware_Smart_Experience"
-				if [ $dooauth -eq 1 ]
-				then
-					pkgs="$pkgs Infrastructure_Operations_Management_VMware_vRealize_Configuration_Manager"
-				fi
-				# Infrastructure_Operations_Management_VMware_vRealize_Operations"
-				pkgs=`echo $pkgs|xargs -n1 | sort | xargs`
-			fi
-			mversions=''
-		fi
-	fi
-	debugecho "DEBUG vsmpkgs: $pkgs"
 }
 
 function load_vsmrc() {
@@ -1554,24 +323,9 @@ function save_vsmrc() {
 			colorecho "Saving to $vsmrc"
 		fi
 		#echo '' > $vsmrc
-		if [ $domyvmware -eq 1 ] && [ Z"$mchoice" != Z"" ]
-		then
-			if [ ! -e ${rcdir}/${favorite}.xhtml ]
-			then
-				favorite=${favorite}
-			fi
-		fi
-		if [ Z"$mchoice" = Z"root" ]
-		then
-			echo "mfchoice='$mfchoice'" > $vsmrc
-			echo "myfvmware='$myfvmware'" >> $vsmrc
-		else
-			echo "mfchoice='$mchoice'" > $vsmrc
-			echo "myfvmware='$myvmware'" >> $vsmrc
-		fi
-		echo "favorite='$favorite'" >> $vsmrc
 		if [ $dosave -eq 1 ]
 		then
+			echo "favorite='$favorite'" > $vsmrc
 			echo "repo='$repo'" >> $vsmrc
 			echo "cdir='$cdir'" >> $vsmrc
 			echo "myoem=$myoem" >> $vsmrc
@@ -1584,7 +338,6 @@ function save_vsmrc() {
 			echo "historical=$historical" >> $vsmrc
 			echo "compress=$compress" >> $vsmrc
 			echo "symlink=$symlink" >> $vsmrc
-			echo "domyvmware=$domyvmware" >> $vsmrc
 		fi
 	fi
 }
@@ -1604,291 +357,6 @@ function stripcolor() {
 	debugecho "SC: $sc"
 }
 
-function menu() {
-	all=""
-	alln=""
-	allm=""
-	file=$1
-	mark=""
-	if [ Z"$1" = Z"All" ]
-	then
-		all=$1
-		file=$2
-		mark="Mark"
-		if [ Z"$3" = Z"All_Plus_OpenSource" ]
-		then
-			allm=$2
-			alln=$3
-			file=$4
-		fi
-	fi
-	back="Back"
-	if [ Z"$choice" = Z"root" ]
-	then
-		usenurl=""
-		linuxvdi=""
-		myvmware=""
-		midprod=0
-		menu2files=0
-		missing=""
-		missname=""
-		mversions=""
-		longProductColumn=0
-		back=""
-	fi
-	debugecho "MENU: $file $domenu2 $dlg"
-	if [ $domenu2 -eq 0 ]
-	then
-		doprogress=0
-		vsmpkgs $file
-		if [ Z"$choice" = Z"root" ] && [ $domyvmware -eq 1 ] 
-		then
-			echo $pkgs |grep Infrastructure_Operations_Management >& /dev/null
-			if [ $? -eq 1 ]
-			then
-				pkgs="$pkgs Infrastructure_Operations_Management"
-			fi
-			if [ $dovexxi -eq 1 ]
-			then
-				pkgs="$pkgs Desktop_End_User_Computing Networking_Security"
-			fi
-		fi
-		# need to recreate dlg=1 here due to myvmware
-		if [ $domyvmware -eq 1 ] && [ $dlg -eq 1 ]
-		then
-			all="All"
-			alln="All_Plus_OpenSource"
-			allm="Minimum_Required"
-			mark="Mark"
-			dlg=2
-			if [ Z"$prevchoice" = Z"" ]
-			then
-				prevchoice=$choice
-			fi
-		fi
-	fi
-	if [ $nbeta1 -eq 1 ]
-	then
-		domyvm=`echo ${myvmware}| awk -F/ '{print NF}'`
-		if [ $domyvm -eq 3 ]
-		then
-			pkgs=`echo $pkgs | sed 's/[ $]/\n/g' |sort -uVr | tr '\n' ' '| sed 's/ $//'`
-		fi
-	fi
-	export COLUMNS=20
-	select choice in $all $allm $alln $pkgs $mark $back Exit
-	do
-		if [ Z"$all" = Z"" ]
-		then
-			longReply=$REPLY
-		fi
-		if [ Z"$choice" != Z"" ]
-		then
-			## needed if we allow
-			stripcolor
-			if [ $choice = "Exit" ]
-			then
-				rm -f ${cdir}/$vpat
-				exit
-			fi
-			if [ $choice = "Mark" ]
-			then
-				favorite=$prevchoice
-				colorecho "Favorite: $favorite"
-				save_vsmrc
-			else
-				# not for root or next layer
-				break
-			fi
-		else
-			echo -n "Please enter a valid numeric number:"
-		fi
-	done
-	if [ $choice != "Back" ]
-	then
-		addpath
-	fi
-	if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
-	then
-		doprogress=1
-	fi
-}
-
-function menu2() {
-	mval=$1
- 	voss=$2
-	voem=$3 
-	vdts=$4
-	all=""
-	pat=''
-	#doprogress=0
-	debugecho "MENU2: $mval"
-	if [ Z"$2" = Z"OpenSource" ]
-	then
-		all="All_Plus_OpenSource"
-	fi
-	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ] && [ $patcnt -gt 0 ]
-	then
-		pat='Patches'
-	fi
-	vmwaremenu2
-	# Put find 'sub-versions' of releases
-	if [ $historical -eq 1 ]
-	then
-		vmwarecv
- 		voss=$oss
-		voem=$oem
-		vdts=$dts
-		mval="_dlg_${choice}.xhtml"
-	fi
-	if [ $choice != "Back" ]
-	then
-		npkg=""
-		f=`echo $mval |sed 's/\.xhtml//' | sed 's/-/_/g' | sed 's/^_//'`
-		for x in $pkgs
-		do
-			if [ ! -e "${repo}/${f}/${x}" ] && [ ! -e "${repo}/${f}/${x}.gz" ]
-			then
-				if [ Z"$npkg" = Z"" ]
-				then
-					npkg="${BOLD}${x}${NB}${NC}"	
-				else
-					npkg="$npkg ${BOLD}${x}${NB}${NC}"
-				fi
-			else
-				if [ Z"$npkg" = Z"" ]
-				then
-					npkg="$x"
-				else
-					npkg="$npkg $x"
-				fi
-			fi
-		done
-		debugecho "MENU2: $mval $2 $3 $4"
-		export COLUMNS=30
-		select choice in All Minimum_Required $all $npkg $voss $voem $vdts $pat Back Exit
-		do
-			if [ Z"$choice" != Z"" ]
-			then
-				stripcolor
-				if [ $choice = "Exit" ]
-				then
-					rm -f ${cdir}/$vpat
-					exit
-				fi
-				break
-
-			else
-				echo -n "Please enter a valid numeric number:"
-			fi
-		done
-		if [ $choice != "Back" ]
-		then
-			addpath
-		fi
-		if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
-		then
-			doprogress=1
-		fi
-	fi
-}
-
-function getvsmparams() {
-	if [ $menu2files -eq 0 ] || [ $domts -eq 1 ]
-	then
-		# xhtml
-		href=`echo $data | xml_grep --pretty_print  --html --cond '//*/[@href]' 2>/dev/null | sed 's/ /\r\n/g' | grep href | awk -F\" '{print $2}'`
-		drparams=`echo $data|sed 's/drparams/\ndrparams/' | tail -1 | sed 's/[><]/ /g' | cut -d' ' -f 2`
-		durl=`echo $data|sed 's/download_url/\ndownload_url/' | tail -1 | sed 's/[><]/ /g' | cut -d' ' -f 2`
-	else
-		# My VMware
-		# nuts n bolts
-		#debugecho "DEBUG: data => $data"
-		fname=`echo $data | sed 's/<\/span>/<\/span>\n/g'|grep fileNameHolder|cut -d\> -f2 |cut -d' ' -f1`
-		# some older files have more than one 'file size'
-		tn=`echo $data | sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g'| grep -n 'File size' | cut -d: -f 1 | head -1`
-		let tn=$tn+1
-		tsize=`echo $data | sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g'| sed -n "${tn}p" | sed 's/^: //'`
-		sha="sha256sum"
-		tn=`echo $data | sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g'| grep -n 'SHA256SUM' | cut -d: -f 1 | head -1`
-		if [ Z"$tn" = Z"" ]
-		then
-			# no 256 so revert to sha1
-			tn=`echo $data | sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g'| grep -n 'SHA1SUM' | cut -d: -f 1 | head -1`
-			sha="sha1sum"
-		fi
-		let tn=$tn+1
-		sha256=`echo $data | sed 's/<br>/\n/g' |sed 's/<\/span>/\n/g'| sed -n "${tn}p" | cut -d' ' -f2`
-		units=`echo $tsize | sed 's/.*[ 0-9]\([A-Z]\+\)/\1/'`
-		if [ Z"$units" != Z"" ]
-		then
-			size=`echo $tsize | cut -d ' ' -f 1| sed "s/$units//"`
-		else
-			size=`echo $tsize | cut -d ' ' -f 1`
-		fi
-		debugecho "DEBUG: size => $size ; units => $units"
-		fdata=`echo $data | sed 's/<\/a>/\n/g'| sed 's/<\/span/\n/g'|egrep "button primary|Download Now"`
-		echo $fdata |egrep 'download.\.vmware\.com' >& /dev/null
-		if [ $? -eq 0 ]
-		then
-			drparams="CART"
-			href=`echo $fdata | sed 's/href/\nhref/' |grep href | cut -d\" -f2`
-			durl=''
-		else
-			ndata=`echo $fdata | cut -d\" -f 6 | sed 's/amp;//g'| sed 's/[\&\?]/ /g'`
-			#debugecho "DEBUG: ndata => $ndata"
-			if [ "$size" -eq "$size" ] 2>/dev/null
-			then
-				size=`echo "$size *1024"|bc` # KB
-				if [ Z"$units" = Z"MB" ] || [ Z"$units" = Z"GB" ] || [ Z"$units" = Z"G" ] || [ Z"$units" = Z"M" ]
-				then # GB
-					size=`echo "$size *1024"|bc`
-				fi
-				if [ Z"$units" = Z"GB" ] || [ Z"$units" = Z"G" ]
-				then # GB
-					size=`echo "$size *1000"|bc`
-				fi
-				size=`printf '%d\n' "$size" 2>/dev/null`
-			fi
-			echo $ndata | grep -i dlgcode >& /dev/null
-			if [ $? -eq 0 ]
-			then
-				for nx in `echo $ndata | sed 's/^\.//' | sed 's#/group/vmware/details##'`; do t=`echo $nx| cut -d= -f1`; s=`echo $nx|cut -d= -f2`; eval "$t=$s"; done
-				dlgcode=$downloadGroup
-				downloaduuid=$uuId
-				#if [ Z"$rnuid" != Z"" ]
-				#then
-				#	downloaduuid=$rnuid
-				#fi
-				if [ Z"$dlgcode" = Z"VRLI-451-VCENTER" ]
-				then
-					dlgcode="VRLI-451"
-				fi
-				# what type of download again?
-				dtcode=`echo $dlgcode | sed 's/DT_//'`
-				dlgtype="Product+Binaries"
-				if [ Z"$dtcode" != Z"$dlgcode" ]
-				then
-					dlgtype="Drivers+Tools"
-				fi
-				dtr="{\"sourcefilesize\":\"$size\",\"dlgcode\":\"$dlgcode\",\"languagecode\":\"en\",\"source\":\"DOWNLOADS\",\"downloadtype\":\"manual\",\"eula\":\"Y\",\"downloaduuid\":\"$downloaduuid\",\"purchased\":\"Y\",\"dlgtype\":\"$dlgtype\",\"productversion\":\"$pver\"}"
-				debugecho "DEBUG: drparams => $dtr"
-				drparams=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $dtr`
-				debugecho "DEBUG: drparams => $drparams"
-			fi
-			href="https://depot.vmware.com/getAuthUrl"
-			if [ Z"${rndir}" = Z"/" ]
-			then
-				durl="https://${rndll}/software/${fname}"
-			else
-				durl="https://${rndll}/software/${rndir}/${fname}"
-			fi
-		fi
-		debugecho "DEBUG: durl => $durl"
-		#durl=`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" $sdu`
-	fi
-}
-
 function shacheck_file() {
 	fn=$1
 	if [ $doshacheck -eq 1 ]
@@ -1897,11 +365,11 @@ function shacheck_file() {
 		echo -n "$fn: check "
 		if [ Z"$sha" = Z"sha256sum" ]
 		then
-			ck=`sha256sum $fn|cut -d' ' -f 1`
+			chk=`sha256sum $fn|cut -d' ' -f 1`
 		else
-			ck=`sha1sum $fn|cut -d' ' -f 1`
+			chk=`sha1sum $fn|cut -d' ' -f 1`
 		fi
-		if [ Z"$ck" != Z"$sha256" ]
+		if [ Z"$chk" != Z"$sha256" ]
 		then
 			shafail="${shafail}
 	${fn}"
@@ -1917,7 +385,7 @@ function compress_file() {
 	if [ $compress -eq 1 ] && [ ${#name} -gt 0 ]
 	then
 		e=${name##*.}
-		if [ Z"$e" != Z"zip" ] && [ Z"$e" != Z"ZIP" ] && [ Z"$e" != Z"gz" ] || [ Z"$e" == Z"$f" ]
+		if [ Z"$e" != Z"zip" ] && [ Z"$e" != Z"ZIP" ] && [ Z"$e" != Z"gz" ] || [ Z"$e" == Z"$f" ] && [ Z"$e" != Z"tgz" ]
 		then
 			if [ ! -e ${name}.gz ] && [ -e ${name} ]
 			then
@@ -1930,49 +398,6 @@ function compress_file() {
 	fi
 } 
 
-need_login=0
-inpatch_dl=0
-function oauth_login() {
-	if [ $dooauth -eq 1 ]
-	then
-		dl=$1
-		z=`date +"%s"`
-		test_login=$(($z-$need_login))
-		debugecho "OL: $test_login $need_login"
-		if [ $test_login -ge 900 ]
-		then
-			need_login=$z
-			# Get creds
-			oauth=`echo $auth | base64 --decode`
-			rd=(`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$oauth" 2>/dev/null|sed 's/%3A/ /'`)
-			pd="vmware=login&username=${rd[0]}&password=${rd[1]}"
-	
-			# Login
-			bmctx=`wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location| grep bmctx= | tail -1|awk '{print $2}'`
-			wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bmctx >& /dev/null
-			wget -O - $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $myvmware_oauth 2>&1 | grep AUTH-ERR >& /dev/null
-        	oauth_err=$?
-			# force new cookies
-			if [ -e $cdir/pcookies.txt ]
-			then
-				rm -f $cdir/pcookies.txt >& /dev/null
-			fi
-			# Patch Cookies - seems needed for many things
-			wget -O ${rcdir}/patch.html $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $mypatches_ref >& /dev/null
-			patchUrl=`grep searchPageUrl: ${rcdir}/patch.html | cut -d\' -f 2`
-			if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ] && [ $oauth_err -eq 1 ]
-			then
-				rm -f $rcdir/_*patch*.xhtml >& /dev/null
-				get_patch_list
-				if [ $dl -eq 1 ]
-				then
-					inpatch_dl=1
-				fi
-			fi
-		fi
-	fi
-}
-
 function get_patch_list() {
 	# do not get if not there already
 	if [ ! -e $rcdir/_patches.xhtml ] || [ ! -e $cdir/pcookies.txt ]
@@ -1982,95 +407,48 @@ function get_patch_list() {
 	fi
 }
 
-function oauth_get_latest() {
-	ghr=$1
-	gou=$2
-
-	if [ $dooauth -eq 1 ]
+function get_patch_cookies()
+{
+	# force new cookies
+	if [ -e $cdir/pcookies.txt ]
 	then
-		# Needs to work with ocookies as well
-		oauth_login 0
-		debugecho "$vurl $gou"
+		rm -f $cdir/pcookies.txt >& /dev/null
+	fi
+	# Patch Cookies - seems needed for many things
+	wget -O ${rcdir}/patch.html $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $mypatches_ref >& /dev/null
+	patchUrl=`grep searchPageUrl: ${rcdir}/patch.html | cut -d\' -f 2`
+	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ] && [ $oauth_err -eq 1 ]
+	then
+		rm -f $rcdir/_*patch*.xhtml >& /dev/null
+		get_patch_list
+	fi
+}
 
-		# no cookies start again
-		if [ ! -e $cdir/pcookies.txt ] && [ $dopatch -eq 1 ]
-		then
-			wget -O - $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $mydl_ref >& /dev/null
-		fi
-		if [ -e $rcdir/_l_${gou}.xhtml ]
-		then
-			rm -f $rcdir/_l_${gou}.xhtml
-		fi
-		# ISSUE: For some reason this may not get me something to download
-		# - VCF for example, could vurl be wrong?
-		old_myoauth=$myoauth
-		myoauth=1
-		vurl=`echo $ghr |sed 's#https://my.vmware.com##'`
-		mywget $rcdir/_l_${gou}.xhtml https://my.vmware.com$vurl >& /dev/null
-		myoauth=$old_myoauth
-		# now reparse latest for info
-		getvsmdata $gou $lastcnt '_l'
-		debugecho $name
-		debugecho $data
-		# if name is not there then getvsmdata failed
-		if [ ${#name} -gt 0 ]
-		then
-			code=`echo $data | sed 's/ /\n/g' | egrep 'getDownload|checkEulaAndPerform' | head -1 | cut -d\( -f 2 | cut -d\) -f 1`
-			if [ Z"$code" != Z"" ]
-			then
-				dlgGroupCode=`echo $code|cut -d, -f1`
-				dlFileId=`echo $code|cut -d, -f2`
-				baseStr=`echo $code|cut -d, -f3`
-				hashkey=`echo $code|cut -d, -f4`
-				echo $data | sed 's/ /\n/g' | grep 'checkEulaAndPerform' >& /dev/null
-				if [ $? -eq 0 ]
-				then
-					# checkEulaAccepted
-					isEulaA='true'
-					tagId=`echo $code|cut -d, -f5`
-					prodId=`echo $code|cut -d, -f6`
-					uuId=`echo $code|cut -d, -f7`
-				else
-					# getDownload
-					isEulaA=`echo $code|cut -d, -f5`
-					tagId=`echo $code|cut -d, -f6`
-					prodId=`echo $code|cut -d, -f7`
-					uuId=`echo $code|cut -d, -f8`
-				fi
-				dlURL=`grep downloadFilesURL $rcdir/_l_${gou}.xhtml|cut -d\" -f6`
-				dlURL="$dlURL&downloadFileId=${dlFileId}&vmware=downloadBinary&baseStr=${baseStr}&hashKey=${hashkey}&productId=${prodId}&tagId=${tagId}&uuId=${uuId}&downloadGroupCode=${dlgGroupCode}"
-				dlURL=`echo $dlURL | sed "s/'//g"`
-				vurl=`echo $vurl |sed 's#https://my.vmware.com##'`
-				lurl=`wget -O - --post-data='' --load-cookies $cdir/pcookies.txt --header="User-Agent: $oaua" --header="Referer: https://my.vmware.com$vurl" $dlURL 2>&1 | grep downloadUrl | cut -d\" -f4`
-			else
-				lurl=`echo $data | sed 's/ /\n/g' | grep href | cut -d\" -f 2`
-				if [ Z"$lurl" != Z"#" ]
-				then
-					lurl="https://www.vmware.com$lurl"
-				else
-					lurl=''
-				fi
-			fi
-			debugecho "OL: lurl => $lurl"
-				
-			# compute rndll, rndir
-			if [ ${#lurl} -gt 0 ]
-			then
-				rndll=`echo $lurl | cut -d/ -f3`
-				rndir=`echo $lurl | cut -d\? -f1 | sed 's#https://download.\.vmware\.com/software/##'`
-				if [ ${#rndir} -ne 0 ]
-				then
-					rndir=`dirname $rndir`
-				fi
-			fi
-		fi
+need_login=0
+function oauth_login() {
+	dl=$1
+	z=`date +"%s"`
+	test_login=$(($z-$need_login))
+	debugecho "OL: $test_login $need_login"
+	if [ $test_login -ge 900 ]
+	then
+		need_login=$z
+		# Get creds
+		oauth=`echo $auth | base64 --decode`
+		rd=(`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$oauth" 2>/dev/null|sed 's/%3A/ /'`)
+		pd="vmware=login&username=${rd[0]}&password=${rd[1]}"
+
+		# Login
+		bmctx=`wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location| grep bmctx= | tail -1|awk '{print $2}'`
+		wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bmctx >& /dev/null
+		wget -O - $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $myvmware_oauth 2>&1 | grep AUTH-ERR >& /dev/null
+       	oauth_err=$?
+		get_patch_cookies
 	fi
 }
 
 function get_product_patches() {
-	sc=$1
-
-	ppr=`echo $sc | sed 's/\([A-Z]\+\)[0-9][0-9A-Z]\+/\1/'`
+	ppr=`echo $missname | sed 's/\([A-Z]\+\)[0-9][0-9A-Z]\+/\1/'`
 	if [ Z"$ppr" = Z"ESXI" ] || [ Z"$ppr" = Z"VC" ]
 	then
 		oauth_login 0
@@ -2084,7 +462,7 @@ function get_product_patches() {
 			ppv="${ppv}.0"
 		fi
 		# patches only work for VC/ESXi
-		if [ ! -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ] || [ $inpatch_dl -eq 1 ]
+		if [ ! -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ] 
 		then
 			## First get index
 			pin=`jq .[].prodList[].name ${rcdir}/_patches.xhtml | awk "/$ppr/{print NR-1}"`
@@ -2111,11 +489,9 @@ function get_product_patches() {
 }
 
 function download_patches() {
-	l_lasturl=$lasturl
-	sc=$1
 	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
 	then
-		ppr=`echo $sc | sed 's/\([A-Z]\+\)[0-9][0-9A-Z]\+/\1/'`
+		ppr=`echo $missname | sed 's/\([A-Z]\+\)[0-9][0-9A-Z]\+/\1/'`
 		if [ Z"$ppr" = Z"ESXI" ] || [ Z"$ppr" = Z"VC" ]
 		then
 			dnr=1
@@ -2131,30 +507,25 @@ function download_patches() {
 			fi
 			if [ -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ]
 			then
-				gotodir $sc "Patches" ${ppr}${ppv}
+				gotodir $missname "Patches" ${ppr}${ppv}
 				
 				# Download links as array
 				darr=(`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | awk "/download/{print NR-$dnr}"`)
-				downloads=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml |grep download | sed 's/[,"]//g'`
+				downloads=(`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml |grep download | sed 's/[,"]//g'`)
 				#jq .[] ${rcdir}/${prod}_patchlist.xhtml |grep download
 				d=0
-				inpatch_dl=0
-				for x in $downloads
+				for px in ${downloads[@]}
 				do
 					# this causes a 'break'
 					# need to restart download_patches
 					oauth_login 1
-					if [ $inpatch_dl -eq 1 ]
-					then
-						break
-					fi
 					if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 					then
 						echo -n "."
 					fi
-					x=`echo $x | cut -d\! -f 1`
-					y=`echo $x | cut -d\? -f 1`
-					f=`basename $y`
+					px=`echo $px | cut -d\! -f 1`
+					py=`echo $px | cut -d\? -f 1`
+					f=`basename $py`
 					name=$f
 					if  [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
 					then
@@ -2165,7 +536,7 @@ function download_patches() {
 						fi
 						# just in case we are not at beginning of line
 						echo ""
-						mywget $name "$x" 'pcookies' 1
+						mywget $name "$px" 'pcookies' 1
 						if [ $doshacheck -eq 1 ]
 						then
 							sha256=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | sed -n "${darr[$d]}p" | cut -d^ -f2 | sed 's/",//'`
@@ -2177,29 +548,28 @@ function download_patches() {
 					fi
 					mksymlink $name
 					((d++))
-					inpatch_dl=0
 					# get latest unless history set
 					if [ $historical -eq 0 ]
 					then
 						break
 					fi
 				done
-				if [ $inpatch_dl -eq 0 ]
+				if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 				then
-					echo ""
-					colorecho "Patches to $repo/dlg_$currchoice/Patches"
+					echo "!"
 				fi
+				colorecho "Patches to $repo/dlg_${missname}/Patches"
 				cd ${cdir}/depot.vmware.com/PROD/channel
 			fi
 		fi
 	fi
-	lasturl=$l_lasturl
 }
 
 function gotodir() {
 	lchoice=$1
 	additional=$2
 	tchoice=$lchoice
+	dotdir=0
 	if [ Z"$3" != Z"" ]
 	then
 		tchoice=$3
@@ -2209,12 +579,7 @@ function gotodir() {
 			dotdir=1
 		fi
 	fi
-
-	debugecho "DEBUG: $currchoice $name"
-	if [ $menu2files -eq 1 ] || [ $domts -eq 1 ]
-	then
-		getinnerrndir $tchoice
-	fi
+	debugecho "DEBUG: tdir => $additional $tdir ($dotdir)"
 
 	# fake symlink setup for large duplicate files
 	if [ Z"$symdir" != Z"" ] && [ $symlink -eq 1 ]
@@ -2278,260 +643,9 @@ function mksymlink() {
 	fi
 }
 
-function getvsm() {
-	lchoice=$1
-	additional=$2
-	tchoice=$lchoice
-	dotdir=0
-	l_lasturl=$lasturl
-
-	gotodir $1 $2 $3
-	debugecho "DEBUG: $currchoice: `pwd`"
-	dovsmit=1
-
-	# open source when not selected!
-	if [ $additional != "OpenSource" ]
-	then
-		echo $name | egrep 'ODP|open_source' >/dev/null
-		if [ $? -eq 0 ]
-		then
-			debugecho "DEBUG: Not in OSS Mode: $name"
-			dovsmit=0
-		fi
-	fi
-	
-	#echo "Download $name to `pwd`?"
-	#read c
-	getvsmparams
-	if [ Z"$drparams" = Z"CART" ]
-	then
-		url=$href
-	else
-		# Ugh, special cases!
-		echo $drparams | grep 'NSX-T' >& /dev/null
-		if [ $? -eq 0 ]
-		then
-			vers=$pver
-			prod="VMware+NSX"
-		fi
-		echo $drparams | grep -- '-NSX' >& /dev/null
-		if [ $? -eq 0 ]
-		then
-			drparams=`echo $drparams | sed 's/-NSX//'`
-			vers=$pver
-			prod="VMware+vSphere"
-		fi
-		url="$href?params=$drparams&downloadurl=$durl&familyversion=$vers&productfamily=$prod"
-	fi
-	debugecho "DEBUG: url => $url"
-	rnnot=0
-	if [ Z"$rndll" = Z"" ] || [ Z"$rndir" = Z"" ] || [ Z"$rndir" = Z"$name" ]
-	then
-		if [ $debugv -ge 1 ] && [ $dovsmit -eq 1 ]
-		then
-			echo ""
-			echo "DEBUGV: name => $name" 
-			echo "DEBUGV: dt => $prevchoice $currchoice $tchoice" 
-			echo "DEBUGV: url => $url" 
-			rnnot=1
-		fi
-	fi
-	if [ $debugv -ge 2 ]
-	then
-		echo ""
-		echo "$prevchoice $currchoice $tchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
-		echo ""
-	fi
-	# sometimes bad download bits
-	if [ ${#name} -eq 0 ]
-	then
-		dovsmit=0
-	fi
-	if [ $dovsmit -eq 1 ]
-	then
-		if [ $fixsymlink -eq 1 ] && [ $dotdir -eq 1 ]
-		then
-			if [ -f ${rdir}/${name} ]
-			then
-				rname=${rdir}/${name}
-			fi
-			if [ -f ${rdir}/${name}.gz ]
-			then
-				rname=${rdir}/${name}.gz
-			fi
-			# Move or Remove regular file if exists
-			if [ ! -L ${rname} ]
-			then
-				if [ ! -e $name ] && [ ! -e ${name}.gz ]
-				then
-					mv ${rname} .
-				else
-					if [ -e $rname ]
-					then
-						rm ${rname}
-					fi
-				fi
-			fi
-		fi
-		debugecho "$name => $rname ($doforce)"
-		if  [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
-		then 
-			debugecho "$name missing"
-			lurl=''
-			if [ $oauthonly -eq 0 ]
-			then
-				if [ Z"$drparams" = Z"CART" ]
-				then
-					lurl=$url
-				else
-					lurl=`wget --max-redirect 0 --load-cookies $cdir/pcookies.txt --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' $url 2>&1 | grep Location | awk '{print $2}'`
-				fi
-			fi
-			debugecho "DEBUG: oauthonly => $oauthonly"
-			debugecho "DEBUG: lurl => $lurl"
-			doesxi5=0
-			# older way to download DriversTools, deprecated
-			echo $url | egrep 'DT-ESXI50|DT-ESXI51' >& /dev/null
-			if [ $? -eq 0 ]
-			then
-				doesxi5=1
-				lurl=$durl
-			fi
-			doeurl=1
-			blocked=0
-			echo $lurl|grep -i blocked >& /dev/null
-			if [ $? -eq 0 ]
-			then
-				blocked=1
-				lurl=''
-			fi
-			debugecho "DEBUG: lurl => $lurl"
-				if [ Z"$lurl" = Z"" ] && [ $dooauth -eq 1 ]
-				then
-					debugecho "DEBUG: lurl && dooauth"
-					# changes lurl
-					if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
-					then
-						echo -n "o"
-					fi
-					oauth_get_latest $l_lasturl $tchoice
-					doeurl=0
-				fi
-				if [ ${#lurl} -gt 0 ]
-				then
-					if [ $doeurl -eq 1 ]
-					then
-						eurl=`python -c "import urllib, sys; print urllib.unquote(sys.argv[1])" $lurl`
-					else
-						eurl=$lurl
-					fi
-					debugecho "DEBUG: eurl => $eurl"
-					diddownload=0
-					if [ $debugv -ge 1 ]
-					then
-						echo "Getting $name ..."
-					fi
-					if [ $dryrun -eq 0 ]
-					then
-						# just in case we are not at beginning of line
-						echo ""
-					fi
-					mywget $name $eurl '--progress=bar:force' 1
-					# Let's try Auth
-					if [ $err -ne 0 ] && [ $dooauth -eq 1 ]
-					then
-						# changes lurl
-						if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
-						then
-							echo -n "o"
-						fi
-						oauth_get_latest $l_lasturl $tchoice
-						if [ ${#lurl} -gt 0 ]
-						then
-							if [ $dryrun -eq 0 ]
-							then
-								# just in case we are not at beginning of line
-								echo ""
-							fi
-							old_myoauth=$myoauth
-							myoauth=1
-							mywget $name $lurl "--progress=bar:force" 1
-							myoauth=$old_myoauth
-						fi
-					fi
-					if [ $debugv -ge 1 ]
-					then
-						echo ""
-						echo "$prevchoice $currchoice $tchoice $rndll $rndir $name" | sed 's/\.vmware\.com//'
-						echo ""
-					fi
-					if [ $err -ne 0 ]
-					then
-						if [ $dryrun -eq 0 ] && [ -e $name ]
-						then
-							rm $name
-						fi
-						if [ $debugv -eq 1 ] && [ $rnnot -ne 1 ]
-						then
-							echo ""
-							echo "DEBUGV: name => $name" 
-							echo "DEBUGV: dt => $prevchoice $currchoice $tchoice" 
-							echo "DEBUGV: url => $url" 
-						fi
-					else
-						if [ $doshacheck -eq 1 ]
-						then
-							shadownload=1
-							shacheck_file $name
-						fi
-						diddownload=1
-					fi
-				else
-					if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
-					then
-						if [ $blocked -eq 1 ]
-						then
-							echo -n "B"
-						else
-							echo -n "E"
-						fi
-						if [ $debugv -eq 1 ]
-						then
-							echo ""
-							echo "DEBUGV: url => $url" 
-						fi
-					else
-						if [ $blocked -eq 1 ]
-						then
-							colorecho "Blocked Redirect Error Getting $name" 1
-						else
-							colorecho "No Redirect Error Getting $name" 1
-						fi
-					fi
-				fi
-		fi
-		if [ -e $name ] || [ -e ${name}.gz ] || [ $doforce -eq 1 ]
-		then
-			compress_file $name
-			mksymlink $name
-		fi
-	fi
-	cd ${cdir}/depot.vmware.com/PROD/channel
-	lasturl=$l_lasturl
-}
-
-function version() {
-	getvdat
-	echo "LinuxVSM Version:"
-	echo "	OS:        $theos"
-	echo "	`basename $0`:    $VERSIONID"
-	echo "	data file: `grep vsm.data $vdat|cut -d' ' -f 3|sed 's/vsm.data.//'`"
-	exit
-}
-
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-l|--latest] [-m|--myvmware] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [-r|--reset] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save]"
+	echo "$0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save]"
 	echo "	-c|--check - do sha256 check against download"
 	echo "	--clean - remove all temporary files and exit"
 	echo "	--dlg - download specific package by name or part of name (regex)"
@@ -2545,11 +659,6 @@ function usage() {
 	echo "	-h|--help - this help"
 	echo "	--historical - display older versions when you select a package"
 	echo "	--nohistorical - disable --historical"
-	echo "	-l|--latest - substitute latest for each package instead of listed"
-	echo "		Deprecated: Now the default, the argument does nothing any more."
-	echo "	-m|--myvmware - get missing suite and packages from My VMware"
-	echo "		Deprecated: Now the default, the argument does nothing any more."
-	echo "	-mr - reset just the My VMware information, implies -m"
 	echo "	-nh|--noheader - leave off the header bits"
 	echo "	-nq|--noquiet - disable quiet mode"
 	echo "	-ns|--nostore - do not store credential data and remove if exists"
@@ -2557,7 +666,7 @@ function usage() {
 	echo "	-p|--password - specify password"
 	echo "	--progress - show progress for OEM, OSS, and DriverTools"
 	echo "	-q|--quiet - be less verbose"
-	echo "	-r|--reset - reset VSM repoi - Not as useful as it once was"
+	echo "	--rebuid - rebuild/add to JSON used by --dlgl and --dlg"
 	echo "	--symlink - use space saving symlinks"
 	echo "	--nosymlink - disable --symlink mode"
 	echo "	-u|--username - specify username"
@@ -2582,8 +691,8 @@ function usage() {
 	echo "		          saved to configuration file"
 	echo "	--save - save settings to \$HOME/.vsmrc, favorite always saved on Mark"
 	echo ""
-	echo "	All-style downloads include: All, All_No_OpenSource, Minimum_Required"
-	echo ""
+	#echo "	All-style downloads include: All, All_No_OpenSource, Minimum_Required"
+	#echo ""
 	echo "To Download the latest Perl CLI use "
 	echo "	(to escape the wild cards used by the internal regex):"
 	echo "	./vsm.sh --dlg CLI\.\*\\.x86_64.tar.gz"
@@ -2789,7 +898,6 @@ wget --help | grep -q -- '--show-progress' && \
 
 #
 # Default settings
-rPId=''
 productId=''
 dodebug=0
 diddownload=0
@@ -2803,61 +911,37 @@ dryrun=0
 dosave=0
 historical=0
 compress=0
-beta=0
 symlink=0
 symdir=''
-osymdir=''
 fixsymlink=0
-nbeta1=1
 mydts=-1
 myoss=-1
 myoem=-1
-domenu2=0
-indomenu2=0
-domyvmware=1
 remyvmware=0
 myyes=0
 myfav=0
-myinnervm=0
 myquiet=0
-repo="/tmp/vsm"
-cdir="/tmp/vsm"
-vdat="/tmp/vsm/vsm.data"
+repo="/tmp/vsm.${USER}"
+cdir="/tmp/vsm.${USER}"
 vsmrc=""
 mypkg=""
 mydlg=""
 dodlg=0
 dovexxi=0
 dopatch=0
-dooauth=1
 oauthonly=0
 myoauth=1
-lasturl=''
-lastcnt=0
 patcnt=0
 # general
-mchoice="root"
 pver=''
 name=''
 data=''
-rndir=''
-rndll=''
-orndir=''
-orndll=''
-likeforlike=''
-like=''
 err=0
 # Used by myvmware
-myvmware=""
-domts=0
-assomissing=""
-missing=""
 missname=""
 mversions=""
-longProductColumn=0
 longReply=0
 fav=""
-midprod=1
 doprogress=0
 myprogress=0
 doquiet=0
@@ -2867,6 +951,7 @@ domre=0
 myq=0
 dodlglist=0
 doignore=0
+rebuild=0
 # onscreen colors
 RED=`tput setaf 1`
 PURPLE=`tput setaf 5`
@@ -2874,6 +959,7 @@ NC=`tput sgr0`
 BOLD=`tput smso`
 NB=`tput rmso`
 TEAL=`tput setaf 6`
+GRAY=`tput setaf 7`
 mycolumns=`tput cols`
 
 xu=`id -un`
@@ -2887,8 +973,7 @@ fi
 # import values from .vsmrc
 load_vsmrc
 
-x="d2hpbGUgW1sgJCMgLWd0IDAgXV07IGRvIGtleT0iJDEiOyBjYXNlICIka2V5IiBpbiAtY3wtLWNoZWNrKSBkb3NoYWNoZWNrPTEgOzsgLWh8LS1oZWxwKSB1c2FnZSA7OyAtaXwtLWlnbm9yZSkgZG9pZ25vcmU9MSA7OyAtbHwtLWxhdGVzdCkgZG9sYXRlc3Q9MCA7OyAtcnwtLXJlc2V0KSBkb3Jlc2V0PTEgOzsgLWZ8LS1mb3JjZSkgZG9mb3JjZT0xIDs7IC1lfC0tZXhpdCkgZG9yZXNldD0xOyBkb2V4aXQ9MSA7OyAteSkgbXl5ZXM9MSA7OyAtdXwtLXVzZXJuYW1lKSB1c2VybmFtZT0kMjsgc2hpZnQgOzsgLXB8LS1wYXNzd29yZCkgcGFzc3dvcmQ9JDI7IHNoaWZ0IDs7IC1uc3wtLW5vc3RvcmUpIG5vc3RvcmU9MSA7OyAtbmh8LS1ub2hlYWRlcikgbm9oZWFkZXI9MSA7OyAtZHwtLWRyeXJ1bikgZHJ5cnVuPTEgOzsgLW5jfC0tbm9jb2xvcikgZG9jb2xvcj0wIDs7IC0tcmVwbykgcmVwbz0iJDIiOyBpZiBbIFoiJHZzbXJjIiA9IFoiIiBdOyB0aGVuIGxvYWRfdnNtcmM7IGZpOyBzaGlmdCA7OyAtLWRsZykgbXlkbGc9JDI7IGRvZGxnPTE7IHNoaWZ0IDs7IC0tZGxnbCkgbXlkbGc9JDI7IGRvZGxnPTE7IGRvZGxnbGlzdD0xOyBzaGlmdCA7OyAtLXZleHBlcnR4KSBkb3ZleHhpPTEgOzsgLS12ZXhwZXJ0eGkpIGRvdmV4eGk9MSA7OyAtLW9hdXRoKSBkb29hdXRoPTEgOzsgLS1wYXRjaGVzKSBkb29hdXRoPTE7IGlmIFsgJGRvdmV4eGkgLWVxIDEgXTsgdGhlbiBkb3BhdGNoPTE7IGZpIDs7IC0tZm9yY2Utb2F1dGgpIG15b2F1dGg9MSA7OyAtdnwtLXZzbWRpcikgY2Rpcj0kMjsgaWYgWyBaIiR2c21yYyIgPSBaIiIgXTsgdGhlbiBsb2FkX3ZzbXJjOyBmaTsgc2hpZnQgOzsgLS1zYXZlKSBkb3NhdmU9MSA7OyAtLWJldGEpIGJldGE9MSA7OyAtLXN5bWxpbmspIHN5bWxpbms9MSA7OyAtLW5vc3ltbGluaykgc3ltbGluaz0wIDs7IC0tZml4c3ltbGluaykgZml4c3ltbGluaz0xOyBzeW1saW5rPTEgOzsgLS1oaXN0b3JpY2FsKSBoaXN0b3JpY2FsPTEgOzsgLS1ub2hpc3RvcmljYWwpIGhpc3RvcmljYWw9MCA7OyAtLWRlYnVnKSBkZWJ1Z3Y9MSA7OyAtLWRlYnVnMikgZGVidWd2PTIgOzsgLS1kZWJ1Z3YpIGRvZGVidWc9MSA7OyAtLW1yZSkgZG9tcmU9MSA7OyAtLWNsZWFuKSBjbGVhbmFsbD0xOyBkb21yZT0xOyBkb3Jlc2V0PTE7IHJlbXl2bXdhcmU9MTsgZG9teXZtd2FyZT0xIDs7IC0tZHRzKSBteWR0cz0xIDs7IC0tb2VtKSBteW9lbT0xIDs7IC0tb3NzKSBteW9zcz0xIDs7IC0tbm9kdHMpIG15ZHRzPTAgOzsgLS1ub29lbSkgbXlvZW09MCA7OyAtLW5vb3NzKSBteW9zcz0wIDs7IC1tfC0tbXl2bXdhcmUpIGRvbXl2bXdhcmU9MSA7OyAtbXIpIHJlbXl2bXdhcmU9MTsgZG9teXZtd2FyZT0xIDs7IC1xfC0tcXVpZXQpIGRvcXVpZXQ9MSA7OyAtbnF8LS1ub3F1aWV0KSBkb3F1aWV0PTAgbXlxPTAgOzsgLS1wcm9ncmVzcykgbXlwcm9ncmVzcz0xIDs7IC0tZmF2b3JpdGUpIGlmIFsgWiIkZmF2b3JpdGUiICE9IFoiIiBdOyB0aGVuIG15ZmF2PTE7IGZpIDs7IC0tZmF2KSBmYXY9JDI7IG15ZmF2PTI7IHNoaWZ0IDs7IC1WfC0tdmVyc2lvbikgdmVyc2lvbiA7OyAtenwtLWNvbXByZXNzKSBjb21wcmVzcz0xIDs7ICopIHVzYWdlIDs7IGVzYWM7IHNoaWZ0OyBkb25lCg=="
-eval `echo $x | base64 -d -`
+while [[ $# -gt 0 ]]; do key="$1"; case "$key" in -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --mre) domre=1 ;; --clean) cleanall=1; domre=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --rebuild) rebuild=1 ;; *) usage ;; esac; shift; done
 
 if [ $myquiet -eq 1 ] && [ $myq -eq 0 ]
 then
@@ -2922,16 +1007,10 @@ then
 	exit
 fi
 
-getvdat
 if [ $noheader -eq 0 ]
 then
 	colorecho "Using the following options:"
 	echo "	Version:	$VERSIONID"
-	echo "	Data Version:	`grep vsm.data $vdat|cut -d' ' -f 3|sed 's/vsm.data.//'`"
-	if [ $debugv -eq 1 ]
-	then
-		echo "	VSM Data:	$vdat"
-	fi
 	if [ Z"$username" != Z"" ]
 	then
 		echo "	Username:		$username"
@@ -2946,8 +1025,6 @@ then
 	echo "	Historical Mode:$historical"
 	echo "	Symlink Mode:	$symlink"
 	echo "	Reset XML Dir:	$doreset"
-	#echo "	Get Latest:	$dolatest"
-	echo "	My VMware:	$domyvmware"
 	if [ $myfav -eq 1 ]
 	then
 		echo "	Favorite: $favorite"
@@ -2960,18 +1037,16 @@ fi
 
 rcdir="${cdir}/depot.vmware.com/PROD/channel"
 cd $cdir
+if [ ! -e $rcdir ]
+then
+	mkdir -p $rcdir
+fi
 
 # Cleanup old data if any
 rm -f cookies.txt index.html.* 2>/dev/null
 if [ $domre -eq 1 ]
 then
 	doreset=$domre
-	rm -rf ${cdir}/vpat*.txt
-fi
-
-if [ ! -e depot.vmware.com/PROD/channel/root.xhtml ]
-then
-	doreset=1
 fi
 
 # Delete all My VMware files! So we can start new
@@ -2993,16 +1068,6 @@ then
 	colorecho "Removed all Temporary Files"
 	exit
 fi
-if [ $noheader -eq 0 ]
-then
-	if [ $dovexxi -eq 1 ]
-	then
-		colorecho "	vExpert Mode:   1"
-	fi
-fi
-
-# save a copy of the .vsmrc and continue
-save_vsmrc
 
 # Get Data for VSM
 if [ $myyes -eq 0 ]
@@ -3015,28 +1080,6 @@ then
 		exit
 	fi
 fi
-
-debugecho "DEBUG: Auth request"
-# Auth as VSM
-wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies cookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="Authorization: Basic $auth" --header='User-Agent: VMwareSoftwareManagerDownloadService/1.5.0.4237942.4237942 Windows/2012ServerR2' https://depot.vmware.com/PROD/ >& /dev/null
-err=$?
-if [ $doignore -eq 0 ]
-then
-	wgeterror $err
-	if [ $err -ne 0 ]
-	then
-		colorecho "Authentication Failed, check credentials!" 1
-		rm -rf ${cdir}/.credstore
-		exit $err
-	fi
-fi
-chmod 600 cookies.txt
-
-# Extract JSESSIONID
-JS=`grep JSESSIONID index.html | awk -F\; '{print $1}' |awk -F= '{print $2}'`
-TS=`grep vmware cookies.txt |awk '{print $5}'`
-#echo $JS
-echo ".vmware.com	TRUE	/	TRUE	$TS	JSESSIONID	$JS" >> cookies.txt
 
 if [ ! -e ${cdir}/depot.vmware.com ]
 then
@@ -3058,50 +1101,15 @@ then
 	rm -f ${cdir}/ocookies.txt
 fi
 
-if [ $doreset -eq 1 ]
+# no need to login for this option, list what is in the file
+if [ $dodlglist -eq 1 ]
 then
-	colorecho "Reset Request"
-	rm -rf ${cdir}/vpat*.txt
-	if [ Z"$_PROGRESS_OPT" != Z"" ]
+	if [ ! -e $rcdir/newlocs.json ]
 	then
-		_PROGRESS_OPT=' '
+		echo "Need to retrieve/rebuild seed JSON file"
+	else
+		jq --arg s "$mydlg" '.dlgList[] | select(.name | contains($s)).name' $rcdir/newlocs.json | sed 's/"//g'
 	fi
-	doqr=$doquiet
-	if [ $doquiet -eq 1 ]
-	then
-		doquiet=0
-	fi
-	# Get index and subsequent data
-	#mywget ' ' https://depot.vmware.com/PROD/index.xhtml '-rxl 1' 
-	mywget ' ' https://depot.vmware.com/PROD/index.xhtml '-rxl 1 --reject-regex dlg_*' 
-	if [ $err -ne 0 ]
-	then
-		exit $err
-	fi
-	if [ $doexit -eq 1 ]
-	then
-		exit 0
-	fi
-	if [ Z"$_PROGRESS_OPT" = Z" " ]
-	then
-		_PROGRESS_OPT=''
-	fi
-	doquiet=$doqr
-fi
-
-
-vpat=.vpat$$.txt
-vpas=`head -1 $vdat | cut -d ' ' -f 3` 
-echo "${vpas}.${VERSIONID}" > ${cdir}/${vpat}
-chmod 400 ${cdir}/$vpat
-
-uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | grep AV_2121 >& /dev/null
-if [ $? -ne 0 ]
-then
-	rm -rf ${cdir}/vpat*.txt
-	colorecho "Unable to proceed:" 1
-	colorecho "	LinuxVSM Datafile version mismatch" 1
-	colorecho "	Please update to latest version of LinuxVSM" 1
 	exit
 fi
 
@@ -3117,38 +1125,38 @@ myvmware_oauth='https://my.vmware.com/oam/server/auth_cred_submit'
 oaua='Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
 ppr=''
 ppv=''
-if [ $dooauth -eq 1 ]
+
+# Authenticate
+if [ $noheader -eq 0 ]; then colorecho "	Authenticating... "; fi
+oauth_login 0
+if [ $oauth_err -eq 1 ]
 then
-	colorecho "	Authenticating... "
-	oauth_login 0
-	if [ $oauth_err -eq 1 ]
-	then
-		colorecho "	Oauth:		1"
-	else
-		colorecho "	Oauth:		Error" 1
-		dooauth=0
-		dopatch=0
-	fi
+	if [ $noheader -eq 0 ]; then colorecho "	Oauth:		1"; fi
+else
+	colorecho "	Oauth:		Error" 1
+	dopatch=0
+	exit
 fi
 if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
 then
 	# force patch oauth
 	get_patch_list
-	colorecho "	Patches:	1"
+	if [ $noheader -eq 0 ]; then colorecho "	Patches:	1"; fi
 fi
 
+findCk # really only need to do this once per run
 if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
 then
 	# Get JSON
-	#mywget ${rcdir}/_h_downloads.html https://my.vmware.com/group/vmware/downloads
-	mywget ${rcdir}/_h_downloads.html https://my.vmware.com/en/web/vmware/downloads
+	mywget ${rcdir}/_h_downloads.html https://my.vmware.com/group/vmware/downloads
+	#mywget ${rcdir}/_h_downloads.html https://my.vmware.com/en/web/vmware/downloads
 	tab2url=`grep allProducts ${rcdir}/_h_downloads.html | cut -d\" -f4`
 
 	mywget ${rcdir}/_j_downloads.xhtml $tab2url
 
 	if [ ! -e ${rcdir}/_j_downloads.xhtml ]
 	then
-		colorecho "Error: Missing Key File" 1
+		colorecho "Error: Could not get My VMware Downloads File" 1
 		exit;
 	fi
 
@@ -3157,608 +1165,965 @@ then
 
 	if [ $err -ne 0 ]
 	then
-		rm -f ${cdir}/$vpat
 		exit $err
 	fi
 fi
 
 
+# save a copy of the .vsmrc and continue
+save_vsmrc
+
 # start of history
-mlist=0
-myvmware_root="https://my.vmware.com/group/vmware/info/slug"
-#myvmware_root="https://my.vmware.com/en/web/vmware/info/slug"
-usenurl=""
-linuxvdi=""
+myvmware_root="https://my.vmware.com/group/vmware/"
 myvmware_ref="https://my.vmware.com/group/vmware/downloads#tab1"
-menu2files=0
 choice="root"
 name=""
-href=""
-drparams=""
 sha256=""
 sha="sha256sum"
 shafail=""
 shadownload=0
-durl=""
-prevchoice=""
-favorites=""
-dlg=0
-pkgs=""
+
+layer=('productCategoryList[]' 'name')
+function removeLayer()
+{
+	echo "DEBUG: ${layer[@]}"
+	arr=()
+	skipfive=0
+	if [ ${#layer[@]} -eq 5 ] && [ ${layer[3]} = ${layer[4]} ]
+	then
+		skipfive=1 # this is a skip
+	fi
+	if [ ${layer[2]} = "name" ]
+	then
+		layer=('productCategoryList[]' 'name') # layer 1
+	elif [ ${layer[2]} = "actions" ]
+	then
+		layer=(${layer[0]}) # layer 2
+		layer+=('proList[]')
+		layer+=('name')
+	elif [ ${#layer[@]} -eq 4 ] || [ $skipfive -eq 1 ]
+	then
+		choice=${layer[2]}
+		arr=(${layer[0]}) # layer 3
+		arr+=(${layer[1]})
+		arr+=('actions')
+		layer=(${arr[@]})
+	else
+		sz=${#layer[@]}
+		nsz=$(($sz-1))
+		rsz=$(($sz-2))
+		i=0
+		choice=${layer[$nsz]}
+		for x in ${layer[@]:0:$nsz}
+		do
+			# need to conver the last [$lr] to []
+			if [ $i -eq $rsz ]
+			then
+				x=`echo $x | sed 's/\[.*\]/[]/'`
+			fi
+			arr+=($x)
+			i=$(($i+1))
+		done
+		layer=(${arr[@]})
+		##
+		# longReply may be wrong here!
+		missname=$specMissname
+	fi
+}
+
+function createLayer()
+{
+	if [ $choice = "Back" ]
+	then
+		removeLayer
+	else
+		lr=$(($longReply-1))
+		if [ Z"${layer[1]}" = Z"name" ]
+		then
+			layer=("productCategoryList[$lr]")
+			layer+=('proList[]')
+			layer+=('name')
+		elif [ ${layer[2]} = "name" ]
+		then
+			layer=(${layer[0]})
+			layer+=("proList[$lr]")
+			layer+=('actions')
+		elif [ ${layer[2]} = "actions" ]
+		then
+			pl=${layer[1]}
+			layer=(${layer[0]})
+			layer+=("$pl")
+			layer+=("$missname") # solution
+			layer+=("$choice") # version
+		else
+			layer+=("$choice") # element
+		fi
+	fi
+}
+
+function getVersionList()
+{
+	# get the versions
+	tver=`xmllint --html --xpath "//div[@class=\"versionList\"]" ${rcdir}/_$missname.xhtml 2>/dev/null |grep option |cut -d'>' -f 2|cut -d'<' -f1|sed 's/\./_/g'|sort -rV`
+	# no options, just 1 version
+	if [ Z"$tver" = Z"" ]
+	then
+		tver=`xmllint --html --xpath "//div[@class=\"versionList\"]" ${rcdir}/_$missname.xhtml 2>/dev/null |tr -d '\n\t' |cut -d'>' -f 2|cut -d'<' -f1|sed 's/\./_/g'|sort -rV`
+		if [ Z"$tver" = Z"" ]
+		then
+			tver=`xmllint --html --xpath "//select[@id=\"versionList\"]" ${rcdir}/_$missname.xhtml 2>/dev/null | sed 's/ /\n/g' |grep downloadgroupid |cut -d\" -f2 | sed 's/-/_/g'`
+		fi
+	fi
+}
+
+function getMyVersions()
+{
+	# we need to go to My VMware now
+	action=`jq "${layers}[]" $rcdir/_j_downloads.xhtml | tr '\n' ' ' | sed 's/} {/}\n{/g' | sed 's/} "/}\n"/g' | sed 's/" {/"\n{/g' |egrep '^"|Download'|tr '\n' ' '|sed 's/} "/}\n"/g'|cut -d\" -f12 |sed 's#\./##'`
+	missname=$choice
+	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
+	then
+		mywget ${rcdir}/_${missname}.xhtml ${myvmware_root}${action}
+	fi
+	getVersionList
+	pkgs=''
+	for x in $tver
+	do
+		pkgs="$pkgs ${missname}_${x}"
+	done
+}
+
+function getMySuites()
+{
+	# deal with version. If 1 then its the same file
+	nnr=$(($nr-1))
+	missname=${layer[$nnr]}
+	nnr=$(($nnr-1))
+	ver=`echo $missname | sed "s/${layer[$nnr]}_//"`
+	over=`basename $action`
+	naction=`echo $action | sed "s/$over/$ver/"`
+	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
+	then
+		mywget ${rcdir}/_${missname}.xhtml ${myvmware_root}${naction}
+	fi
+	mversions=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/_${missname}.xhtml 2>/dev/null | grep longProductColumn |cut -d'>' -f3|cut -d'<' -f1 | sed 's/[ -]/_/g'`
+	pkgs=''
+	for x in $mversions
+	do
+		pkgs="$pkgs ${missname}_${x}"
+	done
+	if [ ${#mversions} -eq 0 ]
+	then
+		choice=$missname
+	fi
+}
+
+function colorMyPkgs()
+{
+	arr=$1
+	npkg=()
+	useDlg=1
+	i=0
+	if [ Z"$2" != Z"" ]
+	then
+		useDlg=$2
+	fi
+	for x in $1
+	do
+		y=${tdls[$i]}
+		if [ ${#y} -lt 5 ] && [ $useDlg -eq 0 ]
+		then
+			if [ ${#npkg[@]} -eq 0 ]
+			then
+				npkg=("${GRAY}${x}${NB}${NC}")
+			else
+				npkg+=("${GRAY}${x}${NB}${NC}")
+			fi
+		else
+			# we use _ for - in names on the filesystem
+			if [ $useDlg -eq 1 ]
+			then
+				fName="dlg_${x}"
+			else
+				fName="dlg_${whatever}/${x}"
+			fi
+			if [ ! -e "${repo}/$fName" ] && [ ! -e "${repo}/${fName}.gz" ]
+			then
+				if [ ${#npkg[@]} -eq 0 ]
+				then
+					npkg=("${BOLD}${TEAL}${x}${NB}${NC}")
+				else
+					npkg+=("${BOLD}${TEAL}${x}${NB}${NC}")
+				fi
+			else
+				if [ ${#npkg[@]} -eq 0 ]
+				then
+					npkg=("$x")
+				else
+					npkg+=("$x")
+				fi
+			fi
+		fi
+		i=$(($i+1))
+	done
+}
+
+function getMyDlgs()
+{
+	nnr=$(($nr-1))
+	missname=${layer[$nnr]}
+	nnr=$(($nr-2))
+	specname=${layer[$nnr]}
+	if [ $nr -gt $prevNr ] #forward
+	then
+		specReply=$longReply
+	fi
+	# use longReply as this is groups by more-details
+	xpkgs=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/_${specname}.xhtml 2>/dev/null | xmllint --html --xpath "(//tr[contains(@class,\"more-details\")])[$specReply]" - 2>/dev/null | grep downloadGroup | grep -v OSS  | cut -d\? -f 2 | cut -d \& -f 1 | cut -d= -f 2 | sed 's/-/_/g'`
+	# need to swing through xpkgs for exist vs not
+	colorMyPkgs "$xpkgs"
+	mark="Mark"
+	pkgs="All ${npkg[@]}"
+}
+
+function getMyDlgVersions()
+{
+	sc=$1
+	if [ $sc -eq 0 ]
+	then
+		nnr=$(($nr-1))
+		missname=${layer[$nnr]}
+	fi
+	iname=`echo $missname | sed 's/_/[_-]/g'`
+	vurl=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/_${specname}.xhtml 2>/dev/null | xmllint --html --xpath "(//tr[contains(@class,\"more-details\")])[$specReply]" - 2>/dev/null | grep downloadGroup | grep $iname | sed 's/\"buttoncol\"//' | cut -d\" -f2 | sed 's/amp;//g'`
+	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
+	then
+		mywget ${rcdir}/_${missname}.xhtml https://my.vmware.com${vurl}
+	fi
+	if [ $sc -eq 0 ]
+	then
+		getVersionList
+		colorMyPkgs "$tver"
+		pkgs=${npkg[@]}
+	fi
+}
+
+function getTabcOne()
+{
+	whatever=$1
+	xdata=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/_${whatever}.xhtml 2>/dev/null`
+	xpkgs=`echo $xdata | xmllint --html --xpath '//span[@class="fileNameHolder"]/text()' - 2>/dev/null`
+	if [ ${#xpkgs} -eq 0 ]
+	then
+		echo $xdata | fgrep 'There are no binaries available for this product.' >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			colorecho "No Primary Downloads Available for this Product" 1
+		else
+			fgrep 'Unable to Complete Your Request' $rcdir/_${whatever}.xhtml >& /dev/null
+			if [ $? -eq 0 ]
+			then
+				if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
+				then
+					echo -n "M"
+				else
+					colorecho "My VMware down for maintenance"
+				fi
+			fi
+		fi
+	fi
+	tdls=(`echo $xdata | xmllint --html --xpath '//a[@class="md"]' - 2>/dev/null | sed 's/<a/\n<a/g' | grep md | sed 's/ //g' | cut -d\" -f4- | cut -d\> -f1|sed "s/''/#/g"`)
+}
+
+function getMyPatches()
+{
+	patcnt=0
+	if [ $dopatch -eq 1 ]
+	then
+		echo $missname | egrep '_[0-9]|-[0-9]' >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			v=`echo ${missname} | sed 's/[0-9A-Z]\+[-_]\([0-9]\+\).*$/\1/' 2>/dev/null | awk -F_ '{print $NF}'`
+		else
+			v=`echo ${missname} | sed 's/[A-Z]\+\([0-9]\+\).*$/\1/' 2>/dev/null | awk -F_ '{print $NF}'`
+		fi
+		if [ Z"$v" = Z"$missname" ]
+		then
+			v=0
+		fi
+		get_product_patches
+		if [ -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ]
+		then
+			patcnt=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml |grep download | sed 's/[,"]//g'|wc -l`
+		fi
+	fi
+}
+
+function wgetMyVersion()
+{
+	if [ ! -e ${rcdir}/_${choice}.xhtml ] || [ $doreset -eq 1 ]
+	then
+		debugecho "DEBUG: ${layer[@]}"
+		nnr=$(($nr-2))
+		iname=${layer[$nnr]}
+		vurl=`echo $vurl | sed "s/$iname/$choice/"`
+		mywget ${rcdir}/_${choice}.xhtml https://my.vmware.com${vurl}
+		missname=$choice
+	fi
+}
+
+function getMyFiles()
+{
+	sc=$1
+	# get the files
+	getTabcOne $choice
+	# need to swing through xpkgs for exist vs not
+	pkgs="$xpkgs"
+	writeJSON
+	if [ $sc -eq 0 ]
+	then
+		colorMyPkgs "$xpkgs" 0
+		pkgs="All ${npkg[@]}"
+	fi
+
+	##
+	# OEM/DTS/Patches - only perform if options set
+	if [ $mydts -eq 1 ]
+	then
+		dtslist=(`xmllint --html --xpath "(//div[@class=\"tabContent\"])[2]" $rcdir/_${choice}.xhtml 2>/dev/null | grep downloadGroup | grep -v OSS  | cut -d\? -f 2 | cut -d \& -f 1 | cut -d= -f 2 | sed 's/-/_/g'`)
+		if [ ${#dtslist[@]} -gt 0 ] && [ $sc -eq 0 ]
+		then
+			pkgs="$pkgs DriversTools"
+		fi
+	fi
+	if [ $myoem -eq 1 ]
+	then
+		oemlist=(`xmllint --html --xpath "(//div[@class=\"tabContent\"])[4]" $rcdir/_${choice}.xhtml 2>/dev/null | grep downloadGroup | grep -v OSS  | cut -d\? -f 2 | cut -d \& -f 1 | cut -d= -f 2 | sed 's/-/_/g'`)
+		if [ ${#oemlist[@]} -gt 0 ] && [ $sc -eq 0 ]
+		then
+			pkgs="$pkgs CustomIso"
+		fi
+	fi
+	getMyPatches
+	if [ $patcnt -gt 0 ]
+	then
+		pkgs="$pkgs Patches"
+	fi
+}
+
+specNnr=0
+specMissname=''
+prevNr=0
+function getLayerPkgs()
+{
+	dojq=0
+	layers=''
+	mark=''
+	debugecho "DEBUG: ${layer[@]}"
+	prevNr=$nr
+	nr=${#layer[@]}
+	if [ $nr -lt 4 ]
+	then
+		dojq=1
+		for x in ${layer[@]}
+		do
+			if [ Z"$x" = Z"actions" ]
+			then
+				dojq=2
+			fi
+			layers="${layers}.${x}"
+		done
+	else
+		dojq=3
+	fi
+	if [ $dojq -eq 1 ]
+	then
+		pkgs=`jq "${layers}" $rcdir/_j_downloads.xhtml | sed 's/ /_/g'|sed 's/"//g'`
+	elif [ $dojq -eq 2 ]
+	then
+		getMyVersions
+	elif [ $dojq -eq 3 ]
+	then
+		if [ $nr -eq 4 ]
+		then
+			getMySuites
+		elif [ $nr -eq 5 ]
+		then
+			if [ $nr -lt $prevNr ] # backwards
+			then
+				specReply=$specNnr
+			fi
+			debugecho "DEBUG: $nr $prevNr $specNnr"
+			getMyDlgs
+			specNnr=$specReply
+		elif [ $nr -eq 6 ]
+		then
+				debugecho "DEBUG: $nr $prevNr $specNnr"
+				getMyDlgVersions 0
+				# no versions or not historical
+				if [ Z"$tver" = Z"" ] || [ $historical -ne 1 ]
+				then
+					getMyFiles 0
+				fi
+		elif [ $nr -eq 7 ]
+		then
+			# File missing, so get data, went down then back up
+			wgetMyVersion
+			getMyFiles 0
+		fi
+	fi
+}
+
+pName=''
+function createMenu()
+{
+	##
+	# TODO:
+	# if grey nothing is selectable just viewable active buttons are Exit/Back
+	##
+	if [ ${#pkgs} -ne 0 ]
+	then
+		if [ Z"$pkgs" = Z"All " ]; then pkgs=''; fi # Nothing so Drop the All!
+		old_lr=$longReply
+		if [ ${#layer[@]} -gt 2 ]
+		then
+			back="Back"
+		fi
+		export COLUMNS=8
+		select choice in $pkgs $mark $back Exit
+		do
+			longReply=$REPLY
+			if [ Z"$choice" != Z"" ]
+			then
+				## needed if we allow
+				stripcolor
+				if [ $choice = "Exit" ]
+				then
+					exit
+				elif [ $choice = "Mark" ]
+				then
+					favorite="${pName}_${layer[4]}"
+					colorecho "Favorite: $favorite"
+					save_vsmrc
+				fi
+				if [ $nr -eq 2 ]
+				then
+					pName=`echo $choice|sed 's/&_//g'`
+				fi
+				break
+			else
+				echo -n "Please enter a valid numeric number:"
+			fi
+		done
+	else
+		longReply=1 # use this value for follow on elements
+	fi
+}
+
+function processCode() 
+{
+	##
+	# This extracts the 'parameters' we can use to perform a download
+	theHref=${tdls[$xloc]}
+	code=(`echo $theHref | sed 's/"/\n/g' | egrep 'getDownload|checkEulaAndPerform' | head -1 | cut -d\( -f 2 | cut -d\) -f 1 | sed "s/'//g" | sed 's/,/ /g' | sed 's/  / /g'`)
+	if [ ${#code[@]} -ne 0 ]
+	then
+		downloadGroup=${code[0]}
+		fileId=${code[1]}
+		vmware='downloadBinary'
+		baseStr=${code[2]}
+		secureParam=${code[3]}
+		if [ ${#code[@]} -eq 7 ]
+		then
+			# checkEulaAccepted
+			isEulaA='true'
+			tagId=${code[4]}
+			productId=${code[5]}
+			uuId=${code[6]}
+		else
+			# getDownload
+			isEulaA=${code[4]}
+			tagId=${code[5]}
+			productId=${code[6]}
+			uuId=${code[7]}
+		fi
+	else
+		# expand URL
+		for nx in `echo $ndata | sed 's/^\.//' | sed 's#/group/vmware/details##'`; do t=`echo $nx| cut -d= -f1`; s=`echo $nx|cut -d= -f2`; eval "$t=$s"; done
+	fi
+	# createURL
+	dlURL=`grep downloadFilesURL $rcdir/_${missname}.xhtml|cut -d\" -f6`
+	if [ Z"$dlURL" != Z"" ]
+	then
+		url="$dlURL&downloadGroupCode=${downloadGroup}&downloadFileId=${fileId}&uuId=${uuId}&hashKey=${secureParam}&productId=${productId}"
+	fi
+}
+
+function getSHAData()
+{
+	# granted md5sum is not supported
+	sha256=`echo $data | sed 's/<br>/\n/g' |sed 's/<span>/\n/g'| grep SHA256SUM | cut -d: -f2 | cut -d' ' -f2`
+	if [ Z"$sha256" = Z"" ]
+	then
+		sha256=`echo $data | sed 's/<br>/\n/g' |sed 's/<span>/\n/g'| grep SHA1SUM | cut -d: -f2 | cut -d' ' -f2`
+		if [ Z"$sha256" = Z"" ]
+		then
+			sha256=`echo $data | sed 's/<br>/\n/g' |sed 's/<span>/\n/g'| grep MD5SUM\< | cut -d: -f2 | cut -d' ' -f2`
+			if [ Z"$sha256" != Z"" ]
+			then
+				sha='md5sum'
+			fi
+		else
+			sha='sha1sum'
+		fi
+	else
+		sha='sha256sum'
+	fi
+}
+
+function getVSMData()
+{
+	url=''
+	lr=$(($longReply-1))
+	data=`xmllint --html --xpath "(//td[@class=\"filename\"])[$lr]" $rcdir/_${missname}.xhtml 2>/dev/null`
+	name=`echo $data | xmllint --html --xpath '//span[@class="fileNameHolder"]/text()' - | sed 's/ //g'`
+	debugecho "DEBUG: $lr $name ${xpkgs[$lr]}"
+}
+
+function doFixSymlinks()
+{
+	if [ $fixsymlink -eq 1 ] && [ $dotdir -eq 1 ]
+	then
+		if [ -f ${rdir}/${name} ]
+		then
+			rname=${rdir}/${name}
+		fi
+		if [ -f ${rdir}/${name}.gz ]
+		then
+			rname=${rdir}/${name}.gz
+		fi
+		# Move or Remove regular file if exists
+		if [ ! -L ${rname} ]
+		then
+			if [ ! -e $name ] && [ ! -e ${name}.gz ]
+			then
+				mv ${rname} .
+			else
+				if [ -e $rname ]
+				then
+					rm ${rname}
+				fi
+			fi
+		fi
+	fi
+}
+
+function getJSON()
+{
+	if [ ! -e $rcdir/newlocs.json ] || [ $rebuild -eq 1 ]
+	then
+		mywget $rcdir/newlocs.json https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/newlocs.json >& /dev/null
+	fi
+}
+
+function writeJSON()
+{
+	if [ $rebuild -eq 1 ]
+	then
+		if [ -e $rcdir/newlocs.json ]
+		then
+			newlocs=`cat $rcdir/newlocs.json`
+		else
+			newlocs='{"dlgList":[]}' # just in case download failed
+		fi
+		echo $newlocs
+		for x in $xpkgs
+		do
+			newlocs=`echo $newlocs|jq --arg n $x --arg t "${pName}_${layer[4]}" --arg v "$missname" --arg p "${layer[6]}" '.dlgList += [{"name": $n, "target": $t, "dlg": $v, "parent": $p}]'`
+			newlocs=`echo $newlocs | jq -M '.dlgList |= unique_by(.name)'`
+		done
+		echo $newlocs
+		echo $newlocs > $rcdir/newlocs.json
+	fi
+}
+
+function downloadFile()
+{
+	# simplified getvsm
+	getVSMData
+	if [ ${#name} -ne 0 ]
+	then
+		doFixSymlinks
+		if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
+		then
+			echo -n "."
+		fi
+		if [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
+		then 
+			# only need to do if replacing
+			getSHAData
+			processCode
+			if [ Z"$dlURL" != Z"" ]
+			then
+				lurl=`wget -O - --load-cookies $cdir/$ck --header="User-Agent: $ua" $url 2>&1 | grep downloadUrl | cut -d\" -f4`
+				if [ ${#lurl} -gt 0 ]
+				then
+					if [ $dryrun -eq 1 ]
+					then
+						echo "mywget $name $lurl '--progress=bar:force' 1"
+					else
+						echo "Downloading $name to `pwd`:"
+						mywget $name $lurl '--progress=bar:force' 1
+						if [ $err -eq 0 ]
+						then
+							if [ $doshacheck -eq 1 ]
+							then
+								shadownload=1
+								shacheck_file $name
+							fi
+						fi
+					fi
+					diddownload=1
+				fi
+			fi
+		fi
+		if [ -e $name ] || [ -e ${name}.gz ] || [ $doforce -eq 1 ]
+		then
+			compress_file $name
+			mksymlink $name
+		fi
+	fi
+}
+
+function getAdditionalDlg()
+{
+	osc=$1
+	gotodir $omissname $osc $missname
+	debugecho "gotodir => `pwd`"
+	# may be _ or -
+	x=`echo $missname | sed 's/_/[_-]/g'`
+	addHref=`egrep "$x" $rcdir/_${omissname}.xhtml | grep href | sed 's/"buttoncol"//'|cut -d\" -f2`
+	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
+	then
+		if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
+		then
+			echo -n "-"
+		fi
+		mywget ${rcdir}/_${missname}.xhtml https://my.vmware.com${addHref}
+	fi
+	getTabcOne $missname
+	longReply=2
+	xloc=0
+	writeJSON
+}
+
+function getAdditional()
+{
+	sc=$2
+	debugecho "DEBUG: missname=>$missname"
+	debugecho "DEBUG: add=>$additionalFiles"
+	if [ ${#additionalFiles} -ne 0 ]
+	then
+		omissname=$missname
+		olongReply=$longReply
+		for missname in $additionalFiles
+		do
+			getAdditionalDlg $sc
+			for y in $xpkgs
+			do
+				choice=$y
+				downloadFile
+				longReply=$(($longReply+1))
+				xloc=$(($xloc+1))
+			done
+		done
+		missname=$omissname
+		longReply=$olongReply
+	fi
+}
+
+function uag_test() {
+	if [ $_v -eq 300 ]
+	then
+		symdir="view"
+	elif [ $_v -eq 0 ] || [ $_v -lt 321 ]
+	then
+		symdir="UAG_${_v:0:2}"
+	else
+		symdir="UAG_${_v}"
+	fi
+}
+
+function getSymdir()
+{
+	# used for fake symlinks, mostly UAG
+	symdir=''
+	_v=`echo $name | sed 's/[a-z-]\+-\([0-9]\.[0-9]\.[0-9]\).*/\1/' | sed 's/\.0$//' |sed 's/\.//g'`
+	case "$name" in
+		euc-access-point*)
+			uag_test $_v
+			;;
+		euc-unified-access*)
+			uag_test $_v
+			;;
+	esac
+}
+
+function endOfDownload()
+{
+	if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
+	then
+		echo "!"
+	fi
+	eou=''
+	if [ Z"$additional" != Z"base" ]
+	then
+		eou="/$additional"
+	fi
+	iou="Existing"
+	if [ $diddownload -eq 1 ]
+	then
+		iou="New"
+	fi
+	colorecho "$iou $missname in $repo/dlg_${missname}${eou}"
+}
+
+function getFile()
+{
+	getSymdir
+	if [ Z"$choice" = Z"Patches" ]
+	then
+		download_patches
+		endOfDownload
+	elif [ Z"$choice" = Z"CustomIso" ]
+	then
+		additionalFiles="${oemlist[@]}"
+		getAdditional $missname "CustomIso"
+		nr=${#layer[@]}
+		nr=$(($nr-1))
+		choice=${layer[$nr]}
+		endOfDownload
+	elif [ Z"$choice" = Z"DriversTools" ]
+	then
+		additionalFiles="${dtslist[@]}"
+		getAdditional $missname "DriversTools"
+		nr=${#layer[@]}
+		nr=$(($nr-1))
+		choice=${layer[$nr]}
+		endOfDownload
+	else
+		gotodir $missname "base"
+		downloadFile
+	fi
+}
+
+function getAllChoice()
+{
+	additional='base'
+	diddownload=0
+	longReply=2
+	xloc=0
+	for x in $xpkgs
+	do
+		choice=$y
+		getFile
+		longReply=$(($longReply+1))
+		xloc=$(($xloc+1))
+	done
+	endOfDownload
+	if [ ${#oemlist[@]} -gt 0 ]
+	then
+		diddownload=0
+		additionalFiles="${oemlist[@]}"
+		getAdditional $missname "CustomIso"
+		endOfDownload
+	fi
+	if [ ${#dtslist[@]} -gt 0 ]
+	then
+		diddownload=0
+		additionalFiles="${dtslist[@]}"
+		getAdditional $missname "DriversTools"
+		endOfDownload
+	fi
+	getMyPatches
+	if [ $patcnt -gt 0 ]
+	then
+		diddownload=0
+		download_patches
+	fi
+}
+
+function getAll()
+{
+	# This depends on where we are
+	if [ $nr -ge 6 ]
+	then
+		getAllChoice
+	elif [ $nr -eq 5 ]
+	then
+		tpkgs="$xpkgs"
+		#specReply=$longReply # packages always listed here
+		for x in $tpkgs
+		do
+			choice=$x
+			missname=$x
+			getMyDlgVersions 1
+			getMyFiles 1
+			getAllChoice
+		done
+	fi
+	longReply=$old_lr
+	nnr=$(($nr-1))
+	choice=${layer[$nnr]}
+}
+
+function getFavPaths()
+{
+	# path version Grouping
+	favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]_[0-9x]\|[0-9]\+\)_\(.*\)/\1 \2 \3/i'`)
+	# Get First Path Entry (productCategory)
+	pc=-1
+	for x in `jq ".productCategoryList[].name" _j_downloads.xhtml|sed 's/ /_/g'`
+	do
+		# reverse grep
+		pc=$(($pc+1))
+		y=`echo $x|sed 's/_&_/.*/g'|sed 's/[_-]/./g'|sed 's/"//g'`
+		z=`echo ${favpaths[0]}|egrep -in $y 2>/dev/null`
+		if [ $? -eq 0 ]
+		then
+			prodCat=(`echo $z | sed 's/:/ /'`)
+			pName=`echo ${y}|sed 's/\.\*/_/g'|sed 's/\./_/g'|sed 's/_\+/_/g'`
+			break
+		fi
+	done
+	if [ $pc -ge 0 ]
+	then
+		#pc=$(($pc-1))
+		shortPro=`echo ${prodCat[1]}|sed "s/${y}_//" |sed 's/[_-]/./g'`
+		# Get Second path entry (proList)
+		proList=(`jq ".productCategoryList[$pc].proList[].name" _j_downloads.xhtml | grep -in "${shortPro}\"" | sed 's/:/ /'`)
+		lr=${proList[0]}
+		# build up front layers
+		if [ $lr -gt 0 ]
+		then
+			lr=$(($lr-1))
+			layer=("productCategoryList[$pc]")
+			layer+=("proList[$lr]")
+			layer+=("actions")
+			missname=`echo $shortPro | sed 's/\./_/g'`
+			choice=$missname
+			getLayerPkgs
+			layer=("productCategoryList[$pc]")
+			layer+=("proList[$lr]")
+			layer+=("$missname")
+			choice=${missname}_${favpaths[1]}
+			layer+=("$choice")
+			longReply=`echo $tver|sed 's/ /\n/g'|grep -in ${favpaths[1]} |cut -d: -f1`
+			longReply=$(($longReply-1))
+			getLayerPkgs
+			longReply=`echo $mversions|sed 's/ /\n/g'| grep -in ${favpaths[2]} |head -1|cut -d: -f1`
+			longReply=$(($longReply-1))
+			choice=${missname}_${favpaths[2]}
+			layer+=("$choice")
+			getLayerPkgs
+			longReply=0
+		fi
+	fi
+}
+
+function getDlgFile()
+{
+	longReply=`echo $xpkgs | sed 's/ /\n/g' |grep -n ${dlgInfo[0]}|cut -d: -f1`
+	choice="${dlgInfo[0]}" # filename to get
+	longReply=$(($longReply+1))
+	xloc=$(($longReply-1))
+	downloadFile
+}
+
+function getDlg()
+{
+	# Get first item into array
+	dlgInfo=(`jq --arg s "$mydlg" '[.dlgList[] | select(.name | contains($s))][0]|.name,.target,.dlg,.parent' $rcdir/newlocs.json | sed 's/"//g'`)
+	favorite=${dlgInfo[1]}
+	getFavPaths
+	pkg=`echo ${dlgInfo[3]}|awk -F[0-9] '{print $1}'`
+	lchoice=(`echo $pkgs |sed 's/ /\n/g' | egrep -n "^${pkg}"|sed 's/:/ /'`)
+	missname=${lchoice[1]}
+	choice=$missname
+	longreply=${lchoice[0]}
+	getMyDlgVersions 1
+	getMyFiles 1
+	# now is it in this layer or 'additional'
+	if [ $choice != ${dlgInfo[3]} ]
+	then
+		choice=${dlgInfo[3]}
+		missname=${choice}
+		wgetMyVersion
+		getMyFiles 1
+	fi
+	if [[ "$xpkgs" == *"${dlgInfo[0]}"* ]]
+	then
+		getDlgFile
+	elif [[ ${dtslist[@]} == *"${dlgInfo[2]}"* ]] 
+	then
+		omissname=$missname
+		missname=${dlgInfo[2]}
+		getAdditionalDlg DriversTools
+		getDlgFile
+	elif [[ ${oemlist[@]} == *"${dlgInfo[2]}"* ]]
+	then
+		omissname=$missname
+		missname=${dlgInfo[2]}
+		getAdditionalDlg CustomIso
+		getDlgFile
+	fi
+}
+
+# handle favorite case
+if [ $myfav -ge 1 ]
+then
+	if [ $myfav -eq 2 ]
+	then
+		favorite=$fav
+	fi
+	rebuild=0
+	getFavPaths
+	getAll
+	exit
+fi
 
 if [ $dodlg -eq 1 ]
 then
-	debugecho "DEBUG: $mydlg"
-	# Find the file
-	if [ $dodlglist -eq 0 ]
+	if [ ! -e $rcdir/newlocs.json ]
 	then
-		myaf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sed 's/VCL_VSP..._//' | cut -d' ' -f2,6  | sed 's/\(\w\)_\(.* \)/\1\2/' | sed 's/U/0U/g' | sort -u -k1 -V | sed 's/0U/U/g' | cut -d' ' -f2|egrep -v 'OSS|open[-_]source' |sort -V|tail -1 `
-		mytf=`uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$myaf" | tail -1` 
+		echo "Need to retrieve/rebuild seed JSON file"
 	else
-		uudecode $vdat | openssl enc -aes-256-ctr -d -a -salt -pass file:${cdir}/$vpat -md md5 2>/dev/null | egrep "$mydlg" | sed 's/VCL_VSP..._//' | cut -d' ' -f2,6  | sed 's/\(\w\)_\(.* \)/\1\2/' | sed 's/U/0U/g' | cut -d' ' -f2|egrep -v 'OSS|open[-_]source' |sort -V
-		exit
+		rebuild=0
+		getDlg
+		endOfDownload
 	fi
-	debugecho "mytf => $mytf"
-	if [ Z"$mytf" = Z"" ]
-	then
-		colorecho "No file found!" 1
-		rm -f ${cdir}/$vpat
-		exit
-	else
-		files=`echo $mytf | cut -d' ' -f6`
-		mypkg=`echo $mytf | cut -d' ' -f3`
-		choice=`echo $mytf | cut -d' ' -f2`
-		prevchoice=`echo $mytf | cut -d' ' -f1`
-	fi
-	echo "Working $mydlg and found $files within $mypkg..."
-	choice=$mypkg
-	findfavpaths $prevchoice
-
-	# now we run through all the prevchoices
-	favorites=$prevchoice
-	debugecho "DEBUG: Choice => $choice"
-	debugecho "DEBUG: mfchoice => $mfchoice"
-	debugecho "DEBUG: myfvmware => $myfvmware"
-	debugecho "DEBUG: DLG => $favorites"
+	exit
 fi
 
-if [ $myfav -eq 2 ]
-then
-	favorite=$fav
-	myfav=1
-	findfavpaths $favorite
-	debugecho "DEBUG: mfchoice => $mfchoice"
-	debugecho "DEBUG: myfvmware => $myfvmware"
-fi
-
+# standard loop
 while [ 1 ]
 do
-	all=""
-	alln=""
-	allm=""
-	if [ $dlg -eq 1 ]
+	getLayerPkgs
+	createMenu
+	if [ Z"$choice" = Z"All" ]
 	then
-		all="All"
-		alln="All_Plus_OpenSource"
-		allm="Minimum_Required"
-		dlg=2
-		if [ Z"$prevchoice" = Z"" ]
-        	then
-        		prevchoice=$choice
-        	fi
-	fi
-	# set up overrides
-	if [ $myfav -eq 1 ] || [ $dodlg -gt 0 ]
+		longReply=$(($longReply+1)) # All is #1 but -1 is used else where
+		getAll	# special case, All is 'several' places
+	elif [ Z"$choice" = Z"Back" ]
 	then
-		# setup auto-download of favorite
-		if [ $dodlg -gt 0 ]
-		then
-			# This overrides DTS incase it is selected!
-			dlg=2
-		fi
-		ochoice="All"
-		if [ $domyvmware -eq 1 ]
-		then
-			if [ $dodlg -eq 0 ]
-			then
-				favorites=$favorite
-			else
-				ochoice=$choice
-			fi
-			mchoice=`dirname $mfchoice`
-			myvmware=`dirname $myfvmware`
-			mchoice=`dirname $mchoice`
-			choice=`basename $mchoice`
-			myvmware=`dirname $myvmware`
-			getvmware #FM
-			midprod=0
-			choice=`basename $mfchoice`
-			mchoice=`dirname $mfchoice`
-			myvmware=`dirname $myfvmware`
-			getvmware #OV
-			mchoice=$mfchoice
-			myvmware=$myfvmware
-			getvmware #IV
-			getlongreply $fav
-		elif [ -e ${rcdir}/${favorite}.xhtml ]
-		then
-			favorites=$favorite
-		fi
-		if [ Z"$favorites" != Z"" ]
-		then
-			choice=$ochoice
-			dlg=2
-		else
-			myfav=0
-		fi
-	fi
-
-	if [ $myfav -eq 0 ] && [ $dodlg -eq 0 ]
+		removeLayer
+	elif [ $nr -eq 7 ] || [ Z"$choice" = Z"DriversTools" ] || [ Z"$choice" = Z"CustomIso" ] || [ Z"$choice" = Z"Patches" ]
 	then
-		debugecho "Menu => $all $allm $alln"
-		menu $all $allm $alln ${choice}.xhtml
-		favorites=$prevchoice
-	fi
-
-	if [ $choice != "Back" ]
-	then
-
-		if [ $dlg -eq 0 ]
-		then
-			grep dlg_ ${choice}.xhtml >& /dev/null
-			if [ $? -eq 0 ]
-			then
-				dlg=1
-			fi
-		fi
-	
-		if [ $dlg -eq 2 ]
-		then
-			for prevchoice in $favorites
-			do
-				debugecho "DEBUG: Prevchoice => $prevchoice"
-				doall=0
-				getproddata
-
-				# if ALL then cycle through dlg in prevchoice
-				#   set 'choices' array, then cycle through all $choices
-				#   ensure 'selected' is in $choices so does this once
-				if [ $choice = "All" ] || [ $choice = "All_Plus_OpenSource" ] || [ $choice = "Minimum_Required" ]
-				then
-					if [ $myinnervm -eq 0 ] || [ $myfav -gt 0 ]
-					then
-						vsmpkgs ${prevchoice}.xhtml
-					fi
-					choices=$pkgs
-					doall=1
-					if [ $choice = "Minimum_Required" ]
-					then
-						doall=3
-					fi
-					if [ $choice = "All_Plus_OpenSource" ]
-					then
-						doall=2
-					fi
-				else
-					choices=$choice
-				fi
-				
-				domenu2=1
-				while [ $domenu2 -eq 1 ]
-				do
-					for choice in $choices
-					do
-						debugecho "DEBUG: Working on $choice"
-						stripcolor
-						# reset for associated packages list
-						oem=""
-						dt=""
-						oss=""
-						om=""
-						oemlist=""
-						osslist=""
-						dtslist=""
-						asso=""
-						assomissing=""
-						wouldassomiss=0
-						# get associated packages
-						#if [ $myfav -eq 0 ]
-						#then
-						#	doprogress=0
-						#fi
-						if [ $myprogress -eq 1 ] && [ $dodebug -eq 0 ]
-						then
-							doprogress=1
-						fi
-						if [ $wouldassomiss -eq 1 ] && [ $domyvmware -eq 1 ]
-						then
-							debugecho "Could get $choice from My VMware"
-							# force getting My VMware bits?
-						fi
-			
-						# reset for options
-						dooem=0
-						dooss=0
-						dodts=0
-						dodat=0
-						dopat=0
-						myall=0
-						mychoice=""
-						currchoice=$choice;
-						menu2files=0;
-						getasso
-			
-						# do not show if ALL, choice set above!
-						if [ $doall -eq 0 ] && [ $dodlg -eq 0 ]
-						then
-							shaecho
-							menu2 _dlg_${choice}.xhtml $oss $oem $dts
-						else
-							# if we do not show menu, we may still
-							# require myvmware data
-							vmwaremenu2
-							getasso
-						fi
-			
-						case $choice in
-							"All")
-								dooem=1
-								dodts=1
-								dodat=1
-								myall=1
-								dopat=1
-								;;
-							"Minimum_Required")
-								dodat=1
-								myall=1
-								;;
-							"All_Plus_OpenSource")
-								dooss=1
-								dooem=1
-								dodts=1
-								dodat=1
-								myall=1
-								dopat=1
-								;;
-							"CustomIso")
-								dooem=1
-								;;
-							"Patches")
-								dopat=1
-								;;
-							"OpenSource")
-								dooss=1
-								;;
-							"DriversTools")
-								dodts=1
-								;;
-							"Back")
-								domenu2=0
-								dlg=1
-								;;
-							*)
-								mychoice=$choice
-								dodat=1
-								;;
-						esac
-						if [ $doall -eq 1 ]
-						then
-							dooss=0
-							dooem=1
-							dodts=1
-							dodat=1
-							myall=1
-							dopat=1
-							domenu2=0
-						fi
-						if [ $doall -eq 2 ]
-						then
-							dooss=1
-							dooem=1
-							dodts=1
-							dodat=1
-							myall=1
-							dopat=1
-							domenu2=0
-						fi
-						if [ $doall -eq 3 ]
-						then
-							dooss=0
-							dooem=0
-							dodts=0
-							dodat=1
-							myall=1
-							dopat=1
-							domenu2=0
-						fi
-						if [ $dodlg -eq 1 ]
-						then
-							dooss=0
-							dooem=1
-							dodts=1
-							dodat=1
-						fi
-						if [ $doall -ne 0 ] || [ $myall -eq 1 ]
-						then
-							if [ $myoem -ne -1 ]
-							then
-								dooem=$myoem
-							fi
-							if [ $myoss -ne -1 ]
-							then
-								dooss=$myoss
-							fi
-							if [ $mydts -ne -1 ]
-							then
-								dodts=$mydts
-							fi
-						fi
-						debugecho "DEBUG: $mychoice $dodat $dooem $dooss $dots"
-			
-						# do the regular including All/All_Plus_OpenSource
-						indomenu2=1
-						if [ $dodat -eq 1 ]
-						then
-							err=0
-							# do something with menu2files
-							getvsmcnt $currchoice
-							cnt=$?
-							debugecho "DEBUG: detected $cnt $mychoice => $mypkg"
-							lastcnt=1
-							xignore=0
-							if [ $dodlg -eq 1 ] && [ Z"$mypkg" != Z"$currchoice" ]
-							then
-								xignore=1
-								lastcnt=$cnt
-							fi
-							while [ $lastcnt -le $cnt ]
-							do
-								if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
-								then
-									echo -n "."
-								fi
-								getvsmdata $currchoice $lastcnt
-								# only do the selected
-								doit=0
-								if [ $dodlg -eq 1 ]
-								then
-									#debugecho "DEBUG: DoDlg"
-									d=`echo $name | sed "s/$mydlg//i"`
-									if [ Z"$d" != Z"$name" ]
-									then
-										doit=1
-									fi
-								elif [ $myall -eq 0 ]
-								then
-									#debugecho "DEBUG: MyChoice"
-									if [ Z"$name" = Z"$mychoice" ]
-									then
-										# got it so strip
-										#getpath
-										doit=1
-									fi
-								else
-									#debugecho "DEBUG: DoIt"
-									doit=1
-								fi
-								#debugecho "DEBUG: $doit"
-								if [ $doit -eq 1 ]
-								then
-									if [ $dodlg -eq 1 ]
-									then
-										echo ""
-										echo "Local:$repo/dlg_$currchoice/$name"
-									fi
-									debugecho "DEBUG: Getting $name"
-									if [ Z"$name" != Z"" ]
-									then
-										pre_oauth=$myoauth
-										myoauth=0
-										getvsm $currchoice "base"
-										myoauth=$pre_oauth
-									fi
-									if [ $dodlg -eq 1 ]
-									then
-										# Just exist, got package
-										rm -f ${cdir}/$vpat
-										exit
-									fi
-								fi
-								# out to dev null seems to be required
-								$((lastcnt++)) 2> /dev/null
-							done
-							if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
-							then
-								echo "!"
-							fi
-							if [ $xignore -eq 0 ]
-							then
-								if [ $diddownload -eq 1 ]
-								then
-									colorecho "Downloads to $repo/dlg_$currchoice"
-								else
-									if [ $err -eq 0 ]
-									then
-										e=''
-										if [ $debugv -gt 0 ]
-										then
-											e="to $repo/dlg_$currchoice."
-										fi
-										colorecho "All $currchoice already downloaded $e"
-										if [ $dodlg -eq 1 ]
-										then
-											# Just exist, got package
-											rm -f ${cdir}/$vpat
-											exit
-										fi
-									fi
-								fi
-							fi
-						fi
-						# Do patches if necessary
-						if [ $dopat -eq 1 ]
-						then
-							if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
-							then
-								while : ; do
-									get_product_patches $currchoice
-									download_patches $currchoice
-									[[ $inpatch_dl -eq 1 ]] || break;
-								done
-								patcnt=0
-							fi
-						fi
-			
-						# Now handle OpenSource, CustomIso, DriversTools
-						# these are via $asso
-						for x in oem dts oss
-						do
-							err=0
-							y="do${x}"
-							l="${x}list"
-							eval dom=\$$y
-							eval om=\$${x}
-							eval omlist=\$${l}
-							if [ $dom -eq 1 ] && [ Z"$om" != Z"" ]
-							then
-								debugecho "DEBUG: $y"
-								diddownload=0
-								xignore=-1
-								for o in `echo $omlist| sed 's/dlg_//g' |sed 's/\.xhtml//g'`
-								do
-									domts=0
-									pkgs=""
-									o=`echo $o|sed 's/^_//'`
-									echo "$assomissing "| egrep "$o " >& /dev/null
-									if [ $? -eq 0 ]
-									then
-										vmwaremenu2 $o
-									else
-										if [ -e dlg_${o}.xhtml ]
-										then
-											domts=1
-										fi
-									fi
-									if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
-									then
-										echo -n "-"
-									fi
-									debugecho "DEBUG $y: $choice: $o => $mypkg"
-									getvsmcnt $o
-									cnt=$?
-									lastcnt=1
-									if [ $dodlg -eq 1 ] && [ Z"$mypkg" != Z"$o" ]
-									then
-										if [ $xignore -ne 0 ]
-										then
-											xignore=1
-										fi
-										lastcnt=$cnt
-									fi
-									while [ $lastcnt -le $cnt ]
-									do
-										getvsmdata $o $lastcnt
-										doit=0
-										if [ $dodlg -eq 1 ]
-										then
-											d=`echo $name | sed "s/$mydlg//i"`
-											if [ Z"$d" != Z"$name" ]
-											then
-												doit=1
-											fi
-										else
-											doit=1
-										fi
-										if [ $doit -eq 1 ]
-										then
-											if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
-											then
-												echo -n "."
-											fi
-											# only do the selected
-											xignore=0
-											if [ $dodlg -eq 1 ]
-											then
-												echo ""
-												echo "Local:$repo/dlg_$currchoice/$om/$name"
-											fi
-											if [ Z"$name" != Z"" ]
-											then
-												pre_oauth=$myoauth
-												myoauth=0
-												getvsm $currchoice $om $o
-												myoauth=$pre_oauth
-											fi
-											# out to dev null seems to be required
-											if [ $dodlg -eq 1 ]
-											then
-												# package exist, exit
-												rm -f ${cdir}/$vpat
-												exit
-											fi
-										fi
-										let lastcnt=$lastcnt+1
-									done
-								done
-								if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
-								then
-									echo "!"
-								fi
-								if [ $xignore -eq 0 ]
-								then
-									if [ $dodlg -eq 1 ]
-									then
-										mypkg=" $mypkg"
-									fi
-									if [ $diddownload -eq 1 ]
-									then
-										colorecho "Downloads $mypkg to $repo/dlg_$currchoice/$om"
-									else
-										if [ $err -eq 0 ]
-										then
-											colorecho "All $currchoice$mypkg $om already downloaded!"
-										fi
-									fi
-								fi
-							fi
-							domts=0
-						done
-						indomenu2=0
-						diddownload=0
-						#choice=$prevchoice
-					done
-					getpath
-					getchoice
-				done # domenu2
-			done
-			shaecho
-			doall=0
-			echo ""
-			if [ $myfav -eq 1 ] || [ $dodlg -gt 0 ]
-			then
-				rm -f ${cdir}/$vpat
-				exit
-			fi
-		fi
+		# getFile could imply file, DriversTools, CustomIso, or Patches
+		#longReply=$(($longReply-1)) # All is #1 but -1 is used else where
+		xloc=$(($longReply-2))
+		getFile
 	else
-		# go back 2 entries as previous is current
-		backvmware
-		getpath
-		getchoice
-		if [ $domenu2 -eq 1 ]
-		then
-			domenu2=0
-			doall=0
-			dlg=1
-		else
-			dlg=0
-		fi
-
-		if [ $dlg -eq 2 ] 
-		then
-			dlg=1
-			#choice=$prevchoice
-		fi
-		prevchoice=""
-		asso=""
+		createLayer
 	fi
 done
