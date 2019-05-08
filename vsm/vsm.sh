@@ -643,6 +643,13 @@ function mksymlink() {
 	fi
 }
 
+function version() {
+	echo "LinuxVSM Version:"
+	echo "	OS:        $theos"
+	echo "	`basename $0`:    $VERSIONID"
+	exit
+}
+
 function usage() {
 	echo "LinuxVSM Help"
 	echo "$0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save]"
