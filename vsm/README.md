@@ -37,6 +37,7 @@ $ vsm.sh --help
 	-h|--help - this help
 	--historical - display older versions when you select a package
 	--nohistorical - disable --historical
+	-mr - remove temporary files
 	-nh|--noheader - leave off the header bits
 	-nq|--noquiet - disable quiet mode
 	-ns|--nostore - do not store credential data and remove if exists
