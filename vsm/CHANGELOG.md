@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.0.1 - Slight change to help/Readme, removal of old option
+
 6.0.0 - 100% My VMware, note if you do not have entitlements you cannot 
         download the packages. That is a My VMware change. Also, there is no
 	longer a datafile, there is a seed file and a way to rebuild or add
