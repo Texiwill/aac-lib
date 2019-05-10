@@ -11,6 +11,9 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.0.2 - Menu without --historical was messed up, as well --historical 
+        after download -- @virtualex
+
 6.0.1 - Slight change to help/Readme, removal of old option
 
 6.0.0 - 100% My VMware, note if you do not have entitlements you cannot 

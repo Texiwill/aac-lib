@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.0.1"
+VERSIONID="6.0.2"
 
 # args: stmt error
 function colorecho() {
@@ -1522,7 +1522,10 @@ function getLayerPkgs()
 	dojq=0
 	layers=''
 	mark=''
-	debugecho "DEBUG: ${layer[@]}"
+	if [ $debugv -eq 1 ]
+	then
+		echo "DEBUG: ${layer[@]}"
+	fi
 	prevNr=$nr
 	nr=${#layer[@]}
 	if [ $nr -lt 4 ]
@@ -1571,7 +1574,10 @@ function getLayerPkgs()
 		elif [ $nr -eq 7 ]
 		then
 			# File missing, so get data, went down then back up
-			wgetMyVersion
+			if [ $historical -eq 1 ]
+			then
+				wgetMyVersion
+			fi
 			getMyFiles 0
 		fi
 	fi
@@ -1917,6 +1923,9 @@ function getFile()
 	else
 		gotodir $missname "base"
 		downloadFile
+		nr=${#layer[@]}
+		nr=$(($nr-1))
+		choice=${layer[$nr]}
 	fi
 }
 
@@ -2082,6 +2091,12 @@ function getDlg()
 	fi
 }
 
+function getTheFiles()
+{
+	xloc=$(($longReply-2))
+	getFile
+}
+
 # handle favorite case
 if [ $myfav -ge 1 ]
 then
@@ -2120,12 +2135,15 @@ do
 	elif [ Z"$choice" = Z"Back" ]
 	then
 		removeLayer
-	elif [ $nr -eq 7 ] || [ Z"$choice" = Z"DriversTools" ] || [ Z"$choice" = Z"CustomIso" ] || [ Z"$choice" = Z"Patches" ]
+	elif [ Z"$choice" = Z"DriversTools" ] || [ Z"$choice" = Z"CustomIso" ] || [ Z"$choice" = Z"Patches" ]
 	then
-		# getFile could imply file, DriversTools, CustomIso, or Patches
-		#longReply=$(($longReply-1)) # All is #1 but -1 is used else where
-		xloc=$(($longReply-2))
-		getFile
+		getTheFiles
+	elif [ $nr -eq 6 ] && [ $historical -eq 0 ]
+	then
+		getTheFiles
+	elif [ $nr -eq 7 ] 
+	then
+		getTheFiles
 	else
 		createLayer
 	fi
