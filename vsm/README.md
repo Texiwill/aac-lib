@@ -336,7 +336,7 @@ everything. LinuxVSM does not bypass VMware's entitlement checks.
 
 * How do I use --dlg, --dlgl
 
-As of Version 6.0.4 the seed datafile is downloaded automatically and
+As of Version 6.0.3 the seed datafile is downloaded automatically and
 contains those items pertaining to vSphere only. You can add to this
 seed file with your specific items by visiting those packages. For
 DriversTools and CustomIso's you will actually need to select that option
