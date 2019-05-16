@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.0.4 - Update to get the JSON, code was out of order
+
 6.0.3 - Update to get the JSON seed file for --dlg, --dlgl
 
 6.0.2 - Menu without --historical was messed up, as well --historical 
