@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.0.2"
+VERSIONID="6.0.3"
 
 # args: stmt error
 function colorecho() {
@@ -1109,7 +1109,7 @@ if [ $dodlglist -eq 1 ]
 then
 	if [ ! -e $rcdir/newlocs.json ]
 	then
-		echo "Need to retrieve/rebuild seed JSON file"
+		getJSON
 	else
 		jq --arg s "$mydlg" '.dlgList[] | select(.name | contains($s)).name' $rcdir/newlocs.json | sed 's/"//g'
 	fi
@@ -1634,6 +1634,7 @@ function processCode()
 	##
 	# This extracts the 'parameters' we can use to perform a download
 	theHref=${tdls[$xloc]}
+	#echo "PC: $theHref"
 	code=(`echo $theHref | sed 's/"/\n/g' | egrep 'getDownload|checkEulaAndPerform' | head -1 | cut -d\( -f 2 | cut -d\) -f 1 | sed "s/'//g" | sed 's/,/ /g' | sed 's/  / /g'`)
 	if [ ${#code[@]} -ne 0 ]
 	then
@@ -1756,6 +1757,12 @@ function writeJSON()
 	fi
 }
 
+function getPreUrl()
+{
+	xurl=$1
+	lurl=`wget -O - --load-cookies $cdir/$ck --header="User-Agent: $ua" $xurl 2>&1 | grep downloadUrl | cut -d\" -f4`
+}
+
 function downloadFile()
 {
 	# simplified getvsm
@@ -1767,14 +1774,14 @@ function downloadFile()
 		then
 			echo -n "."
 		fi
+		# move below if test fails
+		getSHAData
+		processCode
 		if [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
 		then 
-			# only need to do if replacing
-			getSHAData
-			processCode
 			if [ Z"$dlURL" != Z"" ]
 			then
-				lurl=`wget -O - --load-cookies $cdir/$ck --header="User-Agent: $ua" $url 2>&1 | grep downloadUrl | cut -d\" -f4`
+				getPreUrl $url
 				if [ ${#lurl} -gt 0 ]
 				then
 					if [ $dryrun -eq 1 ]
@@ -1835,6 +1842,7 @@ function getAdditional()
 	then
 		omissname=$missname
 		olongReply=$longReply
+		doLurl=0
 		for missname in $additionalFiles
 		do
 			getAdditionalDlg $sc
@@ -1842,6 +1850,12 @@ function getAdditional()
 			do
 				choice=$y
 				downloadFile
+				if [ $doLurl -eq 0 ]
+				then
+					getPreUrl $url
+					preUrl=$lurl
+					doLurl=1
+				fi
 				longReply=$(($longReply+1))
 				xloc=$(($xloc+1))
 			done
@@ -1931,11 +1945,22 @@ function getFile()
 
 function getAllChoice()
 {
+	mpkgs=$xpkgs
+	if [ $dovexxi -eq 1 ]
+	then
+		if [ ${#dtslist[@]} -gt 0 ]
+		then
+			diddownload=0
+			additionalFiles="${dtslist[@]}"
+			getAdditional $missname "DriversTools"
+			endOfDownload
+		fi
+	fi
 	additional='base'
 	diddownload=0
 	longReply=2
 	xloc=0
-	for x in $xpkgs
+	for x in $mpkgs
 	do
 		choice=$y
 		getFile
@@ -1950,12 +1975,15 @@ function getAllChoice()
 		getAdditional $missname "CustomIso"
 		endOfDownload
 	fi
-	if [ ${#dtslist[@]} -gt 0 ]
+	if [ $dovexxi -eq 0 ]
 	then
-		diddownload=0
-		additionalFiles="${dtslist[@]}"
-		getAdditional $missname "DriversTools"
-		endOfDownload
+		if [ ${#dtslist[@]} -gt 0 ]
+		then
+			diddownload=0
+			additionalFiles="${dtslist[@]}"
+			getAdditional $missname "DriversTools"
+			endOfDownload
+		fi
 	fi
 	getMyPatches
 	if [ $patcnt -gt 0 ]
@@ -2114,7 +2142,7 @@ if [ $dodlg -eq 1 ]
 then
 	if [ ! -e $rcdir/newlocs.json ]
 	then
-		echo "Need to retrieve/rebuild seed JSON file"
+		getJSON
 	else
 		rebuild=0
 		getDlg

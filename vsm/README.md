@@ -334,6 +334,15 @@ the DNS server you are working is not working correctly.
 VMware has changed the download process to require entitlement for
 everything. LinuxVSM does not bypass VMware's entitlement checks.
 
+* How do I use --dlg, --dlgl
+
+As of Version 6.0.4 the seed datafile is downloaded automatically and
+contains those items pertaining to vSphere only. You can add to this
+seed file with your specific items by visiting those packages. For
+DriversTools and CustomIso's you will actually need to select that option
+as well. Once the file is updated with --rebuild you can then use --dlg
+and --dlgl with your specific items in addition ot the seed data.
+
 #### Email
 Email elh at astroarch dot com for assistance or if you want to add
 for more items.
