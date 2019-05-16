@@ -214,6 +214,15 @@ function findCk()
 	fi
 }
 
+function getJSON()
+{
+	if [ ! -e $rcdir/newlocs.json ] || [ $rebuild -eq 1 ]
+	then
+		mywget $rcdir/newlocs.json https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/newlocs.json >& /dev/null
+	fi
+}
+
+
 function mywget() {
 	ou=$1
 	hr=$2
@@ -1110,7 +1119,9 @@ then
 	if [ ! -e $rcdir/newlocs.json ]
 	then
 		getJSON
-	else
+	fi
+	if [ -e $rcdir/newlocs.json ]
+	then
 		jq --arg s "$mydlg" '.dlgList[] | select(.name | contains($s)).name' $rcdir/newlocs.json | sed 's/"//g'
 	fi
 	exit
@@ -1728,14 +1739,6 @@ function doFixSymlinks()
 	fi
 }
 
-function getJSON()
-{
-	if [ ! -e $rcdir/newlocs.json ] || [ $rebuild -eq 1 ]
-	then
-		mywget $rcdir/newlocs.json https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/newlocs.json >& /dev/null
-	fi
-}
-
 function writeJSON()
 {
 	if [ $rebuild -eq 1 ]
@@ -2143,7 +2146,9 @@ then
 	if [ ! -e $rcdir/newlocs.json ]
 	then
 		getJSON
-	else
+	fi
+	if [ -e $rcdir/newlocs.json ]
+	then
 		rebuild=0
 		getDlg
 		endOfDownload
