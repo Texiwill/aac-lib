@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.0.4"
+VERSIONID="6.0.5"
 
 # args: stmt error
 function colorecho() {
@@ -1166,6 +1166,13 @@ then
 	#mywget ${rcdir}/_h_downloads.html https://my.vmware.com/en/web/vmware/downloads
 	tab2url=`grep allProducts ${rcdir}/_h_downloads.html | cut -d\" -f4`
 
+	grep "Temporary Maintenance" ${rcdir}/_h_downloads.html >& /dev/null
+	if [ $? -eq 0 ]
+	then
+		colorecho "Error: My VMware Temporary Maintenance" 1
+		exit;
+	fi
+
 	mywget ${rcdir}/_j_downloads.xhtml $tab2url
 
 	if [ ! -e ${rcdir}/_j_downloads.xhtml ]
@@ -1605,6 +1612,10 @@ function createMenu()
 	then
 		if [ Z"$pkgs" = Z"All " ]; then pkgs=''; fi # Nothing so Drop the All!
 		old_lr=$longReply
+		if [ Z"$choice" != Z"Back" ] || [ Z"$choice" != Z"Mark" ] || [ Z"$choice" != Z"All" ]
+		then
+			old_choice=$choice
+		fi
 		if [ ${#layer[@]} -gt 2 ]
 		then
 			back="Back"
@@ -1998,10 +2009,13 @@ function getAllChoice()
 
 function getAll()
 {
+	old_sr=$specReply
+	old_lr=$longReply
 	# This depends on where we are
 	if [ $nr -ge 6 ]
 	then
 		getAllChoice
+		longReply=$old_lr
 	elif [ $nr -eq 5 ]
 	then
 		tpkgs="$xpkgs"
@@ -2014,10 +2028,10 @@ function getAll()
 			getMyFiles 1
 			getAllChoice
 		done
+		longReply=$old_sr
 	fi
-	longReply=$old_lr
-	nnr=$(($nr-1))
-	choice=${layer[$nnr]}
+	choice=$old_choice
+	specReply=$old_sr
 }
 
 function getFavPaths()
