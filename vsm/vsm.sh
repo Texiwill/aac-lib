@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.0.5"
+VERSIONID="6.0.6"
 
 # args: stmt error
 function colorecho() {
@@ -1927,7 +1927,6 @@ function endOfDownload()
 
 function getFile()
 {
-	getSymdir
 	if [ Z"$choice" = Z"Patches" ]
 	then
 		download_patches
@@ -1949,27 +1948,29 @@ function getFile()
 		choice=${layer[$nr]}
 		endOfDownload
 	else
+		getSymdir
 		gotodir $missname "base"
 		downloadFile
 		nr=${#layer[@]}
 		nr=$(($nr-1))
 		choice=${layer[$nr]}
+		symdir=''
 	fi
 }
 
 function getAllChoice()
 {
 	mpkgs=$xpkgs
-	if [ $dovexxi -eq 1 ]
-	then
-		if [ ${#dtslist[@]} -gt 0 ]
-		then
-			diddownload=0
-			additionalFiles="${dtslist[@]}"
-			getAdditional $missname "DriversTools"
-			endOfDownload
-		fi
-	fi
+	#if [ $dovexxi -eq 1 ]
+	#then
+	#	if [ ${#dtslist[@]} -gt 0 ]
+	#	then
+	#		diddownload=0
+	#		additionalFiles="${dtslist[@]}"
+	#		getAdditional $missname "DriversTools"
+	#		endOfDownload
+	#	fi
+	#fi
 	additional='base'
 	diddownload=0
 	longReply=2
@@ -1989,8 +1990,8 @@ function getAllChoice()
 		getAdditional $missname "CustomIso"
 		endOfDownload
 	fi
-	if [ $dovexxi -eq 0 ]
-	then
+	#if [ $dovexxi -eq 0 ]
+	#then
 		if [ ${#dtslist[@]} -gt 0 ]
 		then
 			diddownload=0
@@ -1998,7 +1999,7 @@ function getAllChoice()
 			getAdditional $missname "DriversTools"
 			endOfDownload
 		fi
-	fi
+	#fi
 	getMyPatches
 	if [ $patcnt -gt 0 ]
 	then
