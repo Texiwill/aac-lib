@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.0.7 - Fixed incorrect downloads based on non-entitlement
+
 6.0.6 - Remove some beta code and reset symdir variables after use
 
 6.0.5 - Update to Menu subsystem for lack of historical options

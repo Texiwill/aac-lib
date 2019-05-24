@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.0.6"
+VERSIONID="6.0.7"
 
 # args: stmt error
 function colorecho() {
@@ -1680,15 +1680,20 @@ function processCode()
 			uuId=${code[7]}
 		fi
 	else
-		# expand URL
-		for nx in `echo $ndata | sed 's/^\.//' | sed 's#/group/vmware/details##'`; do t=`echo $nx| cut -d= -f1`; s=`echo $nx|cut -d= -f2`; eval "$t=$s"; done
+		# expand URL 
+		if [ Z"$theHref" != Z"#\"" ]
+		then
+			for nx in `echo $theHref | sed 's/^\.//' | sed 's#/group/vmware/details##'`; do t=`echo $nx| cut -d= -f1`; s=`echo $nx|cut -d= -f2`; eval "$t=$s"; done
+		fi
 	fi
 	# createURL
 	dlURL=`grep downloadFilesURL $rcdir/_${missname}.xhtml|cut -d\" -f6`
-	if [ Z"$dlURL" != Z"" ]
+	if [ Z"$dlURL" != Z"" ] && [ Z"$theHref" != Z"#\"" ]
 	then
 		url="$dlURL&downloadGroupCode=${downloadGroup}&downloadFileId=${fileId}&uuId=${uuId}&hashKey=${secureParam}&productId=${productId}"
 	fi
+	debugecho "DEBUG: $theHref"
+	debugecho "DEBUG: $url"
 }
 
 function getSHAData()
@@ -2023,6 +2028,7 @@ function getAll()
 		#specReply=$longReply # packages always listed here
 		for x in $tpkgs
 		do
+			tdls=()
 			choice=$x
 			missname=$x
 			getMyDlgVersions 1
