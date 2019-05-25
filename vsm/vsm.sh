@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.0.7"
+VERSIONID="6.0.8"
 
 # args: stmt error
 function colorecho() {
@@ -1487,7 +1487,14 @@ function wgetMyVersion()
 		debugecho "DEBUG: ${layer[@]}"
 		nnr=$(($nr-2))
 		iname=${layer[$nnr]}
-		vurl=`echo $vurl | sed "s/$iname/$choice/"`
+		ichoice=$choice
+		echo $vurl | sed 's/\&/\n/g' | sed 's/?/\n/' |grep downloadGroup| cut -d= -f2 | grep - '-' >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			iname=`echo ${layer[$nnr]} | sed 's/_/-/g'`
+			ichoice=`echo $choice | sed 's/_/-/g'`
+		fi
+		vurl=`echo $vurl | sed "s/$iname/$ichoice/"`
 		mywget ${rcdir}/_${choice}.xhtml https://my.vmware.com${vurl}
 		missname=$choice
 	fi
