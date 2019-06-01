@@ -451,7 +451,7 @@ function oauth_login() {
 		# Login
 		bmctx=`wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location| grep bmctx= | tail -1|awk '{print $2}'`
 		#wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bmctx >& /dev/null
-		wget -O $cdir/auth.html $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $myvmware_oauth 2>&1 #| grep AUTH-ERR >& /dev/null
+		wget -O $cdir/auth.html $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $myvmware_oauth 2>&1 >& /dev/null #| grep AUTH-ERR >& /dev/null
 		grep 'Error' $cdir/auth.html >& /dev/null
        	oauth_err=$?
 		if [ $oauth_err -eq 1 ]
@@ -459,7 +459,7 @@ function oauth_login() {
 			# Do SAML request!
 			saml=`sed -n '/INPUT/,/"/p' $cdir/auth.html | sed 's/<INPUT TYPE="hidden" NAME="//' | sed 's/" VALUE//' | sed 's/\/>//'`
 			s_action=`grep ACTION $cdir/auth.html | sed 's/<FORM METHOD="POST" ACTION="//' |sed 's/">//'`
-			wget -O $cdir/sout.html $_PROGRESS_OPT --post-data="$saml" --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/scookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $myvmware_oauth" $s_action 2>&1 # now we are logged in
+			wget -O $cdir/sout.html $_PROGRESS_OPT --post-data="$saml" --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/scookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $myvmware_oauth" $s_action >& /dev/null # now we are logged in
 		fi
 		get_patch_cookies # now we have the proper cookies
 	fi
