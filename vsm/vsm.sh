@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.0.8"
+VERSIONID="6.0.9"
 
 # args: stmt error
 function colorecho() {
@@ -445,14 +445,23 @@ function oauth_login() {
 		# Get creds
 		oauth=`echo $auth | base64 --decode`
 		rd=(`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$oauth" 2>/dev/null|sed 's/%3A/ /'`)
-		pd="vmware=login&username=${rd[0]}&password=${rd[1]}"
+		#pd="vmware=login&username=${rd[0]}&password=${rd[1]}"
+		pd="username=${rd[0]}&password=${rd[1]}"
 
 		# Login
 		bmctx=`wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location| grep bmctx= | tail -1|awk '{print $2}'`
-		wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bmctx >& /dev/null
-		wget -O - $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $myvmware_oauth 2>&1 | grep AUTH-ERR >& /dev/null
+		#wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bmctx >& /dev/null
+		wget -O $cdir/auth.html $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $myvmware_oauth 2>&1 #| grep AUTH-ERR >& /dev/null
+		grep 'Error' $cdir/auth.html >& /dev/null
        	oauth_err=$?
-		get_patch_cookies
+		if [ $oauth_err -eq 1 ]
+		then
+			# Do SAML request!
+			saml=`sed -n '/INPUT/,/"/p' $cdir/auth.html | sed 's/<INPUT TYPE="hidden" NAME="//' | sed 's/" VALUE//' | sed 's/\/>//'`
+			s_action=`grep ACTION $cdir/auth.html | sed 's/<FORM METHOD="POST" ACTION="//' |sed 's/">//'`
+			wget -O $cdir/sout.html $_PROGRESS_OPT --post-data="$saml" --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/scookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $myvmware_oauth" $s_action 2>&1 # now we are logged in
+		fi
+		get_patch_cookies # now we have the proper cookies
 	fi
 }
 
@@ -1135,7 +1144,8 @@ oauth_err=0
 mydl_ref='https://my.vmware.com/group/vmware/downloads#tab1'
 mypatches_ref='https://my.vmware.com/group/vmware/patch'
 myvmware_login='https://my.vmware.com/web/vmware/login'
-myvmware_oauth='https://my.vmware.com/oam/server/auth_cred_submit'
+#myvmware_oauth='https://my.vmware.com/oam/server/auth_cred_submit'
+myvmware_oauth='https://auth.vmware.com/oam/server/auth_cred_submit?Auth-AppID=WMVMWR'
 oaua='Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
 ppr=''
 ppv=''
@@ -1349,7 +1359,7 @@ function colorMyPkgs()
 	then
 		useDlg=$2
 	fi
-	for x in $1
+	for x in $arr 
 	do
 		y=${tdls[$i]}
 		if [ ${#y} -lt 5 ] && [ $useDlg -eq 0 ]
@@ -1403,7 +1413,10 @@ function getMyDlgs()
 	xpkgs=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/_${specname}.xhtml 2>/dev/null | xmllint --html --xpath "(//tr[contains(@class,\"more-details\")])[$specReply]" - 2>/dev/null | grep downloadGroup | grep -v OSS  | cut -d\? -f 2 | cut -d \& -f 1 | cut -d= -f 2 | sed 's/-/_/g'`
 	# need to swing through xpkgs for exist vs not
 	colorMyPkgs "$xpkgs"
-	mark="Mark"
+	if [ ${#xpkgs} -gt 2 ]
+	then
+		mark="Mark"
+	fi
 	pkgs="All ${npkg[@]}"
 }
 
@@ -1545,11 +1558,12 @@ prevNr=0
 function getLayerPkgs()
 {
 	dojq=0
+	infiles=0
 	layers=''
 	mark=''
 	if [ $debugv -eq 1 ]
 	then
-		echo "DEBUG: ${layer[@]}"
+		echo "DEBUG: ${layer[@]} $prevNr"
 	fi
 	prevNr=$nr
 	nr=${#layer[@]}
@@ -1594,6 +1608,7 @@ function getLayerPkgs()
 				# no versions or not historical
 				if [ Z"$tver" = Z"" ] || [ $historical -ne 1 ]
 				then
+					infiles=1
 					getMyFiles 0
 				fi
 		elif [ $nr -eq 7 ]
@@ -1603,6 +1618,7 @@ function getLayerPkgs()
 			then
 				wgetMyVersion
 			fi
+			infiles=1
 			getMyFiles 0
 		fi
 	fi
@@ -1643,6 +1659,7 @@ function createMenu()
 					favorite="${pName}_${layer[4]}"
 					colorecho "Favorite: $favorite"
 					save_vsmrc
+					continue
 				fi
 				if [ $nr -eq 2 ]
 				then
@@ -1907,12 +1924,15 @@ function getSymdir()
 {
 	# used for fake symlinks, mostly UAG
 	symdir=''
-	_v=`echo $name | sed 's/[a-z-]\+-\([0-9]\.[0-9]\.[0-9]\).*/\1/' | sed 's/\.0$//' |sed 's/\.//g'`
-	case "$name" in
+	_v=`echo $choice | sed 's/[a-z-]\+-\([0-9]\.[0-9]\.[0-9]\).*/\1/' | sed 's/\.0$//' |sed 's/\.//g'`
+	case "$choice" in
 		euc-access-point*)
 			uag_test $_v
 			;;
 		euc-unified-access*)
+			uag_test $_v
+			;;
+		uagdeploy*)
 			uag_test $_v
 			;;
 	esac
@@ -1989,7 +2009,7 @@ function getAllChoice()
 	xloc=0
 	for x in $mpkgs
 	do
-		choice=$y
+		choice=$x
 		getFile
 		longReply=$(($longReply+1))
 		xloc=$(($xloc+1))
@@ -2184,6 +2204,7 @@ then
 	exit
 fi
 
+infiles=0
 # standard loop
 while [ 1 ]
 do
@@ -2199,8 +2220,8 @@ do
 	elif [ Z"$choice" = Z"DriversTools" ] || [ Z"$choice" = Z"CustomIso" ] || [ Z"$choice" = Z"Patches" ]
 	then
 		getTheFiles
-	elif [ $nr -eq 6 ] && [ $historical -eq 0 ]
-	then
+	elif [[ $nr -eq 6 && ( $historical -eq 0 ||  $infiles -eq 1 ) ]]
+	then 
 		getTheFiles
 	elif [ $nr -eq 7 ] 
 	then

@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.0.9 - Fixed My VMware login, VMware changed how they login
+
 6.0.8 - Fixed incorrect reference for download groups for historical
 
 6.0.7 - Fixed incorrect downloads based on non-entitlement
