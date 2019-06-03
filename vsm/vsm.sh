@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.0.9"
+VERSIONID="6.1.0"
 
 # args: stmt error
 function colorecho() {
@@ -2134,7 +2134,7 @@ function getDlgFile()
 function getDlg()
 {
 	# Get first item into array
-	dlgInfo=(`jq --arg s "$mydlg" '[.dlgList[] | select(.name | contains($s))][0]|.name,.target,.dlg,.parent' $rcdir/newlocs.json | sed 's/"//g'`)
+	dlgInfo=(`jq --arg s "$mydlg" '[.dlgList[] | select(.name | test($s))][0]|.name,.target,.dlg,.parent' $rcdir/newlocs.json | sed 's/"//g'`)
 	favorite=${dlgInfo[1]}
 	getFavPaths
 	pkg=`echo ${dlgInfo[3]}|awk -F[0-9] '{print $1}'`

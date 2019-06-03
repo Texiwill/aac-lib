@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.1.0 - Fixed --dlg regex issue
+
 6.0.9 - Fixed My VMware login, VMware changed how they login
 
 6.0.8 - Fixed incorrect reference for download groups for historical
