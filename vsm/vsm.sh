@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.1.0"
+VERSIONID="6.1.1"
 
 # args: stmt error
 function colorecho() {
@@ -1349,6 +1349,7 @@ function getMySuites()
 	fi
 }
 
+doColor=1
 function colorMyPkgs()
 {
 	arr=$1
@@ -1359,44 +1360,49 @@ function colorMyPkgs()
 	then
 		useDlg=$2
 	fi
-	for x in $arr 
-	do
-		y=${tdls[$i]}
-		if [ ${#y} -lt 5 ] && [ $useDlg -eq 0 ]
-		then
-			if [ ${#npkg[@]} -eq 0 ]
-			then
-				npkg=("${GRAY}${x}${NB}${NC}")
-			else
-				npkg+=("${GRAY}${x}${NB}${NC}")
-			fi
-		else
-			# we use _ for - in names on the filesystem
-			if [ $useDlg -eq 1 ]
-			then
-				fName="dlg_${x}"
-			else
-				fName="dlg_${whatever}/${x}"
-			fi
-			if [ ! -e "${repo}/$fName" ] && [ ! -e "${repo}/${fName}.gz" ]
+	if [ $doColor -eq 1 ]
+	then
+		for x in $arr 
+		do
+			y=${tdls[$i]}
+			if [ ${#y} -lt 5 ] && [ $useDlg -eq 0 ]
 			then
 				if [ ${#npkg[@]} -eq 0 ]
 				then
-					npkg=("${BOLD}${TEAL}${x}${NB}${NC}")
+					npkg=("${GRAY}${x}${NB}${NC}")
 				else
-					npkg+=("${BOLD}${TEAL}${x}${NB}${NC}")
+					npkg+=("${GRAY}${x}${NB}${NC}")
 				fi
 			else
-				if [ ${#npkg[@]} -eq 0 ]
+				# we use _ for - in names on the filesystem
+				if [ $useDlg -eq 1 ]
 				then
-					npkg=("$x")
+					fName="dlg_${x}"
 				else
-					npkg+=("$x")
+					fName="dlg_${whatever}/${x}"
+				fi
+				if [ ! -e "${repo}/$fName" ] && [ ! -e "${repo}/${fName}.gz" ]
+				then
+					if [ ${#npkg[@]} -eq 0 ]
+					then
+						npkg=("${BOLD}${TEAL}${x}${NB}${NC}")
+					else
+						npkg+=("${BOLD}${TEAL}${x}${NB}${NC}")
+					fi
+				else
+					if [ ${#npkg[@]} -eq 0 ]
+					then
+						npkg=("$x")
+					else
+						npkg+=("$x")
+					fi
 				fi
 			fi
-		fi
-		i=$(($i+1))
-	done
+			i=$(($i+1))
+		done
+	else
+		npkg=(${arr[@]})
+	fi
 }
 
 function getMyDlgs()
@@ -2133,6 +2139,9 @@ function getDlgFile()
 
 function getDlg()
 {
+	doColor=0
+	mydts=1
+	myoem=1
 	# Get first item into array
 	dlgInfo=(`jq --arg s "$mydlg" '[.dlgList[] | select(.name | test($s))][0]|.name,.target,.dlg,.parent' $rcdir/newlocs.json | sed 's/"//g'`)
 	favorite=${dlgInfo[1]}
@@ -2144,10 +2153,14 @@ function getDlg()
 	longreply=${lchoice[0]}
 	getMyDlgVersions 1
 	getMyFiles 1
+	createLayer
+	nr=${#layer[@]}
 	# now is it in this layer or 'additional'
 	if [ $choice != ${dlgInfo[3]} ]
 	then
 		choice=${dlgInfo[3]}
+		createLayer
+		nr=${#layer[@]}
 		missname=${choice}
 		wgetMyVersion
 		getMyFiles 1
@@ -2204,6 +2217,7 @@ then
 	exit
 fi
 
+doColor=1
 infiles=0
 # standard loop
 while [ 1 ]
