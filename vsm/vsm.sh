@@ -2213,6 +2213,8 @@ then
 		rebuild=0
 		getDlg
 		endOfDownload
+		# needed for aac-base scripts
+		echo "Local:$repo/dlg_${missname}{$eou}/$name"
 	fi
 	exit
 fi
