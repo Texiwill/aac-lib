@@ -2132,8 +2132,8 @@ function getDlgFile()
 {
 	longReply=`echo $xpkgs | sed 's/ /\n/g' |grep -n ${dlgInfo[0]}|cut -d: -f1`
 	choice="${dlgInfo[0]}" # filename to get
-	longReply=$(($longReply+1))
 	xloc=$(($longReply-1))
+	longReply=$(($longReply+1))
 	downloadFile
 }
 
@@ -2214,7 +2214,7 @@ then
 		getDlg
 		endOfDownload
 		# needed for aac-base scripts
-		echo "Local:$repo/dlg_${dlgInfo[3]}${eou}/$name"
+		echo "Local:$repo/dlg_${missname}/$name"
 	fi
 	exit
 fi
