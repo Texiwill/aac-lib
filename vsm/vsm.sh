@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.1.1"
+VERSIONID="6.1.2"
 
 # args: stmt error
 function colorecho() {
@@ -1131,7 +1131,7 @@ then
 	fi
 	if [ -e $rcdir/newlocs.json ]
 	then
-		jq --arg s "$mydlg" '.dlgList[] | select(.name | contains($s)).name' $rcdir/newlocs.json | sed 's/"//g'
+		jq --arg s "$mydlg" '.dlgList[] | select(.name | test($s)).name' $rcdir/newlocs.json | sed 's/"//g'
 	fi
 	exit
 fi
@@ -2214,7 +2214,7 @@ then
 		getDlg
 		endOfDownload
 		# needed for aac-base scripts
-		echo "Local:$repo/dlg_${missname}/$name"
+		echo "Local:$repo/dlg_${dlgInfo[3]}${eou}/$name"
 	fi
 	exit
 fi

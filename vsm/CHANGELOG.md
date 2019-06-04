@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.1.2 - Applied same fix to --dlgl
+
 6.1.1 - Fixed --dlg download issue
 
 6.1.0 - Fixed --dlg regex issue
