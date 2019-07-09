@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.1.2"
+VERSIONID="6.1.3"
 
 # args: stmt error
 function colorecho() {
@@ -252,7 +252,7 @@ function mywget() {
 		debugecho "Real Pcookies"
 		ua=$oaua
 		ck='pcookies.txt'
-		hd="--header='Referer: $mypatches_ref'" 
+		hd="--progress=bar:force --header='Referer: $mypatches_ref'" 
 	fi
 	if [ $debugv -ge 2 ]
 	then
@@ -449,7 +449,7 @@ function oauth_login() {
 		pd="username=${rd[0]}&password=${rd[1]}"
 
 		# Login
-		bmctx=`wget $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location| grep bmctx= | tail -1|awk '{print $2}'`
+		bmctx=`wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location| grep bmctx= | tail -1|awk '{print $2}'`
 		#wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bmctx >& /dev/null
 		wget -O $cdir/auth.html $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $myvmware_oauth 2>&1 >& /dev/null #| grep AUTH-ERR >& /dev/null
 		grep 'Error' $cdir/auth.html >& /dev/null
@@ -554,6 +554,7 @@ function download_patches() {
 						fi
 						# just in case we are not at beginning of line
 						echo ""
+						echo "Downloading $name to `pwd`:"
 						mywget $name "$px" 'pcookies' 1
 						if [ $doshacheck -eq 1 ]
 						then
@@ -1472,7 +1473,8 @@ function getTabcOne()
 			fi
 		fi
 	fi
-	tdls=(`echo $xdata | xmllint --html --xpath '//a[@class="md"]' - 2>/dev/null | sed 's/<a/\n<a/g' | grep md | sed 's/ //g' | cut -d\" -f4- | cut -d\> -f1|sed "s/''/#/g"`)
+	tdls=(`echo $xdata | xmllint --html --xpath '//a[@class="md"]' - 2>/dev/null | sed 's/<a/\n<a/g' | grep md | sed 's/<a//' | sed 's/class="md"//' | sed 's/ //g' | cut -d\" -f2- | cut -d\> -f1|sed "s/''/#/g"`)
+	#sed 's/<a/\n<a/g' | grep md | sed 's/ //g' | cut -d\" -f4- | cut -d\> -f1|sed "s/''/#/g"`)
 }
 
 function getMyPatches()
@@ -1686,6 +1688,7 @@ function processCode()
 	##
 	# This extracts the 'parameters' we can use to perform a download
 	theHref=${tdls[$xloc]}
+	isdlurl=0
 	#echo "PC: $theHref"
 	code=(`echo $theHref | sed 's/"/\n/g' | egrep 'getDownload|checkEulaAndPerform' | head -1 | cut -d\( -f 2 | cut -d\) -f 1 | sed "s/'//g" | sed 's/,/ /g' | sed 's/  / /g'`)
 	if [ ${#code[@]} -ne 0 ]
@@ -1711,14 +1714,20 @@ function processCode()
 		fi
 	else
 		# expand URL 
+		echo $theHref | grep ^http >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			isdlurl=1
+			theHref=`echo "$theHref" | sed 's/"/" /' | sed 's/^/url="/'`
+		fi
 		if [ Z"$theHref" != Z"#\"" ]
 		then
-			for nx in `echo $theHref | sed 's/^\.//' | sed 's#/group/vmware/details##'`; do t=`echo $nx| cut -d= -f1`; s=`echo $nx|cut -d= -f2`; eval "$t=$s"; done
+			for nx in `echo $theHref | sed 's/^\.//' | sed 's#/group/vmware/details##'`; do t=`echo $nx| cut -d= -f1`; s=`echo $nx| cut -d= -f2-`; eval "$t=$s"; done
 		fi
 	fi
 	# createURL
 	dlURL=`grep downloadFilesURL $rcdir/_${missname}.xhtml|cut -d\" -f6`
-	if [ Z"$dlURL" != Z"" ] && [ Z"$theHref" != Z"#\"" ]
+	if [ Z"$dlURL" != Z"" ] && [ Z"$theHref" != Z"#\"" ] && [ $isdlurl -eq 0 ]
 	then
 		url="$dlURL&downloadGroupCode=${downloadGroup}&downloadFileId=${fileId}&uuId=${uuId}&hashKey=${secureParam}&productId=${productId}"
 	fi
@@ -1809,7 +1818,13 @@ function writeJSON()
 function getPreUrl()
 {
 	xurl=$1
-	lurl=`wget -O - --load-cookies $cdir/$ck --header="User-Agent: $ua" $xurl 2>&1 | grep downloadUrl | cut -d\" -f4`
+	# sometimes there is no preUrl
+	if [ $isdlurl -eq 0 ]
+	then
+		lurl=`wget -O - --load-cookies $cdir/$ck --header="User-Agent: $ua" $xurl 2>&1 | grep downloadUrl | cut -d\" -f4`
+	else
+		lurl=$xurl
+	fi
 }
 
 function downloadFile()
