@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.1.3"
+VERSIONID="6.1.4"
 
 # args: stmt error
 function colorecho() {
@@ -243,10 +243,11 @@ function mywget() {
 		fi
 	fi
 	debugecho "cookies"
-	if [ $myoauth -eq 1 ] || [ Z"$hd" = Z"pcookies" ] && [ $need_login -ne 0 ]
-	then
+	## should always try
+	#if [ $myoauth -eq 1 ] || [ Z"$hd" = Z"pcookies" ] && [ $need_login -ne 0 ]
+	#then
 		oauth_login 0
-	fi
+	#fi
 	if [ Z"$hd" = Z"pcookies" ]
 	then
 		debugecho "Real Pcookies"
@@ -978,6 +979,7 @@ myq=0
 dodlglist=0
 doignore=0
 rebuild=0
+dlgroup=''
 # onscreen colors
 RED=`tput setaf 1`
 PURPLE=`tput setaf 5`
@@ -999,7 +1001,7 @@ fi
 # import values from .vsmrc
 load_vsmrc
 
-while [[ $# -gt 0 ]]; do key="$1"; case "$key" in -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --rebuild) rebuild=1 ;; *) usage ;; esac; shift; done
+while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --dlgroup) dlgroup=$2; shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --rebuild) rebuild=1 ;; *) usage ;; esac; shift; done
 
 if [ $myquiet -eq 1 ] && [ $myq -eq 0 ]
 then
@@ -1760,9 +1762,12 @@ function getSHAData()
 function getVSMData()
 {
 	url=''
-	lr=$(($longReply-1))
-	data=`xmllint --html --xpath "(//td[@class=\"filename\"])[$lr]" $rcdir/_${missname}.xhtml 2>/dev/null`
-	name=`echo $data | xmllint --html --xpath '//span[@class="fileNameHolder"]/text()' - | sed 's/ //g'`
+	if [ Z"$dlgroup" = Z"" ]
+	then
+		lr=$(($longReply-1))
+		data=`xmllint --html --xpath "(//td[@class=\"filename\"])[$lr]" $rcdir/_${missname}.xhtml 2>/dev/null`
+		name=`echo $data | xmllint --html --xpath '//span[@class="fileNameHolder"]/text()' - | sed 's/ //g'`
+	fi
 	debugecho "DEBUG: $lr $name ${xpkgs[$lr]}"
 }
 
@@ -2231,6 +2236,32 @@ then
 		# needed for aac-base scripts
 		echo "Local:$repo/dlg_${dlgInfo[3]}${eou}/$name"
 	fi
+	exit
+fi
+
+if [ Z"$dlgroup" != Z"" ] && [ $dovexxi -eq 1 ]
+then
+	# limited to JUST the download group, no Additional/CustomISO, etc.
+	choice=$dlgroup
+	mywget ${rcdir}/_${choice}.xhtml https://my.vmware.com/group/vmware/get-download?downloadGroup=$choice
+	missname=${choice}
+	getSymdir
+	gotodir ${choice} "base"
+	xpkgs=`grep textBlack ${rcdir}/_${choice}.xhtml | xmllint --html --xpath 'string(//strong)' - 2>/dev/null| awk '{print $1}'`
+	count=1
+	for x in $xpkgs
+	do
+		((count++))
+		data=`xmllint --html --xpath "//div[@id=\"content_21\"]//tr[$count]" ${rcdir}/_${choice}.xhtml 2>/dev/null`
+		infoText=`echo "$data" | xmllint --html --xpath '//td[@class="info_Text"]/text()' - 2>/dev/null`
+		if [ Z"$infoText" != Z"" ]
+		then
+			name=$x
+			xloc=0
+			tdls=(`echo "$data" | xmllint --html --xpath '//a[@class="md"]' - 2>/dev/null | sed 's/<a/\n<a/g' | grep md | sed 's/<a//' | sed 's/class="md"//' | sed 's/ //g' | cut -d\" -f2- | cut -d\> -f1|sed "s/''/#/g"`)
+			downloadFile
+		fi
+	done
 	exit
 fi
 
