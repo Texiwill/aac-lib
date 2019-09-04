@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.1.4"
+VERSIONID="6.1.5"
 
 # args: stmt error
 function colorecho() {
@@ -1186,7 +1186,7 @@ then
 		exit;
 	fi
 
-	mywget ${rcdir}/_j_downloads.xhtml $tab2url
+	mywget ${rcdir}/_j_downloads.xhtml $tab2url "--post-data=''"
 
 	if [ ! -e ${rcdir}/_j_downloads.xhtml ]
 	then

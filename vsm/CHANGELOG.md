@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.1.5 - Slight change due to My VMware change
+
 6.1.4 - Added a new way to parse certain data files
 
 6.1.3 - Fix for direct downloads such as Horizon Clients
