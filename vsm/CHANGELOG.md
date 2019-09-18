@@ -11,6 +11,9 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.1.6 - Fix for double digit minor version like Horizon 7.10 and version check 
+	for upgrades.
+
 6.1.5 - Slight change due to My VMware change
 
 6.1.4 - Added a new way to parse certain data files

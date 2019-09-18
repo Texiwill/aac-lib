@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.1.5"
+VERSIONID="6.1.6"
 
 # args: stmt error
 function colorecho() {
@@ -222,7 +222,6 @@ function getJSON()
 	fi
 }
 
-
 function mywget() {
 	ou=$1
 	hr=$2
@@ -300,6 +299,18 @@ function mywget() {
 		wgeterror $err
 	fi
 }
+
+function checkForUpdate()
+{
+	oVer=`echo $VERSIONID | sed 's/\.//g'`
+	nVer=`wget -O - https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh 2>/dev/null|grep VERSIONID | head -1 | sed 's/\.//g'| sed 's/VERSIONID=//'|sed 's/\"//g'`
+	if [ $nVer -gt $oVer ]
+	then
+		colorecho "Upgrade needed!" 1
+		exit
+	fi
+}
+
 
 function load_vsmrc() {
 	if [ -e $HOME/.vsmrc ]
@@ -997,6 +1008,8 @@ then
 	colorecho "VSM cannot run as root." 1
 	exit
 fi
+
+checkForUpdate
 
 # import values from .vsmrc
 load_vsmrc
@@ -2097,7 +2110,7 @@ function getAll()
 function getFavPaths()
 {
 	# path version Grouping
-	favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]_[0-9x]\|[0-9]\+\)_\(.*\)/\1 \2 \3/i'`)
+	favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]_[0-9x]\+\|[0-9]\+\)_\(.*\)/\1 \2 \3/i'`)
 	# Get First Path Entry (productCategory)
 	pc=-1
 	for x in `jq ".productCategoryList[].name" _j_downloads.xhtml|sed 's/ /_/g'`
