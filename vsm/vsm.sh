@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.1.6"
+VERSIONID="6.2.0"
 
 # args: stmt error
 function colorecho() {
@@ -51,14 +51,16 @@ function shaecho() {
 	shafail=''
 }
 
+credfile=.credstore
+credname="My VMware"
 function handlecredstore ()
 {
 	# if we say to no store then remove!
 	if [ $nostore -eq 1 ] || [ $cleanall -eq 1 ]
 	then
-		if [ -e .credstore ]
+		if [ -e $credfile ]
 		then
-			rm .credstore
+			rm $credfile
 		fi
 		if [ -e $HOME/.vsm/.key ]
 		then
@@ -84,30 +86,30 @@ function handlecredstore ()
 		then
         	openssl rand -base64 64 | tr '\n' ':' > $HOME/.vsm/.key
         	k=`cat $HOME/.vsm/.key`
-			if [ -e .credstore ]
+			if [ -e $credfile ]
 			then
         		# 1st time so recreate credstore
-				auth=`cat .credstore`
-        		echo -n $auth | openssl enc $pbkdf2 -aes-256-cbc -k "$k" -a -salt -base64 > .credstore
+				auth=`cat $credfile`
+        		echo -n $auth | openssl enc $pbkdf2 -aes-256-cbc -k "$k" -a -salt -base64 > $credfile
 			fi
 		fi
-		if [ -e .credstore ]
+		if [ -e $credfile ]
 		then
-			chmod 600 .credstore
+			chmod 600 $credfile
 		fi
 		chmod 600 $HOME/.vsm/.key
 		k=`cat $HOME/.vsm/.key`
 
-		if [ ! -e .credstore ] || [ $nostore -eq 1 ]
+		if [ ! -e $credfile ] || [ $nostore -eq 1 ]
 		then
 			if [ Z"$username" = Z"" ]
 			then
-				echo -n "Enter My VMware Username: "
+				echo -n "Enter $credname Username: "
 				read username
 			fi
 			if [ Z"$password" = Z"" ]
 			then
-				echo -n "Enter My VMware Password: "
+				echo -n "Enter $credname Password: "
 				read -s password
 			fi
 		
@@ -115,8 +117,8 @@ function handlecredstore ()
 			if [ $nostore -eq 0 ]
 			then
 				# handle storing 'Basic Auth' for reuse
-        		echo -n $auth | openssl enc $pbkdf2 -aes-256-cbc -k $k -a -salt -base64 > .credstore
-				chmod 600 .credstore
+        		echo -n $auth | openssl enc $pbkdf2 -aes-256-cbc -k $k -a -salt -base64 > $credfile
+				chmod 600 $credfile
 			fi
 			if [ $noheader -eq 0 ]
 			then
@@ -133,7 +135,7 @@ function handlecredstore ()
 					echo '0'
 				fi
 			fi
-			auth=`openssl enc $pbkdf2 -aes-256-cbc -d -in .credstore -base64 -salt -k $k`
+			auth=`openssl enc $pbkdf2 -aes-256-cbc -d -in $credfile -base64 -salt -k $k`
 		fi
 	fi
 }
@@ -167,31 +169,41 @@ progressfilt ()
 
 function wgeterror() {
 	err=$1
+	fname=$2
 	debugecho "wget: $err"
 	case "$err" in
 	1) 
-		colorecho "Generic Error Getting $name" 1
+		if [ $debugv -eq 1 ]
+		then
+			echo ""
+		fi
+		colorecho "Generic Error Getting $fname" 1
+		if [ $debugv -eq 1 ]
+		then
+			colorecho "$addHref"
+			colorecho "wget $_PROGRESS_OPT $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr"
+		fi
 		;;
 	2)
-		colorecho "Parse Error Getting $name" 1
+		colorecho "Parse Error Getting $fname" 1
 		;;
 	3)
-		colorecho "File Error: $name (disk full, etc.)" 1
+		colorecho "File Error: $fname (disk full, etc.)" 1
 		;;
 	4)
-		colorecho "Network Error Getting $name" 1
+		colorecho "Network Error Getting $fname" 1
 		;;
 	5)
-		colorecho "SSL Error Getting $name" 1
+		colorecho "SSL Error Getting $fname" 1
 		;;
 	6)
-		colorecho "Credential Error Getting $name" 1
+		colorecho "Credential Error Getting $fname" 1
 		;;
 	7)
-		colorecho "Protocol Error Getting $name" 1
+		colorecho "Protocol Error Getting $fname" 1
 		;;
 	8)
-		colorecho "Server Error Getting $name" 1
+		colorecho "Server Error Getting $fname" 1
 		;;
 	esac
 }
@@ -227,6 +239,7 @@ function mywget() {
 	hr=$2
 	hd=$3
 	err=0
+	fname=$1
 	wgprogress=$doprogress
 	if [ Z"$1" != Z" " ]
 	then
@@ -247,12 +260,25 @@ function mywget() {
 	#then
 		oauth_login 0
 	#fi
+	dopost=0
+	newck=0
 	if [ Z"$hd" = Z"pcookies" ]
 	then
 		debugecho "Real Pcookies"
 		ua=$oaua
 		ck='pcookies.txt'
 		hd="--progress=bar:force --header='Referer: $mypatches_ref'" 
+		newck=1
+	fi
+	if [ Z"$hd" = Z"vacookies" ]
+	then
+		debugecho "vExpert cookies"
+		ua=$oaua
+		ck='vacookies.txt'
+		pd="dlfile=$dlfile"
+		hd="--header='Referer: $vex_ref' --no-check-certificate --post-data=$pd"
+		dopost=1
+		newck=1
 	fi
 	if [ $debugv -ge 2 ]
 	then
@@ -294,9 +320,9 @@ function mywget() {
 			err=$?
 		fi
 	fi
-	if [ Z"$ck" != Z"pcookies.txt" ]
+	if [ $newck -eq 0 ] 
 	then
-		wgeterror $err
+		wgeterror $err $fname
 	fi
 }
 
@@ -384,11 +410,24 @@ function shacheck_file() {
 	then
 		shadownload=1
 		echo -n "$fn: check "
-		if [ Z"$sha" = Z"sha256sum" ]
+		if [ $shavexdl -eq 1 ]
 		then
-			chk=`sha256sum $fn|cut -d' ' -f 1`
+			debugecho "gunzip $fn"
+			# special for vExpert DL as its possibly already compressed
+			if [ Z"$sha" = Z"sha256sum" ]
+			then
+				chk=`gunzip -c $fn | sha256sum |cut -d' ' -f 1`
+			else
+				chk=`gunzip -c $fn | sha1sum |cut -d' ' -f 1`
+			fi
 		else
-			chk=`sha1sum $fn|cut -d' ' -f 1`
+			debugecho "no gunzip $fn"
+			if [ Z"$sha" = Z"sha256sum" ]
+			then
+				chk=`sha256sum $fn|cut -d' ' -f 1`
+			else
+				chk=`sha1sum $fn|cut -d' ' -f 1`
+			fi
 		fi
 		if [ Z"$chk" != Z"$sha256" ]
 		then
@@ -442,6 +481,40 @@ function get_patch_cookies()
 	then
 		rm -f $rcdir/_*patch*.xhtml >& /dev/null
 		get_patch_list
+	fi
+}
+
+function vexpert_login() {
+	if [ $dovexxi -eq 1 ]
+	then
+		o_credfile=$credfile
+		o_credname=$credname
+		o_auth=$auth
+		credname="vExpert"
+		credfile=.vex_credstore
+		handlecredstore
+		vauth=$auth
+
+		csrf_token=`wget -O - $_PROGRESS_OPT --no-check-certificate --save-headers --cookies=on --save-cookies $cdir/vcookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $vex_login 2>&1 | grep csrf_token | cut -d\" -f6`
+		vex_auth=`echo $vauth | base64 --decode`
+		rd=(`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$vex_auth" 2>/dev/null|sed 's/%3A/ /'`)
+		vd="csrf_token="$csrf_token"&login_email=${rd[0]}&login_password=${rd[1]}"
+		wget -O $cdir/vex_auth.html $_PROGRESS_OPT --no-check-certificate --post-data="$vd" --save-headers --cookies=on --load-cookies $cdir/vcookies.txt --save-cookies $cdir/vacookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $vex_login" $vex_login >& /dev/null #| grep AUTH-ERR >& /dev/null
+		grep 'Error' $cdir/vex_auth.html >& /dev/null
+       	vex_err=$?
+		if [ $vex_err -eq 0 ]
+		then
+			colorecho "Incorrect vExpert Credentials" 0
+			exit
+		fi
+
+		# now get the list of available downloads
+		wget -O - $_PROGRESS_OPT --no-check-certificate --load-cookies $cdir/vacookies.txt --header="User-Agent: $oaua" --header="Referer: $vex_login" $vex_ref 2>&1 | grep data-file | cut -d\" -f6 > $rcdir/_vex_files.txt
+
+		# reset settings for other use
+		credfile=$o_credfile
+		credname=$o_credname
+		auth=$o_auth
 	fi
 }
 
@@ -1162,6 +1235,8 @@ mypatches_ref='https://my.vmware.com/group/vmware/patch'
 myvmware_login='https://my.vmware.com/web/vmware/login'
 #myvmware_oauth='https://my.vmware.com/oam/server/auth_cred_submit'
 myvmware_oauth='https://auth.vmware.com/oam/server/auth_cred_submit?Auth-AppID=WMVMWR'
+vex_login='https://vexpert.vmware.com/login'
+vex_ref='https://vexpert.vmware.com/my/downloads/'
 oaua='Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
 ppr=''
 ppv=''
@@ -1219,6 +1294,9 @@ fi
 
 # save a copy of the .vsmrc and continue
 save_vsmrc
+
+# Login to vexpert.vmware.com
+vexpert_login
 
 # start of history
 myvmware_root="https://my.vmware.com/group/vmware/"
@@ -1366,6 +1444,31 @@ function getMySuites()
 }
 
 doColor=1
+function colorMyPkgsFound()
+{
+	if [ $useDlg -eq 1 ]
+	then
+		fName="dlg_${x}"
+	else
+		fName="dlg_${whatever}/${x}"
+	fi
+	if [ ! -e "${repo}/$fName" ] && [ ! -e "${repo}/${fName}.gz" ]
+	then
+		if [ ${#npkg[@]} -eq 0 ]
+		then
+			npkg=("${BOLD}${TEAL}${x}${NB}${NC}")
+		else
+			npkg+=("${BOLD}${TEAL}${x}${NB}${NC}")
+		fi
+	else
+		if [ ${#npkg[@]} -eq 0 ]
+		then
+			npkg=("$x")
+		else
+			npkg+=("$x")
+		fi
+	fi
+}
 function colorMyPkgs()
 {
 	arr=$1
@@ -1383,36 +1486,29 @@ function colorMyPkgs()
 			y=${tdls[$i]}
 			if [ ${#y} -lt 5 ] && [ $useDlg -eq 0 ]
 			then
-				if [ ${#npkg[@]} -eq 0 ]
+				vexit=0
+				if [ $dovexxi -eq 1 ]
 				then
-					npkg=("${GRAY}${x}${NB}${NC}")
+					grep ${x} $rcdir/_vex_files.txt >& /dev/null
+					if [ $? -eq 0 ]
+					then
+						vexit=1
+					fi
+				fi
+				if [ $vexit -eq 0 ]
+				then
+					if [ ${#npkg[@]} -eq 0 ]
+					then
+						npkg=("${GRAY}${x}${NB}${NC}")
+					else
+						npkg+=("${GRAY}${x}${NB}${NC}")
+					fi
 				else
-					npkg+=("${GRAY}${x}${NB}${NC}")
+					# really should check for existence 
+					colorMyPkgsFound
 				fi
 			else
-				# we use _ for - in names on the filesystem
-				if [ $useDlg -eq 1 ]
-				then
-					fName="dlg_${x}"
-				else
-					fName="dlg_${whatever}/${x}"
-				fi
-				if [ ! -e "${repo}/$fName" ] && [ ! -e "${repo}/${fName}.gz" ]
-				then
-					if [ ${#npkg[@]} -eq 0 ]
-					then
-						npkg=("${BOLD}${TEAL}${x}${NB}${NC}")
-					else
-						npkg+=("${BOLD}${TEAL}${x}${NB}${NC}")
-					fi
-				else
-					if [ ${#npkg[@]} -eq 0 ]
-					then
-						npkg=("$x")
-					else
-						npkg+=("$x")
-					fi
-				fi
+				colorMyPkgsFound
 			fi
 			i=$(($i+1))
 		done
@@ -1845,9 +1941,12 @@ function getPreUrl()
 	fi
 }
 
+shavexdl=0
 function downloadFile()
 {
 	# simplified getvsm
+	dlfile=''
+	shavexdl=0
 	getVSMData
 	if [ ${#name} -ne 0 ]
 	then
@@ -1882,6 +1981,28 @@ function downloadFile()
 						fi
 					fi
 					diddownload=1
+				else
+					if [ $dovexxi -eq 1 ]
+					then
+						dlfile=`grep ${name} $rcdir/_vex_files.txt | head -1`
+						if [ Z"$dlfile" != Z"" ]
+						then
+							vname=`basename $dlfile`
+							echo "Downloading $name to `pwd`:"
+							mywget $vname $vex_ref 'vacookies' 1
+							# error here
+							if [ $doshacheck -eq 1 ]
+							then
+								shadownload=1
+								if [ Z"$name" != Z"$vname" ]
+								then
+									shavexdl=1
+								fi
+								shacheck_file $name
+							fi
+							diddownload=1
+						fi
+					fi
 				fi
 			fi
 		fi
@@ -1900,7 +2021,7 @@ function getAdditionalDlg()
 	debugecho "gotodir => `pwd`"
 	# may be _ or -
 	x=`echo $missname | sed 's/_/[_-]/g'`
-	addHref=`egrep "$x" $rcdir/_${omissname}.xhtml | grep href | sed 's/"buttoncol"//'|cut -d\" -f2`
+	addHref=`egrep "=${x}&" $rcdir/_${omissname}.xhtml | grep href | sed 's/"buttoncol"//'|cut -d\" -f2 | grep -v OSS`
 	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
 	then
 		if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
@@ -2110,7 +2231,7 @@ function getAll()
 function getFavPaths()
 {
 	# path version Grouping
-	favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]_[0-9x]\+\|[0-9]\+\)_\(.*\)/\1 \2 \3/i'`)
+	favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]\+_[0-9x]\+\|[0-9]\+\)_\(.*\)/\1 \2 \3/i'`)
 	# Get First Path Entry (productCategory)
 	pc=-1
 	for x in `jq ".productCategoryList[].name" _j_downloads.xhtml|sed 's/ /_/g'`
