@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.2.1 - Several bug fixes in menus for improved vExpert mode and vExpert.md
+
 6.2.0 - Check for new versions. Added vExpert support
 
 6.1.6 - Fix for double digit minor version like Horizon 7.10 and version check 

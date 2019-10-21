@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.2.0"
+VERSIONID="6.2.1"
 
 # args: stmt error
 function colorecho() {
@@ -90,17 +90,17 @@ function handlecredstore ()
 			then
         		# 1st time so recreate credstore
 				auth=`cat $credfile`
-        		echo -n $auth | openssl enc $pbkdf2 -aes-256-cbc -k "$k" -a -salt -base64 > $credfile
+        		echo -n $auth | openssl enc $pbkdf2 -aes-256-cbc -k "$k" -a -salt -base64 > $cdir/$credfile
 			fi
 		fi
-		if [ -e $credfile ]
+		if [ -e $cdir/$credfile ]
 		then
-			chmod 600 $credfile
+			chmod 600 $cdir/$credfile
 		fi
 		chmod 600 $HOME/.vsm/.key
 		k=`cat $HOME/.vsm/.key`
 
-		if [ ! -e $credfile ] || [ $nostore -eq 1 ]
+		if [ ! -e $cdir/$credfile ] || [ $nostore -eq 1 ]
 		then
 			if [ Z"$username" = Z"" ]
 			then
@@ -117,8 +117,8 @@ function handlecredstore ()
 			if [ $nostore -eq 0 ]
 			then
 				# handle storing 'Basic Auth' for reuse
-        		echo -n $auth | openssl enc $pbkdf2 -aes-256-cbc -k $k -a -salt -base64 > $credfile
-				chmod 600 $credfile
+        		echo -n $auth | openssl enc $pbkdf2 -aes-256-cbc -k $k -a -salt -base64 > $cdir/$credfile
+				chmod 600 $cdir/$credfile
 			fi
 			if [ $noheader -eq 0 ]
 			then
@@ -135,7 +135,7 @@ function handlecredstore ()
 					echo '0'
 				fi
 			fi
-			auth=`openssl enc $pbkdf2 -aes-256-cbc -d -in $credfile -base64 -salt -k $k`
+			auth=`openssl enc $pbkdf2 -aes-256-cbc -d -in $cdir/$credfile -base64 -salt -k $k`
 		fi
 	fi
 }
@@ -1175,6 +1175,11 @@ handlecredstore
 # remove all and clean up
 if [ $cleanall -eq 1 ]
 then
+	# vExpert handled a bit later
+	if [ -e $cdir/.vex_credstore ]
+	then
+		rm $cdir/.vex_credstore
+	fi
 	colorecho "Removed all Temporary Files"
 	exit
 fi
@@ -1987,6 +1992,7 @@ function downloadFile()
 						dlfile=`grep ${name} $rcdir/_vex_files.txt | head -1`
 						if [ Z"$dlfile" != Z"" ]
 						then
+							o_ck=$ck
 							vname=`basename $dlfile`
 							echo "Downloading $name to `pwd`:"
 							mywget $vname $vex_ref 'vacookies' 1
@@ -2001,6 +2007,7 @@ function downloadFile()
 								shacheck_file $name
 							fi
 							diddownload=1
+							ck=$o_ck
 						fi
 					fi
 				fi

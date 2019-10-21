@@ -20,6 +20,8 @@ cleaner. Furthermore, common options have been removed, see notes below.
 Also, you should know that Code Stream is a license ontop of VRA, and
 VRA is already in LinuxVSM.
 
+To use vExpert mode read <a href=https://github.com/Texiwill/aac-lib/blob/master/vsm/vExpert.md>vExpert.md</a>.
+
 Here is an example run and help:
 ```
 $ vsm.sh --help
@@ -244,7 +246,7 @@ For example to set the time zone for London UK use:
 
 For example to automatically pick up the time zone use:
 ```
-	./install.sh `timedatectl status | grep "zone" | sed -e 's/^[ ]*Time zone: \(.*\) (.*)$/\1/g'`
+	./install.sh `timedatectl status | grep "zone" | sed -e 's/^[ ]*Time zone: \(.*\) (.*)$/\1/g' | head -1`
 ```
 
 ### Update
@@ -325,8 +327,8 @@ the DNS server you are working is not working correctly.
 
   * RHEL 6/7, Centos 6/7, Fedora 14/19
   * Debian 9.x, Ubuntu 17.10 (or higher)
-  * MacOS High Siera, MacOS Mojave
-  * Embedded Ubuntu within Windows 10 (community tested - @magneet_nl)
+  * MacOS High Siera (at least)
+  * Microsoft WSL - Embedded Ubuntu within Windows (community tested - @magneet_nl)
   * ArchLinux (community tested - @WikiITWizard)
 
 * I cannot download a package, says not found or nothing appears
