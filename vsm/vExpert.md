@@ -11,7 +11,8 @@ Linux Version of VMware Software Manager (vExpert Usage)
 VMware vExperts now have a tool they can use to download their entitled
 packages in full. To do so, you need two logins: My VMware & vExpert Portal.
 
-And a new option: --vexpertx
+And a new option: --vexpertx, that gets stored in your $HOME/.vsmrc file
+so no need to reuse it every time.
 
 With these two logins and the appropriate flag certain files will be
 made available to any vExpert. Note, this is not all files. These files
