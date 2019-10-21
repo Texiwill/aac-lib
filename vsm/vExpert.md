@@ -9,9 +9,7 @@ Linux Version of VMware Software Manager (vExpert Usage)
 ### Notes
 
 VMware vExperts now have a tool they can use to download their entitled
-packages in full. To do so, you need two logins:
-	- My VMware
-	- vExpert Portal
+packages in full. To do so, you need two logins: My VMware & vExpert Portal.
 
 And a new option: --vexpertx
 
@@ -28,12 +26,12 @@ the tool as many times as you want. However a --clean will remove those
 files as well as anything else temporary.
 
 The vExpert bits work by first checking for correct login for the vExpert
-Portal and if it finds a unentitled file in My VMware fill that in with
-an available vExpert Portal file it finds. So in essence, it goes to My
-VMware first then to the vExpert Portal in a seamless fashion. When
-you run LinuxVSM I strongly suggest using the -mr option to ensure your
-temporary files are refreshed every run, else your available files will
-be out of date.
+Portal and if it finds an unentitled file in My VMware LinuxVSM will
+fill that in with an available vExpert Portal file it finds. So in
+essence, it goes to My VMware first then to the vExpert Portal in a
+seamless fashion. When you run LinuxVSM I strongly suggest using the
+-mr option to ensure your temporary files are refreshed every run,
+else your available files will be out of date.
 
 The vExpert Portal itself uses LinuxVSM to create the directory structure
 presented so it is as complete as My VMware. The vExpert Portal does
