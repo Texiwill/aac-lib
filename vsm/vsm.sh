@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.2.1"
+VERSIONID="6.2.2"
 
 # args: stmt error
 function colorecho() {
@@ -262,6 +262,7 @@ function mywget() {
 	#fi
 	dopost=0
 	newck=0
+	findCk # okay, cookies change with vExpert, so reset, then check
 	if [ Z"$hd" = Z"pcookies" ]
 	then
 		debugecho "Real Pcookies"
@@ -1264,7 +1265,7 @@ then
 	if [ $noheader -eq 0 ]; then colorecho "	Patches:	1"; fi
 fi
 
-findCk # really only need to do this once per run
+findCk
 if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
 then
 	# Get JSON
@@ -1992,7 +1993,6 @@ function downloadFile()
 						dlfile=`grep ${name} $rcdir/_vex_files.txt | head -1`
 						if [ Z"$dlfile" != Z"" ]
 						then
-							o_ck=$ck
 							vname=`basename $dlfile`
 							echo "Downloading $name to `pwd`:"
 							mywget $vname $vex_ref 'vacookies' 1
@@ -2007,7 +2007,6 @@ function downloadFile()
 								shacheck_file $name
 							fi
 							diddownload=1
-							ck=$o_ck
 						fi
 					fi
 				fi

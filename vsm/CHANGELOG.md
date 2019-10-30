@@ -11,6 +11,9 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.2.2 - Small bugfix to ensure vExpert mode does not impact other modes 
+	(cookie mixup)
+
 6.2.1 - Several bug fixes in menus for improved vExpert mode and vExpert.md
 
 6.2.0 - Check for new versions. Added vExpert support
