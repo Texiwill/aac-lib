@@ -11,6 +11,27 @@
 # Requires:
 # wget 
 #
+docolor=1
+# onscreen colors
+RED=`tput setaf 1`
+PURPLE=`tput setaf 5`
+NC=`tput sgr0`
+function colorecho() {
+	COLOR=$PURPLE
+	if [ Z"$2" = Z"1" ]
+	then
+		COLOR=$RED
+	fi
+	if [ $debugv -ne 2 ]
+	then
+		if [ $docolor -eq 1 ]
+		then
+			echo "${COLOR}${1}${NC}"
+		else
+			echo ${1}
+		fi
+	fi
+}
 function findos() {
 	if [ -e /etc/os-release ]
 	then
@@ -76,7 +97,7 @@ else
 		doit=1
 	fi
 fi
-if [ $us -eq 0 ] || [ Z"$us" = Z"root" ]
+if [ $doit -eq 0 ] || [ Z"$us" = Z"root" ]
 then
 	echo "Error: Requires a valid non-root username as an argument"
 	usage
