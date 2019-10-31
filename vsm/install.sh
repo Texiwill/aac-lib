@@ -22,14 +22,11 @@ function colorecho() {
 	then
 		COLOR=$RED
 	fi
-	if [ $debugv -ne 2 ]
+	if [ $docolor -eq 1 ]
 	then
-		if [ $docolor -eq 1 ]
-		then
-			echo "${COLOR}${1}${NC}"
-		else
-			echo ${1}
-		fi
+		echo "${COLOR}${1}${NC}"
+	else
+		echo ${1}
 	fi
 }
 function findos() {
@@ -138,6 +135,4 @@ cd $HOME/aac-base
 EOF
 chmod +x update.sh
 
-PURPLE=`tput setaf 5`
-NC=`tput sgr0`
-echo "${PURPLE}VSM is now in /usr/local/bin/vsm.sh${NC}"
+colorecho "VSM is now in /usr/local/bin/vsm.sh"
