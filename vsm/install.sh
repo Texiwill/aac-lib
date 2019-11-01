@@ -96,7 +96,7 @@ else
 fi
 if [ $doit -eq 0 ] || [ Z"$us" = Z"root" ]
 then
-	echo "Error: Requires a valid non-root username as an argument"
+	colorecho "Error: Requires a valid non-root username as an argument" 1
 	usage
 	exit
 fi
