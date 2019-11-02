@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.2.2"
+VERSIONID="6.2.3"
 
 # args: stmt error
 function colorecho() {
@@ -2278,8 +2278,12 @@ function getFavPaths()
 			longReply=`echo $tver|sed 's/ /\n/g'|grep -in ${favpaths[1]} |cut -d: -f1`
 			longReply=$(($longReply-1))
 			getLayerPkgs
+			t_mversions=("$mversions")
 			longReply=`echo $mversions|sed 's/ /\n/g'| grep -in ${favpaths[2]} |head -1|cut -d: -f1`
-			longReply=$(($longReply-1))
+			if [ ${#t_mversions[@]} -gt 1 ]
+			then
+				longReply=$(($longReply-1))
+			fi
 			choice=${missname}_${favpaths[2]}
 			layer+=("$choice")
 			getLayerPkgs
