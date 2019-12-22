@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.2.4"
+VERSIONID="6.2.5"
 
 # args: stmt error
 function colorecho() {
@@ -993,7 +993,7 @@ function finddeps {
 function holidaybanner() {
 	mon=`date +'%m'`
 	day=`date +'%d'`
-	if [ $mon -eq 12 ] && [ $day -gt 12 ] && [ $day -lt 25 ]
+	if [ $mon -eq 12 ] && [ $day -gt 12 ] && [ $day -lt 26 ]
 	then
 		echo "${RED}"
 		cat << "EOF"
@@ -1005,8 +1005,9 @@ function holidaybanner() {
             |_|   |_|    |___/                               |___/     
 EOF
 		echo "$NC"
+		sleep 1
 fi
-	if [ $mon -eq 12 ] && [ $day -gt 25 ]
+	if [[ ($mon -eq 12 && $day -gt 20) || ($mon -eq 1 && $day -lt 3) ]]
 	then
 		echo "${TEAL}"
 		cat << "EOF"
@@ -1018,8 +1019,8 @@ fi
             |_|   |_|    |___/                                             
 EOF
 		echo "$NC"
+		sleep 2
 	fi
-	sleep 2
 }
 
 # onscreen colors
