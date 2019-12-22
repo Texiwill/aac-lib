@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.2.3"
+VERSIONID="6.2.4"
 
 # args: stmt error
 function colorecho() {
@@ -990,6 +990,47 @@ function finddeps {
 	fi
 }
 
+function holidaybanner() {
+	mon=`date +'%m'`
+	day=`date +'%d'`
+	if [ $mon -eq 12 ] && [ $day -gt 12 ] && [ $day -lt 25 ]
+	then
+		echo "${RED}"
+		cat << "EOF"
+ _   _                           _   _       _       _
+| | | | __ _ _ __  _ __  _   _  | | | | ___ | (_) __| | __ _ _   _ ___ 
+| |_| |/ _` | '_ \| '_ \| | | | | |_| |/ _ \| | |/ _` |/ _` | | | / __|
+|  _  | (_| | |_) | |_) | |_| | |  _  | (_) | | | (_| | (_| | |_| \__ \
+|_| |_|\__,_| .__/| .__/ \__, | |_| |_|\___/|_|_|\__,_|\__,_|\__, |___/
+            |_|   |_|    |___/                               |___/     
+EOF
+		echo "$NC"
+fi
+	if [ $mon -eq 12 ] && [ $day -gt 25 ]
+	then
+		echo "${TEAL}"
+		cat << "EOF"
+ _   _                           _   _                __   __              
+| | | | __ _ _ __  _ __  _   _  | \ | | _____      __ \ \ / /__  __ _ _ __ 
+| |_| |/ _` | '_ \| '_ \| | | | |  \| |/ _ \ \ /\ / /  \ V / _ \/ _` | '__|
+|  _  | (_| | |_) | |_) | |_| | | |\  |  __/\ V  V /    | |  __/ (_| | |   
+|_| |_|\__,_| .__/| .__/ \__, | |_| \_|\___| \_/\_/     |_|\___|\__,_|_|   
+            |_|   |_|    |___/                                             
+EOF
+		echo "$NC"
+	fi
+	sleep 2
+}
+
+# onscreen colors
+RED=`tput setaf 1`
+PURPLE=`tput setaf 5`
+NC=`tput sgr0`
+BOLD=`tput smso`
+NB=`tput rmso`
+TEAL=`tput setaf 6`
+GRAY=`tput setaf 7`
+holidaybanner
 # check dependencies
 theos=''
 docolor=1
@@ -1065,14 +1106,6 @@ dodlglist=0
 doignore=0
 rebuild=0
 dlgroup=''
-# onscreen colors
-RED=`tput setaf 1`
-PURPLE=`tput setaf 5`
-NC=`tput sgr0`
-BOLD=`tput smso`
-NB=`tput rmso`
-TEAL=`tput setaf 6`
-GRAY=`tput setaf 7`
 mycolumns=`tput cols`
 
 xu=`id -un`

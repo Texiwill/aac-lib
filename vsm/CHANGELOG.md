@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.2.4 - Holiday Messages
+
 6.2.3 - Fix to download favorites like Fusion using --fav
 
 6.2.2 - Small bugfix to ensure vExpert mode does not impact other modes 
