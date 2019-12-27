@@ -14,6 +14,19 @@ packages in full. To do so, you need two logins: My VMware & vExpert Portal.
 And a new option: --vexpertx, that gets stored in your $HOME/.vsmrc file
 so no need to reuse it every time.
 
+To call LinuxVSM as a vExpert please use the following:
+
+```
+vsm.sh -y --vexpertx --historical --patch --dts --oem  --symlink --compress
+```
+
+Actually, you could probably leave off everything after --historical
+but the others increase the downloads to the Drivers and Tools and OEM
+ISO images while compressing and preserving space by using symlinks
+where useful. I tend to use these options all the time. You need
+--historical asthe vExpert portal does not have every version of
+everything and --historical allows you to go back to earlier versions.
+
 With these two logins and the appropriate flag certain files will be
 made available to any vExpert. Note, this is not all files. These files
 are also updated weekly instead of daily. It may also take longer to
