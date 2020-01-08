@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.2.6 - Date issue fixed
+
 6.2.5 - Small impovement to holiday messages
 
 6.2.4 - Holiday Messages
