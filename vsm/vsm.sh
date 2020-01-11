@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.2.6"
+VERSIONID="6.2.7"
 
 # args: stmt error
 function colorecho() {
@@ -34,6 +34,12 @@ function colorecho() {
 }
 function debugecho() {
 	if [ $dodebug -eq 1 ]
+	then
+		echo ${1}
+	fi
+}
+function debugvecho() {
+	if [ $debugv -eq 1 ]
 	then
 		echo ${1}
 	fi
@@ -1417,7 +1423,7 @@ shadownload=0
 layer=('productCategoryList[]' 'name')
 function removeLayer()
 {
-	echo "DEBUG: ${layer[@]}"
+	debugvecho "DEBUG rl: ${layer[@]}"
 	arr=()
 	skipfive=0
 	if [ ${#layer[@]} -eq 5 ] && [ ${layer[3]} = ${layer[4]} ]
@@ -1460,6 +1466,7 @@ function removeLayer()
 		# longReply may be wrong here!
 		missname=$specMissname
 	fi
+	debugvecho "DEBUG rl: ${layer[@]}"
 }
 
 function createLayer()
@@ -1722,7 +1729,7 @@ function wgetMyVersion()
 {
 	if [ ! -e ${rcdir}/_${choice}.xhtml ] || [ $doreset -eq 1 ]
 	then
-		debugecho "DEBUG: ${layer[@]}"
+		debugvecho "DEBUG wMV: ${layer[@]}"
 		nnr=$(($nr-2))
 		iname=${layer[$nnr]}
 		ichoice=$choice
@@ -1788,7 +1795,7 @@ function getLayerPkgs()
 	mark=''
 	if [ $debugv -eq 1 ]
 	then
-		echo "DEBUG: ${layer[@]} $prevNr"
+		echo "DEBUG gLP: ${layer[@]} $prevNr"
 	fi
 	prevNr=$nr
 	nr=${#layer[@]}
@@ -1864,6 +1871,8 @@ function createMenu()
 		then
 			old_choice=$choice
 		fi
+		debugvecho "DEBUG cM: ${layer[@]}"
+		back=""
 		if [ ${#layer[@]} -gt 2 ]
 		then
 			back="Back"
