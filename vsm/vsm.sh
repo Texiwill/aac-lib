@@ -1,7 +1,7 @@
 #!/bin/bash
 # vim: set tabstop=4 shiftwidth=4:
 #
-# Copyright (c) AstroArch Consulting, Inc.  2017-2019
+# Copyright (c) AstroArch Consulting, Inc.  2017-2020
 # All rights reserved
 #
 # A Linux version of VMware Software Manager (VSM) with some added intelligence
@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.2.7"
+VERSIONID="6.2.8"
 
 # args: stmt error
 function colorecho() {
@@ -763,7 +763,8 @@ function version() {
 
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save]"
+	echo "$0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save] [--allmissing]"
+	echo "	--allmissing - show only those things that are missing"
 	echo "	-c|--check - do sha256 check against download"
 	echo "	--clean - remove all temporary files and exit"
 	echo "	--dlg - download specific package by name or part of name (regex)"
@@ -1093,6 +1094,22 @@ EOF
 		echo "$NC"
 		sleep 2
 	fi
+	if [ $mon -eq 3 ] && [ $day -eq 14 ]
+	then
+		ac=$((RANDOM % 8))
+		echo `tput setaf $ac`
+		cat << "EOF"
+#     #                                  3.141592    ######               
+#     #   ##   #####  #####  #   #      653589793    #     #   ##   #   # 
+#     #  #  #  #    # #    #  # #      23    84      #     #  #  #   # #  
+####### #    # #    # #    #   #      6 2    64      #     # #    #   #   
+#     # ###### #####  #####    #        3    38      #     # ######   #   
+#     # #    # #      #        #        3    27      #     # #    #   #   
+#     # #    # #      #        #        9    50 2    ######  #    #   #   
+                                      8 8    4197                         
+                                       16     93
+EOF
+	fi
 }
 
 # onscreen colors
@@ -1179,6 +1196,7 @@ dodlglist=0
 doignore=0
 rebuild=0
 dlgroup=''
+allmissing=0
 mycolumns=`tput cols`
 
 xu=`id -un`
@@ -1194,7 +1212,7 @@ checkForUpdate
 # import values from .vsmrc
 load_vsmrc
 
-while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --dlgroup) dlgroup=$2; shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --rebuild) rebuild=1 ;; *) usage ;; esac; shift; done
+while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --rebuild) rebuild=1 ;; *) usage ;; esac; shift; done
 
 if [ $myquiet -eq 1 ] && [ $myq -eq 0 ]
 then

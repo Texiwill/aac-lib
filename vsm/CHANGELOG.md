@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.2.8 - More holiday messages and several uid fixes
+
 6.2.7 - Debug and Menu issue fix
 
 6.2.6 - Date issue fixed

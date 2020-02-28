@@ -76,25 +76,8 @@ do
 	shift
 done
 
-doit=1
-if [ Z"$us" != Z"" ]
-then
-	grep ${us}: /etc/passwd >& /dev/null
-	if [ $? -ne 0 ]
-	then
-		doit=0
-	fi
-else
-	# are we root?
-	us=`id -u`
-	if [ $us -eq 0 ]
-	then
-		doit=0
-	else
-		doit=1
-	fi
-fi
-if [ $doit -eq 0 ] || [ Z"$us" = Z"root" ]
+us=`id -un`
+if [ Z"$us" = Z"root" ]
 then
 	colorecho "Error: Requires a valid non-root username as an argument" 1
 	usage
