@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.2.9 - Added --olde option that defaults to 12 hours to remove temporary files between runs (forces -mr option to be used after the hour setting expires).
+
 6.2.8 - More holiday messages and several uid fixes
 
 6.2.7 - Debug and Menu issue fix
