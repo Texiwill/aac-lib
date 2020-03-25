@@ -25,7 +25,8 @@ To use vExpert mode read <a href=https://github.com/Texiwill/aac-lib/blob/master
 Here is an example run and help:
 ```
 $ vsm.sh --help
-./vsm.sh [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save]
+LinuxVSM Help
+./vsm.sh [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12]
 	-c|--check - do sha256 check against download
 	--clean - remove all temporary files and exit
 	--dlg - download specific package by name or part of name (regex)
@@ -37,13 +38,14 @@ $ vsm.sh --help
 	--fixsymlink - convert old repo to symlink based repo
 	-e|--exit - reset and exit
 	-h|--help - this help
+	-mr - remove temporary files
 	--historical - display older versions when you select a package
 	--nohistorical - disable --historical
-	-mr - remove temporary files
 	-nh|--noheader - leave off the header bits
 	-nq|--noquiet - disable quiet mode
 	-ns|--nostore - do not store credential data and remove if exists
 	-nc|--nocolor - do not output with color
+        --olde # - number of hours (default 12) before -mr enforced
 	-p|--password - specify password
 	--progress - show progress for OEM, OSS, and DriverTools
 	-q|--quiet - be less verbose
@@ -72,6 +74,13 @@ $ vsm.sh --help
 		          saved to configuration file
 	--save - save settings to $HOME/.vsmrc, favorite always saved on Mark
 
+To Download the latest Perl CLI use 
+	(to escape the wild cards used by the internal regex):
+	./vsm.sh --dlg CLI\.\*\.x86_64.tar.gz
+
+Use of the Mark option, marks the current product suite as the
+favorite. There is only 1 favorite slot available. Favorites
+can be downloaded without traversing the menus.
     To Download the latest Perl CLI use 
 	(to escape the wild cards used by the internal regex):
 	./vsm.sh --dlg CLI\.\*\.x86_64.tar.gz
