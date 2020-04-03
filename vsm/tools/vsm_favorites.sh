@@ -17,8 +17,8 @@ then
 	vsm='./vsm.sh'
 fi
 
-$vsm -mr -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Enterprise_Plus
-$vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Platinum
+$vsm -mr -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_7_0_Enterprise_Plus
+$vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Enterprise_Plus
 $vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
 $vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_0_Enterprise_Plus
 $vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_5_5_Enterprise_Plus
