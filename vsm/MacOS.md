@@ -40,7 +40,7 @@ cpan> install XML::Twig
 ... lots of questions and such. Answer YES or Y or y to
 any yes/no question presented ...
 cpan> exit
-echo "export PATH=\$PATH:`find $HOME -name xml_grep -print |head -1 2>/dev/null`" >> $HOME/.bash_profile
+echo "export PATH=\$PATH:$HOME/perl5/bin" >> $HOME/.bash_profile
 ```
 * Next install vsm.sh (note the use of 'sudo')
 ```
