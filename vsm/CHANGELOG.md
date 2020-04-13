@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.3.1 - Update to MacOS 10.15.4 fix
+
 6.3.0 - Fix for MacOS 10.15.4 -- Thank you brumcmil
 
 6.2.9 - Added --olde option that defaults to 12 hours to remove temporary files between runs (forces -mr option to be used after the hour setting expires).

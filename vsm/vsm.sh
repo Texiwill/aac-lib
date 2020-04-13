@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.3.0"
+VERSIONID="6.3.1"
 
 # args: stmt error
 function colorecho() {
@@ -879,7 +879,6 @@ function checkdep() {
 		fi
 	elif [ Z"$theos" = Z"macos" ]
 	then
-		. $HOME/.bash_profile
 		if [ Z"$dep" = Z"xcodebuild" ]
 		then
 			which $dep  >& /dev/null
@@ -975,6 +974,7 @@ function finddeps {
 	debian_checkdep="$linux_checkdep python python-urllib3 xml-twig-tools libxml2-utils ncurses-base"
 	if [ Z"$theos" = Z"macos" ]
 	then
+		. $HOME/.bash_profile
 		loopdeps "$macos_checkdep"
 		alias sed=gsed
 		alias uudecode="`which uudecode` -p"
