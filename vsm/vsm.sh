@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.2.9"
+VERSIONID="6.3.0"
 
 # args: stmt error
 function colorecho() {
@@ -879,6 +879,7 @@ function checkdep() {
 		fi
 	elif [ Z"$theos" = Z"macos" ]
 	then
+		. $HOME/.bash_profile
 		if [ Z"$dep" = Z"xcodebuild" ]
 		then
 			which $dep  >& /dev/null
@@ -1291,7 +1292,7 @@ if [ -e ${rcdir}/_downloads.xhtml ]
 then
 	mrt=$((olde*3600))
 	ot=$((($(date +%s) - $(stat -c %Y -- ${rcdir}/_downloads.xhtml)) - $mrt))
-	debugvecho "	olde: $ot" 
+	debugvecho "	Cache Timeout: 	$ot" 
 	if [ $ot -gt 0 ]
 	then
 		remyvmware=1
