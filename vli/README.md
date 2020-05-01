@@ -40,6 +40,10 @@ Compatibility:
 - VMware NSX v6.2 or later
 - VMware vRealize Log Insight 3.6 or later
 
+Latest Testing:
+- Tested against vSphere 6.7
+- Tested against vRealize Log Insight 8.x
+
 Dependencies:
 - We use extracted fields from the VMware vSphere content pack
 - We use extracted fields from the VMware NSX Content pack
@@ -52,10 +56,6 @@ If some of the dashboards here seem similar to others, they may be. The
 goal is to create one content pack to act as the SOC without having to
 jump to too many places.
 
-And the Beta versions:
-- beta Works with vShield Manager (Texiwill Securitybeta.vlcp)
-- nsx-beta Works with NSX Manager (Texiwill Security nsx-beta.vlcp)
-
 ### Installation
 Import into LogInsight
 
@@ -64,6 +64,12 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+- 1.2 Fix to the VMRC Dashboards to account for vSphere 6.7, tested on VRLI 8.x 
+
+- 1.1 Added vNetwork and new visualizations to SecureESX
+
+- 1.0 Added SecureESX Dashboard. Updated dashboard for vSphere 6.5
+
 - 1.0 RC7 - changed vSphere to ESXi in dashboards where appropriate. Also added Shell commands alerting and tracking to the ESXi Config Changes dashboards. Fixed the Data Store Browser dashboards to be more accurate (Thank you fellow vExpert Justin Bias).
 
 - 1.0 RC6 - added the vSphere Config Changes Dashboard. Updated the Firewall dashboard to include a chart of Dropped by port.
