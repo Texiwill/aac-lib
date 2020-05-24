@@ -1,0 +1,24 @@
+---
+- hosts: localhost
+  become_user: root
+  tasks:
+     - name: install the latest for selinux - RHEL
+       become: yes
+       package:
+         name:
+           - policycoreutils-python
+           - setroubleshoot-server
+         state: latest
+       when: (ansible_distribution == "Fedora") or 
+             (ansible_distribution == "RedHat") or
+             (ansible_distribution == "CentOS")
+
+     - name: install the latest for selinux - Debian
+       become: yes
+       package:
+         name:
+           - policycoreutils
+           - selinux-utils
+         state: latest
+       when: (ansible_distribution == "Debian") or 
+             (ansible_distribution == "Ubuntu")

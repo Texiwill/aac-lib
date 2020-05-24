@@ -1,0 +1,75 @@
+---
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- hosts: localhost
+  tasks:
+     - name: install the latest version of LinuxVSM for RedHat
+       become: yes
+       package:
+         name:
+           - wget
+           - libxml2
+           - perl-XML-Twig
+           - ncurses
+           - bc
+           - jq
+           - sharutils
+           - python
+           - python-urllib3
+         state: latest
+       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version < "8") or
+             (ansible_distribution == "CentOS" and ansible_distribution_major_version < "8")
+
+     - name: install the latest version of LinuxVSM for Fedora
+       become: yes
+       package:
+         name:
+           - wget
+           - libxml2
+           - perl-XML-Twig
+           - ncurses
+           - bc
+           - jq
+           - sharutils
+           - python2
+           - python2-urllib3
+         state: latest
+       when: (ansible_distribution == "Fedora") or 
+             (ansible_distribution == "RedHat" and  ansible_distribution_major_version > "7") or
+             (ansible_distribution == "CentOS" and ansible_distribution_major_version > "7")
+
+     - name: install the latest version of LinuxVSM for Debian
+       become: yes
+       package:
+         name:
+           - wget
+           - libxml2
+           - libxml2-utils
+           - xml-twig-tools
+           - ncurses-base
+           - bc
+           - jq
+           - sharutils
+           - python
+           - python-urllib3
+       when: (ansible_distribution == "Debian") or 
+             (ansible_distribution == "Ubuntu")
+
+     - name: Download the latest version of LinuxVSM
+       become: yes
+       get_url:
+         url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
+         dest: /usr/local/bin
+         mode: 0755
+
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...

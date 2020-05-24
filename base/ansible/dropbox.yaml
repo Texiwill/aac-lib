@@ -1,0 +1,97 @@
+---
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- hosts: localhost
+  tasks:
+     - name: install the dropbox in docker dependencies RHEL
+       become: yes
+       package:
+         name:
+           - docker
+           - cockpit-docker 
+           - docker-forward-journald
+         state: latest
+       when: (ansible_distribution == "Fedora") or 
+             (ansible_distribution == "RedHat") or
+             (ansible_distribution == "CentOS")
+
+     - name: install the dropbox in docker dependencies Debian
+       become: yes
+       package:
+         name:
+           - docker
+         state: latest
+       when: (ansible_distribution == "Debian") or 
+             (ansible_distribution == "Ubuntu")
+
+     - name: Download the latest version of Janeczku Docker Dropbox
+       git:
+         repo: https://github.com/janeczku/docker-dropbox.git
+         dest: /tmp
+
+     - name: Fix Code1
+       lineinfile:
+         path: /tmp/docker-dropbox-master/Dockerfile
+         regexp: 'pgp.mit.edu'
+         line: '   && apt-key adv --keyserver hkp://pool.sks-keyservers.net:80 --recv-keys 1C61A2656FB57B7E4DE0F4C1FC918B335044912E \'
+
+     - name: Fix Code2
+       lineinfile:
+         path: /tmp/docker-dropbox-master/Dockerfile
+         regexp: 'install ca-certificates'
+         line: '   && apt-get -qqy install ca-certificates curl python-gpgme libc6 libglapi-mesa libxdamage1 libxfixes3 libxcb-glx0 libxcb-dri2-0 libxcb-dri3-0 libxcb-present0 libxcb-sync1 libxshmfence1 libxxf86vm1 dropbox \'
+
+     - name: Fix Code3
+       lineinfile:
+         path: /tmp/docker-dropbox-master/Dockerfile
+         insertafter: 'chmod g-w /tmp \\'
+         line: '   && chmod 755 /opt/dropbox/dropbox-lnx.*/libdropbox_apex.so \'
+         state: present
+
+     - name: Fix Code4
+       lineinfile:
+         path: /tmp/docker-dropbox-master/run
+         insertbefore: '^echo "Starting dropboxd'
+         line: 'chmod 755 /opt/dropbox/libdropbox_apex.so'
+         state: present
+
+     - name: start Docker
+       become: yes
+       service:
+         name: docker
+         state: started
+
+     - name: build docker image
+       command: docker build -t dropbox:latest .
+
+     - name: create profile.d dropbox.sh
+       become: yes
+       blockinfile:
+         path: /etc/profile.d/dropbox.sh
+         block: |
+           if [ "$PS1" ]; then
+	           alias dropbox="docker exec -it dropbox dropbox"
+	           alias dropbox-start="docker run -d --restart=always --name=dropbox -v $HOME/Dropbox:/dbox/Dropbox:z -v $HOME/.dropbox:/dbox/.dropbox:z -e DBOX_UID=`id -u` -e DBOX_GID=`id -g` janeczku/dropbox"
+	           docker ps |grep dropbox >& /dev/null
+	           if [ $? -eq 1 ] && [ `id -u` != 0 ]
+	           then
+		           docker run -d --restart=always --name=dropbox -v $HOME/Dropbox:/dbox/Dropbox:z -v $HOME/.dropbox:/dbox/.dropbox:z -e DBOX_UID=`id -u` -e DBOX_GID=`id -g` janeczku/dropbox
+	           fi
+           fi
+         mode: 0755
+
+     - name: add docker to wheel users
+       become: yes
+       command: "for x in `lid -g wheel -n`; do usermod -a -G docker $x; done"
+
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...

@@ -6,57 +6,57 @@ AAC Library of Tools
 ## BASE 
 
 ### Description
-A bash script to automatically install all the requirements to use Puppet
-as the configuration manager for CentOS/RHEL installations as well
-as other one off installations such as PowerCLI w/PowerNSX, ovftool,
-DNSCrypt, fpm, and Puppet Server.
+A bash script to automatically install all the requirements to use Ansible
+to add functionality to a Linux installations. This includes Ansible playbooks
+to install PowerCLI w/PowerNSX, ovftool, DNSCrypt, vctui, LinuxVSM,
+vCLI, and others.
 
-Why did I create these scripts?  To help keep my configuration up to date
-across Linux and to install specific items like PowerCLI and
+Why did I create these scripts?  To help keep my configuration up
+to date across Linux and to install specific items like PowerCLI and
 DNSCrypt. While the scripts are pretty generic they are targeted for
-CentOS/RHEL 6 or 7 builds. In addition, since VMware is no longer working
-on the vSphere Management Appliance, I have created one to
-replace/improve, that includes PowerCLI, PowerNSX, vCLI, and ovftool.
+CentOS/RHEL builds, they should also work on Debian distributions as
+well. In addition, since VMware is no longer working on the vSphere
+Management Appliance, I have created one to replace/improve, that includes
+PowerCLI, PowerNSX, vCLI, LinuxVSM, vctui, and ovftool.
 
-
-The problem is that some one offs work better installed via
-scripts. Configuring the puppet server for example is one such.
+The problem is that you need to install a few things before you can
+begin to use Ansible. The main script installs all those necessary bits,
+then switches to use Ansible.
 
 ### Installation
-Run the script using SUDO as root access is required.  The scripts can install
-the latest 4.0 puppet agent, powercli, dnscrypt, and fpm. Puppet-server
-configurations are also coming. The standard install will load the proper
-timezone, EPEL repository, and SELinux policy RPMs automatically. The
-rest is up to you. Here is how it looks.
+Run the script and if root access is required you will be asked to
+provide sudo credentials
 
-	# sudo ./aac-base.install
-	Checking Timezone settings
+	$ ./aac-base.install -v
+	Get wget
 	Checking for EPEL repository
-	Checking for SELinux Policy RPMS
-	If SELinux issues pop up use the following to debug:
-		sealert -a /var/log/audit/audit.log
-	1) aac-base.install.dnscrypt	5) aac-base.install.fpm
-	2) aac-base.install.powercli	6) Exit
-	3) aac-base.install.puppetbase
+	Checking for Ansible
+	1) LinuxVSM  3) ovftool	  5) vma       7) vctui
+	2) vCLI	     4) PowerCLI  6) dropbox   8) Exit
 	#? 
 
+
 We verify timezones, repositories, and SELinux bits are installed then
-prompt for the actions to take. Puppetbase is the first one for my nodes
-and the rest are for one off services not install by puppet currently.
+prompt for the actions to take. 
 
 You can also call the script with the tail end of the available install
 scripts as well. Such as:
 
-	# sudo ./aac-base.install -i powercli
+	# ./aac-base.install -i powercli
 
 The usage of the script is:
 
-	sudo ./aac-base.install [--update|-u] [--install|-i installer] [--help|-h] [timezone] [--home home] [--user username]
-	--install|-i - use specific installer
-	--update|-u - update the script(s), then reload
+	Usage: ./aac-base.install [--install|-i installer] [--update|-u] [-v|--version] [--help|-h] [--noansible|-n] [--user USER] [--home HOME] [timezone]
+		-u|--update => Update
+		-i|--install => Install
+		-V|--version => version
+		-v|--verbose => verbose Ansible
+		-n|--noansible => No Ansible, older shell script approach
+		Last Argument is used to set the timezone
+		Default timezone America/Chicago
 
-Use the following script, which requires sudo, to get everything to run
-these installers:
+Use the following script, to keep everything up to date. If wget is not
+installed it will ask for it.
 
 <pre>
 which wget >& /dev/null
@@ -68,22 +68,12 @@ fi
 wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
 chmod +x aac-base.install
 ./aac-base.install -u
-sudo ./aac-base.install --home $HOME --user $USER
 </pre>
-
-Some installers, specifically for vcli, vma, and ovftool call LinuxVSM which
-must run as a regular user. Hence, the need for the --user and --home options.
 
 ### Installers
 
 #### Base
-Installs the base AAC setup. This is mostly setting timezones and ensuring wget and other useful tools are available.
-
-#### dnscrypt
-Installs DNScrypt 2.x and sets it up for use of 1.1.1.1 via DNS over HTTPS.
-
-#### dropbox
-Installs the Docker Container version of Dropbox for system wide use
+Installs the base AAC setup. This is mostly setting timezones and ensuring wget and ansible are availabile
 
 #### powercli
 Installs Powershell and VMware PowerCLI: run command 'powercli' to start
@@ -95,24 +85,25 @@ Installs vSphere CLI using LinuxVSM to download the latest file.
 Installs ovftool using LinuxVSM to download the latest file.
 
 #### vma
-Installs vsm, powercli, ovftool, and vcli to create a vSphere Management
+Installs LinuxVSM, powercli, ovftool, and vcli to create a vSphere Management
 Appliance. 
 
-#### vsm
+#### LinuxVSM
 Install a port of VMware's Software Manager to Linux - LinuxVSM.
 
-#### puppetbase
-Installs the Puppet 4.x agents for use with a Puppet Server.
+#### vctui
+Installs the vctui tool for connecting to vCenter.
 
-### Todo
-Build out Puppet 4.0 framework for my virtualized environment.
-Create a REPO for build/install later
+#### dropbox
+Installs the Docker Container version of Dropbox for system wide use
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+2.0.0 Move to Ansible
+
 1.7.2 VSM: changes to accomodate fedora
 
 1.6.1 PowerCLI: changes to update

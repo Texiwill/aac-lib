@@ -1,0 +1,48 @@
+---
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- hosts: localhost
+  tasks:
+     - name: golang RPM Key
+       become: yes
+       rpm_key:
+         state: present
+         key: https://mirror.go-repo.io/centos/RPM-GPG-KEY-GO-REPO
+
+     - name: golang repo
+       become: yes
+       get_url:
+         url: https://mirror.go-repo.io/centos/go-repo.repo
+         dest: /etc/yum.repos.d
+         mode: 0644
+
+     - name: install golang
+       become: yes
+       package:
+         name:
+           - golang
+         state: latest
+
+     - name: Install vctui
+       become: no
+       shell: "go get -u github.com/thebsdbox/vctui"
+       args:
+         executable: /bin/bash
+
+     - name: Update PATH
+       lineinfile:
+         path: {{ansible_env.HOME}}/.bash_profile
+         regexp: '^PATH='
+         line: "PATH=$PATH:$HOME/.local/bin:$HOME/bin:$HOME/go/bin"
+
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...

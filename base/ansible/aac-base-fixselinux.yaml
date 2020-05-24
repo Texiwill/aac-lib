@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  become_user: root
+  tasks:
+     - name: Reset SELinux after installs
+       become: yes
+       command: restorecon -R -v /dev
+

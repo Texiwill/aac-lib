@@ -1,0 +1,66 @@
+---
+- hosts: localhost
+  become_user: root
+
+- name: VSM
+  import_playbook: LinuxVSM.yaml
+
+- hosts: localhost
+  tasks:
+
+     - name: install the latest version of ovftool dependencies
+       become: yes
+       package:
+         name:
+           - fuseiso
+           - hiera
+         state: latest
+
+     - name: Download the latest version of ov-import.sh
+       become: yes
+       get_url:
+         url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/ovfimport/ov-import.sh
+         dest: /usr/local/bin
+         mode: 0755
+
+     - name: Download the latest version of ov-defaults
+       get_url:
+         url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/ovfimport/ov-defaults
+         dest: "{{ansible_env.HOME}}/.ov-defaults"
+         mode: 0600
+
+     - name: Check if Credential exists
+       stat:
+         path: "/tmp/vsm.{{ ansible_env.USER }}/.credstore"
+       register: stat_result
+
+     - name: Download the latest version of ovftool
+       become: no
+       shell: "/usr/local/bin/vsm.sh -y -f --dlg ovftool-4.4.*.x86_64.bundle | grep Local"
+       args:
+         executable: /bin/bash
+       register: vsm_local
+       when: stat_result.stat.exists
+
+     - name: Get Local Filename
+       set_fact:
+         file_local: "{{ vsm_local.stdout | regex_replace('^Local:(..)','\\1') }}"
+
+     - name: Debug
+       debug:
+         msg: "Installing {{file_local}}"
+
+     - name: Permission ovftool
+       file:
+         path: "{{file_local}}"
+         mode: 0755
+
+     - name: Installing ovftool
+       become: yes
+       shell: "{{file_local}} --eulas-agreed --required"
+       args:
+         executable: /bin/bash
+      
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...

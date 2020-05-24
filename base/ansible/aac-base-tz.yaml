@@ -1,0 +1,57 @@
+---
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+  tasks:
+     - name: install system updates for redhat systems
+       become: yes
+       yum: name=* state=latest update_cache=yes
+       when: (ansible_distribution == "Fedora") or 
+             (ansible_distribution == "RedHat") or
+             (ansible_distribution == "CentOS")
+
+     - name: install system updates for ubuntu systems
+       become: yes
+       apt: upgrade=dist update_cache=yes
+       when: (ansible_distribution == "Ubuntu") or 
+             (ansible_distribution == "Debian")
+
+     - name: install the latest ntp and other required dependencies
+       become: yes
+       package:
+         name: 
+           - ntp
+           - python2-pip
+         state: latest
+
+     - name: install the latest ansible dependencies
+       become: yes
+       pip:
+         name: pexpect
+
+     - name: Stop ntpd
+       become: yes
+       service:
+         name: ntpd
+         state: stopped
+       when: aac_base_tz is defined
+
+     - name: Set timezone
+       become: yes
+       timezone:
+         name: "{{ item }}"
+         with_items:
+           - "{{ aac_base_tz }}"
+       when: aac_base_tz is defined
+
+     - name: Enable ntpd
+       become: yes
+       service:
+         name: ntpd
+         enabled: yes
+
+     - name: Start ntpd
+       become: yes
+       service:
+         name: ntpd
+         state: started

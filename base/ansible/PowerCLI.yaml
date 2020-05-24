@@ -1,0 +1,226 @@
+---
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- hosts: localhost
+  tasks:
+     - name: Set Fact1 RHEL
+       set_fact: 
+          tgtdir: "/etc/yum.repos.d"
+       when: (ansible_distribution == "RedHat") or
+             (ansible_distribution == "CentOS") or
+             (ansible_distribution == "Fedora")
+
+     - name: Set Fact2 RHEL
+       set_fact: 
+          myos: "rhel"
+       when: (ansible_distribution == "RedHat") or
+             (ansible_distribution == "CentOS") or
+             (ansible_distribution == "Fedora")
+
+     - name: Set Fact3 RHEL
+       set_fact: 
+          prod: "repo"
+       when: (ansible_distribution == "RedHat") or
+             (ansible_distribution == "CentOS") or
+             (ansible_distribution == "Fedora")
+
+     - name: Set Fact1 Debian
+       set_fact: 
+          tgtdir: "/etc/apt/sources.list.d"
+       when: (ansible_distribution == "Debian") or 
+             (ansible_distribution == "Ubuntu")
+
+     - name: Set Fact2 Debian
+       set_fact: 
+          myos: "{{ansible_distribution | lowercase}}"
+       when: (ansible_distribution == "Debian") or 
+             (ansible_distribution == "Ubuntu")
+
+     - name: Set Fact3 Debian
+       set_fact: 
+          prod: "list"
+       when: (ansible_distribution == "Debian") or 
+             (ansible_distribution == "Ubuntu")
+
+     - name: Download the latest PowerShell Repo
+       become: yes
+       get_url:
+         url: "https://packages.microsoft.com/config/{{myos}}/{{ansible_distribution_major_version}}/prod.{{prod}}"
+         dest: "{{tgtdir}}/microsoft.{{prod}}"
+         mode: 0644
+
+     - name: Install powershell Core on RedHat
+       become: yes
+       package:
+         name: powershell
+         state: latest
+       when: (ansible_distribution == "RedHat") or
+             (ansible_distribution == "CentOS") or
+             (ansible_distribution == "Fedora")
+
+     - name: Get Microsoft Key
+       get_url:
+         url: "https://packages.microsoft.com/keys/microsoft.asc"
+         dest: "/tmp/microsoft.key"
+         mode: 0600
+       when: (ansible_distribution == "Debian") or 
+             (ansible_distribution == "Ubuntu")
+
+     - name: Install Key
+       become: no
+       shell: apt-key add /tmp/microsoft.key
+       args:
+         executable: /bin/bash
+       when: (ansible_distribution == "Debian") or 
+             (ansible_distribution == "Ubuntu")
+
+     - name: Install powershell dependencies on Debian
+       become: yes
+       package:
+         name: 
+           - libcurl3
+           - liblttng-ust-ctl2
+           - liblttng-ust0
+           - libunwind8
+           - liburcu4
+           - apt-transport-https
+         state: latest
+       when: (ansible_distribution == "Debian") or 
+             (ansible_distribution == "Ubuntu")
+
+     - name: Install powershell on Debian
+       become: yes
+       package:
+         name: 
+           - powershell
+         state: latest
+       when: (ansible_distribution == "Debian") or 
+             (ansible_distribution == "Ubuntu")
+
+     - name: Get Powershell Version
+       become: no
+       shell: "ls -1 /opt/microsoft/powershell | tail -1"
+       args:
+         executable: /bin/bash
+       register: pwsh_local
+
+     - name: Set PowerShell Version Fact
+       set_fact:
+         version: "{{ pwsh_local.stdout }}"
+
+     - name: Set profile.d BASH settings
+       become: yes
+       lineinfile: 
+         path: /etc/profile.d/powershell.sh
+         line: "export PSModulePath=/opt/microsoft/powershell/{{version}}:/usr/local/share/powershell/Modules"
+         mode: 0644
+         create: yes
+
+     - name: Set profile.d CSH settings
+       become: yes
+       lineinfile: 
+         path: /etc/profile.d/powershell.csh
+         line: "setenv PSModulePath=/opt/microsoft/powershell/{{version}}:/usr/local/share/powershell/Modules"
+         mode: 0644
+         create: yes
+
+     - name: Install PowerCLI
+       become: yes
+       expect:
+         command: /usr/bin/pwsh 
+         responses:
+           'PS.*>': 'Install-Module -Name VMware.PowerCLI -Scope AllUsers'
+           '.*[Y] Yes.*': 'A'
+
+     - name: Install PowerNSX
+       become: yes
+       expect:
+         command: /usr/bin/pwsh 
+         responses:
+           'PS.*>': 'Install-Module -Name PowerNSX -Scope AllUsers'
+           '.*[Y] Yes.*': 'A'
+
+     - name: Create Start-PowerCLI.ps1
+       become: yes
+       blockinfile:
+         path: /usr/local/share/powershell/Start-PowerCLI.ps1
+         block: |
+           $a = (Get-Host).PrivateData
+           $b = get-psreadlineoption | select ErrorBackgroundColor
+           $clear = $b.ErrorBackgroundColor
+           $black= 'black'
+           if ($clear -eq 'black') { 
+	           $black='white' 
+	           set-psreadlineoption -Colors @{ 
+	           "Command" =  [ConsoleColor]::white
+	           "Number" = [ConsoleColor]::white
+	           "String" = [ConsoleColor]::white
+	           "Operator" = [ConsoleColor]::white
+	           "Member" = [ConsoleColor]::white
+	           "Parameter" = [ConsoleColor]::white
+	           "Type" = [ConsoleColor]::white
+	           "Variable" = [ConsoleColor]::white
+	           "Keyword" = [ConsoleColor]::white
+	           }
+           } else {
+	           set-psreadlineoption -Colors @{ 
+	           "Command" =  [ConsoleColor]::black
+	           "Number" = [ConsoleColor]::black
+	           "String" = [ConsoleColor]::black
+	           "Operator" = [ConsoleColor]::black
+	           "Member" = [ConsoleColor]::black
+	           "Parameter" = [ConsoleColor]::black
+	           "Type" = [ConsoleColor]::black
+	           "Variable" = [ConsoleColor]::black
+	           "Keyword" = [ConsoleColor]::black
+	           }
+           }
+           $a.WarningForegroundColor = $black
+           Get-module -ListAvailable VMware* | ForEach-Object {try { Import-module $_ } catch { }}
+           
+           $productName = "vSphere PowerCLI"
+           $productShortName = "PowerCLI"
+           $CustomInitScriptName = "Initialize-PowerCLIEnvironment_Custom.ps1"
+           $currentDir = Split-Path $MyInvocation.MyCommand.Path
+           $CustomInitScript = Join-Path $currentDir $CustomInitScriptName
+           
+           # Update PowerCLI version after snap-in load
+           $version = (Get-Module -Name 'VMware.VimAutomation.Cis.Core').Version
+           $windowTitle = "VMware $productName {0}.{1}.{2} Build {3} " -f $version.Major, $version.Minor, $version.Build, $version.Revision
+           $host.ui.RawUI.WindowTitle = "$windowTitle"
+           # Launch text
+           write-host "          Welcome to VMware $productName!"
+           write-host ""
+           write-host "Log in to a vCenter Server or ESX host:              " -NoNewLine
+           write-host "Connect-VIServer" -foregroundcolor $black
+           write-host "To find out what commands are available, type:       " -NoNewLine
+           write-host "Get-VICommand" -foregroundcolor $black
+           write-host "Once you've connected, display all virtual machines: " -NoNewLine
+           write-host "Get-VM" -foregroundcolor $black
+           write-host ""
+           write-host "       Copyright (C) VMware, Inc. All rights reserved."
+           write-host ""
+           write-host ""
+         mode: 0644
+
+     - name: Create Powercli
+       become: yes
+       blockinfile:
+         path: /usr/local/bin/powercli
+         block: |
+           #!/bin/sh
+           . /etc/profile.d/powershell.sh
+           /usr/bin/pwsh -NoExit -Command /usr/local/share/powershell/Start-PowerCLI.ps1
+         mode: 0755
+
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...
