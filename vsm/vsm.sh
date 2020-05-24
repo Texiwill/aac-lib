@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.3.1"
+VERSIONID="6.3.2"
 
 # args: stmt error
 function colorecho() {
@@ -1346,15 +1346,8 @@ then
 	doprogress=1
 fi
 
-# We should not use this here	
-if [ -e ${cdir}/pcookies.txt ]
-then
-	rm -f ${cdir}/pcookies.txt
-fi
-if [ -e ${cdir}/ocookies.txt ]
-then
-	rm -f ${cdir}/ocookies.txt
-fi
+# Clear any cached elements
+rm -f ${cdir}/*.{txt,html} 2>/dev/null
 
 # no need to login for this option, list what is in the file
 if [ $dodlglist -eq 1 ]
@@ -2066,13 +2059,18 @@ function writeJSON()
 		else
 			newlocs='{"dlgList":[]}' # just in case download failed
 		fi
-		echo $newlocs
+		#echo $newlocs
+		par=${layer[6]}
+		if [ Z"${layer[6]}" = Z"" ]
+		then
+			par=${layer[5]}
+		fi
 		for x in $xpkgs
 		do
-			newlocs=`echo $newlocs|jq --arg n $x --arg t "${pName}_${layer[4]}" --arg v "$missname" --arg p "${layer[6]}" '.dlgList += [{"name": $n, "target": $t, "dlg": $v, "parent": $p}]'`
+			newlocs=`echo $newlocs|jq --arg n $x --arg t "${pName}_${layer[4]}" --arg v "$missname" --arg p "${par}" '.dlgList += [{"name": $n, "target": $t, "dlg": $v, "parent": $p}]'`
 			newlocs=`echo $newlocs | jq -M '.dlgList |= unique_by(.name)'`
 		done
-		echo $newlocs
+		#echo $newlocs
 		echo $newlocs > $rcdir/newlocs.json
 	fi
 }
