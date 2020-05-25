@@ -158,57 +158,55 @@
            $clear = $b.ErrorBackgroundColor
            $black= 'black'
            if ($clear -eq 'black') { 
-	           $black='white' 
-	           set-psreadlineoption -Colors @{ 
-	           "Command" =  [ConsoleColor]::white
-	           "Number" = [ConsoleColor]::white
-	           "String" = [ConsoleColor]::white
-	           "Operator" = [ConsoleColor]::white
-	           "Member" = [ConsoleColor]::white
-	           "Parameter" = [ConsoleColor]::white
-	           "Type" = [ConsoleColor]::white
-	           "Variable" = [ConsoleColor]::white
-	           "Keyword" = [ConsoleColor]::white
-	           }
+           $black='white' 
+                   set-psreadlineoption -Colors @{ 
+                   'Command' =  [ConsoleColor]::white
+                   'Number' = [ConsoleColor]::white
+                   'String' = [ConsoleColor]::white
+                   'Operator' = [ConsoleColor]::white
+                   'Member' = [ConsoleColor]::white
+                   'Parameter' = [ConsoleColor]::white
+                   'Type' = [ConsoleColor]::white
+                   'Variable' = [ConsoleColor]::white
+                   'Keyword' = [ConsoleColor]::white
+                   }
            } else {
-	           set-psreadlineoption -Colors @{ 
-	           "Command" =  [ConsoleColor]::black
-	           "Number" = [ConsoleColor]::black
-	           "String" = [ConsoleColor]::black
-	           "Operator" = [ConsoleColor]::black
-	           "Member" = [ConsoleColor]::black
-	           "Parameter" = [ConsoleColor]::black
-	           "Type" = [ConsoleColor]::black
-	           "Variable" = [ConsoleColor]::black
-	           "Keyword" = [ConsoleColor]::black
-	           }
+                   set-psreadlineoption -Colors @{ 
+                   'Command' =  [ConsoleColor]::black
+                   'Number' = [ConsoleColor]::black
+                   'String' = [ConsoleColor]::black
+                   'Operator' = [ConsoleColor]::black
+                   'Member' = [ConsoleColor]::black
+                   'Parameter' = [ConsoleColor]::black
+                   'Type' = [ConsoleColor]::black
+                   'Variable' = [ConsoleColor]::black
+                   'Keyword' = [ConsoleColor]::black
+                   }
            }
            $a.WarningForegroundColor = $black
-           Get-module -ListAvailable VMware* | ForEach-Object {try { Import-module $_ } catch { }}
-           
-           $productName = "vSphere PowerCLI"
-           $productShortName = "PowerCLI"
-           $CustomInitScriptName = "Initialize-PowerCLIEnvironment_Custom.ps1"
+           Get-module -ListAvailable VMware* \| ForEach-Object {try { Import-module $_ } catch { }}
+           $productName = 'vSphere PowerCLI'
+           $productShortName = 'PowerCLI'
+           $CustomInitScriptName = 'Initialize-PowerCLIEnvironment_Custom.ps1'
            $currentDir = Split-Path $MyInvocation.MyCommand.Path
            $CustomInitScript = Join-Path $currentDir $CustomInitScriptName
-           
            # Update PowerCLI version after snap-in load
            $version = (Get-Module -Name 'VMware.VimAutomation.Cis.Core').Version
            $windowTitle = "VMware $productName {0}.{1}.{2} Build {3} " -f $version.Major, $version.Minor, $version.Build, $version.Revision
            $host.ui.RawUI.WindowTitle = "$windowTitle"
            # Launch text
            write-host "          Welcome to VMware $productName!"
-           write-host ""
-           write-host "Log in to a vCenter Server or ESX host:              " -NoNewLine
-           write-host "Connect-VIServer" -foregroundcolor $black
-           write-host "To find out what commands are available, type:       " -NoNewLine
-           write-host "Get-VICommand" -foregroundcolor $black
-           write-host "Once you've connected, display all virtual machines: " -NoNewLine
-           write-host "Get-VM" -foregroundcolor $black
-           write-host ""
-           write-host "       Copyright (C) VMware, Inc. All rights reserved."
-           write-host ""
-           write-host ""
+           write-host ''
+           write-host 'Log in to a vCenter Server or ESX host:              ' -NoNewLine
+           write-host 'Connect-VIServer' -foregroundcolor $black
+           write-host 'To find out what commands are available, type:       ' -NoNewLine
+           write-host 'Get-VICommand' -foregroundcolor $black
+           write-host 'Once you've connected, display all virtual machines: ' -NoNewLine
+           write-host 'Get-VM' -foregroundcolor $black
+           write-host ''
+           write-host '       Copyright (C) VMware, Inc. All rights reserved.'
+           write-host ''
+           write-host ''
          mode: 0644
 
      - name: Create Powercli
