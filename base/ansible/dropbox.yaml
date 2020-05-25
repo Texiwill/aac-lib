@@ -11,13 +11,19 @@
 
 - hosts: localhost
   tasks:
+     - name: Enable Extras
+       become: yes
+       command: yum-config-manager --enable extras
+       when: (ansible_distribution == "Fedora") or 
+             (ansible_distribution == "RedHat") or
+             (ansible_distribution == "CentOS")
+
      - name: install the dropbox in docker dependencies RHEL
        become: yes
        package:
          name:
            - docker
            - cockpit-docker 
-           - docker-forward-journald
          state: latest
        when: (ansible_distribution == "Fedora") or 
              (ansible_distribution == "RedHat") or
@@ -78,13 +84,13 @@
          path: /etc/profile.d/dropbox.sh
          block: |
            if [ "$PS1" ]; then
-	           alias dropbox="docker exec -it dropbox dropbox"
-	           alias dropbox-start="docker run -d --restart=always --name=dropbox -v $HOME/Dropbox:/dbox/Dropbox:z -v $HOME/.dropbox:/dbox/.dropbox:z -e DBOX_UID=`id -u` -e DBOX_GID=`id -g` janeczku/dropbox"
-	           docker ps |grep dropbox >& /dev/null
-	           if [ $? -eq 1 ] && [ `id -u` != 0 ]
-	           then
-		           docker run -d --restart=always --name=dropbox -v $HOME/Dropbox:/dbox/Dropbox:z -v $HOME/.dropbox:/dbox/.dropbox:z -e DBOX_UID=`id -u` -e DBOX_GID=`id -g` janeczku/dropbox
-	           fi
+                   alias dropbox="docker exec -it dropbox dropbox"
+                   alias dropbox-start="docker run -d --restart=always --name=dropbox -v $HOME/Dropbox:/dbox/Dropbox:z -v $HOME/.dropbox:/dbox/.dropbox:z -e DBOX_UID=`id -u` -e DBOX_GID=`id -g` janeczku/dropbox"
+                   docker ps |grep dropbox >& /dev/null
+                   if [ $? -eq 1 ] && [ `id -u` != 0 ]
+                   then
+                          docker run -d --restart=always --name=dropbox -v $HOME/Dropbox:/dbox/Dropbox:z -v $HOME/.dropbox:/dbox/.dropbox:z -e DBOX_UID=`id -u` -e DBOX_GID=`id -g` janeczku/dropbox
+                   fi
            fi
          mode: 0755
 
