@@ -39,7 +39,7 @@
 
      - name: Update PATH
        lineinfile:
-         path: {{ansible_env.HOME}}/.bash_profile
+         path: "{{ansible_env.HOME}}/.bash_profile"
          regexp: '^PATH='
          line: "PATH=$PATH:$HOME/.local/bin:$HOME/bin:$HOME/go/bin"
 
