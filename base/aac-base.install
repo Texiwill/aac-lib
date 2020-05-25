@@ -383,10 +383,22 @@ function usage() {
 	echo "	Last Argument is used to set the timezone"
 	echo "	Default timezone $TZ"
 	echo "	Available installers are:"
-	for x in `ls ${prog}.*`
+	a=""
+        if [ $ansible -eq 1 ]
+	then
+		a=`find ansible -type f -name '*.yaml' -exec basename {} \; | grep -v aac-base | sed 's/.yaml//g' 2>/dev/null`
+	else
+		a=`ls ${prog}.*`
+	fi
+	for x in $a
 	do
 		echo -n "		"
-		echo $x | awk -F\. '{print $4}'
+		if [ $ansible -eq 1 ]
+		then
+			echo $x
+		else
+			echo $x | awk -F\. '{print $4}'
+		fi
 	done
 	exit
 }
