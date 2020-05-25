@@ -31,17 +31,23 @@
            - golang
          state: latest
 
-     - name: Install vctui
+     - name: Getting vctui
        become: no
        shell: "go get -u github.com/thebsdbox/vctui"
        args:
          executable: /bin/bash
 
-     - name: Update PATH
-       lineinfile:
-         path: "{{ansible_env.HOME}}/.bash_profile"
-         regexp: '^PATH='
-         line: "PATH=$PATH:$HOME/.local/bin:$HOME/bin:$HOME/go/bin"
+     - name: Create bin diretory
+       file:
+         path: "{{ansible_env.HOME}}/bin"
+         state: directory
+         mode: 0755
+
+     - name: Install vctui
+       copy: 
+         src: "{{ansible_env.HOME}}/go/bin/vctui"
+         dest: "{{ansible_env.HOME}}/bin/vctui"
+         mode: 0755
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml
