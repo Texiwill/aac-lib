@@ -134,19 +134,11 @@
 
      - name: Install PowerCLI
        become: yes
-       expect:
-         command: /usr/bin/pwsh 
-         responses:
-           'PS.*>': 'Install-Module -Name VMware.PowerCLI -Scope AllUsers'
-           '.*[Y] Yes.*': 'A'
+       shell: /usr/bin/pwsh -c "Install-Module -Name VMware.PowerCLI -Scope AllUsers -Force"
 
      - name: Install PowerNSX
        become: yes
-       expect:
-         command: /usr/bin/pwsh 
-         responses:
-           'PS.*>': 'Install-Module -Name PowerNSX -Scope AllUsers'
-           '.*[Y] Yes.*': 'A'
+       shell: /usr/bin/pwsh -c "Install-Module -Name PowerNSZ -Scope AllUsers -Force"
 
      - name: Create Start-PowerCLI.ps1
        become: yes
@@ -158,7 +150,7 @@
            $clear = $b.ErrorBackgroundColor
            $black= 'black'
            if ($clear -eq 'black') { 
-           $black='white' 
+                   $black='white' 
                    set-psreadlineoption -Colors @{ 
                    'Command' =  [ConsoleColor]::white
                    'Number' = [ConsoleColor]::white
@@ -184,7 +176,7 @@
                    }
            }
            $a.WarningForegroundColor = $black
-           Get-module -ListAvailable VMware* \| ForEach-Object {try { Import-module $_ } catch { }}
+           Get-module -ListAvailable VMware* | ForEach-Object {try { Import-module $_ } catch { }}
            $productName = 'vSphere PowerCLI'
            $productShortName = 'PowerCLI'
            $CustomInitScriptName = 'Initialize-PowerCLIEnvironment_Custom.ps1'
@@ -195,19 +187,21 @@
            $windowTitle = "VMware $productName {0}.{1}.{2} Build {3} " -f $version.Major, $version.Minor, $version.Build, $version.Revision
            $host.ui.RawUI.WindowTitle = "$windowTitle"
            # Launch text
+           write-host ''
            write-host "          Welcome to VMware $productName!"
            write-host ''
            write-host 'Log in to a vCenter Server or ESX host:              ' -NoNewLine
            write-host 'Connect-VIServer' -foregroundcolor $black
            write-host 'To find out what commands are available, type:       ' -NoNewLine
            write-host 'Get-VICommand' -foregroundcolor $black
-           write-host 'Once you've connected, display all virtual machines: ' -NoNewLine
+           write-host "Once you've connected, display all virtual machines: " -NoNewLine
            write-host 'Get-VM' -foregroundcolor $black
            write-host ''
            write-host '       Copyright (C) VMware, Inc. All rights reserved.'
            write-host ''
            write-host ''
          mode: 0644
+         create: yes
 
      - name: Create Powercli
        become: yes
@@ -218,6 +212,7 @@
            . /etc/profile.d/powershell.sh
            /usr/bin/pwsh -NoExit -Command /usr/local/share/powershell/Start-PowerCLI.ps1
          mode: 0755
+         create: yes
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml
