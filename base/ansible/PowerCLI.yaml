@@ -11,41 +11,19 @@
 
 - hosts: localhost
   tasks:
-     - name: Set Fact1 RHEL
+     - name: Set Facts RHEL
        set_fact: 
           tgtdir: "/etc/yum.repos.d"
-       when: (ansible_distribution == "RedHat") or
-             (ansible_distribution == "CentOS") or
-             (ansible_distribution == "Fedora")
-
-     - name: Set Fact2 RHEL
-       set_fact: 
           myos: "rhel"
-       when: (ansible_distribution == "RedHat") or
-             (ansible_distribution == "CentOS") or
-             (ansible_distribution == "Fedora")
-
-     - name: Set Fact3 RHEL
-       set_fact: 
           prod: "repo"
        when: (ansible_distribution == "RedHat") or
              (ansible_distribution == "CentOS") or
              (ansible_distribution == "Fedora")
 
-     - name: Set Fact1 Debian
+     - name: Set Facts Debian
        set_fact: 
           tgtdir: "/etc/apt/sources.list.d"
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
-
-     - name: Set Fact2 Debian
-       set_fact: 
           myos: "{{ansible_distribution | lowercase}}"
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
-
-     - name: Set Fact3 Debian
-       set_fact: 
           prod: "list"
        when: (ansible_distribution == "Debian") or 
              (ansible_distribution == "Ubuntu")
@@ -56,15 +34,6 @@
          url: "https://packages.microsoft.com/config/{{myos}}/{{ansible_distribution_major_version}}/prod.{{prod}}"
          dest: "{{tgtdir}}/microsoft.{{prod}}"
          mode: 0644
-
-     - name: Install powershell Core on RedHat
-       become: yes
-       package:
-         name: powershell
-         state: latest
-       when: (ansible_distribution == "RedHat") or
-             (ansible_distribution == "CentOS") or
-             (ansible_distribution == "Fedora")
 
      - name: Get Microsoft Key
        get_url:
@@ -96,14 +65,12 @@
        when: (ansible_distribution == "Debian") or 
              (ansible_distribution == "Ubuntu")
 
-     - name: Install powershell on Debian
+     - name: Install powershell
        become: yes
        package:
          name: 
            - powershell
          state: latest
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
 
      - name: Get Powershell Version
        become: no

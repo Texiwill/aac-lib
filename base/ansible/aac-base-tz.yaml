@@ -55,3 +55,9 @@
        service:
          name: ntpd
          state: started
+
+     - name: Stop postfix
+       become: yes
+       service:
+         name: postfix
+         state: stopped
