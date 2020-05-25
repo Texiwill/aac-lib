@@ -113,7 +113,7 @@
          dest: /tmp
 
      - name: Uninstall older vCLI
-       become: no
+       become: yes
        shell: "/usr/bin/vmware-uninstall-vSphere-CLI.pl"
        args:
          executable: /bin/bash
