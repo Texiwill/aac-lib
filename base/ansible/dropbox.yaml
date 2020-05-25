@@ -38,28 +38,33 @@
        when: (ansible_distribution == "Debian") or 
              (ansible_distribution == "Ubuntu")
 
+     - name: Remove Janeczku Docker Dropbox directory
+       file:
+         path: /tmp/docker-dropbox-master
+         state: absent
+
      - name: Download the latest version of Janeczku Docker Dropbox
        git:
          repo: https://github.com/janeczku/docker-dropbox.git
-         dest: /tmp
+         dest: /tmp/docker-dropbox-master
 
      - name: Fix Code1
        lineinfile:
          path: /tmp/docker-dropbox-master/Dockerfile
          regexp: 'pgp.mit.edu'
-         line: '   && apt-key adv --keyserver hkp://pool.sks-keyservers.net:80 --recv-keys 1C61A2656FB57B7E4DE0F4C1FC918B335044912E \'
+         line: '       && apt-key adv --keyserver hkp://pool.sks-keyservers.net:80 --recv-keys 1C61A2656FB57B7E4DE0F4C1FC918B335044912E \'
 
      - name: Fix Code2
        lineinfile:
          path: /tmp/docker-dropbox-master/Dockerfile
          regexp: 'install ca-certificates'
-         line: '   && apt-get -qqy install ca-certificates curl python-gpgme libc6 libglapi-mesa libxdamage1 libxfixes3 libxcb-glx0 libxcb-dri2-0 libxcb-dri3-0 libxcb-present0 libxcb-sync1 libxshmfence1 libxxf86vm1 dropbox \'
+         line: '       && apt-get -qqy install ca-certificates curl python-gpgme libc6 libglapi-mesa libxdamage1 libxfixes3 libxcb-glx0 libxcb-dri2-0 libxcb-dri3-0 libxcb-present0 libxcb-sync1 libxshmfence1 libxxf86vm1 dropbox \'
 
      - name: Fix Code3
        lineinfile:
          path: /tmp/docker-dropbox-master/Dockerfile
          insertafter: 'chmod g-w /tmp \\'
-         line: '   && chmod 755 /opt/dropbox/dropbox-lnx.*/libdropbox_apex.so \'
+         line: '       && chmod 755 /opt/dropbox/dropbox-lnx.*/libdropbox_apex.so \'
          state: present
 
      - name: Fix Code4
@@ -69,6 +74,12 @@
          line: 'chmod 755 /opt/dropbox/libdropbox_apex.so'
          state: present
 
+     - name: add docker to wheel users
+       become: yes
+       shell: "groupadd docker; chgrp docker /var/run/docker.sock; for x in `lid -g wheel -n`; do usermod -a -G docker $x; done"
+       args:
+         executable: /bin/bash
+
      - name: start Docker
        become: yes
        service:
@@ -76,7 +87,9 @@
          state: started
 
      - name: build docker image
-       command: docker build -t dropbox:latest .
+       shell: "sg - docker -c 'docker build -t dropbox:latest .'"
+       args:
+         chdir: /tmp/docker-dropbox-master
 
      - name: create profile.d dropbox.sh
        become: yes
@@ -93,10 +106,7 @@
                    fi
            fi
          mode: 0755
-
-     - name: add docker to wheel users
-       become: yes
-       command: "for x in `lid -g wheel -n`; do usermod -a -G docker $x; done"
+         create: yes
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml
