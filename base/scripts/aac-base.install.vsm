@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+# Copyright (c) 2017-2018 AstroArch Consulting, Inc. All rights reserved
+#
+# Install Bits for VSM
+#
+# Target: CentOS/RHEL 7/Debian/Ubuntu
+#
+# Version 1.0
+#
+###
+
+function vsm_version() {
+	echo "1.7.3"
+}
+
+function vsm() {
+	PYTHON="python python-urllib3"
+	FPYTHON="python2 python2-urllib3"
+	INSTALL="wget libxml2 perl-XML-Twig ncurses bc jq sharutils"
+	DINSTALL="wget python python-urllib3 libxml2 libxml2-utils xml-twig-tools ncurses-base bc jq sharutils"
+	DEVEL=""
+	DDEVEL=$DEVEL
+
+	# Find way to download direct
+	if [ -e vsm.sh ]
+	then
+		rm -f vsm.sh
+	fi
+	wget https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
+	mv vsm.sh /usr/local/bin
+	chmod +x /usr/local/bin/vsm.sh
+	
+	# Install RPMS
+	if [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
+	then
+		checkdep xml-twig-tools
+	elif [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
+	then
+		checkdep perl-XML-Twig
+	fi
+	if [ Z"$theos" = Z"fedora" ]
+	then
+		INSTALL="$INSTALL $FPYTHON"
+	else
+		INSTALL="$INSTALL $PYTHON"
+	fi
+	a=$needdep
+	checkdep jq
+	b=$needdep
+	checkdep sharutils
+	if [ $needdep != 0 ] || [ $a != 0 ] || [ $b != 0 ]
+	then
+		#yum -y install $INSTALL $DEVEL
+		installdep
+	fi
+
+	cd $menu_pd
+}
+

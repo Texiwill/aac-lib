@@ -196,7 +196,9 @@ function menu() {
 			a=`find ansible -type f -name '*.yaml' -exec basename {} \; | grep -v aac-base | sed 's/.yaml//g' 2>/dev/null`
 		fi
 	else
+		cd scripts
 		a=`ls ${prog}.* 2>/dev/null`
+		cd ..
 	fi
 	if [ Z"$a" = Z"" ]
 	then
@@ -215,12 +217,13 @@ function menu() {
 				then
 					call_playbook
 				else
+					cd scripts
 					installer=`echo $choice | awk -F\. '{print $4}'`
 					menu_pd=`pwd`
 					. $choice
 					$installer
 					changes=1
-					cd $menu_pd
+					cd ..
 				fi
 			fi
 			break
@@ -388,7 +391,9 @@ function usage() {
 	then
 		a=`find ansible -type f -name '*.yaml' -exec basename {} \; | grep -v aac-base | sed 's/.yaml//g' 2>/dev/null`
 	else
+		cd scripts
 		a=`ls ${prog}.*`
+		cd ..
 	fi
 	for x in $a
 	do
@@ -494,6 +499,12 @@ then
 			wget -O $x https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/ansible/$x
 		done
 		cd ..
+	else
+		files=`wget -O - https://github.com/Texiwill/aac-lib/blob/master/base/scripts |grep aac-base.install | grep span | awk -F\> '{print $3}' |sed 's#</a##g'`
+		for x in $files
+		do
+			wget -O $x https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/scripts/$x
+		done
 	fi
 	echo "Update Done - Exiting"
 	exit
@@ -537,13 +548,15 @@ if [ Z"$installer" != Z"" ]
 then
 	if [ $ansible -eq 0 ]
 	then
+		cd scripts
 		. ${0}.$installer
 		changes=1
+		$installer
+		cd ..
 	else
 		choice=$installer
 		call_playbook
 	fi
-	$installer
 else
 	menu
 fi

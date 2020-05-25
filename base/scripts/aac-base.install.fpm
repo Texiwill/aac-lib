@@ -1,0 +1,97 @@
+#!/bin/sh
+#
+# Copyright (c) 2017-2018 AstroArch Consulting, Inc. All rights reserved
+#
+# install or update fpm for package management
+
+function fpm_version() {
+	echo "1.0.0"
+}
+
+function fpm() {
+	echo "Installing or Updating FPM"
+
+	DEVEL="ruby-devel gcc make rpm-build"
+
+	echo $RPMLIST | grep ruby-devel > /dev/null
+	if [ $? != 0 ]
+	then
+		yum -y install $DEVEL
+	fi
+
+	gem install --no-ri --no-rdoc fpm
+
+	# do we still need $DEVEL
+
+	echo "FPM setup completed"
+}
+
+###
+# adds a http repo, and list the rpms
+# General usage: createrepo list_of_rpms
+###
+function createrepo() {
+	echo "Creating Repo if one does not exist"
+
+	INSTALL="createrepo nginx"
+	echo $RPMLIST | grep createrepo > /dev/null
+	if [ $? != 0 ]
+	then
+		yum -y install $INSTALL
+	fi
+
+	###
+	# Build out directory
+	# -- build it out even anyways, we may have added something
+	###
+	CDIR="/var/www/html/CentOS/${VERSION_ID}/local"
+	mkdir -p $CDIR/{noarch,x86_64,src,debuginfo} >& /dev/null
+
+	###
+	# Build out nginx
+	###
+
+	###
+	# Move passed files into proper location
+	###
+	for x in $*
+	do
+		# src, x86_64, or noarch
+		d=`echo $x |awk '/debuginfo/{print "debuginfo"}/src/{print "src"}/x86_64{print "x86_64"}/noarch/{print "noarch"}'`
+		cp $x $CDIR/$d
+	done
+	###
+	# Build the repo
+	###
+	for d in src x86_64 noarch debuginfo
+	do
+		createrepo $CDIR/$d
+	done
+}
+
+###
+# check if in repo
+# General usage: checkrepo list_of_rpms
+###
+function checkrepo() {
+	echo "Checking Repo for $*"
+
+	CDIR="/var/www/html/CentOS/${VERSION_ID}/local"
+	ret=0
+	###
+	# Check repo
+	###
+	for x in $*
+	do
+		# src, x86_64, or noarch
+		d=`echo $x |awk '/debuginfo/{print "debuginfo"}/src/{print "src"}/x86_64{print "x86_64"}/noarch/{print "noarch"}'`
+		if [ -e $CDIR/$d/$x ]
+		then
+			ret=1
+		else
+			ret=0
+		fi
+	done
+
+	return $ret
+}
