@@ -105,16 +105,16 @@ chmod +x aac-base.install
 if [ Z"$us" != "" ]
 then
 	./aac-base.install -u --user $us $tz
-	sudo ./aac-base.install -i vsm --user $us $tz
+	./aac-base.install -i LinuxVSM --user $us $tz
 else
 	./aac-base.install -u $tz
-	sudo ./aac-base.install -i vsm $tz
+	./aac-base.install -i LinuxVSM $tz
 fi
 
 cat > update.sh << EOF
 cd $HOME/aac-base
 ./aac-base.install -u $tz
-./aac-base.install -i vsm $tz
+./aac-base.install -i LinuxVSM $tz
 EOF
 chmod +x update.sh
 
