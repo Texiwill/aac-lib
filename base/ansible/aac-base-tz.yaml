@@ -1,4 +1,6 @@
 ---
+# version: 1.0.1
+
 - hosts: localhost
   gather_facts: true
   become_user: root
@@ -22,12 +24,9 @@
          name: 
            - ntp
            - python2-pip
+           - pexpect
+           - git
          state: latest
-
-     - name: install the latest ansible dependencies
-       become: yes
-       pip:
-         name: pexpect
 
      - name: Stop ntpd
        become: yes

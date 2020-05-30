@@ -9,10 +9,10 @@
 # Target: CentOS/RHEL 7
 #
 ###
-VERSION="2.0.0"
+VERSIONID="2.0.1"
 
 function version() {
-	echo "$0 version is $VERSION"
+	echo "$0 version is $VERSIONID"
 	for x in `ls ${prog}.*`
 	do
 		. ./$x
@@ -31,6 +31,21 @@ function colorecho() {
 	fi
 	echo "${COLOR}${1}${NC}"
 }
+
+forceu=0
+function checkForUpdate()
+{
+    oVer=`echo $VERSIONID | sed 's/\.//g'`
+    nVer=`wget -O - https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install 2>/dev/null|grep VERSIONID | head -1 | sed 's/\.//g'| sed 's/VERSIONID=//'|sed 's/\"//g'`
+    if [ $nVer -gt $oVer ]
+    then
+        colorecho "Upgrade needed!" 1
+        #force -u and exit
+	forceu=1
+	update=1
+    fi
+}
+
 
 function findos() {
 	if [ -e /etc/os-release ]
@@ -175,7 +190,7 @@ function call_playbook() {
 	fi
 	if [ Z"$choice" != Z"" ]
 	then
-		if [ Z"$choice" = Z"vCLI" ] || [ Z"$choice" = Z"ovftool" ]
+		if [ Z"$choice" = Z"vCLI" ] || [ Z"$choice" = Z"ovftool" ] || [ Z"$choice" = Z"vma" ]
 		then
 			# create the LinuxVSM credstore since we use it
 			# within the playbook
@@ -479,6 +494,8 @@ do
 	shift
 done
 
+checkForUpdate
+
 ###
 # Update aac-base bits
 ###
@@ -489,22 +506,25 @@ then
 	do
 		wget -O $x https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/$x
 	done
-	if [ $ansible -eq 1 ]
+	if [ $forceu -ne 1 ]
 	then
-		files=`wget -O - https://github.com/Texiwill/aac-lib/blob/master/base/ansible |grep yaml | grep span | awk -F\> '{print $3}' |sed 's#</a##g'`
-		if [ ! -e ansible ]; then mkdir ansible; fi
-		cd ansible
-		for x in $files
-		do
-			wget -O $x https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/ansible/$x
-		done
-		cd ..
-	else
-		files=`wget -O - https://github.com/Texiwill/aac-lib/blob/master/base/scripts |grep aac-base.install | grep span | awk -F\> '{print $3}' |sed 's#</a##g'`
-		for x in $files
-		do
-			wget -O $x https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/scripts/$x
-		done
+		if [ $ansible -eq 1 ]
+		then
+			files=`wget -O - https://github.com/Texiwill/aac-lib/blob/master/base/ansible |grep yaml | grep span | awk -F\> '{print $3}' |sed 's#</a##g'`
+			if [ ! -e ansible ]; then mkdir ansible; fi
+			cd ansible
+			for x in $files
+			do
+				wget -O $x https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/ansible/$x
+			done
+			cd ..
+		else
+			files=`wget -O - https://github.com/Texiwill/aac-lib/blob/master/base/scripts |grep aac-base.install | grep span | awk -F\> '{print $3}' |sed 's#</a##g'`
+			for x in $files
+			do
+				wget -O $x https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/scripts/$x
+			done
+		fi
 	fi
 	echo "Update Done - Exiting"
 	exit

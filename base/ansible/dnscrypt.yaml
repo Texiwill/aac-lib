@@ -1,4 +1,6 @@
 ---
+# version: 1.0.0
+
 - hosts: localhost
   gather_facts: true
   become_user: root
