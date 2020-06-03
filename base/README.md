@@ -102,6 +102,10 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+2.0.2 Fix to not use -K for ansible-playbook when running already as root
+
+2.0.1 Fix a permission issue with vma playbook, missing dependicies for vctui
+
 2.0.0 Move to Ansible
 
 1.7.2 VSM: changes to accomodate fedora

@@ -9,7 +9,7 @@
 # Target: CentOS/RHEL 7
 #
 ###
-VERSIONID="2.0.1"
+VERSIONID="2.0.2"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -183,6 +183,12 @@ function handlecredstore ()
 }
 
 function call_playbook() {
+	us=`id -un`
+	if [ Z"$us" = Z"root" ]
+	then
+		# no need if already root
+		askpass=""
+	fi
 	extraargs=""
 	if [ Z"TZ" != Z"" ]
 	then
