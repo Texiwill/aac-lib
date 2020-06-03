@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) AstroArch Consulting, Inc.  2017,2018
+# Copyright (c) AstroArch Consulting, Inc.  2017-2020
 # All rights reserved
 # vim: tabstop=4 shiftwidth=4
 #
@@ -76,13 +76,13 @@ do
 	shift
 done
 
-us=`id -un`
-if [ Z"$us" = Z"root" ]
-then
-	colorecho "Error: Requires a valid non-root username as an argument" 1
-	usage
-	exit
-fi
+#us=`id -un`
+#if [ Z"$us" = Z"root" ]
+#then
+#	colorecho "Error: Requires a valid non-root username as an argument" 1
+#	usage
+#	exit
+#fi
 
 theos=''
 findos
