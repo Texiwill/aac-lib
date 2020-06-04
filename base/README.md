@@ -102,6 +102,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+2.0.3 Fix: translate vsm to LinuxVSM, add python-pip dependency for Ubuntu
+
 2.0.2 Fix to not use -K for ansible-playbook when running already as root
 
 2.0.1 Fix a permission issue with vma playbook, missing dependicies for vctui

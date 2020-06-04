@@ -9,7 +9,7 @@
 # Target: CentOS/RHEL 7
 #
 ###
-VERSIONID="2.0.2"
+VERSIONID="2.0.3"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -193,6 +193,10 @@ function call_playbook() {
 	if [ Z"TZ" != Z"" ]
 	then
 		extraargs="--extra-vars=\"aac_base_tz=$TZ\""
+	fi
+	if [ Z"$choice" = Z"vsm" ]
+	then
+		choice="LinuxVSM"
 	fi
 	if [ Z"$choice" != Z"" ]
 	then
