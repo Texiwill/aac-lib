@@ -1,5 +1,5 @@
 ---
-# version: 1.0.1
+# version: 1.0.2
 
 - hosts: localhost
   gather_facts: true
@@ -18,29 +18,38 @@
        when: (ansible_distribution == "Ubuntu") or 
              (ansible_distribution == "Debian")
 
-     - name: install the latest ntp and other required dependencies
+     - name: install the latest ntp and other required dependencies for RHEL < 8
        become: yes
        package:
-         name: 
+         name:
            - ntp
-           - pexpect
            - git
-         state: latest
-
-     - name: install the other required dependencies RHEL
-       become: yes
-       package:
-         name: 
+           - pexpect
            - python2-pip
          state: latest
-       when: (ansible_distribution == "Fedora") or 
-             (ansible_distribution == "RedHat") or
-             (ansible_distribution == "CentOS")
+       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version < "8") or
+             (ansible_distribution == "CentOS" and ansible_distribution_major_version < "8")
+
+     - name: install the latest ntp and other required dependencies for RHEL >= 8
+       become: yes
+       package:
+         name:
+           - chrony
+           - git
+           - pexpect
+           - python2-pip
+         state: latest
+       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version > "7") or
+             (ansible_distribution == "CentOS" and ansible_distribution_major_version > "7") or
+             (ansible_distribution == "Fedora")
 
      - name: install the other required dependencies Ubuntu
        become: yes
        package:
          name: 
+           - ntp
+           - git
+           - python-pexpect
            - python-pip
          state: latest
        when: (ansible_distribution == "Ubuntu") or 
@@ -66,12 +75,38 @@
        service:
          name: ntpd
          enabled: yes
+       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version < "8") or
+             (ansible_distribution == "CentOS" and ansible_distribution_major_version < "8") or
+             (ansible_distribution == "Ubuntu") or 
+             (ansible_distribution == "Debian")
 
      - name: Start ntpd
        become: yes
        service:
          name: ntpd
          state: started
+       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version < "8") or
+             (ansible_distribution == "CentOS" and ansible_distribution_major_version < "8") or
+             (ansible_distribution == "Ubuntu") or 
+             (ansible_distribution == "Debian")
+
+     - name: Enable chrony
+       become: yes
+       service:
+         name: chrony
+         enabled: yes
+       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version > "7") or
+             (ansible_distribution == "CentOS" and ansible_distribution_major_version > "7") or
+             (ansible_distribution == "Fedora")
+
+     - name: Start chrony
+       become: yes
+       service:
+         name: chrony
+         state: started
+       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version > "7") or
+             (ansible_distribution == "CentOS" and ansible_distribution_major_version > "7") or
+             (ansible_distribution == "Fedora")
 
      - name: Stop postfix
        become: yes
