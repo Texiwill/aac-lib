@@ -9,7 +9,7 @@
 # Target: CentOS/RHEL 7
 #
 ###
-VERSIONID="2.0.3"
+VERSIONID="2.0.4"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -198,9 +198,13 @@ function call_playbook() {
 	then
 		choice="LinuxVSM"
 	fi
+	if [ Z"$choice" = Z"vma" ]
+	then
+		choice="LinuxVMA"
+	fi
 	if [ Z"$choice" != Z"" ]
 	then
-		if [ Z"$choice" = Z"vCLI" ] || [ Z"$choice" = Z"ovftool" ] || [ Z"$choice" = Z"vma" ]
+		if [ Z"$choice" = Z"vCLI" ] || [ Z"$choice" = Z"ovftool" ] || [ Z"$choice" = Z"LinuxVMA" ]
 		then
 			# create the LinuxVSM credstore since we use it
 			# within the playbook
