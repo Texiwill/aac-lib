@@ -8,8 +8,8 @@ AAC Library of Tools
 ### Description
 A bash script to automatically install all the requirements to use Ansible
 to add functionality to a Linux installations. This includes Ansible playbooks
-to install PowerCLI w/PowerNSX, ovftool, DNSCrypt, vctui, LinuxVSM,
-vCLI, and others.
+to install PowerCLI w/PowerNSX & PowerVRA, ov-import/ovftool, DNSCrypt,
+vctui, LinuxVSM, vCLI, and others.
 
 Why did I create these scripts?  To help keep my configuration up
 to date across Linux and to install specific items like PowerCLI and
@@ -17,7 +17,8 @@ DNSCrypt. While the scripts are pretty generic they are targeted for
 CentOS/RHEL builds, they should also work on Debian distributions as
 well. In addition, since VMware is no longer working on the vSphere
 Management Appliance, I have created one to replace/improve, that includes
-PowerCLI, PowerNSX, vCLI, LinuxVSM, vctui, and ovftool.
+PowerCLI, PowerNSX, PowerVRA, vCLI, LinuxVSM, vctui, ov-import.sh,
+and ovftool.
 
 The problem is that you need to install a few things before you can
 begin to use Ansible. The main script installs all those necessary bits,
@@ -31,7 +32,7 @@ provide sudo credentials
 	Get wget
 	Checking for EPEL repository
 	Checking for Ansible
-	1) LinuxVSM  3) ovftool	  5) vma       7) vctui
+	1) LinuxVSM  3) ovftool	  5) LinuxVMA  7) vctui
 	2) vCLI	     4) PowerCLI  6) dropbox   8) Exit
 	#? 
 
@@ -84,9 +85,10 @@ Installs vSphere CLI using LinuxVSM to download the latest file.
 #### ovftool
 Installs ovftool using LinuxVSM to download the latest file.
 
-#### vma
-Installs LinuxVSM, powercli, ovftool, and vcli to create a vSphere Management
-Appliance. 
+#### LinuxVMA
+Installs LinuxVSM, PowerCLI, ov-import.sh, ovftool, and vcli to create
+a Linux vSphere Management Appliance.  PowerCLI includes Powershell,
+PowerCLI, PowerNSX, and PowerVRA.
 
 #### LinuxVSM
 Install a port of VMware's Software Manager to Linux - LinuxVSM.

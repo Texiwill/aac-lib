@@ -1,5 +1,5 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 
 - hosts: localhost
   gather_facts: true
@@ -101,13 +101,23 @@
          mode: 0644
          create: yes
 
+     - name: Remove Older PowerCLI/PowerNSX/PowerVRA
+       become: yes
+       file:
+         path: /usr/local/share/powershell
+         state: absent
+
      - name: Install PowerCLI
        become: yes
        shell: /usr/bin/pwsh -c "Install-Module -Name VMware.PowerCLI -Scope AllUsers -Force"
 
      - name: Install PowerNSX
        become: yes
-       shell: /usr/bin/pwsh -c "Install-Module -Name PowerNSZ -Scope AllUsers -Force"
+       shell: /usr/bin/pwsh -c "Install-Module -Name PowerNSX -Scope AllUsers -Force"
+
+     - name: Install PowerVRA
+       become: yes
+       shell: /usr/bin/pwsh -c "Install-Module -Name PowerVRA -Scope AllUsers -Force"
 
      - name: Create Start-PowerCLI.ps1
        become: yes
