@@ -1,5 +1,5 @@
 ---
-# version: 1.0.2
+# version: 1.0.3
 
 - hosts: localhost
   gather_facts: true
@@ -24,7 +24,6 @@
          name:
            - ntp
            - git
-           - pexpect
            - python2-pip
          state: latest
        when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version < "8") or
@@ -36,7 +35,6 @@
          name:
            - chrony
            - git
-           - pexpect
            - python2-pip
          state: latest
        when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version > "7") or
@@ -49,11 +47,15 @@
          name: 
            - ntp
            - git
-           - python-pexpect
            - python-pip
          state: latest
        when: (ansible_distribution == "Ubuntu") or 
              (ansible_distribution == "Debian")
+
+     - name: Install pexpect
+       become: yes
+       pip:
+         name: pexpect
 
      - name: Stop ntpd
        become: yes
