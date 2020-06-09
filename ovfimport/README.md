@@ -192,6 +192,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+2.1.1 Added Debug and fixed multi-word eval
+
 2.1 Fixed hiera bug with hyphen as the argument. Needed single quotes
 around it. The --setup configures this.
 

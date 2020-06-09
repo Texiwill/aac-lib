@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2017-2018 AstroArch Consulting, Inc. All rights reserved
 #
-VERSION="2.1"
+VERSION="2.1.1"
 
 function setup_qry() {
 	m=$1
@@ -18,7 +18,12 @@ function oqry() {
 	#rc=`grep -i "${m}::${f}:" $defaults|cut -d: -f 4|sed 's/^[ \t]\+//'`
 	if [ $usev1 -eq 0 ]
 	then
-		echo -n "hiera -c $defaults -y t.yaml $f 2>/dev/null"
+		if [ $debug -eq 1 ]
+		then
+			echo -n "hiera -c $defaults -y t.yaml $f 2>/dev/null"
+		else
+			echo -n "$f"
+		fi
 		rc=`hiera -c $defaults -y t.yaml $f 2>/dev/null`
 		echo " ... $rc"
 		if [ Z"$rc" = Z"nil" ]
@@ -37,6 +42,7 @@ nocleanup=0
 ovaovf=""
 usev1=0
 dosetup=0
+debug=0
 while [[ $# -gt 0 ]]
 do
 	key="$1"
@@ -57,12 +63,15 @@ do
 		-n|--nocleanup)
 			nocleanup=1
 			;;
+ 		--debug) 
+			debug=1
+			;;
 		-y|--name)
 			yz=$2; 
 			shift;
 			;;
 		-h|--help)
-			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [-v1] [--setup] [-y name ] [ova/ovf file]"
+			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [-v1] [--setup] [-y name ] [--debug] [ova/ovf file]"
 			echo "  -y specifies alternative name to use for lookups in $HOME/.ov-imports"
 			echo "  --dryrun implies --nocleanup"
 			echo "	-v1 implies do not use hiera"
@@ -70,7 +79,7 @@ do
 			exit;
 			;;
 		-*)
-			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [-v1] [--setup] [-y name] [ova/ovf file]"
+			echo "Usage: $0 [[-p|--precheck]|[-d|--dryrun]|[-n|--nocleanup]|[-h|--help]] [-v1] [--setup] [-y name] [--debug] [ova/ovf file]"
 			echo "  -y specifies alternative name to use for lookups in $HOME/.ov-imports"
 			echo "  --dryrun implies --nocleanup"
 			echo "	-v1 implies do not use hiera"
@@ -378,8 +387,8 @@ do
 	for xx in domain network vswitch ntp ssh ip netmask dns gw hostname ceip searchpath syslog
 	do
 		oqry ${y} $xx
-		z=$rc
-		eval ${xx}=$z
+		z="$rc"
+		eval "${xx}=\"$z\""
 		if [ $usev1 -eq 1 ]
 		then
 			if [ Z"$z" = Z"" ]
