@@ -68,7 +68,18 @@
        service:
          name: ntpd
          state: stopped
-       when: aac_base_tz is defined
+       when: (aac_base_tz is defined) and
+             (ansible_distribution != "Ubuntu") and 
+             (ansible_distribution != "Debian")
+
+     - name: Stop ntpd
+       become: yes
+       service:
+         name: ntp
+         state: stopped
+       when: (aac_base_tz is defined) and
+             (ansible_distribution == "Ubuntu") or 
+             (ansible_distribution == "Debian")
 
      - name: Set timezone
        become: yes
@@ -84,8 +95,14 @@
          name: ntpd
          enabled: yes
        when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version < "8") or
-             (ansible_distribution == "CentOS" and ansible_distribution_major_version < "8") or
-             (ansible_distribution == "Ubuntu") or 
+             (ansible_distribution == "CentOS" and ansible_distribution_major_version < "8")
+
+     - name: Enable ntp
+       become: yes
+       service:
+         name: ntp
+         enabled: yes
+       when: (ansible_distribution == "Ubuntu") or 
              (ansible_distribution == "Debian")
 
      - name: Start ntpd
@@ -94,8 +111,14 @@
          name: ntpd
          state: started
        when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version < "8") or
-             (ansible_distribution == "CentOS" and ansible_distribution_major_version < "8") or
-             (ansible_distribution == "Ubuntu") or 
+             (ansible_distribution == "CentOS" and ansible_distribution_major_version < "8")
+
+     - name: Start ntp
+       become: yes
+       service:
+         name: ntp
+         state: started
+       when: (ansible_distribution == "Ubuntu") or 
              (ansible_distribution == "Debian")
 
      - name: Enable chrony
@@ -121,3 +144,5 @@
        service:
          name: postfix
          state: stopped
+       when: (ansible_distribution != "Ubuntu") and 
+             (ansible_distribution != "Debian")
