@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.3.3 - Fixed partial cache of cookies
+
 6.3.2 - Fixed a caching issue with Authentication
 
 6.3.1 - Update to MacOS 10.15.4 fix

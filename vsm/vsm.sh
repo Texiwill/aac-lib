@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.3.2"
+VERSIONID="6.3.3"
 
 # args: stmt error
 function colorecho() {
@@ -575,25 +575,27 @@ function get_product_patches() {
 		# patches only work for VC/ESXi
 		if [ ! -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ] 
 		then
-			## First get index
-			pin=`jq .[].prodList[].name ${rcdir}/_patches.xhtml | awk "/$ppr/{print NR-1}"`
-			## Get 'productName'
-			pnn=`jq ".[].prodList[${pin}].name" ${rcdir}/_patches.xhtml`
-			## Get 'product'
-			pvn=`jq ".[].prodList[${pin}].value" ${rcdir}/_patches.xhtml`
-	
-			# Get 'Details'
-			pini=`jq ".[].prodList[${pin}].versions[].name" ${rcdir}/_patches.xhtml |awk "/$ppv/{print NR-1}"`
-			pnam=`jq ".[].prodList[${pin}].versions[${pini}].name" ${rcdir}/_patches.xhtml`
-			pinv=`jq ".[].prodList[${pin}].versions[${pini}].value" ${rcdir}/_patches.xhtml`
-			prt=`jq ".[].prodList[${pin}].versions[${pini}].resultType" ${rcdir}/_patches.xhtml`
+			if [ -e ${rcdir}/_patches.xhtml ]
+			then
+				## First get index
+				pin=`jq .[].prodList[].name ${rcdir}/_patches.xhtml | awk "/$ppr/{print NR-1}"`
+				## Get 'productName'
+				pnn=`jq ".[].prodList[${pin}].name" ${rcdir}/_patches.xhtml`
+				## Get 'product'
+				pvn=`jq ".[].prodList[${pin}].value" ${rcdir}/_patches.xhtml`
+		
+				# Get 'Details'
+				pini=`jq ".[].prodList[${pin}].versions[].name" ${rcdir}/_patches.xhtml |awk "/$ppv/{print NR-1}"`
+				pnam=`jq ".[].prodList[${pin}].versions[${pini}].name" ${rcdir}/_patches.xhtml`
+				pinv=`jq ".[].prodList[${pin}].versions[${pini}].value" ${rcdir}/_patches.xhtml`
+				prt=`jq ".[].prodList[${pin}].versions[${pini}].resultType" ${rcdir}/_patches.xhtml`
 
-			# Patch Data per version
-			pd=`echo "product=${pvn}&productName=${pnn}&version=${pinv}&versionName=${pnam}&resultType=${prt}&releasedate=YYYY-MM-DD&severity=All+Severities&category=All+Categories&classify=All+Classifications&releasenumber=Enter+Release+Name&buildnumber=Enter+Build+Number&bulletinnumber=Enter+Bulletin+Number&dependency=true" |sed 's/"//g' | sed 's/ /+/g'`
-			#echo $pd
-			wget -O ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml --load-cookies $cdir/pcookies.txt --post-data="$pd" --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" 'https://my.vmware.com/group/vmware/patch?p_p_id=PatchDownloadSearchPortlet_WAR_itofflinePatch&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getPatchData&p_p_cacheability=cacheLevelPage&p_p_col_id=column-6&p_p_col_pos=1&p_p_col_count=2' >& /dev/null
+				# Patch Data per version
+				pd=`echo "product=${pvn}&productName=${pnn}&version=${pinv}&versionName=${pnam}&resultType=${prt}&releasedate=YYYY-MM-DD&severity=All+Severities&category=All+Categories&classify=All+Classifications&releasenumber=Enter+Release+Name&buildnumber=Enter+Build+Number&bulletinnumber=Enter+Bulletin+Number&dependency=true" |sed 's/"//g' | sed 's/ /+/g'`
+				#echo $pd
+				wget -O ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml --load-cookies $cdir/pcookies.txt --post-data="$pd" --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" 'https://my.vmware.com/group/vmware/patch?p_p_id=PatchDownloadSearchPortlet_WAR_itofflinePatch&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getPatchData&p_p_cacheability=cacheLevelPage&p_p_col_id=column-6&p_p_col_pos=1&p_p_col_count=2' >& /dev/null
+			fi
 		fi
-
 	else
 		debugecho "Cannot get patches for $ppr"
 	fi
@@ -1285,7 +1287,7 @@ then
 fi
 
 # Cleanup old data if any
-rm -f cookies.txt index.html.* 2>/dev/null
+rm -f *cookies.txt index.html.* 2>/dev/null
 
 # Get Olde Time and remove temp files if time limited reached, default 12 hours
 if [ -e ${rcdir}/_downloads.xhtml ]
