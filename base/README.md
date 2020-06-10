@@ -9,7 +9,7 @@ AAC Library of Tools
 A bash script to automatically install all the requirements to use Ansible
 to add functionality to a Linux installations. This includes Ansible playbooks
 to install PowerCLI w/PowerNSX & PowerVRA, ov-import/ovftool, DNSCrypt,
-vctui, LinuxVSM, vCLI, and others.
+vctui, LinuxVSM, vCLI, DCLI, and others.
 
 Why did I create these scripts?  To help keep my configuration up
 to date across Linux and to install specific items like PowerCLI and
@@ -28,14 +28,14 @@ then switches to use Ansible.
 Run the script and if root access is required you will be asked to
 provide sudo credentials
 
-	$ ./aac-base.install -v
+	$ ./aac-base.install
 	Get wget
 	Checking for EPEL repository
 	Checking for Ansible
-	1) LinuxVSM  3) ovftool	  5) LinuxVMA  7) vctui
-	2) vCLI	     4) PowerCLI  6) dropbox   8) Exit
+	1) LinuxVSM    4) dropbox    7) vctui	  10) dcli
+	2) PowerCLI    5) ovftool    8) vma	  11) Exit
+	3) dnscrypt    6) vCLI	     9) LinuxVMA
 	#? 
-
 
 We verify timezones, repositories, and SELinux bits are installed then
 prompt for the actions to take. 
@@ -73,31 +73,37 @@ chmod +x aac-base.install
 
 ### Installers
 
-#### Base
+#### Base - 2.x
 Installs the base AAC setup. This is mostly setting timezones and ensuring wget and ansible are availabile
 
-#### powercli
+#### powercli - 1.0.1
 Installs Powershell and VMware PowerCLI: run command 'powercli' to start
 
-#### vcli
+#### vcli - 1.0.0
 Installs vSphere CLI using LinuxVSM to download the latest file.
 
-#### ovftool
+#### dcli - 1.0.0
+Installs Datacenter CLI (DCLI)
+
+#### ovftool - 1.0.0
 Installs ovftool using LinuxVSM to download the latest file.
 
-#### LinuxVMA
-Installs LinuxVSM, PowerCLI, ov-import.sh, ovftool, and vcli to create
+#### LinuxVMA - 1.0.2
+Installs LinuxVSM, PowerCLI, ov-import.sh, ovftool, DCLI, and vcli to create
 a Linux vSphere Management Appliance.  PowerCLI includes Powershell,
 PowerCLI, PowerNSX, and PowerVRA.
 
-#### LinuxVSM
+#### LinuxVSM - 1.0.0
 Install a port of VMware's Software Manager to Linux - LinuxVSM.
 
-#### vctui
+#### vctui - 1.0.0
 Installs the vctui tool for connecting to vCenter.
 
-#### dropbox
+#### dropbox - 1.0.0
 Installs the Docker Container version of Dropbox for system wide use
+
+#### dnscrypt - 1.0.0
+Installs DNSCrypt Proxy 2.x
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add

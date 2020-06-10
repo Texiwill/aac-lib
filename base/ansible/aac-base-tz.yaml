@@ -52,6 +52,12 @@
        when: (ansible_distribution == "Ubuntu") or 
              (ansible_distribution == "Debian")
 
+     - name: Upgrade PIP
+       become: yes
+       pip:
+         name: pip
+         state: latest
+
      - name: Install pexpect
        become: yes
        pip:
