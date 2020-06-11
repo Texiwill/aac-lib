@@ -25,11 +25,14 @@ begin to use Ansible. The main script installs all those necessary bits,
 then switches to use Ansible.
 
 #### Supported Operating Systems
+Full support for LinuxVMA is available for:
+
 * RHEL/CentOS 7
 * RHEL/CentOS 8
 * Debian 9
 * Debian 10
 * Ubuntu 18.04
+* Ubuntu 20.04
 
 WSL also works per the community
 
@@ -85,7 +88,7 @@ chmod +x aac-base.install
 #### Base - 2.x
 Installs the base AAC setup. This is mostly setting timezones and ensuring wget and ansible are availabile
 
-#### powercli - 1.0.2
+#### powercli - 1.0.3
 Installs Powershell and VMware PowerCLI: run command 'powercli' to start
 
 #### vcli - 1.0.1

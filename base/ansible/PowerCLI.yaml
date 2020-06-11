@@ -1,5 +1,5 @@
 ---
-# version: 1.0.2
+# version: 1.0.3
 
 - hosts: localhost
   gather_facts: true
@@ -56,36 +56,29 @@
          url: "https://packages.microsoft.com/config/{{myos}}/{{ansible_distribution_major_version}}/packages-microsoft-prod.deb"
          dest: "/tmp/packages-microsoft-prod.deb"
          mode: 0600
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) or
-             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>'))
+       when: ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>')
 
      - name: Install Repo
        become: yes
        shell: dpkg -i /tmp/packages-microsoft-prod.deb
        args:
          executable: /bin/bash
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) or
-             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>'))
+       when: ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>')
 
-     #- name: Install powershell dependencies on Debian
-     #  become: yes
-     #  package:
-     #    name: 
-     #      - libcurl3
-     #      - liblttng-ust-ctl2
-     #      - liblttng-ust0
-     #      - libunwind8
-     #      - liburcu4
-     #      - apt-transport-https
-     #    state: latest
-     #  when: ansible_os_family == "Debian"
-
-     - name: Install powershell
+     - name: Install powershell Debian/Ubuntu 18/RHEL
        become: yes
        package:
          name: 
            - powershell
          state: latest
+       when: (ansible_os_family == "RedHat") or
+             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
+             (ansible_distribution == "Debian")
+
+     - name: Install powershell Ubuntu 20
+       become: yes
+       shell: "snap install powershell-preview --classic"
+       when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')
 
      - name: Get Powershell Version
        become: no
@@ -93,16 +86,29 @@
        args:
          executable: /bin/bash
        register: pwsh_local
+       when: (ansible_os_family == "RedHat") or
+             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
+             (ansible_distribution == "Debian")
 
      - name: Set PowerShell Version Fact
        set_fact:
-         version: "{{ pwsh_local.stdout }}"
+         pwsh_path: "/opt/microsoft/powershell/{{pwsh_local.stdout}}"
+         pwsh_cmd: "/usr/bin/pwsh"
+       when: (ansible_os_family == "RedHat") or
+             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
+             (ansible_distribution == "Debian")
+
+     - name: Set PowerShell Fact
+       set_fact:
+         pwsh_path: "/snap/powershell-preview/current/opt/powershell"
+         pwsh_cmd: "/snap/bin/powershell-preview"
+       when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')
 
      - name: Set profile.d BASH settings
        become: yes
        lineinfile: 
          path: /etc/profile.d/powershell.sh
-         line: "export PSModulePath=/opt/microsoft/powershell/{{version}}:/usr/local/share/powershell/Modules"
+         line: "export PSModulePath={{pwsh_path}}/Modules:/usr/local/share/powershell/Modules"
          mode: 0644
          create: yes
 
@@ -110,7 +116,7 @@
        become: yes
        lineinfile: 
          path: /etc/profile.d/powershell.csh
-         line: "setenv PSModulePath=/opt/microsoft/powershell/{{version}}:/usr/local/share/powershell/Modules"
+         line: "setenv PSModulePath={{pwsh_path}}/Modules:/usr/local/share/powershell/Modules"
          mode: 0644
          create: yes
 
@@ -122,15 +128,15 @@
 
      - name: Install PowerCLI
        become: yes
-       shell: /usr/bin/pwsh -c "Install-Module -Name VMware.PowerCLI -Scope AllUsers -Force"
+       shell: '{{pwsh_cmd}} -c "Install-Module -Name VMware.PowerCLI -Scope AllUsers -Force"'
 
      - name: Install PowerNSX
        become: yes
-       shell: /usr/bin/pwsh -c "Install-Module -Name PowerNSX -Scope AllUsers -Force"
+       shell: '{{pwsh_cmd}} -c "Install-Module -Name PowerNSX -Scope AllUsers -Force"'
 
      - name: Install PowerVRA
        become: yes
-       shell: /usr/bin/pwsh -c "Install-Module -Name PowerVRA -Scope AllUsers -Force"
+       shell: '{{pwsh_cmd}} -c "Install-Module -Name PowerVRA -Scope AllUsers -Force"'
 
      - name: Create Start-PowerCLI.ps1
        become: yes
@@ -202,7 +208,7 @@
          block: |
            #!/bin/sh
            . /etc/profile.d/powershell.sh
-           /usr/bin/pwsh -NoExit -Command /usr/local/share/powershell/Start-PowerCLI.ps1
+           {{pwsh_cmd}} -NoExit -Command /usr/local/share/powershell/Start-PowerCLI.ps1
          mode: 0755
          create: yes
 
