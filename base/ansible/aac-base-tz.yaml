@@ -1,5 +1,5 @@
 ---
-# version: 1.0.3
+# version: 1.0.4
 
 - hosts: localhost
   gather_facts: true
@@ -8,15 +8,12 @@
      - name: install system updates for redhat systems
        become: yes
        yum: name=* state=latest update_cache=yes
-       when: (ansible_distribution == "Fedora") or 
-             (ansible_distribution == "RedHat") or
-             (ansible_distribution == "CentOS")
+       when: ansible_os_family == "RedHat"
 
      - name: install system updates for ubuntu systems
        become: yes
        apt: upgrade=dist update_cache=yes
-       when: (ansible_distribution == "Ubuntu") or 
-             (ansible_distribution == "Debian")
+       when: ansible_os_family == "Debian"
 
      - name: install the latest ntp and other required dependencies for RHEL < 8
        become: yes
@@ -26,8 +23,7 @@
            - git
            - python2-pip
          state: latest
-       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version < "8") or
-             (ansible_distribution == "CentOS" and ansible_distribution_major_version < "8")
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')
 
      - name: install the latest ntp and other required dependencies for RHEL >= 8
        become: yes
@@ -37,9 +33,7 @@
            - git
            - python2-pip
          state: latest
-       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version > "7") or
-             (ansible_distribution == "CentOS" and ansible_distribution_major_version > "7") or
-             (ansible_distribution == "Fedora")
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>')
 
      - name: install the other required dependencies Ubuntu
        become: yes
@@ -49,8 +43,19 @@
            - git
            - python-pip
          state: latest
-       when: (ansible_distribution == "Ubuntu") or 
-             (ansible_distribution == "Debian")
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
+             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<'))
+
+     - name: install the other required dependencies Debian
+       become: yes
+       package:
+         name: 
+           - chrony
+           - git
+           - python3-pip
+         state: latest
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) or
+             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>'))
 
      - name: Upgrade PIP
        become: yes
@@ -63,23 +68,31 @@
        pip:
          name: pexpect
 
-     - name: Stop ntpd
-       become: yes
-       service:
-         name: ntpd
-         state: stopped
-       when: (aac_base_tz is defined) and
-             (ansible_distribution != "Ubuntu") and 
-             (ansible_distribution != "Debian")
+     - name: Package Facts
+       package_facts:
+         manager: "auto"
 
-     - name: Stop ntpd
+     - name: Set Facts
+       set_fact:
+         set_time: ntp
+       when: ansible_os_family == "Debian"
+
+     - name: Set Facts
+       set_fact:
+         set_time: ntpd
+       when: ansible_os_family == "RedHat"
+
+     - name: Set Facts
+       set_fact:
+         set_time: chronyd
+       when: '"chrony" in ansible_facts.packages'
+
+     - name: Stop Time Daemon
        become: yes
        service:
-         name: ntp
+         name: "{{set_time}}"
          state: stopped
-       when: (aac_base_tz is defined) and
-             (ansible_distribution == "Ubuntu") or 
-             (ansible_distribution == "Debian")
+       when: (aac_base_tz is defined)
 
      - name: Set timezone
        become: yes
@@ -89,60 +102,21 @@
            - "{{ aac_base_tz }}"
        when: aac_base_tz is defined
 
-     - name: Enable ntpd
+     - name: Enable Time Daemon
        become: yes
        service:
-         name: ntpd
+         name: "{{set_time}}"
          enabled: yes
-       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version < "8") or
-             (ansible_distribution == "CentOS" and ansible_distribution_major_version < "8")
 
-     - name: Enable ntp
+     - name: Enable Time Daemon
        become: yes
        service:
-         name: ntp
+         name: "{{set_time}}"
          enabled: yes
-       when: (ansible_distribution == "Ubuntu") or 
-             (ansible_distribution == "Debian")
-
-     - name: Start ntpd
-       become: yes
-       service:
-         name: ntpd
-         state: started
-       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version < "8") or
-             (ansible_distribution == "CentOS" and ansible_distribution_major_version < "8")
-
-     - name: Start ntp
-       become: yes
-       service:
-         name: ntp
-         state: started
-       when: (ansible_distribution == "Ubuntu") or 
-             (ansible_distribution == "Debian")
-
-     - name: Enable chrony
-       become: yes
-       service:
-         name: chrony
-         enabled: yes
-       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version > "7") or
-             (ansible_distribution == "CentOS" and ansible_distribution_major_version > "7") or
-             (ansible_distribution == "Fedora")
-
-     - name: Start chrony
-       become: yes
-       service:
-         name: chrony
-         state: started
-       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version > "7") or
-             (ansible_distribution == "CentOS" and ansible_distribution_major_version > "7") or
-             (ansible_distribution == "Fedora")
 
      - name: Stop postfix
        become: yes
        service:
          name: postfix
          state: stopped
-       when: (ansible_distribution != "Ubuntu") and 
-             (ansible_distribution != "Debian")
+       when: '"postfix" in ansible_facts.packages'

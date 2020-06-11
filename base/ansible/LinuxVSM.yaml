@@ -1,5 +1,5 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 
 - hosts: localhost
   gather_facts: true
@@ -27,8 +27,7 @@
            - python
            - python-urllib3
          state: latest
-       when: (ansible_distribution == "RedHat" and  ansible_distribution_major_version < "8") or
-             (ansible_distribution == "CentOS" and ansible_distribution_major_version < "8")
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("8","<")
 
      - name: install the latest version of LinuxVSM for Fedora
        become: yes
@@ -44,9 +43,7 @@
            - python2
            - python2-urllib3
          state: latest
-       when: (ansible_distribution == "Fedora") or 
-             (ansible_distribution == "RedHat" and  ansible_distribution_major_version > "7") or
-             (ansible_distribution == "CentOS" and ansible_distribution_major_version > "7")
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("7",">")
 
      - name: install the latest version of LinuxVSM for Debian
        become: yes
@@ -62,8 +59,7 @@
            - sharutils
            - python
            - python-urllib3
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
+       when: ansible_os_family == "Debian"
 
      - name: Download the latest version of LinuxVSM
        become: yes

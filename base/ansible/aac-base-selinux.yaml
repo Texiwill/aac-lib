@@ -1,5 +1,5 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 #
 - hosts: localhost
   become_user: root
@@ -11,9 +11,7 @@
            - policycoreutils-python
            - setroubleshoot-server
          state: latest
-       when: (ansible_distribution == "Fedora") or 
-             (ansible_distribution == "RedHat") or
-             (ansible_distribution == "CentOS")
+       when: ansible_os_family == "RedHat"
 
      - name: install the latest for selinux - Debian
        become: yes
@@ -22,5 +20,5 @@
            - policycoreutils
            - selinux-utils
          state: latest
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
+       when: ansible_os_family == "Debian"
+...

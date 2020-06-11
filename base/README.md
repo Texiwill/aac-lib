@@ -24,6 +24,15 @@ The problem is that you need to install a few things before you can
 begin to use Ansible. The main script installs all those necessary bits,
 then switches to use Ansible.
 
+#### Supported Operating Systems
+* RHEL/CentOS 7
+* RHEL/CentOS 8
+* Debian 9
+* Debian 10
+* Ubuntu 18.04
+
+WSL also works per the community
+
 ### Installation
 Run the script and if root access is required you will be asked to
 provide sudo credentials
@@ -76,10 +85,10 @@ chmod +x aac-base.install
 #### Base - 2.x
 Installs the base AAC setup. This is mostly setting timezones and ensuring wget and ansible are availabile
 
-#### powercli - 1.0.1
+#### powercli - 1.0.2
 Installs Powershell and VMware PowerCLI: run command 'powercli' to start
 
-#### vcli - 1.0.0
+#### vcli - 1.0.1
 Installs vSphere CLI using LinuxVSM to download the latest file.
 
 #### dcli - 1.0.0
@@ -93,10 +102,10 @@ Installs LinuxVSM, PowerCLI, ov-import.sh, ovftool, DCLI, and vcli to create
 a Linux vSphere Management Appliance.  PowerCLI includes Powershell,
 PowerCLI, PowerNSX, and PowerVRA.
 
-#### LinuxVSM - 1.0.0
+#### LinuxVSM - 1.0.1
 Install a port of VMware's Software Manager to Linux - LinuxVSM.
 
-#### vctui - 1.0.0
+#### vctui - 1.0.1
 Installs the vctui tool for connecting to vCenter.
 
 #### dropbox - 1.0.0

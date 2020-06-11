@@ -1,5 +1,5 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 
 - hosts: localhost
   become_user: root
@@ -9,7 +9,7 @@
 
 - hosts: localhost
   tasks:
-     - name: install development tools
+     - name: install RHEL development tools
        become: yes
        package:
          name:
@@ -22,6 +22,21 @@
            - perl-Module-Build
            - perl-CPAN
          state: latest
+       when: ansible_os_family == "RedHat"
+
+     - name: install DEBIAN development tools
+       become: yes
+       package:
+         name:
+           - gcc
+           - cpp
+           - libmpc-dev
+           - libmpfr-dev
+           - libyaml-perl
+           - libuuid-perl
+           - libmodule-build-perl
+         state: latest
+       when: ansible_os_family == "Debian"
 
      - name: install the latest version of vCLI dependencies for RedHat
        become: yes
@@ -55,9 +70,7 @@
            - perl-Net-INET6Glue
            - perl-Try-Tiny
          state: latest
-       when: (ansible_distribution == "RedHat") or
-             (ansible_distribution == "CentOS") or
-             (ansible_distribution == "Fedora")
+       when: ansible_os_family == "RedHat"
 
      - name: install the latest version of vCLI dependencies for Debian
        become: yes
@@ -68,7 +81,7 @@
            - libclass-data-inheritable-perl
            - libclass-methodmaker-perl
            - libcompress-raw-zlib-perl
-           - libperl5.24
+           - libperl-dev
            - libconvert-asn1-perl
            - libcrypt-openssl-rsa-perl
            - libcrypt-openssl-x509-perl
@@ -79,9 +92,8 @@
            - libxml-namespacesupport-perl
            - libxml-libxml-perl
            - libsocket6-perl
-           - libcrypt-ssleay-perl"
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
+           - libcrypt-ssleay-perl
+       when: ansible_os_family == "Debian"
 
      - name: Check if Credential exists
        stat:
@@ -99,7 +111,6 @@
        args:
          executable: /bin/bash
        register: vsm_local
-       when: stat_result.stat.exists
 
      - name: Get Local Filename
        set_fact:
@@ -126,64 +137,56 @@
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: 'my .installed_ssl_version =' 
          line: "   my $installed_ssl_version = '1.0.0';"
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
+       when: ansible_os_family == "Debian"
 
      - name: Update ssleay_installed in vmware_install.pl for Debian/Ubuntu
        lineinfile:
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: 'my .ssleay_installed = 0'
          line: '   my $ssleay_installed = 1;'
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
+       when: ansible_os_family == "Debian"
 
      - name: Update OpenSSL_installed in vmware_install.pl for Debian/Ubuntu
        lineinfile:
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: 'my .OpenSSL_installed = 0'
          line: '   my $OpenSSL_installed = 1;'
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
+       when: ansible_os_family == "Debian"
 
      - name: Update LibXML2_installed in vmware_install.pl for Debian/Ubuntu
        lineinfile:
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: 'my .LibXML2_installed = 0'
          line: '   my $LibXML2_installed = 1;'
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
+       when: ansible_os_family == "Debian"
 
      - name: Update OpenSSL_dev_installed in vmware_install.pl for Debian/Ubuntu
        lineinfile:
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: 'my .OpenSSL_dev_installed = 0'
          line: '   my $OpenSSL_dev_installed = 1;'
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
+       when: ansible_os_family == "Debian"
 
      - name: Update e2fsprogs_installed in vmware_install.pl for Debian/Ubuntu
        lineinfile:
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: 'my .e2fsprogs_installed = 0'
          line: '   my $e2fsprogs_installed = 1;'
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
+       when: ansible_os_family == "Debian"
 
      - name: Update e2fsprogs_version in vmware_install.pl for Debian/Ubuntu
        lineinfile:
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: "my .e2fsprogs_version = '0'"
          line: "   my $e2fsprogs_version = '1.42';"
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
+       when: ansible_os_family == "Debian"
 
      - name: Update install_rhel55_local in vmware_install.pl for Debian/Ubuntu
        lineinfile:
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: 'my .install_rhel55_local = 0'
          line: '   my $install_rhel55_local = 1;'
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
+       when: ansible_os_family == "Debian"
 
      - name: Install vCLI
        become: yes
@@ -196,7 +199,7 @@
            '[yes]': 'yes'
            '[/usr/bin]': '/usr/bin'
 
-     - name: uninstall development tools
+     - name: uninstall RHEL development tools
        become: yes
        package:
          name:
@@ -209,6 +212,21 @@
            - perl-Module-Build
            - perl-CPAN
          state: absent
+       when: ansible_os_family == "RedHat"
+
+     - name: uninstall Debian development tools
+       become: yes
+       package:
+         name:
+           - gcc
+           - cpp
+           - libmpc-dev
+           - libmpfr-dev
+           - libyaml-perl
+           - libuuid-perl
+           - libmodule-build-perl
+         state: absent
+       when: ansible_os_family == "Debian"
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml
