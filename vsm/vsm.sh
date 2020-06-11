@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.3.3"
+VERSIONID="6.3.4"
 
 # args: stmt error
 function colorecho() {
@@ -974,6 +974,7 @@ function finddeps {
 	redhat_checkdep="$linux_checkdep $el_checkdep python python-urllib3"
 	#Packages required by Debian and derivatives 
 	debian_checkdep="$linux_checkdep python python-urllib3 xml-twig-tools libxml2-utils ncurses-base"
+	ubuntu20_checkdep="$linux_checkdep python3 python3-urllib3 xml-twig-tools libxml2-utils ncurses-base"
 	if [ Z"$theos" = Z"macos" ]
 	then
 		. $HOME/.bash_profile
@@ -997,7 +998,13 @@ function finddeps {
 		loopdeps "$fedora_checkdep"
 	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 	then
-		loopdeps "$debian_checkdep"
+		myver=`echo $VERSION_ID | cut -d\. -f1`
+		if [ $myver -ge 20 ]
+		then
+			loopdeps "$ubuntu20_checkdep"
+		else
+			loopdeps "$debian_checkdep"
+		fi
 	fi
 }
 
