@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.3.4 - Fixed Ubuntu 20.04 Dependency checks
+
 6.3.3 - Fixed partial cache of cookies
 
 6.3.2 - Fixed a caching issue with Authentication
