@@ -1,15 +1,13 @@
 #!/bin/bash
 #
-# Copyright (c) 2016-2018 AstroArch Consulting, Inc. All rights reserved
+# Copyright (c) 2016-2020 AstroArch Consulting, Inc. All rights reserved
 #
+# Create a Base Install to use Ansible for further installs
 #
-#
-# Create a Base Install
-#
-# Target: CentOS/RHEL 7
+# Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS
 #
 ###
-VERSIONID="2.0.4"
+VERSIONID="2.1.0"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -73,8 +71,16 @@ function findos() {
 		theos=`cut -d' ' -f1 < /etc/debian-release | tr [:upper:] [:lower:]`
 		VERSION_ID=`awk '{print $3}' /etc/debian-release | awk -F. '{print $1}'`
 	else
-		colorecho "Do not know this operating system. LinuxVSM may not work." 1
-		theos="unknown"
+		# Mac OS
+		uname -a | grep Darwin  >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			theos="macos"
+			VERSION_ID=`sw_vers | grep ProductVersion | cut -d'	' -f2`
+		else
+			colorecho "Do not know this operating system. LinuxVSM may not work." 1
+			theos="unknown"
+		fi
 	fi
 	export VERSION_ID
 }
@@ -93,7 +99,16 @@ function checkdep() {
 	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 	then
 		# to remove dep use 'apt-get purge $dep' so dpkg works
-		dpkg -s $dep >& /dev/null
+		#dpkg -s $dep >& /dev/null
+		dpkg-query -W -f='${Status} ${Version}\n' $dep |grep -i '^install' >& /dev/null
+		if [ $? -ne 0 ]
+		then
+			echo "Missing Dependency $dep"
+			needdep=1
+		fi
+	elif [ Z"$theos" = Z"macos" ]
+	then
+		which $dep >& /dev/null
 		if [ $? -ne 0 ]
 		then
 			echo "Missing Dependency $dep"
@@ -184,9 +199,9 @@ function handlecredstore ()
 
 function call_playbook() {
 	us=`id -un`
-	if [ Z"$us" = Z"root" ]
+	if [ Z"$us" = Z"root" ] || [ Z"$theos" = Z"macos" ]
 	then
-		# no need if already root
+		# no need if already root or local installs only
 		askpass=""
 	fi
 	extraargs=""
@@ -288,19 +303,29 @@ function get_wget() {
 	checkdep wget
 	if [ $needdep -eq 1 ]
 	then
-		echo "Updating Repos"
-		if [ -e /usr/bin/yum ]
+		if [ Z"$theos" != Z"macos" ]
 		then
-			yum -q clean all >& /dev/null
-			yum -q makecache fast >& /dev/null
-		elif [ -e /usr/bin/apt-get ]
-		then
-			apt-get update
+			echo "Updating Repos"
+			if [ -e /usr/bin/yum ]
+			then
+				yum -q clean all >& /dev/null
+				yum -q makecache fast >& /dev/null
+			elif [ -e /usr/bin/apt-get ]
+			then
+				apt-get update
+			fi
+			echo "Install/update wget"
+			INSTALL=wget
+			DINSTALL=$INSTALL
+			installdep
+		else
+			checkdep brew
+			if [ $needdep -eq 1 ]
+			then
+				/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+			fi
+			brew install wget
 		fi
-		echo "Install/update wget"
-		INSTALL=wget
-		DINSTALL=$INSTALL
-		installdep
 	else
 		askpass="-K"
 	fi
@@ -339,11 +364,11 @@ function tz() {
 }
 
 function epel() {
-	echo "Checking for EPEL repository"
-	checkdep epel-release
-	if [ $needdep -eq 1 ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
 	then
-		if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
+		echo "Checking for EPEL repository"
+		checkdep epel-release
+		if [ $needdep -eq 1 ]
 		then
 			echo "Installing EPEL repository"
 			wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION_ID}.noarch.rpm
@@ -362,13 +387,50 @@ function ansible() {
 	checkdep ansible
 	if [ $needdep -eq 1 ]
 	then
-		echo "Installing Ansible"
-		INSTALL="ansible"
-		DINSTALL="ansible"
-		installdep
-		askpass=""
+		if [ Z"$theos" != Z"macos" ]
+		then
+			if [ Z"$theos" = Z"debian" ] && [ $VERSION_ID -eq 9 ]
+			then
+				sudo apt install dirmngr
+				cp /etc/apt/sources.list /tmp/sources.list
+				cp /etc/apt/sources.list /tmp/sources.list.orig
+				echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /tmp/sources.list
+				sudo cp /tmp/sources.list /etc/apt
+				wget -O - "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x93C4A3FD7BB9C367" | sudo apt-key add
+				sudo apt update
+			fi
+			echo "Installing Ansible"
+			INSTALL="ansible"
+			DINSTALL="ansible"
+			installdep
+			askpass=""
+			if [ Z"$theos" = Z"debian" ] && [ $VERSION_ID -eq 9 ]
+			then
+				sudo cp /tmp/sources.list.orig /etc/apt/sources.list
+				rm /tmp/sources.list*
+				sudo apt-key del 93C4A3FD7BB9C367
+				sudo apt update
+			fi
+		else
+			# MacOS
+			checkdep pip
+			if [ $needdep -eq 1 ]
+			then
+				curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py 2>/dev/null
+				python /tmp/get-pip.py --user
+			fi
+			PATH=${PATH}:${HOME}/Library/Python/2.7/bin
+			export PATH
+			pip install --user ansible
+		fi
 	else
 		askpass="-K"
+		# Set PATH for MacOS
+		if [ Z"$theos" = Z"macos" ]
+		then
+			PATH=${PATH}:${HOME}/Library/Python/2.7/bin
+			export PATH
+		fi
 	fi
 }
 
@@ -510,6 +572,11 @@ done
 
 checkForUpdate
 
+if [ Z"$theos" = Z"macos" ]
+then
+	. $HOME/.bash_profile
+fi
+
 ###
 # Update aac-base bits
 ###
@@ -547,7 +614,7 @@ fi
 ###
 # Get the RHEL/CentOS Version
 ###
-DNAME=`hostname -d`
+#DNAME=`hostname -d`
 RPMLIST=''
 if [ $ansible -ne 1 ]
 then

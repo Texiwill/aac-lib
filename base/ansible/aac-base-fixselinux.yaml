@@ -1,5 +1,5 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 
 - hosts: localhost
   become_user: root
@@ -7,4 +7,5 @@
      - name: Reset SELinux after installs
        become: yes
        command: restorecon -R -v /dev
+       when: ansible_distribution != "MacOSX"
 

@@ -1,5 +1,5 @@
 ---
-# version: 1.0.1
+# version: 1.0.2
 
 - hosts: localhost
   gather_facts: true
@@ -13,7 +13,7 @@
 
 - hosts: localhost
   tasks:
-     - name: install the latest version of LinuxVSM for RedHat
+     - name: install RHEL < 8 dependencies
        become: yes
        package:
          name:
@@ -29,7 +29,18 @@
          state: latest
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("8","<")
 
-     - name: install the latest version of LinuxVSM for Fedora
+     - name: Need Yum Utils
+       become: yes
+       package:
+         name: yum-utils
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("7",">")
+
+     - name: Need Power Tools for RHEL 8
+       become: yes
+       shell: "yum-config-manager --enable PowerTools"
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("7",">")
+
+     - name: install the RHEL >= 8 dependencies
        become: yes
        package:
          name:
@@ -45,7 +56,7 @@
          state: latest
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("7",">")
 
-     - name: install the latest version of LinuxVSM for Debian
+     - name: install the Debian dependencies for LinuxVSM
        become: yes
        package:
          name:
@@ -59,7 +70,81 @@
            - sharutils
            - python
            - python-urllib3
-       when: ansible_os_family == "Debian"
+         state: latest
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
+             (ansible_distribution == "Debian")
+
+     - name: install the Ubuntu dependency for LinuxVSM
+       become: yes
+       package:
+         name:
+           - wget
+           - libxml2
+           - libxml2-utils
+           - xml-twig-tools
+           - ncurses-base
+           - bc
+           - jq
+           - sharutils
+           - python
+           - python3-urllib3
+         state: latest
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'>='))
+
+     - name: Install Xcode CLI for MacOSX
+       ignore_errors: yes
+       shell: "xcode-select --install"
+       when: ansible_distribution == "MacOSX"
+
+     - name: Install Dependencies for MacOSX
+       homebrew:
+         name:
+           - gnu-sed
+           - wget
+           - jq
+           - cpanminus
+         state: latest
+       when: ansible_distribution == "MacOSX"
+
+     - name: Install MacOS Perl Dependencies
+       cpanm:
+         name: XML::Twig
+       when: ansible_distribution == "MacOSX"
+
+     - name: create bin directory
+       become: yes
+       file:
+         path: "{{ansible_env.HOME}}/bin"
+         state: directory
+       when: ansible_distribution == "MacOSX"
+
+     - name: Set MacOSX Facts
+       set_fact:
+         path_two: 
+           - "{{ansible_env.HOME}}/perl5/bin"
+           - "{{ansible_env.HOME}}/bin"
+       when: ansible_distribution == "MacOSX"
+
+     - name: Merge the LinuxVSM MacOSX Paths
+       set_fact:
+         vsmpath: "{{(mypath + path_two)|unique}}"
+       when: ansible_distribution == "MacOSX"
+
+     - name: Update .zshrc on MacOSX
+       lineinfile:
+         path: "{{ansible_env.HOME}}/.zshrc"
+         regexp: 'PATH='
+         line: "export PATH=$PATH{{vsmpath|join(':')}}"
+         create: yes
+       when: ansible_distribution == "MacOSX"
+
+     - name: Update .bash_profile on MacOSX
+       lineinfile:
+         path: "{{ansible_env.HOME}}/.bash_profile"
+         regexp: 'PATH='
+         line: "export PATH=$PATH{{vsmpath|join(':')}}"
+         create: yes
+       when: ansible_distribution == "MacOSX"
 
      - name: Download the latest version of LinuxVSM
        become: yes
@@ -67,6 +152,14 @@
          url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
          dest: /usr/local/bin
          mode: 0755
+       when: ansible_distribution != "MacOSX"
+
+     - name: Download the latest version of LinuxVSM MacOSX
+       get_url:
+         url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
+         dest: "{{ansible_env.HOME}}/bin"
+         mode: 0755
+       when: ansible_distribution == "MacOSX"
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

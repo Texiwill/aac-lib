@@ -34,6 +34,14 @@
          name:
            - golang
          state: latest
+       when: ansible_distribution != "MacOSX"
+
+     - name: Install Dependencies for MacOSX
+       homebrew:
+         name:
+           - golang
+         state: latest
+       when: ansible_distribution == "MacOSX"
 
      - name: Getting vctui
        become: no

@@ -36,6 +36,10 @@ Full support for LinuxVMA is available for:
 
 WSL also works per the community
 
+MacOSX support exists for:
+* dcli
+* LinuxVSM
+
 ### Installation
 Run the script and if root access is required you will be asked to
 provide sudo credentials
@@ -94,7 +98,7 @@ Installs Powershell and VMware PowerCLI: run command 'powercli' to start
 #### vcli - 1.0.1
 Installs vSphere CLI using LinuxVSM to download the latest file.
 
-#### dcli - 1.0.0
+#### dcli - 1.0.1
 Installs Datacenter CLI (DCLI)
 
 #### ovftool - 1.0.0
@@ -105,7 +109,7 @@ Installs LinuxVSM, PowerCLI, ov-import.sh, ovftool, DCLI, and vcli to create
 a Linux vSphere Management Appliance.  PowerCLI includes Powershell,
 PowerCLI, PowerNSX, and PowerVRA.
 
-#### LinuxVSM - 1.0.1
+#### LinuxVSM - 1.0.2
 Install a port of VMware's Software Manager to Linux - LinuxVSM.
 
 #### vctui - 1.0.1
@@ -122,6 +126,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+2.1.0 Beginning MacOSX support, Fixes for Debian 9, RHEL 8, Ubuntu 20
+
 2.0.4 LinuxVMA / vma mapping
 
 2.0.3 Fix: translate vsm to LinuxVSM, add python-pip dependency for Ubuntu

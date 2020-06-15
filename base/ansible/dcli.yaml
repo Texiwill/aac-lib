@@ -1,5 +1,5 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 - hosts: localhost
   gather_facts: true
   become_user: root
@@ -12,10 +12,23 @@
 
 - hosts: localhost
   tasks:
+     - name: Install Debian < 10 dependency
+       become: yes
+       package:
+         name: python-pyasn1
+         state: latest
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<'))
+
      - name: install dcli
        become: yes
        pip:
          name: dcli
+       when: ansible_distribution != "MacOSX"
+
+     - name: install dcli
+       pip:
+         name: dcli
+       when: ansible_distribution == "MacOSX"
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

@@ -1,5 +1,5 @@
 ---
-# version: 1.0.4
+# version: 1.0.5
 
 - hosts: localhost
   gather_facts: true
@@ -62,15 +62,76 @@
        pip:
          name: pip
          state: latest
+       when: ansible_distribution != "MacOSX"
 
      - name: Install pexpect
        become: yes
        pip:
          name: pexpect
+       when: ansible_distribution != "MacOSX"
+
+     - name: Install pexpect MacOSX
+       pip:
+         name: 
+           - pexpect
+           - rpm
+       when: ansible_distribution == "MacOSX"
 
      - name: Package Facts
        package_facts:
          manager: "auto"
+       when: ansible_distribution != "MacOSX"
+
+     - name: Package Facts MacOSX
+       package_facts:
+         manager: "rpm"
+       when: ansible_distribution == "MacOSX"
+
+     - name: Homebrew fact MacOSX
+       stat:
+         path: "/usr/local/bin/brew"
+       register: brew_result
+
+     - name: Install Homebrew for MacOSX
+       shell: 'ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+       when: ansible_distribution == "MacOSX" and not brew_result.stat.exists
+
+     - name: MacOSX PATH
+       become: no
+       shell: "grep PATH $HOME/.zshrc 2>/dev/null| sed 's/export //'|sed 's/PATH=//' | sed 's/$PATH://g'|tr '\n' ':' | sed 's/:$//'"
+       args:
+         executable: /bin/bash
+       register: path_local
+       when: ansible_distribution == "MacOSX"
+
+     - name: Set MacOSX Facts
+       set_fact:
+         path_one: "{{path_local.stdout.split(':')}}"
+         path_two: 
+           - "{{ansible_env.HOME}}/Library/Python/2.7/bin"
+           - "{{ansible_env.HOME}}/bin"
+       when: ansible_distribution == "MacOSX"
+
+     - name: Merge the Paths
+       set_fact:
+         mypath: "{{(path_one + path_two)|unique}}"
+       when: ansible_distribution == "MacOSX"
+
+     - name: Update .zshrc
+       lineinfile:
+         path: "{{ansible_env.HOME}}/.zshrc"
+         regexp: 'PATH='
+         line: "export PATH=$PATH{{mypath|join(':')}}"
+         create: yes
+       when: ansible_distribution == "MacOSX"
+
+     - name: Update .bash_profile
+       lineinfile:
+         path: "{{ansible_env.HOME}}/.bash_profile"
+         regexp: 'PATH='
+         line: "export PATH=$PATH{{mypath|join(':')}}"
+         create: yes
+       when: ansible_distribution == "MacOSX"
 
      - name: Set Facts
        set_fact:
@@ -92,7 +153,7 @@
        service:
          name: "{{set_time}}"
          state: stopped
-       when: (aac_base_tz is defined)
+       when: aac_base_tz is defined and ansible_distribution != "MacOSX"
 
      - name: Set timezone
        become: yes
@@ -100,19 +161,21 @@
          name: "{{ item }}"
          with_items:
            - "{{ aac_base_tz }}"
-       when: aac_base_tz is defined
+       when: aac_base_tz is defined and ansible_distribution != "MacOSX"
 
      - name: Enable Time Daemon
        become: yes
        service:
          name: "{{set_time}}"
          enabled: yes
+       when: ansible_distribution != "MacOSX"
 
      - name: Enable Time Daemon
        become: yes
        service:
          name: "{{set_time}}"
          enabled: yes
+       when: ansible_distribution != "MacOSX"
 
      - name: Stop postfix
        become: yes
