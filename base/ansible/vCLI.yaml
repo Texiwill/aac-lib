@@ -1,5 +1,5 @@
 ---
-# version: 1.0.1
+# version: 1.0.2
 
 - hosts: localhost
   become_user: root
@@ -70,7 +70,38 @@
            - perl-Net-INET6Glue
            - perl-Try-Tiny
          state: latest
-       when: ansible_os_family == "RedHat"
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')
+
+     - name: install the latest version of vCLI dependencies for RHEL 8
+       become: yes
+       package:
+         name:
+           - openssl-devel
+           - perl-Archive-Zip
+           - perl-Class-Data-Inheritable
+           - perl-Class-MethodMaker
+           - perl-Compress-Raw-Zlib
+           - perl-Compress-Zlib
+           - perl-Crypt-OpenSSL-RSA
+           - perl-Crypt-OpenSSL-X509
+           - perl-Data-Dump
+           - perl-Data-Dumper
+           - perl-HTML-Parser
+           - perl-IO-Compress
+           - perl-IO-Compress
+           - perl-URI
+           - perl-XML-NamespaceSupport
+           - perl-XML-LibXML
+           - perl-Socket6
+           - perl-Text-Template
+           - perl-Time-Piece
+           - perl-Path-Class
+           - perl-LWP-Protocol-https
+           - perl-IO-Socket-INET6
+           - perl-Net-INET6Glue
+           - perl-Try-Tiny
+         state: latest
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=')
 
      - name: install the latest version of vCLI dependencies for Debian
        become: yes
@@ -212,7 +243,19 @@
            - perl-Module-Build
            - perl-CPAN
          state: absent
-       when: ansible_os_family == "RedHat"
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')
+
+     # other tools required by go-toolset used by vctui
+     - name: uninstall RHEL 8 development tools
+       become: yes
+       package:
+         name:
+           - perl-YAML
+           - libuuid-devel
+           - perl-Module-Build
+           - perl-CPAN
+         state: absent
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=')
 
      - name: uninstall Debian development tools
        become: yes

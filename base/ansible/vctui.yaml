@@ -1,5 +1,5 @@
 ---
-# version: 1.0.1
+# version: 1.0.3
 
 - hosts: localhost
   gather_facts: true
@@ -18,7 +18,7 @@
        rpm_key:
          state: present
          key: https://mirror.go-repo.io/centos/RPM-GPG-KEY-GO-REPO
-       when: ansible_os_family == "RedHat"
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')
 
      - name: golang repo
        become: yes
@@ -26,7 +26,14 @@
          url: https://mirror.go-repo.io/centos/go-repo.repo
          dest: /etc/yum.repos.d
          mode: 0644
-       when: ansible_os_family == "RedHat"
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')
+
+     - name: install golang dependency
+       become: yes
+       package:
+         name:
+           - gcc
+         state: latest
 
      - name: install golang
        become: yes
@@ -34,7 +41,40 @@
          name:
            - golang
          state: latest
-       when: ansible_distribution != "MacOSX"
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')) or
+             (ansible_os_family == "Debian" and ansible_distribution_major_version is version("9",'!='))
+
+     - name: install golang RHEL/CentOS > 7
+       become: yes
+       package:
+         name:
+           - go-toolset
+         state: latest
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+
+     - name: Download Go for Debian 9
+       get_url:
+         url: https://dl.google.com/go/go1.12.5.linux-amd64.tar.gz
+         dest: "{{ansible_user_dir}}"
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'='))
+
+     - name: Unbundle Go
+       unarchive:
+         src: "{{ansible_user_dir}}/go1.12.5.linux-amd64.tar.gz"
+         dest: "{{ansible_user_dir}}"
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'='))
+
+     - name: Set Debian 9 Fact
+       set_fact:
+         ipath: "{{ansible_user_dir}}"
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'='))
+
+     - name: Install Go for Debian 9
+       become: yes
+       shell: "cp -r {{ipath}}/go /usr/local; chown -R root:root /usr/local/go"
+       args:
+         executable: /bin/bash
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'='))
 
      - name: Install Dependencies for MacOSX
        homebrew:
@@ -43,22 +83,68 @@
          state: latest
        when: ansible_distribution == "MacOSX"
 
+     - name: Set profile.d BASH settings
+       become: yes
+       blockinfile:
+         path: /etc/profile.d/go.sh
+         block: |
+           export PATH="$PATH:/usr/local/go/bin"
+           export GOPATH="$HOME/go"
+           export GOROOT=/usr/local/go
+         mode: 0644
+         create: yes
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'='))
+
+     - name: Set profile.d CSH settings
+       become: yes
+       blockinfile:
+         path: /etc/profile.d/go.csh
+         block: |
+           setenv PATH="$PATH:$HOME/go/bin"
+           setenv GOPATH="$HOME/go"
+           setenv GOROOT=/usr/local/go
+         mode: 0644
+         create: yes
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'='))
+
+     - name: Cleanup HOME files
+       file:
+         path: "{{ansible_user_dir}}/go1.12.5.linux-amd64.tar.gz"
+         state: absent
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'='))
+
+     - name: Cleanup HOME Directory
+       file:
+         path: "{{ansible_user_dir}}/go"
+         state: absent
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'='))
+
+     - name: Getting vctui Debian 9
+       become: no
+       shell: ". /etc/profile.d/go.sh; go get -u github.com/thebsdbox/vctui"
+       args:
+         executable: /bin/bash
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'='))
+
      - name: Getting vctui
        become: no
        shell: "go get -u github.com/thebsdbox/vctui"
        args:
          executable: /bin/bash
+       when: (ansible_os_family == "RedHat") or
+             (ansible_distribution == "MacOSX") or
+             (ansible_os_family == "Debian" and ansible_distribution_major_version is version("9",'!='))
 
      - name: Create bin diretory
        file:
-         path: "{{ansible_env.HOME}}/bin"
+         path: "{{ansible_user_dir}}/bin"
          state: directory
          mode: 0755
 
      - name: Install vctui
        copy: 
-         src: "{{ansible_env.HOME}}/go/bin/vctui"
-         dest: "{{ansible_env.HOME}}/bin/vctui"
+         src: "{{ansible_user_dir}}/go/bin/vctui"
+         dest: "{{ansible_user_dir}}/bin/vctui"
          mode: 0755
 
 - name: Fix SELinux

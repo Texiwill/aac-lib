@@ -1,5 +1,5 @@
 ---
-# version: 1.0.2
+# version: 1.0.3
 
 - hosts: localhost
   gather_facts: true
@@ -112,17 +112,16 @@
        when: ansible_distribution == "MacOSX"
 
      - name: create bin directory
-       become: yes
        file:
-         path: "{{ansible_env.HOME}}/bin"
+         path: "{{ansible_user_dir}}/bin"
          state: directory
        when: ansible_distribution == "MacOSX"
 
      - name: Set MacOSX Facts
        set_fact:
          path_two: 
-           - "{{ansible_env.HOME}}/perl5/bin"
-           - "{{ansible_env.HOME}}/bin"
+           - "{{ansible_user_dir}}/perl5/bin"
+           - "{{ansible_user_dir}}/bin"
        when: ansible_distribution == "MacOSX"
 
      - name: Merge the LinuxVSM MacOSX Paths
@@ -132,7 +131,7 @@
 
      - name: Update .zshrc on MacOSX
        lineinfile:
-         path: "{{ansible_env.HOME}}/.zshrc"
+         path: "{{ansible_user_dir}}/.zshrc"
          regexp: 'PATH='
          line: "export PATH=$PATH{{vsmpath|join(':')}}"
          create: yes
@@ -140,7 +139,7 @@
 
      - name: Update .bash_profile on MacOSX
        lineinfile:
-         path: "{{ansible_env.HOME}}/.bash_profile"
+         path: "{{ansible_user_dir}}/.bash_profile"
          regexp: 'PATH='
          line: "export PATH=$PATH{{vsmpath|join(':')}}"
          create: yes
@@ -157,7 +156,7 @@
      - name: Download the latest version of LinuxVSM MacOSX
        get_url:
          url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
-         dest: "{{ansible_env.HOME}}/bin"
+         dest: "{{ansible_user_dir}}/bin"
          mode: 0755
        when: ansible_distribution == "MacOSX"
 

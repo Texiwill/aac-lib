@@ -1,5 +1,5 @@
 ---
-# version: 1.0.2
+# version: 1.0.3
 
 - hosts: localhost
   become_user: root
@@ -13,11 +13,11 @@
 - name: PowerCLI
   import_playbook: PowerCLI.yaml
 
-- name: vctui
-  import_playbook: vctui.yaml
-
 - name: dcli
   import_playbook: dcli.yaml
+
+- name: vctui
+  import_playbook: vctui.yaml
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

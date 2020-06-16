@@ -108,8 +108,8 @@
        set_fact:
          path_one: "{{path_local.stdout.split(':')}}"
          path_two: 
-           - "{{ansible_env.HOME}}/Library/Python/2.7/bin"
-           - "{{ansible_env.HOME}}/bin"
+           - "{{ansible_user_dir}}/Library/Python/2.7/bin"
+           - "{{ansible_user_dir}}/bin"
        when: ansible_distribution == "MacOSX"
 
      - name: Merge the Paths
@@ -119,7 +119,7 @@
 
      - name: Update .zshrc
        lineinfile:
-         path: "{{ansible_env.HOME}}/.zshrc"
+         path: "{{ansible_user_dir}}/.zshrc"
          regexp: 'PATH='
          line: "export PATH=$PATH{{mypath|join(':')}}"
          create: yes
@@ -127,7 +127,7 @@
 
      - name: Update .bash_profile
        lineinfile:
-         path: "{{ansible_env.HOME}}/.bash_profile"
+         path: "{{ansible_user_dir}}/.bash_profile"
          regexp: 'PATH='
          line: "export PATH=$PATH{{mypath|join(':')}}"
          create: yes

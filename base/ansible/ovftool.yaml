@@ -17,6 +17,23 @@
            - fuseiso
            - hiera
          state: latest
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')) or
+             (ansible_os_family == "Debian")
+
+     - name: install the latest version of ovftool dependencies for RHEL > 7
+       become: yes
+       package:
+         name:
+           - hiera
+         state: latest
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=')
+
+     - name: Install fuseiso for RHEL8
+       become: yes
+       dnf:
+         name: 'http://vault.centos.org/7.7.1908/os/x86_64/Packages/fuseiso-20070708-15.el7.x86_64.rpm'
+         state: present
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=')
 
      - name: Download the latest version of ov-import.sh
        become: yes
@@ -28,7 +45,7 @@
      - name: Download the latest version of ov-defaults
        get_url:
          url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/ovfimport/ov-defaults
-         dest: "{{ansible_env.HOME}}/.ov-defaults"
+         dest: "{{ansible_user_dir}}/.ov-defaults"
          mode: 0600
 
      - name: Check if Credential exists

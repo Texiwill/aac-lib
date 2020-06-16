@@ -1,5 +1,5 @@
 ---
-# version: 1.0.3
+# version: 1.0.4
 
 - hosts: localhost
   gather_facts: true
@@ -35,35 +35,55 @@
          mode: 0644
        when: ansible_os_family == "RedHat"
 
+     - name: Download the latest PowerShell Repo RHEL 8
+       become: yes
+       get_url:
+         url: "https://packages.microsoft.com/config/{{myos}}/7/prod.{{prod}}"
+         dest: "{{tgtdir}}/microsoft.{{prod}}"
+         mode: 0644
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=')
+
      - name: Get Microsoft Key
        get_url:
          url: "https://packages.microsoft.com/keys/microsoft.asc"
          dest: "/tmp/microsoft.key"
          mode: 0600
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
-             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<'))
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<'))
 
      - name: Install Key
        become: yes
        shell: apt-key add /tmp/microsoft.key
        args:
          executable: /bin/bash
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
-             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<'))
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<'))
 
      - name: Get Microsoft Repo
        get_url:
          url: "https://packages.microsoft.com/config/{{myos}}/{{ansible_distribution_major_version}}/packages-microsoft-prod.deb"
          dest: "/tmp/packages-microsoft-prod.deb"
          mode: 0600
-       when: ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>')
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>')) or
+             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
+
+     - name: Install Repo Debian 9
+       become: yes
+       shell: sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-debian-stretch-prod stretch main" > /etc/apt/sources.list.d/microsoft.list'
+       when: ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<')
 
      - name: Install Repo
        become: yes
        shell: dpkg -i /tmp/packages-microsoft-prod.deb
        args:
          executable: /bin/bash
-       when: ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>')
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>')) or
+             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
+
+     - name: Add Repo
+       become: yes
+       shell: add-apt-repository universe
+       args:
+         executable: /bin/bash
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
 
      - name: Install powershell Debian/Ubuntu 18/RHEL
        become: yes
@@ -72,8 +92,16 @@
            - powershell
          state: latest
        when: (ansible_os_family == "RedHat") or
-             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
-             (ansible_distribution == "Debian")
+             (ansible_distribution == "Debian") or
+             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
+
+     - name: Install HTTPS transport
+       become: yes
+       package:
+         name: 
+           - apt-transport-https
+         state: latest
+       when: (ansible_os_family == "Debian")
 
      - name: Install powershell Ubuntu 20
        become: yes
