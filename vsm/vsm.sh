@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.3.4"
+VERSIONID="6.3.5"
 
 # args: stmt error
 function colorecho() {
@@ -972,6 +972,8 @@ function finddeps {
 	fedora_checkdep="$linux_checkdep $el_checkdep python2 python2-urllib3"
 	#Packages required by RedHat and derivatives 
 	redhat_checkdep="$linux_checkdep $el_checkdep python python-urllib3"
+    #Packages requried by RHEL 8 and derivatives
+	rhel8_checkdep="$linux_checkdep $el_checkdep python3 python3-urllib3"
 	#Packages required by Debian and derivatives 
 	debian_checkdep="$linux_checkdep python python-urllib3 xml-twig-tools libxml2-utils ncurses-base"
 	ubuntu20_checkdep="$linux_checkdep python3 python3-urllib3 xml-twig-tools libxml2-utils ncurses-base"
@@ -992,7 +994,13 @@ function finddeps {
 	fi
 	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ]
 	then
-		loopdeps "$redhat_checkdep"
+		myver=`echo $VERSION_ID | cut -d\. -f1`
+		if [ $myver -ge 8 ]
+		then
+			loopdeps "$rhel8_checkdep"
+		else
+			loopdeps "$redhat_checkdep"
+		fi
 	elif [ Z"$theos" = Z"fedora" ]
 	then
 		loopdeps "$fedora_checkdep"
