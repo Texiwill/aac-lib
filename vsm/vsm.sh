@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.3.5"
+VERSIONID="6.3.6"
 
 # args: stmt error
 function colorecho() {
@@ -505,7 +505,7 @@ function vexpert_login() {
 
 		csrf_token=`wget -O - $_PROGRESS_OPT --no-check-certificate --save-headers --cookies=on --save-cookies $cdir/vcookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $vex_login 2>&1 | grep csrf_token | cut -d\" -f6`
 		vex_auth=`echo $vauth | base64 --decode`
-		rd=(`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$vex_auth" 2>/dev/null|sed 's/%3A/ /'`)
+		rd=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$vex_auth" 2>/dev/null|sed 's/%3A/ /'`)
 		vd="csrf_token="$csrf_token"&login_email=${rd[0]}&login_password=${rd[1]}"
 		wget -O $cdir/vex_auth.html $_PROGRESS_OPT --no-check-certificate --post-data="$vd" --save-headers --cookies=on --load-cookies $cdir/vcookies.txt --save-cookies $cdir/vacookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $vex_login" $vex_login >& /dev/null #| grep AUTH-ERR >& /dev/null
 		grep 'Error' $cdir/vex_auth.html >& /dev/null
@@ -537,7 +537,7 @@ function oauth_login() {
 		need_login=$z
 		# Get creds
 		oauth=`echo $auth | base64 --decode`
-		rd=(`python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$oauth" 2>/dev/null|sed 's/%3A/ /'`)
+		rd=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$oauth" 2>/dev/null|sed 's/%3A/ /'`)
 		#pd="vmware=login&username=${rd[0]}&password=${rd[1]}"
 		pd="username=${rd[0]}&password=${rd[1]}"
 
@@ -910,7 +910,7 @@ function checkdep() {
 			fi
 		elif [ Z"$dep" = Z"urllib2" ]
 		then
-			python -c "help('modules')" 2>/dev/null | grep $dep >& /dev/null
+			$python -c "help('modules')" 2>/dev/null | grep $dep >& /dev/null
 			if [ $? -eq 1 ]
 			then
 				echo "Missing Dependency $dep"
@@ -932,7 +932,7 @@ function checkdep() {
 			ignore=1
 		elif [ Z"$dep" = Z"python-urllib3" ]
 		then
-			python -c "help('modules')" 2>/dev/null | grep urllib3 >& /dev/null
+			$python -c "help('modules')" 2>/dev/null | grep urllib3 >& /dev/null
 			if [ $? -eq 1 ]
 			then
 				echo "Missing Dependency $dep"
@@ -959,6 +959,7 @@ function loopdeps {
 	fi
 }
 
+python="python"
 function finddeps {
 	#Packages required by all OS
 	all_checkdep="bc jq wget"
@@ -995,6 +996,7 @@ function finddeps {
 		myver=`echo $VERSION_ID | cut -d\. -f1`
 		if [ $myver -ge 8 ]
 		then
+			python="python2"
 			loopdeps "$fedora_checkdep"
 		else
 			loopdeps "$redhat_checkdep"
