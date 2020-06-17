@@ -95,13 +95,13 @@ Installs the base AAC setup. This is mostly setting timezones and ensuring wget 
 #### powercli - 1.0.3
 Installs Powershell and VMware PowerCLI: run command 'powercli' to start
 
-#### vcli - 1.0.1
+#### vcli - 1.0.2
 Installs vSphere CLI using LinuxVSM to download the latest file.
 
 #### dcli - 1.0.1
 Installs Datacenter CLI (DCLI)
 
-#### ovftool - 1.0.0
+#### ovftool - 1.0.1
 Installs ovftool using LinuxVSM to download the latest file.
 
 #### LinuxVMA - 1.0.2
@@ -109,10 +109,10 @@ Installs LinuxVSM, PowerCLI, ov-import.sh, ovftool, DCLI, and vcli to create
 a Linux vSphere Management Appliance.  PowerCLI includes Powershell,
 PowerCLI, PowerNSX, and PowerVRA.
 
-#### LinuxVSM - 1.0.2
+#### LinuxVSM - 1.0.3
 Install a port of VMware's Software Manager to Linux - LinuxVSM.
 
-#### vctui - 1.0.1
+#### vctui - 1.0.3
 Installs the vctui tool for connecting to vCenter.
 
 #### dropbox - 1.0.0
