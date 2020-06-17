@@ -1,5 +1,5 @@
 ---
-# version: 1.0.3
+# version: 1.0.4
 
 - hosts: localhost
   gather_facts: true
@@ -120,7 +120,7 @@
        when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'='))
 
      - name: Getting vctui Debian 9
-       become: no
+       become: yes
        shell: ". /etc/profile.d/go.sh; go get -u github.com/thebsdbox/vctui"
        args:
          executable: /bin/bash
@@ -140,12 +140,18 @@
          path: "{{ansible_user_dir}}/bin"
          state: directory
          mode: 0755
+       when: (ansible_os_family == "RedHat") or
+             (ansible_distribution == "MacOSX") or
+             (ansible_os_family == "Debian" and ansible_distribution_major_version is version("9",'!='))
 
      - name: Install vctui
        copy: 
          src: "{{ansible_user_dir}}/go/bin/vctui"
          dest: "{{ansible_user_dir}}/bin/vctui"
          mode: 0755
+       when: (ansible_os_family == "RedHat") or
+             (ansible_distribution == "MacOSX") or
+             (ansible_os_family == "Debian" and ansible_distribution_major_version is version("9",'!='))
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml
