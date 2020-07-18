@@ -54,7 +54,8 @@ function findos() {
 
 function usage()
 {
-	echo "$0 [-h|--help][-u|--user user][timezone]"
+	#echo "$0 [-h|--help][-u|--user user][timezone]"
+	echo "$0 [-h|--help][timezone]"
 }
 
 while [[ $# -gt 0 ]]
@@ -65,10 +66,10 @@ do
 			usage
 			exit
 			;;
-		-u|--user) 
-			us=$2
-			shift
-			;;
+		#-u|--user) 
+		#	us=$2
+		#	shift
+		#	;;
 		*)
 			tz=$1
 			;;
@@ -102,14 +103,14 @@ mkdir aac-base
 cd aac-base
 wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
 chmod +x aac-base.install
-if [ Z"$us" != "" ]
-then
-	./aac-base.install -u --user $us $tz
-	./aac-base.install -i LinuxVSM --user $us $tz
-else
+#if [ Z"$us" != "" ]
+#then
+#	./aac-base.install -u --user $us $tz
+#	./aac-base.install -i LinuxVSM --user $us $tz
+#else
 	./aac-base.install -u $tz
 	./aac-base.install -i LinuxVSM $tz
-fi
+#fi
 
 cat > update.sh << EOF
 cd $HOME/aac-base
