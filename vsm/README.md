@@ -13,7 +13,7 @@ determine how to fix. In addition the --patches option no longer works
 for the same reasons.__
 
 ### Description
-A slightly more intelligent version of VSM for Linux and MacOS. It ignores
+A slightly more intelligent version of VSM for Linux. It ignores
 missing definition files that cause the VMware version to stop working. It
 also finds packages not in the definitions yet. It is also possible to find
 the latest of every package.
@@ -234,7 +234,7 @@ Existing ESXI67U2 in /mnt/rainbow/iso/vmware/depot/content/dlg_ESXI67U2/DriversT
 ### Installation
 To install use the provided install.sh script which calls the aac-lib/base installers to install vsm.
 
-To install on MacOS X read <a href=https://github.com/Texiwill/aac-lib/blob/master/vsm/MacOS.md>MacOS.md</a>.
+To install on MacOS X read <a href=https://github.com/Texiwill/aac-lib/blob/master/vsm/MacOS.md>MacOS.md</a>. (Please note this no longer works at this time.)
 
 You can install LOCALLY to your Home Directory, as follows:
 ```
