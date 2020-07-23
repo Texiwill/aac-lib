@@ -1,5 +1,5 @@
 ---
-# version: 1.0.3
+# version: 1.0.4
 
 - hosts: localhost
   gather_facts: true
@@ -11,8 +11,29 @@
 - name: SELinux
   import_playbook: aac-base-selinux.yaml
 
+
 - hosts: localhost
   tasks:
+     - name: Get NodeJS
+       get_url:
+         url: https://rpm.nodesource.com/setup_14.x
+         dest: /tmp
+         mode: 0750
+       when: ansible_os_family == "RedHat"
+
+     - name: Get Deb NodeJS
+       get_url:
+         url: https://deb.nodesource.com/setup_14.x
+         dest: /tmp
+         mode: 0750
+       when: ansible_os_family == "Debian"
+
+     - name: Register NodeJS Repo
+       become: yes
+       shell: "/tmp/setup_14.x"
+       args:
+         executable: /bin/bash
+
      - name: install RHEL < 8 dependencies
        become: yes
        package:
@@ -26,6 +47,14 @@
            - sharutils
            - python
            - python-urllib3
+           - nodejs
+           - xorg-x11-server-Xvfb
+           - libXScrnSaver
+           - at-spi2-atk
+           - gcc
+           - gcc-c++
+           - make
+           - gtk3
          state: latest
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("8","<")
 
@@ -53,6 +82,17 @@
            - sharutils
            - python2
            - python2-urllib3
+           - nodejs
+           - xorg-x11-server-Xvfb
+           - libXScrnSaver
+           - at-spi2-atk
+           - gcc
+           - gcc-c++
+           - make
+           - nss
+           - gtk3
+           - mesa-libgbm
+           - alsa-lib
          state: latest
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("7",">")
 
@@ -70,6 +110,13 @@
            - sharutils
            - python
            - python-urllib3
+           - nodejs
+           - xvfb
+           - libnss3
+           - libgtk-3-0
+           - libgbm1
+           - libasound2
+           - libxss1
          state: latest
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
              (ansible_distribution == "Debian")
@@ -88,6 +135,15 @@
            - sharutils
            - python
            - python3-urllib3
+           - xvfb
+           - nodejs
+           - gcc
+           - g++
+           - make
+           - libgtk-3-0
+           - libnss3
+           - libgbm1
+           - libxss1
          state: latest
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'>='))
 
@@ -103,7 +159,13 @@
            - wget
            - jq
            - cpanminus
+           - node
          state: latest
+       when: ansible_distribution == "MacOSX"
+
+     - name: Install Cask Dependencies for MacOSX
+       homebrew_cask:
+         name: xquartz
        when: ansible_distribution == "MacOSX"
 
      - name: Install MacOS Perl Dependencies

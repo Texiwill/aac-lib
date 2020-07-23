@@ -7,7 +7,7 @@
 # Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS
 #
 ###
-VERSIONID="2.1.0"
+VERSIONID="2.1.1"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -570,6 +570,7 @@ do
 	shift
 done
 
+get_wget
 checkForUpdate
 
 if [ Z"$theos" = Z"macos" ]
@@ -631,7 +632,6 @@ fi
 ###
 # Now do the base install - just enough for ansible
 ###
-get_wget
 epel
 if [ $ansible -eq 1 ]
 then

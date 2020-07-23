@@ -25,7 +25,7 @@ begin to use Ansible. The main script installs all those necessary bits,
 then switches to use Ansible.
 
 #### Supported Operating Systems
-Full support for LinuxVMA is available for:
+Full support for LinuxVMA/LinuxVSM is available for:
 
 * RHEL/CentOS 7
 * RHEL/CentOS 8
@@ -35,10 +35,10 @@ Full support for LinuxVMA is available for:
 * Ubuntu 20.04
 
 WSL also works per the community
+* Not for LinuxVSM 6.4.x
 
-MacOSX support exists for:
-* dcli
-* LinuxVSM
+MacOSX support exists:
+* Not for LinuxVSM 6.4.x
 
 ### Installation
 Run the script and if root access is required you will be asked to
@@ -109,7 +109,7 @@ Installs LinuxVSM, PowerCLI, ov-import.sh, ovftool, DCLI, and vcli to create
 a Linux vSphere Management Appliance.  PowerCLI includes Powershell,
 PowerCLI, PowerNSX, and PowerVRA.
 
-#### LinuxVSM - 1.0.3
+#### LinuxVSM - 1.0.4
 Install a port of VMware's Software Manager to Linux - LinuxVSM.
 
 #### vctui - 1.0.3
@@ -126,6 +126,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+2.1.1 Updates if wget does not already exist/LinuxVSM installer update
+
 2.1.0 Beginning MacOSX support, Fixes for Debian 9, RHEL 8, Ubuntu 20
 
 2.0.4 LinuxVMA / vma mapping
