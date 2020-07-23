@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.4.0 - Updated to support latest My VMware login and API, this release has many more dependencies and only currently works on Linux subsystems not WSL or MacOSX. --patches support has been temporarily dropped
+
 6.3.6 - Fixed RHEL8 Python2 usage
 
 6.3.5 - Fixed RHEL8 Dependency checks

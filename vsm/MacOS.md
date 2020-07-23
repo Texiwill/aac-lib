@@ -7,6 +7,13 @@ AAC Library of Tools
 Linux Version of VMware Software Manager (MacOS Install)
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/>List of Tools</a>
 
+### NOTICE
+__As of LinuxVSM v6.4.0, MacOSX support is not available. This is due
+to the way My VMware has changed. A solution to this problem is being
+sought, but none has been found yet. The community will be updated when
+this is fixed. For now please use Linux systems: Debian, Ubuntu, CentOS,
+or RedHat.__
+
 ### Description
 A MacOS and slightly more intelligent version of VSM. See README.md for more information:
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/vsm>LinuxVSM README</a>

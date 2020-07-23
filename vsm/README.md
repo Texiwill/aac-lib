@@ -6,6 +6,12 @@ AAC Library of Tools
 ## vsm
 Linux Version of VMware Software Manager
 
+### NOTICE
+__As of v6.4.0 support for WSL and MacOSX has dropped due to My VMware
+changes and the solution found to those changes. Work will continue to
+determine how to fix. In addition the --patches option no longer works
+for the same reasons.__
+
 ### Description
 A slightly more intelligent version of VSM for Linux and MacOS. It ignores
 missing definition files that cause the VMware version to stop working. It
@@ -277,9 +283,9 @@ script for the appropriate lines for your own update.sh)
 You can UPDATE LOCALLY to your Home Directory, using the following:
 ```
 echo << EOF > $HOME/bin/update.sh
-wget https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh 
-mv vsm.sh $HOME/bin
-chmod +x $HOME/bin
+wget https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/install.sh
+chmod 755 install.sh
+./install.sh
 EOF
 ```
 The following line Updates VSM at 3AM. You would add using the
@@ -315,6 +321,10 @@ LinuxVSM in scripts
 ### Support
 
 #### Frequently Asked Questions
+* I receive a Long Error message during Login
+
+This is often due to either a VMware website issue, DNS, or bad credentials.
+
 * I receive a "Credential Error Getting" error
 
 This has three solutions, one is not solvable except by VMware. 
@@ -334,10 +344,10 @@ the DNS server you are working is not working correctly.
 
 * On What operating systems will LinuxVSM run?
 
-  * RHEL 6/7, Centos 6/7, Fedora 14/19
-  * Debian 9.x, Ubuntu 17.10 (or higher)
-  * MacOS High Siera (at least)
-  * Microsoft WSL - Embedded Ubuntu within Windows (community tested - @magneet_nl)
+  * RHEL 6/7/8, Centos 6/7/8, Fedora
+  * Debian 9/10, Ubuntu 18.04/20.04
+  * NOT MacOSX (work continues to find an answer)
+  * NOT Microsoft WSL (work continues to find an answer)
   * ArchLinux (community tested - @WikiITWizard)
 
 * I cannot download a package, says not found or nothing appears

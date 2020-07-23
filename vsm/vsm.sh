@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
 #
 
-VERSIONID="6.3.6"
+VERSIONID="6.4.0"
 
 # args: stmt error
 function colorecho() {
@@ -308,14 +308,29 @@ function mywget() {
 			then
 				if [ ${#_PROGRESS_OPT} -eq 0 ]
 				then
-					wget $_PROGRESS_OPT --progress=bar:force $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
+					if [ Z"$hd" = Z"xhr" ]
+					then
+						wget $_PROGRESS_OPT --progress=bar:force --header="Referer: $4" --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
+					else
+						wget $_PROGRESS_OPT --progress=bar:force $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
+					fi
 					err=${PIPESTATUS[0]}
 				else
-					wget $_PROGRESS_OPT --progress=bar:force $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr
+					if [ Z"$hd" = Z"xhr" ]
+					then
+						wget $_PROGRESS_OPT --progress=bar:force --header="Referer: $4" --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr
+					else
+						wget $_PROGRESS_OPT --progress=bar:force $hd --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr
+					fi
 					err=$?
 				fi
 			else
-				wget $_PROGRESS_OPT $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
+				if [ Z"$hd" = Z"xhr" ]
+				then
+					wget $_PROGRESS_OPT --header="Referer: $4" --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
+				else
+					wget $_PROGRESS_OPT $hd --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
+				fi
 				err=$?
 			fi
 			#if [ $doprogress -eq 1 ]
@@ -323,11 +338,16 @@ function mywget() {
 			#	echo -n "+"
 			#fi
 		else
-			wget $_PROGRESS_OPT $hd --progress=bar:force --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
+			if [ Z"$hd" = Z"xhr" ]
+			then
+				wget $_PROGRESS_OPT --header="Referer: $4" --progress=bar:force --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
+			else
+				wget $_PROGRESS_OPT $hd --progress=bar:force --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
+			fi
 			err=$?
 		fi
 	fi
-	if [ $newck -eq 0 ] 
+	if [ $newck -eq 0 ] && [ $err -ne 0 ]
 	then
 		wgeterror $err $fname
 	fi
@@ -468,23 +488,22 @@ function compress_file() {
 
 function get_patch_list() {
 	# do not get if not there already
-	if [ ! -e $rcdir/_patches.xhtml ] || [ ! -e $cdir/pcookies.txt ]
+	if [ ! -e $rcdir/_patches.xhtml ]
 	then
 		# Patch List
-		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --load-cookies $cdir/pcookies.txt --post-data='' --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $patchUrl >& /dev/null
+		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --load-cookies $cdir/ocookies.txt  --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $patchUrl >& /dev/null
+		#wget $_PROGRESS_OPT -O $rcdir/_eol_patches.xhtml --load-cookies $cdir/ocookies.txt  --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $eolUrl >& /dev/null
+		#wget $_PROGRESS_OPT -O $rcdir/_locale_patches.xhtml --load-cookies $cdir/ocookies.txt  --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $localeUrl >& /dev/null
 	fi
 }
 
-function get_patch_cookies()
+function get_patch_url()
 {
-	# force new cookies
-	if [ -e $cdir/pcookies.txt ]
-	then
-		rm -f $cdir/pcookies.txt >& /dev/null
-	fi
-	# Patch Cookies - seems needed for many things
-	wget -O ${rcdir}/patch.html $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $mypatches_ref >& /dev/null
+	wget -O ${rcdir}/patch.html $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $mypatches_ref >& /dev/null
 	patchUrl=`grep searchPageUrl: ${rcdir}/patch.html | cut -d\' -f 2`
+	#eolUrl=`grep eolUrl: ${rcdir}/patch.html | cut -d\' -f 2`
+	searchUrl=`grep searchResultUrl: ${rcdir}/patch.html | cut -d\' -f 2`
+	#localeUrl=`grep localeSelectorUrl: ${rcdir}/patch.html | grep -v '//' | cut -d\' -f 2`
 	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ] && [ $oauth_err -eq 1 ]
 	then
 		rm -f $rcdir/_*patch*.xhtml >& /dev/null
@@ -526,7 +545,7 @@ function vexpert_login() {
 	fi
 }
 
-need_login=0
+#need_login=0
 function oauth_login() {
 	dl=$1
 	z=`date +"%s"`
@@ -534,32 +553,124 @@ function oauth_login() {
 	debugecho "OL: $test_login $need_login"
 	if [ $test_login -ge 900 ]
 	then
+		if [ $noheader -eq 0 ]; then colorecho "	Authenticating... May take up to 90s... 12-20s is normal...  "; fi
 		need_login=$z
 		# Get creds
-		oauth=`echo $auth | base64 --decode`
-		rd=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$oauth" 2>/dev/null|sed 's/%3A/ /'`)
-		#pd="vmware=login&username=${rd[0]}&password=${rd[1]}"
-		pd="username=${rd[0]}&password=${rd[1]}"
-
-		# Login
-		bmctx=`wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $myvmware_login 2>&1 |grep Location| grep bmctx= | tail -1|awk '{print $2}'`
-		#wget -O - $_PROGRESS_OPT --save-headers --cookies=on --save-cookies $cdir/ocookies.txt --keep-session-cookies --header="Referer: $myvmware_login" --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $bmctx >& /dev/null
-		wget -O $cdir/auth.html $_PROGRESS_OPT --post-data="$pd" --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/acookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $myvmware_oauth 2>&1 >& /dev/null #| grep AUTH-ERR >& /dev/null
-		grep 'Error' $cdir/auth.html >& /dev/null
-       	oauth_err=$?
-		if [ $oauth_err -eq 1 ]
+		#oauth=`echo $auth | base64 --decode`
+		#rd=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$oauth" 2>/dev/null|sed 's/%3A/ /'`)
+		#pd="username=${rd[0]}&password=${rd[1]}"
+		# does node exist?
+		pushd ${cdir} >& /dev/null
+		if [ ! -e ${cdir}/node_modules ]
 		then
-			# Do SAML request!
-			saml=`sed -n '/INPUT/,/"/p' $cdir/auth.html | sed 's/<INPUT TYPE="hidden" NAME="//' | sed 's/" VALUE//' | sed 's/\/>//'`
-			s_action=`grep ACTION $cdir/auth.html | sed 's/<FORM METHOD="POST" ACTION="//' |sed 's/">//'`
-			wget -O $cdir/sout.html $_PROGRESS_OPT --post-data="$saml" --save-headers --cookies=on --load-cookies $cdir/acookies.txt --save-cookies $cdir/scookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $myvmware_oauth" $s_action >& /dev/null # now we are logged in
+			npm install puppeteer --unsafe-perm=true >& /dev/null
+			if [ $? -eq 1 ]
+			then
+				echo "Not enough space in $cdir; please add more"
+				exit
+			fi
+			npm install xvfb --unsafe-perm=true >& /dev/null
+			if [ $? -eq 1 ]
+			then
+				echo "Error installing nodejs xvfb, please verify C++ compiler exists"
+				exit
+			fi
 		fi
-		get_patch_cookies # now we have the proper cookies
+		if [ ! -e ${cdir}/node-bm.js ]
+		then
+			cat >> $cdir/node-bm.js << EOF
+const puppeteer = require('puppeteer');
+const fs = require('fs').promises;
+const Xvfb = require('xvfb');
+
+function delay(time) {
+   return new Promise(function(resolve) { 
+       setTimeout(resolve, time)
+   });
+}
+
+var data='${auth}';
+let buff = new Buffer.from(data,'base64');
+let text = buff.toString('ascii');
+const words = text.split(':');
+
+(async () => {
+	var xvfb = new Xvfb({
+		silent: true,
+		xvfb_args: ["-screen", "0", '1280x1024x24', '-ac'],
+	});
+	xvfb.start((err)=>{if (err) {console.error(err); process.exit(1);}})
+	const browser = await puppeteer.launch({
+		headless: false,
+		defaultViewport: null,
+		args: ['--no-sandbox', '--remote-debugging-port=9222','--start-fullscreen', '--display='+xvfb._display]
+	});
+	const page = await browser.newPage();
+	await page.goto('https://my.vmware.com/web/vmware/login',{waitUntil: 'networkidle0'});
+	const navigationPromise = page.waitForNavigation();
+	await page.type('#email',words[0]);
+	await page.type('#password',words[1]);
+	await page.keyboard.press('Enter');
+	await navigationPromise;
+	await page.waitForSelector('.ng-star-inserted',{timeout: 90000});
+	await page.goto('https://my.vmware.com/group/vmware/home',{waitUntil: 'networkidle0'});
+	await page.waitForSelector('.ng-star-inserted');
+	//await page.goto('https://my.vmware.com/group/vmware/patch',{waitUntil: 'networkidle2'});
+	//await page.waitForSelector('.eaSelector');
+	const { cookies } = await page._client.send('Network.getAllCookies');
+	var cookieContent=\`# HTTP cookie file.
+# Generated for Wget
+# Edit at your own risk.
+
+\`;
+	for (let cookie of cookies.values()) {
+		var string = "";
+		string += cookie.domain + '\t';
+        //if (string.includes('vmware')) {
+			string = string.replace(/^\./,'');
+			string +=  String(cookie.session).toUpperCase() + '\t';
+			string +=  cookie.path + '\t';
+			string +=  String(cookie.secure).toUpperCase() + '\t';
+			if (cookie.expires == -1) {
+				string +=  "0" + '\t';
+			} else {
+				string +=  cookie.expires + '\t';
+			}	
+			string +=  cookie.name + '\t';
+			string +=  cookie.value;
+			cookieContent += string.trim() + '\n';
+		//}
+	}
+	await fs.writeFile('./ocookies.txt',cookieContent);
+	await browser.close()
+	xvfb.stop();
+})();
+EOF
+			chmod -R 600 node-bm.js
+			chmod 700 node_modules
+		fi
+		node node-bm.js
+		if [ $? -ne 0 ]
+		then
+			colorecho "	Login Failure or Missing Dependencies" 1
+			rm node-bm.js
+			exit
+		fi
+		popd >& /dev/null
+	fi
+	# recheck, just in case
+	grep OAMAuthnCookie $cdir/ocookies.txt >& /dev/null
+	oauth_err=$?
+
+	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
+	then
+		get_patch_url # get the url for patches
 	fi
 }
 
 function get_product_patches() {
 	ppr=`echo $missname | sed 's/\([A-Z]\+\)[0-9][0-9A-Z]\+/\1/'`
+	# TODO: Expand to all listed patches!
 	if [ Z"$ppr" = Z"ESXI" ] || [ Z"$ppr" = Z"VC" ]
 	then
 		oauth_login 0
@@ -592,8 +703,10 @@ function get_product_patches() {
 
 				# Patch Data per version
 				pd=`echo "product=${pvn}&productName=${pnn}&version=${pinv}&versionName=${pnam}&resultType=${prt}&releasedate=YYYY-MM-DD&severity=All+Severities&category=All+Categories&classify=All+Classifications&releasenumber=Enter+Release+Name&buildnumber=Enter+Build+Number&bulletinnumber=Enter+Bulletin+Number&dependency=true" |sed 's/"//g' | sed 's/ /+/g'`
-				#echo $pd
-				wget -O ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml --load-cookies $cdir/pcookies.txt --post-data="$pd" --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" 'https://my.vmware.com/group/vmware/patch?p_p_id=PatchDownloadSearchPortlet_WAR_itofflinePatch&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getPatchData&p_p_cacheability=cacheLevelPage&p_p_col_id=column-6&p_p_col_pos=1&p_p_col_count=2' >& /dev/null
+				#xsrf=`grep -i xsrf-token $cdir/$ck|cut -f7`
+				#dtpc=`grep -i dtpc $cdir/$ck|cut -f7`
+				debugecho $pd
+				wget -O ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml --load-cookies $cdir/ocookies.txt --post-data="$pd" --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" --header="Accept: application/json" $searchUrl
 			fi
 		fi
 	else
@@ -962,20 +1075,20 @@ function loopdeps {
 python="python"
 function finddeps {
 	#Packages required by all OS
-	all_checkdep="bc jq wget"
+	all_checkdep="bc jq wget nodejs"
 	#Packages required by MacOS
 	macos_checkdep="$all_checkdep python xcodebuild xml_grep gnu-sed uudecode"
 	#Packages required by all Linux Distros currently supported
 	linux_checkdep="$all_checkdep libxml2 sharutils"
 	#Packages required by Enterprise Linux and derivatives (including fedora)
-	el_checkdep="perl-XML-Twig ncurses"
+	el_checkdep="perl-XML-Twig ncurses xorg-x11-server-Xvfb libXScrnSaver at-spi2-atk gcc-c++ make nss gtk3"
 	#Packages required by Fedora 
-	fedora_checkdep="$linux_checkdep $el_checkdep python2 python2-urllib3"
+	fedora_checkdep="$linux_checkdep $el_checkdep python2 python2-urllib3 meta-libgbm alsa-lib"
 	#Packages required by RedHat and derivatives 
 	redhat_checkdep="$linux_checkdep $el_checkdep python python-urllib3"
 	#Packages required by Debian and derivatives 
-	debian_checkdep="$linux_checkdep python python-urllib3 xml-twig-tools libxml2-utils ncurses-base"
-	ubuntu20_checkdep="$linux_checkdep python3 python3-urllib3 xml-twig-tools libxml2-utils ncurses-base"
+	debian_checkdep="$linux_checkdep python python-urllib3 xml-twig-tools libxml2-utils ncurses-base xvfb libnss3 libgtk-3-0 libgbm1 libasound2 libxss1"
+	ubuntu20_checkdep="$linux_checkdep python3 python3-urllib3 xml-twig-tools libxml2-utils ncurses-base xvfb libgtk-3-0 g++ libnss3 libgbm1 libxss1 make"
 	if [ Z"$theos" = Z"macos" ]
 	then
 		. $HOME/.bash_profile
@@ -1234,6 +1347,9 @@ load_vsmrc
 
 while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --rebuild) rebuild=1 ;; --olde) olde=$2; shift;; *) usage ;; esac; shift; done
 
+# remove when fixed
+dopatch=0
+
 if [ $myquiet -eq 1 ] && [ $myq -eq 0 ]
 then
 	doquiet=1
@@ -1302,7 +1418,7 @@ then
 fi
 
 # Cleanup old data if any
-rm -f *cookies.txt index.html.* 2>/dev/null
+rm -f index.html.* 2>/dev/null
 
 # Get Olde Time and remove temp files if time limited reached, default 12 hours
 if [ -e ${rcdir}/_downloads.xhtml ]
@@ -1319,12 +1435,12 @@ fi
 # Delete all My VMware files! So we can start new
 if [ $remyvmware -eq 1 ]
 then
-	rm -rf ${rcdir}/_*
+	rm -rf ${rcdir}/_* ${cdir}/*.txt
 fi
 
 if [ $doreset -eq 1 ]
 then
-	rm -rf ${rcdir}/*
+	rm -rf ${rcdir}/* ${cdir}/*.txt
 fi
 
 handlecredstore
@@ -1337,6 +1453,7 @@ then
 	then
 		rm $cdir/.vex_credstore
 	fi
+	rm -rf ${cdir}/node* ${cdir}/*.json ${cdir}/*.txt ${cdir}/node-bm.js
 	colorecho "Removed all Temporary Files"
 	exit
 fi
@@ -1364,7 +1481,7 @@ then
 fi
 
 # Clear any cached elements
-rm -f ${cdir}/*.{txt,html} 2>/dev/null
+rm -f ${cdir}/*.html 2>/dev/null
 
 # no need to login for this option, list what is in the file
 if [ $dodlglist -eq 1 ]
@@ -1390,16 +1507,37 @@ mypatches_ref='https://my.vmware.com/group/vmware/patch'
 myvmware_login='https://my.vmware.com/web/vmware/login'
 #myvmware_oauth='https://my.vmware.com/oam/server/auth_cred_submit'
 myvmware_oauth='https://auth.vmware.com/oam/server/auth_cred_submit?Auth-AppID=WMVMWR'
+myvmware_prod='https://my.vmware.com/channel/public/api/v1.0/products/getAllProducts?locale=en_US&isPrivate=true'
+prod_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getProductHeader?locale=en_US&'
+related_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&'
+# referer https://my.vmware.com/group/vmware/downloads/details?downloadGroup=DLG&productId=.dlgList[].productId&rPId=.dlgList[].releasePackageId
+dlghdr_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getDLGHeader?locale=en_US&' #downloadGroup=DLG&productID=.dlgList[].productId
+dlg_xhr='https://my.vmware.com/channel/public/api/v1.0/dlg/details?locale=en_US&' # downloadGroup=DLG&productId=.product[].id&rPId=.product[].releasePackageId
+dlgrel_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getDLGRelatedDLGList?locale=en_US&'
+eula_xhr='https://my.vmware.com/channel/api/v1.0/dlg/eula/accept?locale=en_US&' #downloadGroup=DLG
+download_xhr='https://my.vmware.com/channel/api/v1.0/dlg/download' # POST
 vex_login='https://vexpert.vmware.com/login'
 vex_ref='https://vexpert.vmware.com/my/downloads/'
-oaua='Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
+oaua='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.0 Safari/537.36'
 ppr=''
 ppv=''
 
+# save a copy of the .vsmrc and continue
+if [ $noheader -eq 0 ]
+then
+	echo -n "	"
+fi
+save_vsmrc
+
+# seed oauth check
+need_login=0
+if [ -f ${cdir}/ocookies.txt ]
+then
+	need_login=`stat --format "%Y" ${cdir}/ocookies.txt 2> /dev/null`
+fi
 # Authenticate
-if [ $noheader -eq 0 ]; then colorecho "	Authenticating... "; fi
 oauth_login 0
-if [ $oauth_err -eq 1 ]
+if [ $oauth_err -eq 0 ]
 then
 	if [ $noheader -eq 0 ]; then colorecho "	Oauth:		1"; fi
 else
@@ -1418,27 +1556,28 @@ findCk
 if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
 then
 	# Get JSON
-	mywget ${rcdir}/_h_downloads.html https://my.vmware.com/group/vmware/downloads
+	mywget ${rcdir}/_h_downloads.xhtml $myvmware_prod
+	#mywget ${rcdir}/_h_downloads.html https://my.vmware.com/group/vmware/downloads
 	#mywget ${rcdir}/_h_downloads.html https://my.vmware.com/en/web/vmware/downloads
-	tab2url=`grep allProducts ${rcdir}/_h_downloads.html | cut -d\" -f4`
+	#tab2url=`grep allProducts ${rcdir}/_h_downloads.html | cut -d\" -f4`
 
-	grep "Temporary Maintenance" ${rcdir}/_h_downloads.html >& /dev/null
+	grep "Temporary Maintenance" ${rcdir}/_h_downloads.xhtml >& /dev/null
 	if [ $? -eq 0 ]
 	then
 		colorecho "Error: My VMware Temporary Maintenance" 1
 		exit;
 	fi
 
-	mywget ${rcdir}/_j_downloads.xhtml $tab2url "--post-data=''"
+	#mywget ${rcdir}/_h_downloads.xhtml $tab2url "--post-data=''"
 
-	if [ ! -e ${rcdir}/_j_downloads.xhtml ]
+	if [ ! -e ${rcdir}/_h_downloads.xhtml ]
 	then
 		colorecho "Error: Could not get My VMware Downloads File" 1
 		exit;
 	fi
 
 	# Parse JSON
-	cat ${rcdir}/_j_downloads.xhtml | jq '.[][].proList[]|.name,.actions[]'| tr '\n' ' ' | sed 's/} {/}\n{/g' | sed 's/} "/}\n"/g' | sed 's/" {/"\n{/g' |egrep '^"|Download'|tr '\n' ' '|sed 's/} "/}\n"/g' > ${rcdir}/_downloads.xhtml
+	cat ${rcdir}/_h_downloads.xhtml | jq '.[][].productList[]|.name,.actions[]'| tr '\n' ' ' | sed 's/} {/}\n{/g' | sed 's/} "/}\n"/g' | sed 's/" {/"\n{/g' |egrep '^"|Download'|tr '\n' ' '|sed 's/} "/}\n"/g' > ${rcdir}/_downloads.xhtml
 
 	if [ $err -ne 0 ]
 	then
@@ -1446,9 +1585,6 @@ then
 	fi
 fi
 
-
-# save a copy of the .vsmrc and continue
-save_vsmrc
 
 # Login to vexpert.vmware.com
 vexpert_login
@@ -1479,7 +1615,7 @@ function removeLayer()
 	elif [ ${layer[2]} = "actions" ]
 	then
 		layer=(${layer[0]}) # layer 2
-		layer+=('proList[]')
+		layer+=('productList[]')
 		layer+=('name')
 	elif [ ${#layer[@]} -eq 4 ] || [ $skipfive -eq 1 ]
 	then
@@ -1522,12 +1658,12 @@ function createLayer()
 		if [ Z"${layer[1]}" = Z"name" ]
 		then
 			layer=("productCategoryList[$lr]")
-			layer+=('proList[]')
+			layer+=('productList[]')
 			layer+=('name')
 		elif [ ${layer[2]} = "name" ]
 		then
 			layer=(${layer[0]})
-			layer+=("proList[$lr]")
+			layer+=("productList[$lr]")
 			layer+=('actions')
 		elif [ ${layer[2]} = "actions" ]
 		then
@@ -1542,38 +1678,33 @@ function createLayer()
 	fi
 }
 
-function getVersionList()
-{
-	# get the versions
-	tver=`xmllint --html --xpath "//div[@class=\"versionList\"]" ${rcdir}/_$missname.xhtml 2>/dev/null |grep option |cut -d'>' -f 2|cut -d'<' -f1|sed 's/\./_/g'|sort -rV`
-	# no options, just 1 version
-	if [ Z"$tver" = Z"" ]
-	then
-		tver=`xmllint --html --xpath "//div[@class=\"versionList\"]" ${rcdir}/_$missname.xhtml 2>/dev/null |tr -d '\n\t' |cut -d'>' -f 2|cut -d'<' -f1|sed 's/\./_/g'|sort -rV`
-		if [ Z"$tver" = Z"" ]
-		then
-			tver=`xmllint --html --xpath "//select[@id=\"versionList\"]" ${rcdir}/_$missname.xhtml 2>/dev/null | sed 's/ /\n/g' |grep downloadgroupid |cut -d\" -f2 | sed 's/-/_/g'`
-		fi
-	fi
-}
-
 function getMyVersions()
 {
+	# This changed...
 	# we need to go to My VMware now
-	action=`jq "${layers}[]" $rcdir/_j_downloads.xhtml | tr '\n' ' ' | sed 's/} {/}\n{/g' | sed 's/} "/}\n"/g' | sed 's/" {/"\n{/g' |egrep '^"|Download'|tr '\n' ' '|sed 's/} "/}\n"/g'|cut -d\" -f12 |sed 's#\./##'`
+	action=`jq "${layers}[0].target" $rcdir/_h_downloads.xhtml | sed 's#./info/slug/#category=#' | sed 's#/#\&product=#'|sed 's#/#\&version=#' | sed 's/"//g'`
+	
+	echo $pName
 	missname=$choice
 	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
 	then
-		mywget ${rcdir}/_${missname}.xhtml ${myvmware_root}${action}
+		
+		mywget ${rcdir}/_${missname}.xhtml ${prod_xhr}${action}
+		#mywget ${rcdir}/_${missname}_dlgList.xhtml ${related_xhr}${action}
 	fi
-	getVersionList
+	#getVersionList
+	tver=`jq '.versions[].id' ${rcdir}/_${missname}.xhtml|sed 's/"//g'`
 	pkgs=''
-	for x in $tver
-	do
-		pkgs="$pkgs ${missname}_${x}"
-	done
+	if [ Z"$tver" != Z"" ]
+	then
+		for x in $tver
+		do
+			pkgs="$pkgs ${missname}_${x}"
+		done
+	fi
 }
 
+naction=''
 function getMySuites()
 {
 	# deal with version. If 1 then its the same file
@@ -1581,13 +1712,15 @@ function getMySuites()
 	missname=${layer[$nnr]}
 	nnr=$(($nnr-1))
 	ver=`echo $missname | sed "s/${layer[$nnr]}_//"`
-	over=`basename $action`
-	naction=`echo $action | sed "s/$over/$ver/"`
+	#over=`basename $action`
+	naction=`echo $action | sed "s/version=.*/version=$ver/"`
 	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
 	then
-		mywget ${rcdir}/_${missname}.xhtml ${myvmware_root}${naction}
+		#mywget ${rcdir}/_${missname}.xhtml ${prod_xhr}${naction}
+		mywget ${rcdir}/_${missname}.xhtml "${related_xhr}${naction}&dlgType=PRODUCT_BINARY"
+		#mywget ${rcdir}/_${missname}.xhtml ${myvmware_root}${naction}
 	fi
-	mversions=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/_${missname}.xhtml 2>/dev/null | grep longProductColumn |cut -d'>' -f3|cut -d'<' -f1 | sed 's/[ -]/_/g'`
+	mversions=`jq '.dlgEditionsLists[].name' ${rcdir}/_${missname}.xhtml|sed 's/"//g'|sed 's/ /_/g'`
 	pkgs=''
 	for x in $mversions
 	do
@@ -1604,7 +1737,7 @@ function colorMyPkgsFound()
 {
 	if [ $useDlg -eq 1 ]
 	then
-		fName="dlg_${x}"
+		fName=`echo "dlg_${x}"|sed 's/-/_/g'`
 	else
 		fName="dlg_${whatever}/${x}"
 	fi
@@ -1639,8 +1772,7 @@ function colorMyPkgs()
 	then
 		for x in $arr 
 		do
-			y=${tdls[$i]}
-			if [ ${#y} -lt 5 ] && [ $useDlg -eq 0 ]
+			if [ $useDlg -eq 0 ]
 			then
 				vexit=0
 				if [ $dovexxi -eq 1 ]
@@ -1651,22 +1783,22 @@ function colorMyPkgs()
 						vexit=1
 					fi
 				fi
-				if [ $vexit -eq 0 ]
-				then
-					if [ ${#npkg[@]} -eq 0 ]
-					then
-						npkg=("${GRAY}${x}${NB}${NC}")
-					else
-						npkg+=("${GRAY}${x}${NB}${NC}")
-					fi
-				else
+				# API not showing how to do this
+				#if [ $vexit -eq 0 ]
+				#then
+				#	if [ ${#npkg[@]} -eq 0 ]
+				#	then
+				#		npkg=("${GRAY}${x}${NB}${NC}")
+				#	else
+				#		npkg+=("${GRAY}${x}${NB}${NC}")
+				#	fi
+				#else
 					# really should check for existence 
 					colorMyPkgsFound
-				fi
+				#fi
 			else
 				colorMyPkgsFound
 			fi
-			i=$(($i+1))
 		done
 	else
 		npkg=(${arr[@]})
@@ -1683,8 +1815,9 @@ function getMyDlgs()
 	then
 		specReply=$longReply
 	fi
+	snr=$(($specReply-1))
 	# use longReply as this is groups by more-details
-	xpkgs=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/_${specname}.xhtml 2>/dev/null | xmllint --html --xpath "(//tr[contains(@class,\"more-details\")])[$specReply]" - 2>/dev/null | grep downloadGroup | grep -v OSS  | cut -d\? -f 2 | cut -d \& -f 1 | cut -d= -f 2 | sed 's/-/_/g'`
+	xpkgs=`jq ".dlgEditionsLists[$snr].dlgList[].code" $rcdir/_${specname}.xhtml|sed 's/"//g'|sed 's/-/_/g'`
 	# need to swing through xpkgs for exist vs not
 	colorMyPkgs "$xpkgs"
 	if [ ${#xpkgs} -gt 2 ]
@@ -1702,46 +1835,24 @@ function getMyDlgVersions()
 		nnr=$(($nr-1))
 		missname=${layer[$nnr]}
 	fi
+	snr=$(($specNnr-1))
+	pnr=$(($lr-1))
 	iname=`echo $missname | sed 's/_/[_-]/g'`
-	vurl=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/_${specname}.xhtml 2>/dev/null | xmllint --html --xpath "(//tr[contains(@class,\"more-details\")])[$specReply]" - 2>/dev/null | grep downloadGroup | grep $iname | sed 's/\"buttoncol\"//' | cut -d\" -f2 | sed 's/amp;//g'`
-	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
+	#downloadGroup=DLG&productID=.dlgList[].productId
+	vurl=`jq ".dlgEditionsLists[$snr].dlgList[$pnr]|.code,.productId" $rcdir/_${specname}.xhtml|sed 's/"//g'|tr '\n' ' ' |sed 's/^/downloadGroup=/' |sed 's/ /\&productId=/'`
+	#downloadGroup=DLG&productID=.dlgList[].productId&rPId=.dlgList[].releasePackageId
+	vhr=`jq ".dlgEditionsLists[$snr].dlgList[$pnr]|.code,.productId,.releasePackageId" $rcdir/_${specname}.xhtml|sed 's/"//g'|tr '\n' ' ' |sed 's/^/downloadGroup=/' |sed 's/ /\&productId=/'|sed 's/ /\&rPId=/' | sed 's/ //'`
+	xhr="https://my.vmware.com/group/vmware/downloads/details?${vhr}"
+	if [ ! -e ${rcdir}/_${missname}_ver.xhtml ] || [ $doreset -eq 1 ]
 	then
-		mywget ${rcdir}/_${missname}.xhtml https://my.vmware.com${vurl}
+		mywget ${rcdir}/_${missname}_ver.xhtml ${dlghdr_xhr}${vurl} xhr $xhr
 	fi
 	if [ $sc -eq 0 ]
 	then
-		getVersionList
+		tver=`jq 'if (.versions | length) > 1 then .versions[].id else "" end' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/-/_/g'`
 		colorMyPkgs "$tver"
 		pkgs=${npkg[@]}
 	fi
-}
-
-function getTabcOne()
-{
-	whatever=$1
-	xdata=`xmllint --html --xpath "(//div[@class=\"tabContent\"])[1]" $rcdir/_${whatever}.xhtml 2>/dev/null`
-	xpkgs=`echo $xdata | xmllint --html --xpath '//span[@class="fileNameHolder"]/text()' - 2>/dev/null`
-	if [ ${#xpkgs} -eq 0 ]
-	then
-		echo $xdata | fgrep 'There are no binaries available for this product.' >& /dev/null
-		if [ $? -eq 0 ]
-		then
-			colorecho "No Primary Downloads Available for this Product" 1
-		else
-			fgrep 'Unable to Complete Your Request' $rcdir/_${whatever}.xhtml >& /dev/null
-			if [ $? -eq 0 ]
-			then
-				if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
-				then
-					echo -n "M"
-				else
-					colorecho "My VMware down for maintenance"
-				fi
-			fi
-		fi
-	fi
-	tdls=(`echo $xdata | xmllint --html --xpath '//a[@class="md"]' - 2>/dev/null | sed 's/<a/\n<a/g' | grep md | sed 's/<a//' | sed 's/class="md"//' | sed 's/ //g' | cut -d\" -f2- | cut -d\> -f1|sed "s/''/#/g"`)
-	#sed 's/<a/\n<a/g' | grep md | sed 's/ //g' | cut -d\" -f4- | cut -d\> -f1|sed "s/''/#/g"`)
 }
 
 function getMyPatches()
@@ -1768,31 +1879,42 @@ function getMyPatches()
 	fi
 }
 
-function wgetMyVersion()
-{
-	if [ ! -e ${rcdir}/_${choice}.xhtml ] || [ $doreset -eq 1 ]
-	then
-		debugvecho "DEBUG wMV: ${layer[@]}"
-		nnr=$(($nr-2))
-		iname=${layer[$nnr]}
-		ichoice=$choice
-		echo $vurl | sed 's/\&/\n/g' | sed 's/?/\n/' |grep downloadGroup| cut -d= -f2 | grep - '-' >& /dev/null
-		if [ $? -eq 0 ]
-		then
-			iname=`echo ${layer[$nnr]} | sed 's/_/-/g'`
-			ichoice=`echo $choice | sed 's/_/-/g'`
-		fi
-		vurl=`echo $vurl | sed "s/$iname/$ichoice/"`
-		mywget ${rcdir}/_${choice}.xhtml https://my.vmware.com${vurl}
-		missname=$choice
-	fi
-}
-
+vhr=''
 function getMyFiles()
 {
 	sc=$1
+	snr=$(($specNnr-1))
+	iname=`echo $missname | sed 's/_/[_-]/g'`
+	ichoice=`echo $choice | sed 's/-/_/g'`
+	#downloadGroup=DLG&productID=.dlgList[].productId
+	#code=`jq ".dlgEditionsLists[$snr].dlgList[$fnr].code" ${rcdir}/_${specname}.xhtml|sed 's/"//g'`
+	#mywget ${rcdir}/_${missname}_eula.xhtml "${eula_xhr}downloadGroup=${choice}" xhr $xhr
+	vhr=`jq ".dlgEditionsLists[$snr].dlgList[]|if (.code|test(\"${iname}$\")) then .code,.productId,.releasePackageId else \"\" end" ${rcdir}/_${specname}.xhtml |sed '/""/d'|sed 's/"//g' |tr '\n' ' ' |sed 's/^/downloadGroup=/' |sed 's/ /\&productId=/'|sed 's/ /\&rPId=/' | sed 's/ //'`
+	if [ Z"$missname" != Z"$ichoice" ] && [ $historical -eq 1 ]
+	then
+		icode=`echo $ichoice | sed 's/_/[_-]/g'`
+		# Missing file due to historical, change missname and get header
+		d=`jq ".versions[]|if (.id|test(\"${icode}$\")) then .id else \"\" end" ${rcdir}/_${missname}_ver.xhtml|sed '/""/d'|sed 's/"//g'`
+		vhr=`echo $vhr | sed "s/$iname/$d/"`
+		mhr=`echo $vhr | sed "s/\&rPId=.*//"`
+		xhr="https://my.vmware.com/group/vmware/downloads/details?${vhr}"
+		missname=${ichoice}
+		if [ ! -e ${rcdir}/_${missname}_ver.xhtml ] || [ $doreset -eq 1 ]
+		then
+			mywget ${rcdir}/_${missname}_ver.xhtml ${dlghdr_xhr}${mhr} xhr $xhr 
+		fi
+	else
+		xhr="https://my.vmware.com/group/vmware/downloads/details?${vhr}"
+	fi
+	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
+	then
+		mywget ${rcdir}/__${missname}.xhtml ${dlg_xhr}${vhr} xhr $xhr 
+		# Strip out 'header' elements
+		sed 's/},/},\n/g' ${rcdir}/__${missname}.xhtml | sed 's/:\[/:\[\n/' |sed 's/}]/}\n]/' | grep -v '"header":true' | tr '\n' ' ' |sed 's/, ]/]/' > ${rcdir}/_${missname}.xhtml
+	fi
 	# get the files
-	getTabcOne $choice
+	whatever=`echo $choice|sed 's/-/_/g'`
+	xpkgs=`jq '.downloadFiles[].fileName' ${rcdir}/_${missname}.xhtml | sed 's/"//g'`
 	# need to swing through xpkgs for exist vs not
 	pkgs="$xpkgs"
 	writeJSON
@@ -1806,7 +1928,13 @@ function getMyFiles()
 	# OEM/DTS/Patches - only perform if options set
 	if [ $mydts -eq 1 ]
 	then
-		dtslist=(`xmllint --html --xpath "(//div[@class=\"tabContent\"])[2]" $rcdir/_${choice}.xhtml 2>/dev/null | grep downloadGroup | grep -v OSS  | cut -d\? -f 2 | cut -d \& -f 1 | cut -d= -f 2 | sed 's/-/_/g'`)
+		if [ ! -e ${rcdir}/_${missname}_dts.xhtml ] || [ $doreset -eq 1 ]
+		then
+			icode=`echo $missname|sed 's/_/[_-]/g'`
+			d=`jq ".versions[]|if (.id|test(\"${icode}$\")) then .id else \"\" end" ${rcdir}/_${missname}_ver.xhtml|sed '/""/d'|sed 's/"//g'`
+			mywget ${rcdir}/_${missname}_dts.xhtml "${dlgrel_xhr}${naction}&downloadGroup=${d}&dlgType=DRIVERS_TOOLS" xhr $xhr
+		fi
+		dtslist=(`jq '.dlgEditionsLists[].dlgList[].code' ${rcdir}/_${missname}_dts.xhtml 2>/dev/null |sed 's/"//g'|sed 's/-/_/g'`)
 		if [ ${#dtslist[@]} -gt 0 ] && [ $sc -eq 0 ]
 		then
 			pkgs="$pkgs DriversTools"
@@ -1814,7 +1942,14 @@ function getMyFiles()
 	fi
 	if [ $myoem -eq 1 ]
 	then
-		oemlist=(`xmllint --html --xpath "(//div[@class=\"tabContent\"])[4]" $rcdir/_${choice}.xhtml 2>/dev/null | grep downloadGroup | grep -v OSS  | cut -d\? -f 2 | cut -d \& -f 1 | cut -d= -f 2 | sed 's/-/_/g'`)
+		if [ ! -e ${rcdir}/_${missname}_oem.xhtml ] || [ $doreset -eq 1 ]
+		then
+			icode=`echo $missname|sed 's/_/[_-]/g'`
+			d=`jq ".versions[]|if (.id|test(\"${icode}$\")) then .id else \"\" end" ${rcdir}/_${missname}_ver.xhtml|sed '/""/d'|sed 's/"//g'`
+			mywget ${rcdir}/_${missname}_oem.xhtml "${dlgrel_xhr}${naction}&downloadGroup=${d}&dlgType=CUSTOM_ISO" xhr $xhr
+			mywget ${rcdir}/_${missname}_add.xhtml "${dlgrel_xhr}${naction}&downloadGroup=${d}&dlgType=ADDONS" xhr $xhr
+		fi
+		oemlist=(`jq '.dlgEditionsLists[].dlgList[].code' ${rcdir}/_${missname}_oem.xhtml 2>/dev/null |sed 's/"//g';jq '.dlgEditionsLists[].dlgList[].code' ${rcdir}/_${missname}_add.xhtml 2>/dev/null |sed 's/"//g'|sed 's/-/_/g'`)
 		if [ ${#oemlist[@]} -gt 0 ] && [ $sc -eq 0 ]
 		then
 			pkgs="$pkgs CustomIso"
@@ -1858,7 +1993,7 @@ function getLayerPkgs()
 	fi
 	if [ $dojq -eq 1 ]
 	then
-		pkgs=`jq "${layers}" $rcdir/_j_downloads.xhtml | sed 's/ /_/g'|sed 's/"//g'`
+		pkgs=`jq "${layers}" $rcdir/_h_downloads.xhtml | sed 's/ /_/g'|sed 's/"//g'`
 	elif [ $dojq -eq 2 ]
 	then
 		getMyVersions
@@ -1880,7 +2015,7 @@ function getLayerPkgs()
 		then
 				debugecho "DEBUG: $nr $prevNr $specNnr"
 				getMyDlgVersions 0
-				# no versions or not historical
+				# no or 1 version or not historical
 				if [ Z"$tver" = Z"" ] || [ $historical -ne 1 ]
 				then
 					infiles=1
@@ -1889,10 +2024,10 @@ function getLayerPkgs()
 		elif [ $nr -eq 7 ]
 		then
 			# File missing, so get data, went down then back up
-			if [ $historical -eq 1 ]
-			then
-				wgetMyVersion
-			fi
+			#if [ $historical -eq 1 ]
+			#then
+			#	wgetMyVersion
+			#fi
 			infiles=1
 			getMyFiles 0
 		fi
@@ -1900,6 +2035,7 @@ function getLayerPkgs()
 }
 
 pName=''
+prevChoice=$choice
 function createMenu()
 {
 	##
@@ -1908,6 +2044,7 @@ function createMenu()
 	##
 	if [ ${#pkgs} -ne 0 ]
 	then
+		prevChoice=$choice
 		if [ Z"$pkgs" = Z"All " ]; then pkgs=''; fi # Nothing so Drop the All!
 		old_lr=$longReply
 		if [ Z"$choice" != Z"Back" ] || [ Z"$choice" != Z"Mark" ] || [ Z"$choice" != Z"All" ]
@@ -1954,66 +2091,49 @@ function createMenu()
 
 function processCode() 
 {
-	##
-	# This extracts the 'parameters' we can use to perform a download
-	theHref=${tdls[$xloc]}
-	isdlurl=0
-	#echo "PC: $theHref"
-	code=(`echo $theHref | sed 's/"/\n/g' | egrep 'getDownload|checkEulaAndPerform' | head -1 | cut -d\( -f 2 | cut -d\) -f 1 | sed "s/'//g" | sed 's/,/ /g' | sed 's/  / /g'`)
-	if [ ${#code[@]} -ne 0 ]
+	# PARAMS
+	#	dlgType: Product Binaries
+	#	dlgVersion: .downloadFiles[].version
+	#	downloadGroup: DLG
+	#	isBetaFlow: false
+	#	locale: en_US
+	#	md5checksum: .downloadFiles[].md5checksum
+	#	productFamily: .product.name
+	#	productId: .product.id
+	#	releaseDate: .downloadFiles[].releaseDate
+	#	tagId: .dlg[].tagId
+	#	uUId: .downloadFiles[].uuid
+	#pnr=$((lr-1))
+	dlgVersion=`jq ".downloadFiles[$pnr].version" ${rcdir}/_${missname}.xhtml|sed 's/"//g'`
+	md5checksum=`jq ".downloadFiles[$pnr].md5checksum" ${rcdir}/_${missname}.xhtml|sed 's/"//g'`
+	releaseDate=`jq ".downloadFiles[$pnr].releaseDate" ${rcdir}/_${missname}.xhtml|sed 's/"//g'`
+	uUId=`jq ".downloadFiles[$pnr].uuid" ${rcdir}/_${missname}.xhtml|sed 's/"//g'`
+	productId=`jq '.product.id' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
+	tagId=`jq '.dlg.tagId' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
+	downloadGroup=`jq '.dlg.code' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
+	dlgType=`jq '.dlg.type' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/amp;//g'`
+	productFamily=`jq '.product.name' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
+	# This should change for betas
+	isBetaFlow='false'
+	payload=""
+	if [ Z"$uUId" != Z"null" ]
 	then
-		downloadGroup=${code[0]}
-		fileId=${code[1]}
-		vmware='downloadBinary'
-		baseStr=${code[2]}
-		secureParam=${code[3]}
-		if [ ${#code[@]} -eq 7 ]
-		then
-			# checkEulaAccepted
-			isEulaA='true'
-			tagId=${code[4]}
-			productId=${code[5]}
-			uuId=${code[6]}
-		else
-			# getDownload
-			isEulaA=${code[4]}
-			tagId=${code[5]}
-			productId=${code[6]}
-			uuId=${code[7]}
-		fi
-	else
-		# expand URL 
-		echo $theHref | grep ^http >& /dev/null
-		if [ $? -eq 0 ]
-		then
-			isdlurl=1
-			theHref=`echo "$theHref" | sed 's/"/" /' | sed 's/^/url="/'`
-		fi
-		if [ Z"$theHref" != Z"#\"" ]
-		then
-			for nx in `echo $theHref | sed 's/^\.//' | sed 's#/group/vmware/details##'`; do t=`echo $nx| cut -d= -f1`; s=`echo $nx| cut -d= -f2-`; eval "$t=$s"; done
-		fi
+		payload="{\"locale\":\"en_US\",\"downloadGroup\":\"$downloadGroup\",\"productId\":\"$productId\",\"md5checksum\":\"$md5checksum\",\"tagId\":$tagId,\"uUId\":\"$uUId\",\"dlgType\":\"$dlgType\",\"productFamily\":\"$productFamily\",\"releaseDate\":\"$releaseDate\",\"dlgVersion\":\"$dlgVersion\",\"isBetaFlow\":$isBetaFlow}"
 	fi
-	# createURL
-	dlURL=`grep downloadFilesURL $rcdir/_${missname}.xhtml|cut -d\" -f6`
-	if [ Z"$dlURL" != Z"" ] && [ Z"$theHref" != Z"#\"" ] && [ $isdlurl -eq 0 ]
-	then
-		url="$dlURL&downloadGroupCode=${downloadGroup}&downloadFileId=${fileId}&uuId=${uuId}&hashKey=${secureParam}&productId=${productId}"
-	fi
-	debugecho "DEBUG: $theHref"
-	debugecho "DEBUG: $url"
+	debugecho $payload
+	#payload=`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$pre_payload" 2>/dev/null`
 }
 
 function getSHAData()
 {
 	# granted md5sum is not supported
-	sha256=`echo $data | sed 's/<br>/\n/g' |sed 's/<span>/\n/g'| grep SHA256SUM | cut -d: -f2 | cut -d' ' -f2`
+	sha256=`jq ".downloadFiles[$pnr].sha256checksum" ${rcdir}/_${missname}.xhtml|sed 's/"//g'`
 	if [ Z"$sha256" = Z"" ]
 	then
-		sha256=`echo $data | sed 's/<br>/\n/g' |sed 's/<span>/\n/g'| grep SHA1SUM | cut -d: -f2 | cut -d' ' -f2`
+		sha256=`jq ".downloadFiles[$pnr].sha1checksum" ${rcdir}/_${missname}.xhtml|sed 's/"//g'`
 		if [ Z"$sha256" = Z"" ]
 		then
-			sha256=`echo $data | sed 's/<br>/\n/g' |sed 's/<span>/\n/g'| grep MD5SUM\< | cut -d: -f2 | cut -d' ' -f2`
+			sha256=`jq ".downloadFiles[$pnr].md5checksum" ${rcdir}/_${missname}.xhtml|sed 's/"//g'`
 			if [ Z"$sha256" != Z"" ]
 			then
 				sha='md5sum'
@@ -2092,16 +2212,23 @@ function writeJSON()
 	fi
 }
 
+isdlurl=0
 function getPreUrl()
 {
 	xurl=$1
 	# sometimes there is no preUrl
 	if [ $isdlurl -eq 0 ]
 	then
-		lurl=`wget -O - --load-cookies $cdir/$ck --header="User-Agent: $ua" $xurl 2>&1 | grep downloadUrl | cut -d\" -f4`
+		cl=`echo -n $payload | wc -c`
+		#lurl=`wget -O - --load-cookies $cdir/$ck --post-data="$payload" --header="Referer: $xhr" --header="Content-length: $cl" --header="Content-Type: application/json" --header="Cookie: s_ptc=%5B%5BB%5D%5D;mv_eid_processed=true" --header="User-Agent: $ua" $xurl 2>&1 | grep downloadUrl | cut -d\" -f4`
+		# New API
+		xsrf=`grep -i xsrf-token $cdir/$ck|cut -f7`
+		dtpc=`grep -i dtpc $cdir/$ck|cut -f7`
+		lurl=`wget -O - --load-cookies $cdir/$ck --post-data="$payload" --header="Referer: $xhr" --header="Content-length: $cl" --header="Content-Type: application/json" --header="User-Agent: $ua" --header="x-dtpc: $dtpc" --header="X-XSRF-TOKEN: $xsrf" --header='TE: Trailers' $download_xhr 2>/dev/null|grep downloadURL|cut -d\" -f4 `
 	else
 		lurl=$xurl
 	fi
+	debugecho $lurl
 }
 
 shavexdl=0
@@ -2110,7 +2237,11 @@ function downloadFile()
 	# simplified getvsm
 	dlfile=''
 	shavexdl=0
-	getVSMData
+	#getVSMData
+	pnr=$(($longReply-2))
+	name=`jq ".downloadFiles[$pnr].fileName" ${rcdir}/_${missname}.xhtml|sed 's/"//g'`
+	debugecho "$name $pnr"
+	oauth_login 0
 	if [ ${#name} -ne 0 ]
 	then
 		doFixSymlinks
@@ -2118,53 +2249,50 @@ function downloadFile()
 		then
 			echo -n "."
 		fi
-		# move below if test fails
-		getSHAData
-		processCode
 		if [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
 		then 
-			if [ Z"$dlURL" != Z"" ]
+			getSHAData
+			processCode
+			getPreUrl $download_xhr
+			if [ ${#lurl} -gt 0 ]
 			then
-				getPreUrl $url
-				if [ ${#lurl} -gt 0 ]
+				if [ $dryrun -eq 1 ]
 				then
-					if [ $dryrun -eq 1 ]
+					echo "mywget $name $lurl '--progress=bar:force' 1"
+				else
+					echo "Downloading $name to `pwd`:"
+					mywget $name $lurl '--progress=bar:force' 1
+					if [ $err -eq 0 ]
 					then
-						echo "mywget $name $lurl '--progress=bar:force' 1"
-					else
-						echo "Downloading $name to `pwd`:"
-						mywget $name $lurl '--progress=bar:force' 1
-						if [ $err -eq 0 ]
+						if [ $doshacheck -eq 1 ]
 						then
-							if [ $doshacheck -eq 1 ]
-							then
-								shadownload=1
-								shacheck_file $name
-							fi
+							shadownload=1
+							shacheck_file $name
 						fi
 					fi
-					diddownload=1
-				else
-					if [ $dovexxi -eq 1 ]
+				fi
+				diddownload=1
+			else
+				# only if downloadURL not valid
+				if [ $dovexxi -eq 1 ]
+				then
+					dlfile=`grep ${name} $rcdir/_vex_files.txt | head -1`
+					if [ Z"$dlfile" != Z"" ]
 					then
-						dlfile=`grep ${name} $rcdir/_vex_files.txt | head -1`
-						if [ Z"$dlfile" != Z"" ]
+						vname=`basename $dlfile`
+						echo "Downloading $name to `pwd`:"
+						mywget $vname $vex_ref 'vacookies' 1
+						# error here
+						if [ $doshacheck -eq 1 ]
 						then
-							vname=`basename $dlfile`
-							echo "Downloading $name to `pwd`:"
-							mywget $vname $vex_ref 'vacookies' 1
-							# error here
-							if [ $doshacheck -eq 1 ]
+							shadownload=1
+							if [ Z"$name" != Z"$vname" ]
 							then
-								shadownload=1
-								if [ Z"$name" != Z"$vname" ]
-								then
-									shavexdl=1
-								fi
-								shacheck_file $name
+								shavexdl=1
 							fi
-							diddownload=1
+							shacheck_file $name
 						fi
+						diddownload=1
 					fi
 				fi
 			fi
@@ -2182,20 +2310,22 @@ function getAdditionalDlg()
 	osc=$1
 	gotodir $omissname $osc $missname
 	debugecho "gotodir => `pwd`"
-	# may be _ or -
-	x=`echo $missname | sed 's/_/[_-]/g'`
-	addHref=`egrep "=${x}&" $rcdir/_${omissname}.xhtml | grep href | sed 's/"buttoncol"//'|cut -d\" -f2 | grep -v OSS`
+	icode=`echo $specname | sed 's/_/[_-]/g'`
+	vurl=`jq ".dlgEditionsLists[].dlgList[] | if (.code|test(\"${icode}$\")) then .code,.productId else \"\" end" ${rcdir}/_${omissname}_oem.xhtml ${rcdir}/_${omissname}_dts.xhtml ${rcdir}/_${omissname}_add.xhtml|sed '/""/d' | tr '\n' ' ' | sed 's/"//g'|sed 's/^/downloadGroup=/' |sed 's/ /\&productId=/'| sed 's/ .*//'`
+	#vurl="downloadGroup=$specname&productId=$productId"
 	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
 	then
 		if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
 		then
 			echo -n "-"
 		fi
-		mywget ${rcdir}/_${missname}.xhtml https://my.vmware.com${addHref}
+		mywget ${rcdir}/_${missname}_ver.xhtml ${dlghdr_xhr}${vurl} xhr $xhr
+		mywget ${rcdir}/__${missname}.xhtml ${dlg_xhr}${vurl} xhr $xhr
+		sed 's/},/},\n/g' ${rcdir}/__${missname}.xhtml | sed 's/:\[/:\[\n/' |sed 's/}]/}\n]/' | grep -v '"header":true' | tr '\n' ' ' |sed 's/, ]/]/' > ${rcdir}/_${missname}.xhtml
 	fi
-	getTabcOne $missname
-	longReply=2
-	xloc=0
+	whatever=$missname
+	# null is header so drop
+	xpkgs=`jq '.downloadFiles[].fileName' ${rcdir}/_${missname}.xhtml | sed 's/"//g'|grep -v null`
 	writeJSON
 }
 
@@ -2206,27 +2336,31 @@ function getAdditional()
 	debugecho "DEBUG: add=>$additionalFiles"
 	if [ ${#additionalFiles} -ne 0 ]
 	then
+		ospecname=$specname
 		omissname=$missname
 		olongReply=$longReply
 		doLurl=0
-		for missname in $additionalFiles
+		for specname in $additionalFiles
 		do
+			longReply=2
+			missname=`echo $specname | sed 's/-/_/g'`
 			getAdditionalDlg $sc
 			for y in $xpkgs
 			do
 				choice=$y
 				downloadFile
-				if [ $doLurl -eq 0 ]
-				then
-					getPreUrl $url
-					preUrl=$lurl
-					doLurl=1
-				fi
+				#if [ $doLurl -eq 0 ]
+				#then
+				#	getPreUrl $url
+				#	preUrl=$lurl
+				#	doLurl=1
+				#fi
 				longReply=$(($longReply+1))
-				xloc=$(($xloc+1))
+				#xloc=$(($xloc+1))
 			done
 		done
 		missname=$omissname
+		specname=$ospecname
 		longReply=$olongReply
 	fi
 }
@@ -2376,14 +2510,24 @@ function getAll()
 	then
 		tpkgs="$xpkgs"
 		#specReply=$longReply # packages always listed here
+		longReply=1
 		for x in $tpkgs
 		do
-			tdls=()
-			choice=$x
+			o_sp=$specname
+			o_nr=$specNnr
+			o_lr=$longReply
+			lr=$longReply
+			pnr=$(($lr-1))
+			snr=$(($specNnr-1))
+			choice=`jq ".dlgEditionsLists[$snr].dlgList[$pnr].code" $rcdir/_${specname}.xhtml|sed 's/"//g'`
 			missname=$x
 			getMyDlgVersions 1
 			getMyFiles 1
 			getAllChoice
+			missname=$x
+			longReply=$(($o_lr+1))
+			specNnr=$o_nr
+			specname=$o_sp
 		done
 		longReply=$old_sr
 	fi
@@ -2397,7 +2541,7 @@ function getFavPaths()
 	favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]\+_[0-9x]\+\|[0-9]\+\)_\(.*\)/\1 \2 \3/i'`)
 	# Get First Path Entry (productCategory)
 	pc=-1
-	for x in `jq ".productCategoryList[].name" _j_downloads.xhtml|sed 's/ /_/g'`
+	for x in `jq ".productCategoryList[].name" _h_downloads.xhtml|sed 's/ /_/g'`
 	do
 		# reverse grep
 		pc=$(($pc+1))
@@ -2414,25 +2558,26 @@ function getFavPaths()
 	then
 		#pc=$(($pc-1))
 		shortPro=`echo ${prodCat[1]}|sed "s/${y}_//" |sed 's/[_-]/./g'`
-		# Get Second path entry (proList)
-		proList=(`jq ".productCategoryList[$pc].proList[].name" _j_downloads.xhtml | grep -in "${shortPro}\"" | sed 's/:/ /'`)
-		lr=${proList[0]}
+		# Get Second path entry (productList)
+		productList=(`jq ".productCategoryList[$pc].productList[].name" _h_downloads.xhtml | grep -in "${shortPro}\"" | sed 's/:/ /'`)
+		lr=${productList[0]}
 		# build up front layers
 		if [ $lr -gt 0 ]
 		then
 			lr=$(($lr-1))
 			layer=("productCategoryList[$pc]")
-			layer+=("proList[$lr]")
+			layer+=("productList[$lr]")
 			layer+=("actions")
 			missname=`echo $shortPro | sed 's/\./_/g'`
 			choice=$missname
 			getLayerPkgs
 			layer=("productCategoryList[$pc]")
-			layer+=("proList[$lr]")
+			layer+=("productList[$lr]")
 			layer+=("$missname")
 			choice=${missname}_${favpaths[1]}
+			#choice=`echo $favorite | sed "s/${pName}_//"`
 			layer+=("$choice")
-			longReply=`echo $tver|sed 's/ /\n/g'|grep -in ${favpaths[1]} |cut -d: -f1`
+			longReply=`echo $pkgs|sed 's/ /\n/g'|grep -in $choice |cut -d: -f1`
 			longReply=$(($longReply-1))
 			getLayerPkgs
 			t_mversions=("$mversions")
@@ -2463,6 +2608,7 @@ function getDlg()
 	doColor=0
 	mydts=1
 	myoem=1
+	historical=1
 	# Get first item into array
 	dlgInfo=(`jq --arg s "$mydlg" '[.dlgList[] | select(.name | test($s))][0]|.name,.target,.dlg,.parent' $rcdir/newlocs.json | sed 's/"//g'`)
 	favorite=${dlgInfo[1]}
@@ -2471,7 +2617,8 @@ function getDlg()
 	lchoice=(`echo $pkgs |sed 's/ /\n/g' | egrep -n "^${pkg}"|sed 's/:/ /'`)
 	missname=${lchoice[1]}
 	choice=$missname
-	longreply=${lchoice[0]}
+	longReply=${lchoice[0]}
+	lr=$(($longReply-1))
 	getMyDlgVersions 1
 	getMyFiles 1
 	createLayer
@@ -2482,8 +2629,8 @@ function getDlg()
 		choice=${dlgInfo[3]}
 		createLayer
 		nr=${#layer[@]}
-		missname=${choice}
-		wgetMyVersion
+		#missname=${choice}
+		#wgetMyVersion
 		getMyFiles 1
 	fi
 	if [[ "$xpkgs" == *"${dlgInfo[0]}"* ]]
@@ -2493,6 +2640,7 @@ function getDlg()
 	then
 		omissname=$missname
 		missname=${dlgInfo[2]}
+		specname=$missname
 		getAdditionalDlg DriversTools
 		getDlgFile
 	elif [[ ${oemlist[@]} == *"${dlgInfo[2]}"* ]]
@@ -2540,6 +2688,7 @@ then
 	exit
 fi
 
+# TODO: very broken with new API!
 if [ Z"$dlgroup" != Z"" ] && [ $dovexxi -eq 1 ]
 then
 	# limited to JUST the download group, no Additional/CustomISO, etc.
