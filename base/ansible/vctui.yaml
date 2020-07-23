@@ -34,6 +34,7 @@
          name:
            - gcc
          state: latest
+       when: ansible_distribution != "MacOSX"
 
      - name: install golang
        become: yes
