@@ -7,7 +7,7 @@
 # Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS
 #
 ###
-VERSIONID="2.1.1"
+VERSIONID="2.1.2"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -468,7 +468,7 @@ function fixselinux() {
 
 function usage() {
 	# echo "Usage: $prog [--install|-i installer] [--createrepo|-c] [--help|-h] [timezone]"
-	echo "Usage: $prog [--install|-i installer] [--update|-u] [-v|--version] [--help|-h] [--noansible|-n] [--user USER] [--home HOME] [timezone]"
+	echo "Usage: $prog [--install|-i installer] [--update|-u] [-V|--version] [--help|-h][-v|--verbose][--noansible|-n] [--user USER] [--home HOME] [timezone]"
 	echo "	-u|--update => Update"
 	echo "	-i|--install => Install"
 	echo "	-V|--version => version"

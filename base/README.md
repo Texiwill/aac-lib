@@ -126,6 +126,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+2.1.2 Change to help
+
 2.1.1 Updates if wget does not already exist/LinuxVSM installer update
 
 2.1.0 Beginning MacOSX support, Fixes for Debian 9, RHEL 8, Ubuntu 20
