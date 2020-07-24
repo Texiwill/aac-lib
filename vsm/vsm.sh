@@ -10,10 +10,10 @@
 # created yet
 #
 # Requires:
-# wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc
+# wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.4.0"
+VERSIONID="6.4.1"
 
 # args: stmt error
 function colorecho() {
@@ -1083,7 +1083,7 @@ function finddeps {
 	#Packages required by Enterprise Linux and derivatives (including fedora)
 	el_checkdep="perl-XML-Twig ncurses xorg-x11-server-Xvfb libXScrnSaver at-spi2-atk gcc-c++ make nss gtk3"
 	#Packages required by Fedora 
-	fedora_checkdep="$linux_checkdep $el_checkdep python2 python2-urllib3 meta-libgbm alsa-lib"
+	fedora_checkdep="$linux_checkdep $el_checkdep python2 python2-urllib3 mesa-libgbm alsa-lib"
 	#Packages required by RedHat and derivatives 
 	redhat_checkdep="$linux_checkdep $el_checkdep python python-urllib3"
 	#Packages required by Debian and derivatives 
@@ -1817,7 +1817,11 @@ function getMyDlgs()
 	fi
 	snr=$(($specReply-1))
 	# use longReply as this is groups by more-details
-	xpkgs=`jq ".dlgEditionsLists[$snr].dlgList[].code" $rcdir/_${specname}.xhtml|sed 's/"//g'|sed 's/-/_/g'`
+	xpkgs=`jq ".dlgEditionsLists[$snr].dlgList[].code" $rcdir/_${specname}.xhtml 2>/dev/null |sed 's/"//g'|sed 's/-/_/g'`
+	if [ Z"$xpkgs" = Z"" ]
+	then
+		colorecho "There are no Packages Available for this Software"
+	fi
 	# need to swing through xpkgs for exist vs not
 	colorMyPkgs "$xpkgs"
 	if [ ${#xpkgs} -gt 2 ]
@@ -1915,6 +1919,12 @@ function getMyFiles()
 	# get the files
 	whatever=`echo $choice|sed 's/-/_/g'`
 	xpkgs=`jq '.downloadFiles[].fileName' ${rcdir}/_${missname}.xhtml | sed 's/"//g'`
+	if [ Z"$xpkgs" = Z"" ]
+	then
+		echo $PURPLE
+		echo -e `jq '.downloadFiles[0]|if (.description|test("follow")) then .description else "" end' ${rcdir}/__${missname}.xhtml | sed -e 's/<[^>]*>//g' |sed 's/"//g'`
+		echo $NC
+	fi
 	# need to swing through xpkgs for exist vs not
 	pkgs="$xpkgs"
 	writeJSON
