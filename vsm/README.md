@@ -7,7 +7,7 @@ AAC Library of Tools
 Linux Version of VMware Software Manager
 
 ### NOTICE
-__As of v6.4.0 support for WSL and MacOSX has dropped due to My VMware
+__As of v6.4.0 support for MacOSX has dropped due to My VMware
 changes and the solution found to those changes. Work will continue to
 determine how to fix. In addition the --patches option no longer works
 for the same reasons.__
@@ -17,6 +17,9 @@ A slightly more intelligent version of VSM for Linux. It ignores
 missing definition files that cause the VMware version to stop working. It
 also finds packages not in the definitions yet. It is also possible to find
 the latest of every package.
+
+As of v6.4.0 LinuxVSM now uses the My VMware API for all things but
+login. This has made the code more resilient to changes from VMware.
 
 As of v6.0.0 LinuxVSM has moved to 100% My VMware capability. This often 
 requires an appropriate entitlement to download anything. This is a change
@@ -346,8 +349,8 @@ the DNS server you are working is not working correctly.
 
   * RHEL 6/7/8, Centos 6/7/8, Fedora
   * Debian 9/10, Ubuntu 18.04/20.04
+  * Microsoft WSL 2
   * NOT MacOSX (work continues to find an answer)
-  * NOT Microsoft WSL (work continues to find an answer)
   * ArchLinux (community tested - @WikiITWizard)
 
 * I cannot download a package, says not found or nothing appears
