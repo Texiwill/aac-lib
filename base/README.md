@@ -126,7 +126,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
-2.1.2 Change to help
+2.1.2 Change to help and WSL support
 
 2.1.1 Updates if wget does not already exist/LinuxVSM installer update
 
