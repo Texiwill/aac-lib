@@ -11,7 +11,6 @@
 - name: SELinux
   import_playbook: aac-base-selinux.yaml
 
-
 - hosts: localhost
   tasks:
      - name: Get NodeJS
