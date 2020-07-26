@@ -1,5 +1,5 @@
 ---
-# version: 1.0.5
+# version: 1.0.6
 
 - hosts: localhost
   gather_facts: true
@@ -168,14 +168,7 @@
        service:
          name: "{{set_time}}"
          enabled: yes
-       when: ansible_distribution != "MacOSX"
-
-     - name: Enable Time Daemon
-       become: yes
-       service:
-         name: "{{set_time}}"
-         enabled: yes
-       when: ansible_distribution != "MacOSX"
+       when: ansible_distribution != "MacOSX" and "microsoft" not in ansible_kernel
 
      - name: Stop postfix
        become: yes
