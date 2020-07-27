@@ -1,5 +1,5 @@
 ---
-# version: 1.0.4
+# version: 1.0.5
 
 - hosts: localhost
   gather_facts: true
@@ -54,6 +54,7 @@
            - gcc-c++
            - make
            - gtk3
+           - alsa-lib
          state: latest
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("8","<")
 
