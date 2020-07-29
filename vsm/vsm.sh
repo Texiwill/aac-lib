@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.4.1"
+VERSIONID="6.4.2"
 
 # args: stmt error
 function colorecho() {
@@ -563,6 +563,7 @@ function oauth_login() {
 		pushd ${cdir} >& /dev/null
 		if [ ! -e ${cdir}/node_modules ]
 		then
+			colorecho "Installing necessary modules"
 			npm install puppeteer --unsafe-perm=true >& /dev/null
 			if [ $? -eq 1 ]
 			then
@@ -575,10 +576,12 @@ function oauth_login() {
 				echo "Error installing nodejs xvfb, please verify C++ compiler exists"
 				exit
 			fi
+			colorecho "Finished installing necessary modules"
 		fi
 		if [ ! -e ${cdir}/node-bm.js ]
 		then
 			cat >> $cdir/node-bm.js << EOF
+const os = require('os');
 const puppeteer = require('puppeteer');
 const fs = require('fs').promises;
 const Xvfb = require('xvfb');
@@ -589,22 +592,37 @@ function delay(time) {
    });
 }
 
+const platform=os.platform();
 var data='${auth}';
 let buff = new Buffer.from(data,'base64');
 let text = buff.toString('ascii');
 const words = text.split(':');
 
 (async () => {
-	var xvfb = new Xvfb({
-		silent: true,
-		xvfb_args: ["-screen", "0", '1280x1024x24', '-ac'],
-	});
-	xvfb.start((err)=>{if (err) {console.error(err); process.exit(1);}})
-	const browser = await puppeteer.launch({
-		headless: false,
-		defaultViewport: null,
-		args: ['--no-sandbox', '--remote-debugging-port=9222','--start-fullscreen', '--display='+xvfb._display]
-	});
+	var browser;
+	if (platform != 'darwin') {
+		var xvfb = new Xvfb({
+			silent: true,
+			xvfb_args: ["-screen", "0", '1280x1024x24', '-ac'],
+		});
+		xvfb.start((err)=>{if (err) {console.error(err); process.exit(1);}})
+		browser = await puppeteer.launch({
+			headless: false,
+			defaultViewport: null,
+			args: ['--no-sandbox', '--remote-debugging-port=9222','--start-fullscreen', '--display='+xvfb._display]
+		});
+	} else {
+		browser = await puppeteer.launch({
+				headless: false,
+				defaultViewport: {width: 100,height: 100},
+				args: ['--no-sandbox', '--window-size=50,50',
+				'--disable-background-timer-throttling',
+				'--disable-backgrounding-occluded-windows',
+				'--disable-renderer-backgrounding',
+				'--window-position=-500,0'
+				]
+		});
+	}
 	const page = await browser.newPage();
 	await page.goto('https://my.vmware.com/web/vmware/login',{waitUntil: 'networkidle0'});
 	const navigationPromise = page.waitForNavigation();
@@ -643,7 +661,9 @@ const words = text.split(':');
 	}
 	await fs.writeFile('./ocookies.txt',cookieContent);
 	await browser.close()
-	xvfb.stop();
+	if (platform != 'darwin') {
+		xvfb.stop();
+	}
 })();
 EOF
 			chmod -R 600 node-bm.js
@@ -1075,11 +1095,11 @@ function loopdeps {
 python="python"
 function finddeps {
 	#Packages required by all OS
-	all_checkdep="bc jq wget nodejs"
+	all_checkdep="bc jq wget"
 	#Packages required by MacOS
-	macos_checkdep="$all_checkdep python xcodebuild xml_grep gnu-sed uudecode"
+	macos_checkdep="$all_checkdep node python xcodebuild xml_grep gnu-sed uudecode"
 	#Packages required by all Linux Distros currently supported
-	linux_checkdep="$all_checkdep libxml2 sharutils"
+	linux_checkdep="$all_checkdep libxml2 sharutils nodejs"
 	#Packages required by Enterprise Linux and derivatives (including fedora)
 	el_checkdep="perl-XML-Twig ncurses xorg-x11-server-Xvfb libXScrnSaver at-spi2-atk gcc-c++ make nss gtk3"
 	#Packages required by Fedora 
@@ -1921,9 +1941,12 @@ function getMyFiles()
 	xpkgs=`jq '.downloadFiles[].fileName' ${rcdir}/_${missname}.xhtml | sed 's/"//g'`
 	if [ Z"$xpkgs" = Z"" ]
 	then
-		echo $PURPLE
-		echo -e `jq '.downloadFiles[0]|if (.description|test("follow")) then .description else "" end' ${rcdir}/__${missname}.xhtml | sed -e 's/<[^>]*>//g' |sed 's/"//g'`
-		echo $NC
+		notice=`jq '.downloadFiles[0]|if (.description|test("follow")) then .description else "" end' ${rcdir}/__${missname}.xhtml | sed -e 's/<[^>]*>//g' |sed 's/"//g'`
+		if [ Z"$notice" = Z"" ]
+		then
+			notice="No Downloads Available"
+		fi
+		echo -e "${PURPLE}$notice${NC}"
 	fi
 	# need to swing through xpkgs for exist vs not
 	pkgs="$xpkgs"
@@ -2379,7 +2402,7 @@ function uag_test() {
 	if [ $_v -eq 300 ]
 	then
 		symdir="view"
-	elif [ $_v -eq 0 ] || [ $_v -lt 321 ]
+	elif [ $_v -eq 0 ] || [ $_v -lt 310 ]
 	then
 		symdir="UAG_${_v:0:2}"
 	else
@@ -2391,7 +2414,8 @@ function getSymdir()
 {
 	# used for fake symlinks, mostly UAG
 	symdir=''
-	_v=`echo $choice | sed 's/[a-z-]\+-\([0-9]\.[0-9]\.[0-9]\).*/\1/' | sed 's/\.0$//' |sed 's/\.//g'`
+	_v=`echo $choice | sed 's/[a-z-]\+-\([0-9]\.[0-9]\+\.[0-9]\).*/\1/' | sed 's/\.0$//' |sed 's/\.//g'`
+	debugecho "$choice => $_v"
 	case "$choice" in
 		euc-access-point*)
 			uag_test $_v
@@ -2704,9 +2728,9 @@ then
 	# limited to JUST the download group, no Additional/CustomISO, etc.
 	choice=$dlgroup
 	mywget ${rcdir}/_${choice}.xhtml https://my.vmware.com/group/vmware/get-download?downloadGroup=$choice
-	missname=${choice}
 	getSymdir
 	gotodir ${choice} "base"
+	missname=${choice}
 	xpkgs=`grep textBlack ${rcdir}/_${choice}.xhtml | xmllint --html --xpath 'string(//strong)' - 2>/dev/null| awk '{print $1}'`
 	count=1
 	for x in $xpkgs

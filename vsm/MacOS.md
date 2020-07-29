@@ -8,11 +8,9 @@ Linux Version of VMware Software Manager (MacOS Install)
 - <a href=https://github.com/Texiwill/aac-lib/tree/master/>List of Tools</a>
 
 ### NOTICE
-__As of LinuxVSM v6.4.0, MacOSX support is not available. This is due
-to the way My VMware has changed. A solution to this problem is being
-sought, but none has been found yet. The community will be updated when
-this is fixed. For now please use Linux systems: Debian, Ubuntu, CentOS,
-or RedHat.__
+__As of LinuxVSM v6.4.2, MacOSX support is available. However, the
+dependencies must be met, including the xcode-select below. There is
+often an issue where the Xcode CLI install needs to be repaired first.__
 
 ### Description
 A MacOS and slightly more intelligent version of VSM. See README.md for more information:
@@ -34,6 +32,7 @@ $ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/maste
 brew install gnu-sed
 brew install wget
 brew install jq
+brew install node
 ```
 * Next install XML::Twig (note the 'sudo'), if you rather not use sudo,
 and I can understand why, you will have to update your PATH variables

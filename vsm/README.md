@@ -7,10 +7,7 @@ AAC Library of Tools
 Linux Version of VMware Software Manager
 
 ### NOTICE
-__As of v6.4.0 support for MacOSX has dropped due to My VMware
-changes and the solution found to those changes. Work will continue to
-determine how to fix. In addition the --patches option no longer works
-for the same reasons.__
+__As of v6.4.2 support for MacOSX has been readded.__
 
 ### Description
 A slightly more intelligent version of VSM for Linux. It ignores
@@ -237,7 +234,7 @@ Existing ESXI67U2 in /mnt/rainbow/iso/vmware/depot/content/dlg_ESXI67U2/DriversT
 ### Installation
 To install use the provided install.sh script which calls the aac-lib/base installers to install vsm.
 
-To install on MacOS X read <a href=https://github.com/Texiwill/aac-lib/blob/master/vsm/MacOS.md>MacOS.md</a>. (Please note this no longer works at this time.)
+To install on MacOS X read <a href=https://github.com/Texiwill/aac-lib/blob/master/vsm/MacOS.md>MacOS.md</a>. (Please note this required v6.4.2 or later.)
 
 You can install LOCALLY to your Home Directory, as follows:
 ```
@@ -350,7 +347,7 @@ the DNS server you are working is not working correctly.
   * RHEL 6/7/8, Centos 6/7/8, Fedora
   * Debian 9/10, Ubuntu 18.04/20.04
   * Microsoft WSL 2
-  * NOT MacOSX (work continues to find an answer)
+  * MacOSX
   * ArchLinux (community tested - @WikiITWizard)
 
 * I cannot download a package, says not found or nothing appears

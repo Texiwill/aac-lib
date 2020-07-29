@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.4.2 - MacOS Support, fix for Additional naming convention
+
 6.4.1 - Error reporting for empty suits and packages, fix for CentOS 8
 
 6.4.0 - Updated to support latest My VMware login and API, this release has many more dependencies and only currently works on Linux subsystems not WSL or MacOSX. --patches support has been temporarily dropped
