@@ -321,6 +321,13 @@ LinuxVSM in scripts
 ### Support
 
 #### Frequently Asked Questions
+* I received the following error: 
+
+__UnhandledPromiseRejectionWarning: TimeoutError: Timed out after 30000 ms__
+
+Rerun with --clean option as the nodejs libraries are out-of-date or you
+have a bad credential. Alternatively, there is a DNS issue (see below).
+
 * I receive a Long Error message during Login
 
 This is often due to either a VMware website issue, DNS, or bad credentials.
