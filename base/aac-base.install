@@ -389,7 +389,7 @@ function ansible() {
 	then
 		if [ Z"$theos" != Z"macos" ]
 		then
-			if [ Z"$theos" = Z"debian" ] && [ $VERSION_ID -eq 9 ]
+			if [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 			then
 				# needed for WSL and some other things
 				sudo apt-get update
@@ -406,7 +406,7 @@ function ansible() {
 			DINSTALL="ansible"
 			installdep
 			askpass=""
-			if [ Z"$theos" = Z"debian" ] && [ $VERSION_ID -eq 9 ]
+			if [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 			then
 				sudo cp /tmp/sources.list.orig /etc/apt/sources.list
 				rm /tmp/sources.list*
