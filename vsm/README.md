@@ -7,7 +7,7 @@ AAC Library of Tools
 Linux Version of VMware Software Manager
 
 ### NOTICE
-__As of v6.4.2 support for MacOSX has been readded.__
+__As of v6.4.2 support for MacOSX has been readded. As of v6.4.1 WSL2 support has been added, NOT WS1. Please upgrade to WSL2.__
 
 ### Description
 A slightly more intelligent version of VSM for Linux. It ignores
@@ -325,8 +325,10 @@ LinuxVSM in scripts
 
 __UnhandledPromiseRejectionWarning: TimeoutError: Timed out after 30000 ms__
 
-Rerun with --clean option as the nodejs libraries are out-of-date or you
-have a bad credential. Alternatively, there is a DNS issue (see below).
+If you are using WSL1, please upgrade to WSL2. WSL1 is not supported. If
+it is not a WSL issue, rerun with --clean option as the nodejs libraries
+are out-of-date or you have a bad credential. Alternatively, there is
+a DNS issue (see below).
 
 * I receive a Long Error message during Login
 
@@ -353,7 +355,7 @@ the DNS server you are working is not working correctly.
 
   * RHEL 6/7/8, Centos 6/7/8, Fedora
   * Debian 9/10, Ubuntu 18.04/20.04
-  * Microsoft WSL 2
+  * Microsoft WSL2 (NOT WSL1)
   * MacOSX
   * ArchLinux (community tested - @WikiITWizard)
 
