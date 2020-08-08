@@ -17,7 +17,7 @@ so no need to reuse it every time.
 To call LinuxVSM as a vExpert please use the following:
 
 ```
-vsm.sh -y --vexpertx --historical --patch --dts --oem  --symlink --compress
+vsm.sh -y --vexpertx --historical --patches --dts --oem  --symlink --compress
 ```
 
 Actually, you could probably leave off everything after --historical
