@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.4.3 - Better error handling, fix to --dlgroup, bug fixes around error handling
+
 6.4.2 - MacOS Support, fix for Additional naming convention
 
 6.4.1 - Error reporting for empty suits and packages, fix for CentOS 8

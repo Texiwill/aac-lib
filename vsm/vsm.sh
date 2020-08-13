@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.4.2"
+VERSIONID="6.4.3"
 
 # args: stmt error
 function colorecho() {
@@ -491,9 +491,25 @@ function get_patch_list() {
 	if [ ! -e $rcdir/_patches.xhtml ]
 	then
 		# Patch List
-		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --load-cookies $cdir/ocookies.txt  --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $patchUrl >& /dev/null
+		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $patchUrl >& /dev/null
 		#wget $_PROGRESS_OPT -O $rcdir/_eol_patches.xhtml --load-cookies $cdir/ocookies.txt  --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $eolUrl >& /dev/null
 		#wget $_PROGRESS_OPT -O $rcdir/_locale_patches.xhtml --load-cookies $cdir/ocookies.txt  --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $localeUrl >& /dev/null
+		d=`date +"%s"`
+		grep SpryMedia_DataTables_patchResultTblVc_patch ${cdir}/ocookies.txt >& /dev/null
+		if [ $? -eq 1 ]
+		then
+			echo "my.vmware.com	FALSE	/group/vmware/	FALSE	$d	SpryMedia_DataTables_patchResultTblVc_patch	%7B%22iCreate%22%3A1596458287473%2C%22iStart%22%3A0%2C%22iEnd%22%3A0%2C%22iLength%22%3A10%2C%22sFilter%22%3A%22%22%2C%22sFilterEsc%22%3Atrue%2C%22aaSorting%22%3A%5B%20%5B1%2C%22desc%22%5D%5D%2C%22aaSearchCols%22%3A%5B%20%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%5D%2C%22abVisCols%22%3A%5B%20true%2Ctrue%2Ctrue%2Ctrue%2Cfalse%2Cfalse%2Cfalse%2Cfalse%2Ctrue%5D%7D" >> ${cdir}/ocookies.txt
+		fi
+		grep SpryMedia_DataTables_patchResultTblGVc_patch ${cdir}/ocookies.txt >& /dev/null
+		if [ $? -eq 1 ]
+		then
+			echo "my.vmware.com	FALSE	/group/vmware/	FALSE	$d	SpryMedia_DataTables_patchResultTblGVc_patch	%7B%22iCreate%22%3A1596458287482%2C%22iStart%22%3A0%2C%22iEnd%22%3A0%2C%22iLength%22%3A10%2C%22sFilter%22%3A%22%22%2C%22sFilterEsc%22%3Atrue%2C%22aaSorting%22%3A%5B%20%5B1%2C%22desc%22%5D%5D%2C%22aaSearchCols%22%3A%5B%20%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%5D%2C%22abVisCols%22%3A%5B%20true%2Ctrue%2Ctrue%2Ctrue%2Cfalse%2Cfalse%2Cfalse%2Cfalse%2Ctrue%5D%7D" >> ${cdir}/ocookies.txt
+		fi
+		grep SpryMedia_DataTables_patchResultTbl5x_patch ${cdir}/ocookies.txt >& /dev/null
+		if [ $? -eq 1 ]
+		then
+			echo "my.vmware.com	FALSE	/group/vmware/	FALSE	$d	SpryMedia_DataTables_patchResultTbl5x_patch	%7B%22iCreate%22%3A1596477217092%2C%22iStart%22%3A0%2C%22iEnd%22%3A0%2C%22iLength%22%3A10%2C%22sFilter%22%3A%22%22%2C%22sFilterEsc%22%3Atrue%2C%22aaSorting%22%3A%5B%20%5B2%2C%22desc%22%5D%5D%2C%22aaSearchCols%22%3A%5B%20%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%5D%2C%22abVisCols%22%3A%5B%20true%2Ctrue%2Ctrue%2Ctrue%2Cfalse%2Cfalse%2Cfalse%2Ctrue%2Cfalse%2Cfalse%2Ctrue%5D%7D" >> ${cdir}/ocookies.txt
+		fi
 	fi
 }
 
@@ -563,20 +579,20 @@ function oauth_login() {
 		pushd ${cdir} >& /dev/null
 		if [ ! -e ${cdir}/node_modules ]
 		then
-			colorecho "Installing necessary modules"
+			colorecho "	Installing necessary modules"
 			npm install puppeteer --unsafe-perm=true >& /dev/null
 			if [ $? -eq 1 ]
 			then
-				echo "Not enough space in $cdir; please add more"
+				colorecho "	Not enough space in $cdir; please add more" 1
 				exit
 			fi
 			npm install xvfb --unsafe-perm=true >& /dev/null
 			if [ $? -eq 1 ]
 			then
-				echo "Error installing nodejs xvfb, please verify C++ compiler exists"
+				colorecho "	Error installing nodejs xvfb, please verify C++ compiler exists" 1
 				exit
 			fi
-			colorecho "Finished installing necessary modules"
+			colorecho "	Finished installing necessary modules"
 		fi
 		if [ ! -e ${cdir}/node-bm.js ]
 		then
@@ -585,19 +601,20 @@ const os = require('os');
 const puppeteer = require('puppeteer');
 const fs = require('fs').promises;
 const Xvfb = require('xvfb');
-
+process.on('unhandledRejection', function(err) {
+	console.log(err);
+	process.exit(1);
+});
 function delay(time) {
    return new Promise(function(resolve) { 
        setTimeout(resolve, time)
    });
 }
-
 const platform=os.platform();
 var data='${auth}';
 let buff = new Buffer.from(data,'base64');
 let text = buff.toString('ascii');
 const words = text.split(':');
-
 (async () => {
 	var browser;
 	if (platform != 'darwin') {
@@ -669,11 +686,38 @@ EOF
 			chmod -R 600 node-bm.js
 			chmod 700 node_modules
 		fi
-		node node-bm.js
-		if [ $? -ne 0 ]
+		nj=`node node-bm.js 2>&1`
+		echo $nj | grep .ng-star-inserted >& /dev/null
+		if [ $? -eq 0 ]
 		then
-			colorecho "	Login Failure or Missing Dependencies" 1
-			rm node-bm.js
+			colorecho "	Login Failure Bad or Missing Credential" 1
+			pkill -9 Xvfb
+			if [ $debugv -eq 0 ]
+			then
+				rm node-bm.js
+			fi
+			exit
+		fi
+		echo $nj | grep Navigation >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			colorecho "	DNS or WSL1 issue? Unable to reach My VMware" 1
+			pkill -9 Xvfb
+			if [ $debugv -eq 0 ]
+			then
+				rm node-bm.js
+			fi
+			exit
+		fi
+		echo $nj | egrep 'Cannot find module|loading shared libraries' >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			colorecho "	Installation Issue, reinstall using LinuxVSM install.sh" 1
+			pkill -9 Xvfb
+			if [ $debugv -eq 0 ]
+			then
+				rm node-bm.js
+			fi
 			exit
 		fi
 		popd >& /dev/null
@@ -725,8 +769,9 @@ function get_product_patches() {
 				pd=`echo "product=${pvn}&productName=${pnn}&version=${pinv}&versionName=${pnam}&resultType=${prt}&releasedate=YYYY-MM-DD&severity=All+Severities&category=All+Categories&classify=All+Classifications&releasenumber=Enter+Release+Name&buildnumber=Enter+Build+Number&bulletinnumber=Enter+Bulletin+Number&dependency=true" |sed 's/"//g' | sed 's/ /+/g'`
 				#xsrf=`grep -i xsrf-token $cdir/$ck|cut -f7`
 				#dtpc=`grep -i dtpc $cdir/$ck|cut -f7`
-				debugecho $pd
-				wget -O ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml --load-cookies $cdir/ocookies.txt --post-data="$pd" --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" --header="Accept: application/json" $searchUrl
+				echo $pd
+				echo "wget -O ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml --load-cookies $cdir/ocookies.txt --post-data=\"$pd\" --header=\"User-Agent: $oaua\" --header=\"Referer: $mypatches_ref\" --header=\"Accept: application/json\" --header=\"X-Requested-With: XMLHttpRequest\" $searchUrl"
+				wget -O ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml --cookies=on --load-cookies $cdir/ocookies.txt --post-data="$pd" --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" --header="Accept: application/json" --header="X-Requested-With: XMLHttpRequest" $searchUrl
 			fi
 		fi
 	else
@@ -899,9 +944,10 @@ function version() {
 
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12]"
+	echo "$0 [-c|--check] [--clean] [--dlgroup dlgcode productId] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12]"
 	echo "	-c|--check - do sha256 check against download"
 	echo "	--clean - remove all temporary files and exit"
+	echo "	--dlgroup - download a specifc package by dlgcode and productId (in the URL)"
 	echo "	--dlg - download specific package by name or part of name (regex)"
 	echo "	--dlgl - list all packages by name or part of name (regex)"
 	echo "	-d|--dryrun - dryrun, do not download"
@@ -964,7 +1010,7 @@ function findos() {
 	if [ -e /etc/os-release ]
 	then
 		. /etc/os-release
-		theos=`echo $ID | tr [:upper:] [:lower:]`
+		theos=`echo $ID | tr '[:upper:]' '[:lower:]'`
 		if [ Z"$theos" = Z"linuxmint" ]
 		then
 			theos=`echo $ID_LIKE | tr [:upper:] [:lower:]`
@@ -1348,6 +1394,7 @@ dodlglist=0
 doignore=0
 rebuild=0
 dlgroup=''
+dlgid=''
 allmissing=0
 olde=12
 mycolumns=`tput cols`
@@ -1365,7 +1412,7 @@ checkForUpdate
 # import values from .vsmrc
 load_vsmrc
 
-while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --rebuild) rebuild=1 ;; --olde) olde=$2; shift;; *) usage ;; esac; shift; done
+while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --rebuild) rebuild=1 ;; --olde) olde=$2; shift;; *) usage ;; esac; shift; done
 
 # remove when fixed
 dopatch=0
@@ -1473,7 +1520,13 @@ then
 	then
 		rm $cdir/.vex_credstore
 	fi
+	if [ -e $cdir/vex_auth.html ]
+	then
+		rm $cdir/vex_auth.html
+	fi
+	rm -rf $HOME/.vsm/.key >& /dev/null
 	rm -rf ${cdir}/node* ${cdir}/*.json ${cdir}/*.txt ${cdir}/node-bm.js
+	pkill -9 Xvfb
 	colorecho "Removed all Temporary Files"
 	exit
 fi
@@ -1704,7 +1757,7 @@ function getMyVersions()
 	# we need to go to My VMware now
 	action=`jq "${layers}[0].target" $rcdir/_h_downloads.xhtml | sed 's#./info/slug/#category=#' | sed 's#/#\&product=#'|sed 's#/#\&version=#' | sed 's/"//g'`
 	
-	echo $pName
+	debugecho $pName
 	missname=$choice
 	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
 	then
@@ -1913,7 +1966,10 @@ function getMyFiles()
 	#downloadGroup=DLG&productID=.dlgList[].productId
 	#code=`jq ".dlgEditionsLists[$snr].dlgList[$fnr].code" ${rcdir}/_${specname}.xhtml|sed 's/"//g'`
 	#mywget ${rcdir}/_${missname}_eula.xhtml "${eula_xhr}downloadGroup=${choice}" xhr $xhr
-	vhr=`jq ".dlgEditionsLists[$snr].dlgList[]|if (.code|test(\"${iname}$\")) then .code,.productId,.releasePackageId else \"\" end" ${rcdir}/_${specname}.xhtml |sed '/""/d'|sed 's/"//g' |tr '\n' ' ' |sed 's/^/downloadGroup=/' |sed 's/ /\&productId=/'|sed 's/ /\&rPId=/' | sed 's/ //'`
+	if [ Z"$dlgroup" = Z"" ]
+	then
+		vhr=`jq ".dlgEditionsLists[$snr].dlgList[]|if (.code|test(\"${iname}$\")) then .code,.productId,.releasePackageId else \"\" end" ${rcdir}/_${specname}.xhtml |sed '/""/d'|sed 's/"//g' |tr '\n' ' ' |sed 's/^/downloadGroup=/' |sed 's/ /\&productId=/'|sed 's/ /\&rPId=/' | sed 's/ //'`
+	fi
 	if [ Z"$missname" != Z"$ichoice" ] && [ $historical -eq 1 ]
 	then
 		icode=`echo $ichoice | sed 's/_/[_-]/g'`
@@ -2727,25 +2783,35 @@ if [ Z"$dlgroup" != Z"" ] && [ $dovexxi -eq 1 ]
 then
 	# limited to JUST the download group, no Additional/CustomISO, etc.
 	choice=$dlgroup
-	mywget ${rcdir}/_${choice}.xhtml https://my.vmware.com/group/vmware/get-download?downloadGroup=$choice
-	getSymdir
-	gotodir ${choice} "base"
-	missname=${choice}
-	xpkgs=`grep textBlack ${rcdir}/_${choice}.xhtml | xmllint --html --xpath 'string(//strong)' - 2>/dev/null| awk '{print $1}'`
-	count=1
-	for x in $xpkgs
-	do
-		((count++))
-		data=`xmllint --html --xpath "//div[@id=\"content_21\"]//tr[$count]" ${rcdir}/_${choice}.xhtml 2>/dev/null`
-		infoText=`echo "$data" | xmllint --html --xpath '//td[@class="info_Text"]/text()' - 2>/dev/null`
-		if [ Z"$infoText" != Z"" ]
-		then
-			name=$x
-			xloc=0
-			tdls=(`echo "$data" | xmllint --html --xpath '//a[@class="md"]' - 2>/dev/null | sed 's/<a/\n<a/g' | grep md | sed 's/<a//' | sed 's/class="md"//' | sed 's/ //g' | cut -d\" -f2- | cut -d\> -f1|sed "s/''/#/g"`)
-			downloadFile
-		fi
-	done
+	missname=`echo $choice|sed 's/-/_/g'`
+	vurl="downloadGroup=$choice&productId=$dlgid"
+	xhr="https://my.vmware.com/group/vmware/downloads/details?${vurl}"
+	if [ ! -e ${rcdir}/_${missname}_ver.xhtml ] || [ $doreset -eq 1 ]
+	then
+		mywget ${rcdir}/_${missname}_ver.xhtml ${dlghdr_xhr}${vurl} xhr $xhr
+	fi
+	catmap=`jq '.product.categorymap' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
+	prodmap=`jq '.product.productmap' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
+	versmap=`jq '.product.versionmap' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
+	namemap=`jq '.product.name' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/ /_/g'`
+	dlgmap=`jq '.dlg.name' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/ /_/g'`
+	rPId=`jq '.product.releasePackageId' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/ /_/g'`
+	pc=`jq "[.productCategoryList[]|.id == \"${catmap}\"]|index(true)" ${rcdir}/_h_downloads.xhtml`
+	vhr="downloadGroup=$choice&productId=$dlgid&rPId=$rPId"
+	lr=`jq "[.productCategoryList[$pc].productList[]|.actions[0].target|contains(\"/${prodmap}/\")]|index(true)" ${rcdir}/_h_downloads.xhtml`
+	#productCategoryList[6] productList[1] VMware_Horizon VMware_Horizon_7_12 VMware_Horizon_7_12_Horizon_7.12_Enterprise VIEW_7120_ENT
+	if [ Z"$lr" != Z"null" ]
+	then
+		layer=("productCategoryList[$pc]")
+		layer+=("productList[$lr]")
+		layer+=("${namemap}")
+		layer+=("${namemap}_${versmap}")
+		layer+=("${namemap}_${versmap}_${dlgmap}")
+		#layer+=("${missname}")
+		xpkgs=${choice}
+		getMyFiles 1
+		getAllChoice
+	fi
 	exit
 fi
 
