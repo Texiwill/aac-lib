@@ -24,5 +24,7 @@ $vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
 #$vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_5_5_Enterprise_Plus
 $vsm -y --fav Networking_Security_VMware_NSX_T_Data_Center_3_x_VMware_NSX_Data_Center_Enterprise_Plus
 #$vsm -y --fav Networking_Security_VMware_NSX_T_Data_Center_2_x_VMware_NSX_Data_Center_Enterprise_Plus
-$vsm -y --fav Desktop_End-User_Computing_VMware_Horizon_7_12_Horizon_7.12_Enterprise
+
+$vsm -y --fav Desktop_End-User_Computing_VMware_Horizon_2006_Horizon_Enterprise
+#$vsm -y --fav Desktop_End-User_Computing_VMware_Horizon_7_12_Horizon_7.12_Enterprise
 $vsm -y --fav Infrastructure_Operations_Management_VMware_vRealize_Suite_2019_Enterprise
