@@ -1,5 +1,5 @@
 ---
-# version: 1.0.5
+# version: 1.0.6
 
 - hosts: localhost
   gather_facts: true
@@ -32,6 +32,7 @@
        shell: "/tmp/setup_14.x"
        args:
          executable: /bin/bash
+       when: ansible_distribution != "MacOSX"
 
      - name: install RHEL < 8 dependencies
        become: yes
