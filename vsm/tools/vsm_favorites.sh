@@ -16,15 +16,25 @@ if [ -e ./vsm.sh ]
 then
 	vsm='./vsm.sh'
 fi
+mr='-mr'
+echo "Getting vSphere ..."
+for x in 7_0 6_7 6_5 6_0 5_5
+do
+	$vsm $mr -y --debug -q --patches --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_${x}_Enterprise_Plus
+	mr=''
+done
 
-$vsm -mr -y -q --progress --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_7_0_Enterprise_Plus
-$vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_7_Enterprise_Plus
-$vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_5_Enterprise_Plus
-#$vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_6_0_Enterprise_Plus
-#$vsm -y --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_5_5_Enterprise_Plus
-$vsm -y --fav Networking_Security_VMware_NSX_T_Data_Center_3_x_VMware_NSX_Data_Center_Enterprise_Plus
-#$vsm -y --fav Networking_Security_VMware_NSX_T_Data_Center_2_x_VMware_NSX_Data_Center_Enterprise_Plus
+echo "Getting NSX ..."
+for x in 3_x 2_x
+do
+	$vsm -y --debug --patches --fav Networking_Security_VMware_NSX_T_Data_Center_${x}_VMware_NSX_Data_Center_Enterprise_Plus
+done
 
-$vsm -y --fav Desktop_End-User_Computing_VMware_Horizon_2006_Horizon_Enterprise
-#$vsm -y --fav Desktop_End-User_Computing_VMware_Horizon_7_12_Horizon_7.12_Enterprise
-$vsm -y --fav Infrastructure_Operations_Management_VMware_vRealize_Suite_2019_Enterprise
+echo "Getting Horizon ..."
+for x in 2006_Horizon 7_12_Horizon_7.12 7_11_Horizon_7.11 7_10_Horizon_7.10
+do
+	$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Horizon_${x}_Enterprise
+done
+
+echo "Getting vRealize Suite ..."
+$vsm -y --debug --patches --fav Infrastructure_Operations_Management_VMware_vRealize_Suite_2019_Enterprise
