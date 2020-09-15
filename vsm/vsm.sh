@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.4.3"
+VERSIONID="6.4.4"
 
 # args: stmt error
 function colorecho() {
@@ -345,6 +345,11 @@ function mywget() {
 				wget $_PROGRESS_OPT $hd --progress=bar:force --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
 			fi
 			err=$?
+		fi
+		if [ $err -ne 0 ]
+		then
+			# for timers downloads mean clock starts over
+			touch  $cdir/$ck
 		fi
 	fi
 	if [ $newck -eq 0 ] && [ $err -ne 0 ]
@@ -712,7 +717,8 @@ EOF
 		echo $nj | egrep 'Cannot find module|loading shared libraries' >& /dev/null
 		if [ $? -eq 0 ]
 		then
-			colorecho "	Installation Issue, reinstall using LinuxVSM install.sh" 1
+			colorecho "	Installation Issue, run vsm.sh --clean" 1
+			colorecho "	if problem continues reinstall using install.sh" 1
 			pkill -9 Xvfb
 			if [ $debugv -eq 0 ]
 			then
@@ -1585,6 +1591,8 @@ prod_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getProductHeade
 related_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&'
 # referer https://my.vmware.com/group/vmware/downloads/details?downloadGroup=DLG&productId=.dlgList[].productId&rPId=.dlgList[].releasePackageId
 dlghdr_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getDLGHeader?locale=en_US&' #downloadGroup=DLG&productID=.dlgList[].productId
+betahdr_xhr='https://my.vmware.com/channel/public/api/v1.0/dlg/beta/header?locale=en_US&' #downloadGroup=DLG
+beta_xhr='https://my.vmware.com/channel/public/api/v1.0/dlg/beta/details?locale=en_US&' #downloadGroup=DLG
 dlg_xhr='https://my.vmware.com/channel/public/api/v1.0/dlg/details?locale=en_US&' # downloadGroup=DLG&productId=.product[].id&rPId=.product[].releasePackageId
 dlgrel_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getDLGRelatedDLGList?locale=en_US&'
 eula_xhr='https://my.vmware.com/channel/api/v1.0/dlg/eula/accept?locale=en_US&' #downloadGroup=DLG
@@ -1970,6 +1978,7 @@ function getMyFiles()
 	then
 		vhr=`jq ".dlgEditionsLists[$snr].dlgList[]|if (.code|test(\"${iname}$\")) then .code,.productId,.releasePackageId else \"\" end" ${rcdir}/_${specname}.xhtml |sed '/""/d'|sed 's/"//g' |tr '\n' ' ' |sed 's/^/downloadGroup=/' |sed 's/ /\&productId=/'|sed 's/ /\&rPId=/' | sed 's/ //'`
 	fi
+	use_xhr=$dlg_xhr
 	if [ Z"$missname" != Z"$ichoice" ] && [ $historical -eq 1 ]
 	then
 		icode=`echo $ichoice | sed 's/_/[_-]/g'`
@@ -1984,11 +1993,17 @@ function getMyFiles()
 			mywget ${rcdir}/_${missname}_ver.xhtml ${dlghdr_xhr}${mhr} xhr $xhr 
 		fi
 	else
-		xhr="https://my.vmware.com/group/vmware/downloads/details?${vhr}"
+		if [ Z"$dlgid" = Z"beta" ]
+		then
+			xhr="https://my.vmware.com/group/vmware/downloads/get-download?${vhr}"
+			use_xhr=$beta_xhr
+		else
+			xhr="https://my.vmware.com/group/vmware/downloads/details?${vhr}"
+		fi
 	fi
 	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
 	then
-		mywget ${rcdir}/__${missname}.xhtml ${dlg_xhr}${vhr} xhr $xhr 
+		mywget ${rcdir}/__${missname}.xhtml ${use_xhr}${vhr} xhr $xhr 
 		# Strip out 'header' elements
 		sed 's/},/},\n/g' ${rcdir}/__${missname}.xhtml | sed 's/:\[/:\[\n/' |sed 's/}]/}\n]/' | grep -v '"header":true' | tr '\n' ' ' |sed 's/, ]/]/' > ${rcdir}/_${missname}.xhtml
 	fi
@@ -2013,41 +2028,47 @@ function getMyFiles()
 		pkgs="All ${npkg[@]}"
 	fi
 
-	##
-	# OEM/DTS/Patches - only perform if options set
-	if [ $mydts -eq 1 ]
+	if [ Z"$dlgid" != Z"beta" ]
 	then
-		if [ ! -e ${rcdir}/_${missname}_dts.xhtml ] || [ $doreset -eq 1 ]
+		##
+		# OEM/DTS/Patches - only perform if options set
+		if [ $mydts -eq 1 ]
 		then
-			icode=`echo $missname|sed 's/_/[_-]/g'`
-			d=`jq ".versions[]|if (.id|test(\"${icode}$\")) then .id else \"\" end" ${rcdir}/_${missname}_ver.xhtml|sed '/""/d'|sed 's/"//g'`
-			mywget ${rcdir}/_${missname}_dts.xhtml "${dlgrel_xhr}${naction}&downloadGroup=${d}&dlgType=DRIVERS_TOOLS" xhr $xhr
+			if [ ! -e ${rcdir}/_${missname}_dts.xhtml ] || [ $doreset -eq 1 ]
+			then
+				icode=`echo $missname|sed 's/_/[_-]/g'`
+				d=`jq ".versions[]|if (.id|test(\"${icode}$\")) then .id else \"\" end" ${rcdir}/_${missname}_ver.xhtml|sed '/""/d'|sed 's/"//g'`
+				mywget ${rcdir}/_${missname}_dts.xhtml "${dlgrel_xhr}${naction}&downloadGroup=${d}&dlgType=DRIVERS_TOOLS" xhr $xhr
+			fi
+			dtslist=(`jq '.dlgEditionsLists[].dlgList[].code' ${rcdir}/_${missname}_dts.xhtml 2>/dev/null |sed 's/"//g'|sed 's/-/_/g'`)
+			if [ ${#dtslist[@]} -gt 0 ] && [ $sc -eq 0 ]
+			then
+				pkgs="$pkgs DriversTools"
+			fi
 		fi
-		dtslist=(`jq '.dlgEditionsLists[].dlgList[].code' ${rcdir}/_${missname}_dts.xhtml 2>/dev/null |sed 's/"//g'|sed 's/-/_/g'`)
-		if [ ${#dtslist[@]} -gt 0 ] && [ $sc -eq 0 ]
+		if [ $myoem -eq 1 ]
 		then
-			pkgs="$pkgs DriversTools"
+			if [ ! -e ${rcdir}/_${missname}_oem.xhtml ] || [ $doreset -eq 1 ]
+			then
+				icode=`echo $missname|sed 's/_/[_-]/g'`
+				d=`jq ".versions[]|if (.id|test(\"${icode}$\")) then .id else \"\" end" ${rcdir}/_${missname}_ver.xhtml|sed '/""/d'|sed 's/"//g'`
+				mywget ${rcdir}/_${missname}_oem.xhtml "${dlgrel_xhr}${naction}&downloadGroup=${d}&dlgType=CUSTOM_ISO" xhr $xhr
+				mywget ${rcdir}/_${missname}_add.xhtml "${dlgrel_xhr}${naction}&downloadGroup=${d}&dlgType=ADDONS" xhr $xhr
+			fi
+			oemlist=(`jq '.dlgEditionsLists[].dlgList[].code' ${rcdir}/_${missname}_oem.xhtml 2>/dev/null |sed 's/"//g';jq '.dlgEditionsLists[].dlgList[].code' ${rcdir}/_${missname}_add.xhtml 2>/dev/null |sed 's/"//g'|sed 's/-/_/g'`)
+			if [ ${#oemlist[@]} -gt 0 ] && [ $sc -eq 0 ]
+			then
+				pkgs="$pkgs CustomIso"
+			fi
 		fi
-	fi
-	if [ $myoem -eq 1 ]
-	then
-		if [ ! -e ${rcdir}/_${missname}_oem.xhtml ] || [ $doreset -eq 1 ]
+		getMyPatches
+		if [ $patcnt -gt 0 ]
 		then
-			icode=`echo $missname|sed 's/_/[_-]/g'`
-			d=`jq ".versions[]|if (.id|test(\"${icode}$\")) then .id else \"\" end" ${rcdir}/_${missname}_ver.xhtml|sed '/""/d'|sed 's/"//g'`
-			mywget ${rcdir}/_${missname}_oem.xhtml "${dlgrel_xhr}${naction}&downloadGroup=${d}&dlgType=CUSTOM_ISO" xhr $xhr
-			mywget ${rcdir}/_${missname}_add.xhtml "${dlgrel_xhr}${naction}&downloadGroup=${d}&dlgType=ADDONS" xhr $xhr
+			pkgs="$pkgs Patches"
 		fi
-		oemlist=(`jq '.dlgEditionsLists[].dlgList[].code' ${rcdir}/_${missname}_oem.xhtml 2>/dev/null |sed 's/"//g';jq '.dlgEditionsLists[].dlgList[].code' ${rcdir}/_${missname}_add.xhtml 2>/dev/null |sed 's/"//g'|sed 's/-/_/g'`)
-		if [ ${#oemlist[@]} -gt 0 ] && [ $sc -eq 0 ]
-		then
-			pkgs="$pkgs CustomIso"
-		fi
-	fi
-	getMyPatches
-	if [ $patcnt -gt 0 ]
-	then
-		pkgs="$pkgs Patches"
+	else
+		dtslist=()
+		oemlist=()
 	fi
 }
 
@@ -2145,6 +2166,10 @@ function createMenu()
 		if [ ${#layer[@]} -gt 2 ]
 		then
 			back="Back"
+		fi
+		if [ Z"$mark" != Z"" ]
+		then
+			debugvecho "Fav Potential: ${pName}_${layer[4]}"
 		fi
 		export COLUMNS=8
 		select choice in $pkgs $mark $back Exit
@@ -2628,7 +2653,8 @@ function getAll()
 function getFavPaths()
 {
 	# path version Grouping
-	favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]\+_[0-9x]\+\|[0-9]\+\)_\(.*\)/\1 \2 \3/i'`)
+	#favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]\+_[0-9x]\+\|[0-9]\+\)_\(.*\)/\1 \2 \3/i'`)
+	favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]\+_[0-9x]\+\|[0-9]\+\)\($\|_[a-z].*\)/\1 \2 \3/i'`)
 	# Get First Path Entry (productCategory)
 	pc=-1
 	for x in `jq ".productCategoryList[].name" _h_downloads.xhtml|sed 's/ /_/g'`
@@ -2670,14 +2696,21 @@ function getFavPaths()
 			longReply=`echo $pkgs|sed 's/ /\n/g'|grep -in $choice |cut -d: -f1`
 			longReply=$(($longReply-1))
 			getLayerPkgs
-			t_mversions=("$mversions")
-			longReply=`echo $mversions|sed 's/ /\n/g'| grep -in ${favpaths[2]} |head -1|cut -d: -f1`
-			if [ ${#t_mversions[@]} -gt 1 ]
+			# no mversions so why do favpaths 2
+			if [ Z"$mversions" != Z"" ]
 			then
-				longReply=$(($longReply-1))
+				t_mversions=("$mversions")
+				mfpath=`echo ${favpaths[2]}|sed 's/_//'`
+				longReply=`echo $mversions|sed 's/ /\n/g'| grep -in ${mfpath} |head -1|cut -d: -f1`
+				if [ ${#t_mversions[@]} -gt 1 ]
+				then
+					longReply=$(($longReply-1))
+				fi
+				choice=${missname}_${mfpath}
+				layer+=("$choice")
+			else
+				layer+=("$missname")
 			fi
-			choice=${missname}_${favpaths[2]}
-			layer+=("$choice")
 			getLayerPkgs
 			longReply=0
 		fi
@@ -2784,34 +2817,49 @@ then
 	# limited to JUST the download group, no Additional/CustomISO, etc.
 	choice=$dlgroup
 	missname=`echo $choice|sed 's/-/_/g'`
-	vurl="downloadGroup=$choice&productId=$dlgid"
-	xhr="https://my.vmware.com/group/vmware/downloads/details?${vurl}"
+	usehdr_xhr=$dlghdr_xhr
+	if [ Z"$dlgid" = Z"beta" ]
+	then
+		vurl="downloadGroup=$choice"
+		xhr="https://my.vmware.com/group/vmware/downloads/get-download?${vurl}"
+		usehdr_xhr=$betahdr_xhr
+	else
+		vurl="downloadGroup=$choice&productId=$dlgid"
+		xhr="https://my.vmware.com/group/vmware/downloads/details?${vurl}"
+	fi
 	if [ ! -e ${rcdir}/_${missname}_ver.xhtml ] || [ $doreset -eq 1 ]
 	then
-		mywget ${rcdir}/_${missname}_ver.xhtml ${dlghdr_xhr}${vurl} xhr $xhr
+		mywget ${rcdir}/_${missname}_ver.xhtml ${usehdr_xhr}${vurl} xhr $xhr
 	fi
-	catmap=`jq '.product.categorymap' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
-	prodmap=`jq '.product.productmap' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
-	versmap=`jq '.product.versionmap' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
-	namemap=`jq '.product.name' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/ /_/g'`
-	dlgmap=`jq '.dlg.name' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/ /_/g'`
-	rPId=`jq '.product.releasePackageId' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/ /_/g'`
-	pc=`jq "[.productCategoryList[]|.id == \"${catmap}\"]|index(true)" ${rcdir}/_h_downloads.xhtml`
-	vhr="downloadGroup=$choice&productId=$dlgid&rPId=$rPId"
-	lr=`jq "[.productCategoryList[$pc].productList[]|.actions[0].target|contains(\"/${prodmap}/\")]|index(true)" ${rcdir}/_h_downloads.xhtml`
-	#productCategoryList[6] productList[1] VMware_Horizon VMware_Horizon_7_12 VMware_Horizon_7_12_Horizon_7.12_Enterprise VIEW_7120_ENT
-	if [ Z"$lr" != Z"null" ]
+	xpkgs=${choice}
+	if [ Z"$dlgid" = Z"beta" ]
 	then
-		layer=("productCategoryList[$pc]")
-		layer+=("productList[$lr]")
-		layer+=("${namemap}")
-		layer+=("${namemap}_${versmap}")
-		layer+=("${namemap}_${versmap}_${dlgmap}")
-		#layer+=("${missname}")
-		xpkgs=${choice}
-		getMyFiles 1
-		getAllChoice
+		# beta is handled much differently
+		colorecho "Downloading Beta $choice"
+		vhr="downloadGroup=$choice"
+	else
+		catmap=`jq '.product.categorymap' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
+		prodmap=`jq '.product.productmap' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
+		versmap=`jq '.product.versionmap' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
+		namemap=`jq '.product.name' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/ /_/g'`
+		dlgmap=`jq '.dlg.name' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/ /_/g'`
+		rPId=`jq '.product.releasePackageId' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/ /_/g'`
+		pc=`jq "[.productCategoryList[]|.id == \"${catmap}\"]|index(true)" ${rcdir}/_h_downloads.xhtml`
+		vhr="downloadGroup=$choice&productId=$dlgid&rPId=$rPId"
+		lr=`jq "[.productCategoryList[$pc].productList[]|.actions[0].target|contains(\"/${prodmap}/\")]|index(true)" ${rcdir}/_h_downloads.xhtml`
+		#productCategoryList[6] productList[1] VMware_Horizon VMware_Horizon_7_12 VMware_Horizon_7_12_Horizon_7.12_Enterprise VIEW_7120_ENT
+		if [ Z"$lr" != Z"null" ]
+		then
+			layer=("productCategoryList[$pc]")
+			layer+=("productList[$lr]")
+			layer+=("${namemap}")
+			layer+=("${namemap}_${versmap}")
+			layer+=("${namemap}_${versmap}_${dlgmap}")
+			#layer+=("${missname}")
+		fi
 	fi
+	getMyFiles 1
+	getAllChoice
 	exit
 fi
 
