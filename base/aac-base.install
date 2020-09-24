@@ -72,7 +72,7 @@ function findos() {
 		VERSION_ID=`awk '{print $3}' /etc/debian-release | awk -F. '{print $1}'`
 	elif [ -e /etc/photon-release ]
 	then
-		theos="photon"
+		theos="VMware Photon OS"
 		VERSION_ID=`awk '{print $4}' /etc/photon-release | awk -F ' '  '{print $1}'`
 	else
 		# Mac OS
@@ -92,7 +92,7 @@ function findos() {
 function checkdep() {
 	dep=$1
 	needdep=0
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"VMware Photon OS" ]
 	then
 		rpm -q $dep >& /dev/null
 		if [ $? -ne 0 ]
@@ -130,7 +130,7 @@ function installdep() {
 	then
 		installopts=$1
 	fi
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"VMware Photon OS" ]
 	then
 		if [ Z"$INSTALL" != Z"" ] || [ Z"$DEVEL" != Z"" ]
 		then
@@ -626,7 +626,7 @@ RPMLIST=''
 if [ $ansible -ne 1 ]
 then
 	echo "Getting RPMLIST"
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"VMware Photon OS" ]
 	then
 		RPMLIST=`rpm -qa`
 	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
