@@ -35,11 +35,11 @@ function vsm() {
 	if [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 	then
 		checkdep xml-twig-tools
-	elif [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ]
+	elif [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"VMware Photon OS" ]
 	then
 		checkdep perl-XML-Twig
 	fi
-	if [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ]
+	if [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"VMware Photon OS" ]
 	then
 		INSTALL="$INSTALL $FPYTHON"
 	else
