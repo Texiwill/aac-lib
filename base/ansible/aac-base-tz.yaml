@@ -136,7 +136,7 @@
      - name: Set Facts
        set_fact:
          set_time: ntp
-       when: ansible_os_family == "Debian"
+       when: ((ansible_os_family == "Debian") or (ansible_os_family == "VMware Photon OS"))
 
      - name: Set Facts
        set_fact:
