@@ -70,7 +70,6 @@ function findos() {
 	then
 		theos=`cut -d' ' -f1 < /etc/debian-release | tr [:upper:] [:lower:]`
 		VERSION_ID=`awk '{print $3}' /etc/debian-release | awk -F. '{print $1}'`
-	else
 	elif [ -e /etc/photon-release ]
 	then
 		theos="photon"
