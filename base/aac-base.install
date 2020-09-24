@@ -4,7 +4,7 @@
 #
 # Create a Base Install to use Ansible for further installs
 #
-# Target: CentOS/RHEL 7/Photon/Debian/Ubuntu/MacOS
+# Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS
 #
 ###
 VERSIONID="2.1.3"
