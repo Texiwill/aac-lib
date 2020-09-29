@@ -7,7 +7,7 @@ AAC Library of Tools
 Linux Version of VMware Software Manager
 
 ### NOTICE
-__As of v6.4.2 support for MacOSX has been readded. As of v6.4.1 WSL2 support has been added, NOT WS1. Please upgrade to WSL2.__
+__As of v6.4.2 support for MacOSX has been readded. As of v6.4.1 WSL2 support has been added, NOT WS1. Please upgrade to WSL2. As of v6.4.5 support for Photon OS 3 has been added.__
 
 ### Description
 A slightly more intelligent version of VSM for Linux. It ignores

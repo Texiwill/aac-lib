@@ -10,10 +10,10 @@
 # created yet
 #
 # Requires:
-# wget python python-urllib3 libxml2 perl-XML-Twig ncurses bc nodejs Xvfb
+# wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.4.4"
+VERSIONID="6.4.5"
 
 # args: stmt error
 function colorecho() {
@@ -1048,7 +1048,7 @@ function findos() {
 
 function checkdep() {
 	dep=$1
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ]
 	then
 		rpm -q $dep > /dev/null
 		if [ $? -eq 1 ]
@@ -1149,32 +1149,35 @@ function finddeps {
 	#Packages required by all OS
 	all_checkdep="bc jq wget"
 	#Packages required by MacOS
-	macos_checkdep="$all_checkdep node python xcodebuild xml_grep gnu-sed uudecode"
+	#macos_checkdep="$all_checkdep node python xcodebuild gnu-sed uudecode"
+	macos_checkdep="$all_checkdep node python xcodebuild gnu-sed"
 	#Packages required by all Linux Distros currently supported
-	linux_checkdep="$all_checkdep libxml2 sharutils nodejs"
+	linux_checkdep="$all_checkdep libxml2 nodejs"
 	#Packages required by Enterprise Linux and derivatives (including fedora)
-	el_checkdep="perl-XML-Twig ncurses xorg-x11-server-Xvfb libXScrnSaver at-spi2-atk gcc-c++ make nss gtk3"
+	el_checkdep="ncurses xorg-x11-server-Xvfb libXScrnSaver at-spi2-atk gcc-c++ make nss gtk3"
 	#Packages required by Fedora 
 	fedora_checkdep="$linux_checkdep $el_checkdep python2 python2-urllib3 mesa-libgbm alsa-lib"
 	#Packages required by RedHat and derivatives 
 	redhat_checkdep="$linux_checkdep $el_checkdep python python-urllib3"
 	#Packages required by Debian and derivatives 
-	debian_checkdep="$linux_checkdep python python-urllib3 xml-twig-tools libxml2-utils ncurses-base xvfb libnss3 libgtk-3-0 libgbm1 libasound2 libxss1"
-	ubuntu20_checkdep="$linux_checkdep python3 python3-urllib3 xml-twig-tools libxml2-utils ncurses-base xvfb libgtk-3-0 g++ libnss3 libgbm1 libxss1 make"
+	debian_checkdep="$linux_checkdep python python-urllib3 libxml2-utils ncurses-base xvfb libnss3 libgtk-3-0 libgbm1 libasound2 libxss1"
+	ubuntu20_checkdep="$linux_checkdep python3 python3-urllib3 libxml2-utils ncurses-base xvfb libgtk-3-0 g++ libnss3 libgbm1 libxss1 make"
+	#Packages required by PhotonOS
+	photon_checkdep="$linux_checkdep python2 python-urllib3 xorg-server xorg-applications libXScrnSaver at-spi2-atk gtk3 make alsa-lib"
 	if [ Z"$theos" = Z"macos" ]
 	then
 		. $HOME/.bash_profile
 		loopdeps "$macos_checkdep"
 		alias sed=gsed
-		alias uudecode="`which uudecode` -p"
+		#alias uudecode="`which uudecode` -p"
 		alias sha256sum="`which shasum` -a 256"
 		alias sha1sum="`which shasum`"
 	else
 		# set language to English
 		LANG=en_US.utf8
 		export LANG
-		loopdeps "$linux_checkdep"
-		alias uudecode="`which uudecode` -o -"
+		#loopdeps "$linux_checkdep"
+		#alias uudecode="`which uudecode` -o -"
 	fi
 	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ]
 	then
@@ -1198,6 +1201,10 @@ function finddeps {
 		else
 			loopdeps "$debian_checkdep"
 		fi
+	elif [ Z"$theos" = Z"photon" ]
+	then
+		myver=`echo $VERSION_ID | cut -d\. -f1`
+		loopdeps "$photon_checkdep"
 	fi
 }
 
