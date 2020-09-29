@@ -9,10 +9,10 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="2.0.0"
+VERSIONID="2.0.2"
 
 function usage () {
-	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][-v|--version]"
+	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][-v|--version]"
 	echo "	--latest - get the latest only (default)"
 	echo "	--n+1 - get the latest + 1 previous version"
 	echo "	--n+2 - get the latest + 2 previous versions"
@@ -22,6 +22,7 @@ function usage () {
 	echo "	--n+6 - get the latest + 6 previous versions"
 	echo "	--all - get everything"
 	echo "	--euc - Add Additional EUC components"
+	echo "	--vcd - Add Additional VCD components"
 	echo "	-mr   - Clear 1st time use"
 	echo "	-h|--help - this help"
 	echo "	-s|--save - save get and --euc options to \$HOME/.vsmfavsrc"
@@ -34,6 +35,8 @@ function usage () {
 nc=1 # default
 save=0
 euc=0
+vcd=0
+future=0
 mr=''
 if [ -e $HOME/.vsmfavsrc ]
 then
@@ -50,6 +53,7 @@ do
 		--n+4) nc=5;;
 		--n+6) nc=6;;
 		--euc) euc=1;;
+		--vcd) vcd=1;;
 		--all) nc=1000;;
 		-mr) mr='-mr';;
 		-s|--save) save=1;;
@@ -64,6 +68,7 @@ if [ $save -eq 1 ]
 then
 	echo "nc=$nc" > $HOME/.vsmfavsrc
 	echo "euc=$euc" >> $HOME/.vsmfavsrc
+	echo "vcd=$vcd" >> $HOME/.vsmfavsrc
 fi
 
 # local overrides default path
@@ -72,6 +77,7 @@ if [ -e ./vsm.sh ]
 then
 	vsm='./vsm.sh'
 fi
+
 echo "Getting vSphere ..."
 c=0
 for x in 7_0 6_7 6_5 6_0 5_5 5_0
@@ -141,7 +147,7 @@ then
 	
 	echo "Getting Dynamic Environment Manager (DEM) ..."
 	c=0
-	for x in 2006 9_11 9_10 9_9 9_8 9_7 9_6 9_5 9_4 9_3 9_2
+	for x in 2006_VMware_Dynamic_Environment_Manager_Enterprise 9_11 9_10 9_9 9_8 9_7 9_6 9_5 9_4 9_3 9_2
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Dynamic_Environment_Manager_${x}
@@ -162,6 +168,18 @@ then
 			break;
 		fi
 	done
+
+	echo "Getting VMware Workstation Player ..."
+	c=0
+	for x in 16_0_VMware_Workstation_Player_16.0 15_0_VMware_Workstation_Player_15.5.6 14_0_VMware_Workstation_Player_14.1.8
+	do
+		c=$(($c+1))
+		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Workstation_Player_${x}
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
 fi
 
 echo "Getting vRealize Suite ..."
@@ -175,3 +193,42 @@ do
 		break;
 	fi
 done
+
+if [ $vcd -eq 1 ]
+then
+	echo "Getting vCloud Director ..."
+	c=0
+	for x in 10_1 10_0 9_7 9_5 9_1 9_0 8_20 8_10
+	do
+		c=$(($c+1))
+		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_${x}_VMware_vCloud_Director
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
+
+	echo "Getting vCloud Director Availability ..."
+	c=0
+	for x in 4_0 3_5_vCloud_Availability_3.5_Appliance_for_Cloud_Providers 3_0_vCloud_Availability_3.0_Appliance_for_Cloud_Providers
+	do
+		c=$(($c+1))
+		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_Availability_${x}
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
+
+	echo "Getting vCloud Director Object Storage Extension ..."
+	c=0
+	for x in 1_5 1_0
+	do
+		c=$(($c+1))
+		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_Object_Storage_Extension_${x}
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
+fi
