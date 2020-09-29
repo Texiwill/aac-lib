@@ -33,8 +33,9 @@ Full support for LinuxVMA/LinuxVSM is available for:
 * Debian 10
 * Ubuntu 18.04
 * Ubuntu 20.04
+* PhotonOS 3
 
-WSL also works per the community
+WSL2 also works per the community
 * Not for LinuxVSM 6.4.x
 
 MacOSX support exists:
@@ -126,6 +127,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+2.1.4 Changes to support Photon OS 3
+
 2.1.3 Change to improve Ubuntu on WSL
 
 2.1.2 Change to help and WSL support
