@@ -7,7 +7,7 @@
 # Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS
 #
 ###
-VERSIONID="2.1.3"
+VERSIONID="2.1.4"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -88,7 +88,7 @@ function findos() {
 function checkdep() {
 	dep=$1
 	needdep=0
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ]
 	then
 		rpm -q $dep >& /dev/null
 		if [ $? -ne 0 ]
@@ -126,7 +126,7 @@ function installdep() {
 	then
 		installopts=$1
 	fi
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ]
 	then
 		if [ Z"$INSTALL" != Z"" ] || [ Z"$DEVEL" != Z"" ]
 		then
@@ -391,15 +391,18 @@ function ansible() {
 		then
 			if [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 			then
-				# needed for WSL and some other things
 				sudo apt-get update
-				sudo apt install dirmngr
-				cp /etc/apt/sources.list /tmp/sources.list
-				cp /etc/apt/sources.list /tmp/sources.list.orig
-				echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /tmp/sources.list
-				sudo cp /tmp/sources.list /etc/apt
-				wget -O - "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x93C4A3FD7BB9C367" | sudo apt-key add
-				sudo apt update
+				# needed for WSL and some other things
+				if [ $VERSION_ID -lt 20 ]
+				then
+					sudo apt install dirmngr
+					cp /etc/apt/sources.list /tmp/sources.list
+					cp /etc/apt/sources.list /tmp/sources.list.orig
+					echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /tmp/sources.list
+					sudo cp /tmp/sources.list /etc/apt
+					wget -O - "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x93C4A3FD7BB9C367" | sudo apt-key add
+					sudo apt update
+				fi
 			fi
 			echo "Installing Ansible"
 			INSTALL="ansible"

@@ -1,5 +1,5 @@
 ---
-# version: 1.0.6
+# version: 1.0.7
 
 - hosts: localhost
   gather_facts: true
@@ -32,7 +32,8 @@
        shell: "/tmp/setup_14.x"
        args:
          executable: /bin/bash
-       when: ansible_distribution != "MacOSX"
+       when: (ansible_distribution != "MacOSX") and
+             (ansible_os_family != "VMware Photon OS")
 
      - name: install RHEL < 8 dependencies
        become: yes
@@ -40,7 +41,6 @@
          name:
            - wget
            - libxml2
-           - perl-XML-Twig
            - ncurses
            - bc
            - jq
@@ -76,7 +76,6 @@
          name:
            - wget
            - libxml2
-           - perl-XML-Twig
            - ncurses
            - bc
            - jq
@@ -104,7 +103,6 @@
            - wget
            - libxml2
            - libxml2-utils
-           - xml-twig-tools
            - ncurses-base
            - bc
            - jq
@@ -129,7 +127,6 @@
            - wget
            - libxml2
            - libxml2-utils
-           - xml-twig-tools
            - ncurses-base
            - bc
            - jq
@@ -148,6 +145,115 @@
          state: latest
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'>='))
 
+# Photon is missing several critical packages
+     - name: Remove Vivace YUM file for Photon
+       become: yes
+       file:
+         path: /etc/yum.repos.d/vivace.repo
+         state: absent
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: set jq name
+       set_fact:
+         jqname: jq-1.5-4.ph3.src.rpm
+         jqbname: jq-1.5-4.x86_64.rpm
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: Re/create Vivace YUM repos for Photon
+       become: yes
+       blockinfile:
+         path: /etc/yum.repos.d/vivace.repo
+         block: |
+           [vivace]
+           name=VMware Vivace 3.0(x86_64)
+           baseurl=https://dl.bintray.com/vmware/vivace_$releasever_$basearch
+           gpgkey=file:///etc/pki/rpm-gpg/VMWARE-RPM-GPG-KEY
+           gpgcheck=1
+           enabled=1
+           skip_if_unavailable=True
+
+           [xrpms]
+           name=VMware X-RPMS (x86_64)
+           baseurl=https://packages.vmware.com/photon/photon_publish_x_rpms
+           gpgkey=file:///etc/pki/rpm-gpg/VMWARE-RPM-GPG-KEY
+           gpgcheck=0
+           enabled=1
+           skip_if_unavailable=True
+         mode: 0644
+         create: yes
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: install the required dependencies for LinuxVSM on Photon
+       become: yes
+       command: "tdnf -y install {{ item }}"
+       with_items:
+         - libxml2
+         - nodejs
+         - make
+         - gcc
+         - tar
+         - patch
+         - rpm-build
+         - binutils
+         - valgrind
+         - linux-api-headers
+         - python-urllib3
+         - bc
+         - oniguruma
+         - oniguruma-devel
+         - ncurses
+         - xorg-server
+         - xorg-applications
+         - at-spi2-atk
+         - libXcomposite
+         - libXrandr
+         - libXScrnSaver
+         - alsa-lib
+         - cups
+         - gtk3
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: Photon Get JQ Source
+       get_url:
+         url: "https://packages.vmware.com/photon/3.0/photon_srpms_3.0_x86_64/{{jqname}}"
+         dest: "{{ansible_user_dir}}"
+         mode: 0644
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: Photon Re/create .rpmmacros
+       become: yes
+       blockinfile:
+         path: "{{ansible_user_dir}}/.rpmmacros"
+         block: |
+            %_topdir %(echo $HOME)/rpmbuild
+            %with_check 1
+         mode: 0644
+         create: yes
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: Photon Build rpmbuild directories
+       file:
+         path: "{{item}}"
+         state: directory
+         mode: 0755
+       loop:
+         - "{{ansible_user_dir}}/rpmbuild"
+         - "{{ansible_user_dir}}/rpmbuild/BUILD"
+         - "{{ansible_user_dir}}/rpmbuild/SOURCES"
+         - "{{ansible_user_dir}}/rpmbuild/RPMS"
+         - "{{ansible_user_dir}}/rpmbuild/SPECS"
+         - "{{ansible_user_dir}}/rpmbuild/SRPMS"
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: Photon Rebuild JQ
+       command: "rpmbuild --rebuild --nocheck {{ansible_user_dir}}/{{jqname}}"
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: Photon Install JQ
+       become: yes
+       command: "rpm -ivh --force {{ansible_user_dir}}/rpmbuild/RPMS/x86_64/{{jqbname}}"
+       when: ansible_os_family == "VMware Photon OS"
+
      - name: Install Xcode CLI for MacOSX
        ignore_errors: yes
        shell: "xcode-select --install"
@@ -159,7 +265,6 @@
            - gnu-sed
            - wget
            - jq
-           - cpanminus
            - node
          state: latest
        when: ansible_distribution == "MacOSX"
@@ -169,12 +274,7 @@
          name: xquartz
        when: ansible_distribution == "MacOSX"
 
-     - name: Install MacOS Perl Dependencies
-       cpanm:
-         name: XML::Twig
-       when: ansible_distribution == "MacOSX"
-
-     - name: create bin directory
+     - name: MacOSX create bin directory
        file:
          path: "{{ansible_user_dir}}/bin"
          state: directory

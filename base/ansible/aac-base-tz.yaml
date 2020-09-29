@@ -15,6 +15,11 @@
        apt: upgrade=dist update_cache=yes
        when: ansible_os_family == "Debian"
 
+     - name: install system updates for Photon
+       become: yes
+       command: "tdnf -y update"
+       when: ansible_os_family == "VMware Photon OS"
+
      - name: install the latest ntp and other required dependencies for RHEL < 8
        become: yes
        package:
@@ -24,6 +29,15 @@
            - python2-pip
          state: latest
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')
+
+     - name: install the required dependencies for Photon
+       become: yes
+       command: "tdnf -y install {{ item }}"
+       with_items:
+         - ntp
+         - git
+         - python-pip
+       when: ansible_os_family == "VMware Photon OS"
 
      - name: install the latest ntp and other required dependencies for RHEL >= 8
        become: yes
@@ -57,6 +71,14 @@
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) or
              (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>'))
 
+     - name: install the other required dependencies Debian
+       become: yes
+       package:
+         name: 
+           - python-pip
+         state: latest
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>'))
+
      - name: Upgrade PIP
        become: yes
        pip:
@@ -80,12 +102,24 @@
      - name: Package Facts
        package_facts:
          manager: "auto"
-       when: ansible_distribution != "MacOSX"
+       when: (ansible_distribution != "MacOSX") and
+             (ansible_os_family != "VMware Photon OS")
 
      - name: Package Facts MacOSX
        package_facts:
          manager: "rpm"
        when: ansible_distribution == "MacOSX"
+
+     - name: Package Facts Photon
+       become: yes
+       shell: tdnf list | cut -d\. -f1
+       register: packages_facts
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: Register Photon Packages
+       set_fact:
+         ansible_facts: "{{ ansible_facts | combine({'packages': packages_facts.stdout_lines}) }}"
+       when: ansible_os_family == "VMware Photon OS"
 
      - name: Homebrew fact MacOSX
        stat:
@@ -141,12 +175,20 @@
      - name: Set Facts
        set_fact:
          set_time: ntpd
-       when: ansible_os_family == "RedHat"
+       when: (ansible_os_family == "RedHat") or
+             (ansible_os_family == "VMware Photon OS")
 
      - name: Set Facts
        set_fact:
          set_time: chronyd
-       when: '"chrony" in ansible_facts.packages'
+       when: ('"chrony" in ansible_facts.packages') and
+             (ansible_os_family != "VMware Photon OS")
+
+     - name: Set Facts
+       set_fact:
+         set_time: ntp
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<')) or
+             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
 
      - name: Stop Time Daemon
        become: yes
