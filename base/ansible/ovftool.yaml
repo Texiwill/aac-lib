@@ -1,5 +1,5 @@
 ---
-# version: 1.0.0
+# version: 1.0.2
 
 - hosts: localhost
   become_user: root
@@ -34,6 +34,24 @@
          name: 'http://vault.centos.org/7.7.1908/os/x86_64/Packages/fuseiso-20070708-15.el7.x86_64.rpm'
          state: present
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=')
+
+     - name: install the required dependencies for Photon
+       become: yes
+       command: "tdnf -y install {{ item }}"
+       with_items:
+         - ruby
+         - fuse
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: install the hiera dependencies for Photon
+       become: yes
+       command: gem install hiera
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: Update File Permissions Photon
+       become: yes
+       file: path=/usr/bin/hiera mode=0755
+       when: ansible_os_family == "VMware Photon OS"
 
      - name: Download the latest version of ov-import.sh
        become: yes
@@ -79,6 +97,14 @@
        shell: "{{file_local}} --eulas-agreed --required"
        args:
          executable: /bin/bash
+       when: ansible_os_family != "VMware Photon OS"
+
+     - name: Installing ovftool Photon
+       become: yes
+       shell: "{{file_local}} --eulas-agreed --required -s vmware-installer initdir /etc/rc.d/init.d"
+       args:
+         executable: /bin/bash
+       when: ansible_os_family == "VMware Photon OS"
       
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

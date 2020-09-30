@@ -102,7 +102,7 @@ Installs vSphere CLI using LinuxVSM to download the latest file.
 #### dcli - 1.0.2
 Installs Datacenter CLI (DCLI)
 
-#### ovftool - 1.0.1
+#### ovftool - 1.0.2
 Installs ovftool using LinuxVSM to download the latest file.
 
 #### LinuxVMA - 1.0.2
