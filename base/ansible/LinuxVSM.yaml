@@ -1,5 +1,5 @@
 ---
-# version: 1.0.7
+# version: 1.0.8
 
 - hosts: localhost
   gather_facts: true
@@ -191,6 +191,7 @@
          - nodejs
          - make
          - gcc
+         - glibc-devel
          - tar
          - patch
          - rpm-build
