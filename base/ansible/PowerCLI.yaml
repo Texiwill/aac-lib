@@ -1,5 +1,5 @@
 ---
-# version: 1.0.4
+# version: 1.0.5
 
 - hosts: localhost
   gather_facts: true
@@ -95,6 +95,14 @@
              (ansible_distribution == "Debian") or
              (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
 
+
+     - name: install the required dependencies for PowerCLI on Photon
+       become: yes
+       command: "tdnf -y install {{ item }}"
+       with_items:
+         - powershell
+       when: (ansible_os_family == "VMware Photon OS")
+
      - name: Install HTTPS transport
        become: yes
        package:
@@ -125,6 +133,12 @@
        when: (ansible_os_family == "RedHat") or
              (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
              (ansible_distribution == "Debian")
+
+     - name: Set PowerShell Version Fact Photon
+       set_fact:
+         pwsh_path: "/usr/lib/powershell"
+         pwsh_cmd: "/usr/bin/pwsh"
+       when: (ansible_os_family == "VMware Photon OS")
 
      - name: Set PowerShell Fact
        set_fact:
@@ -165,6 +179,16 @@
      - name: Install PowerVRA
        become: yes
        shell: '{{pwsh_cmd}} -c "Install-Module -Name PowerVRA -Scope AllUsers -Force"'
+
+     - name: Update Directory Permissions Photon
+       become: yes
+       file: path=/usr/local/share/powershell mode=0755 state=directory recurse=yes
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: Update File Permissions Photon
+       become: yes
+       command: find /usr/local/share/powershell -type f ! -perm 0644 -exec chmod 0644 {} \;
+       when: ansible_os_family == "VMware Photon OS"
 
      - name: Create Start-PowerCLI.ps1
        become: yes
