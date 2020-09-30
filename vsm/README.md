@@ -232,7 +232,11 @@ Existing ESXI67U2 in /mnt/rainbow/iso/vmware/depot/content/dlg_ESXI67U2/DriversT
 ```
 
 ### Installation
-To install use the provided install.sh script which calls the aac-lib/base installers to install vsm.
+To install use the provided install.sh script which calls the aac-lib/base
+installers to install vsm.
+
+To install on Photon OS 3 you must first create a regular user and
+pre-install sudo. Then you can follow these instructions.
 
 To install on MacOS X read <a href=https://github.com/Texiwill/aac-lib/blob/master/vsm/MacOS.md>MacOS.md</a>. (Please note this required v6.4.2 or later.)
 
