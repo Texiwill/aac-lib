@@ -33,7 +33,7 @@ Full support for LinuxVMA/LinuxVSM is available for:
 * Debian 10
 * Ubuntu 18.04
 * Ubuntu 20.04
-* PhotonOS 3
+* PhotonOS 3 - requires creating an account and installing sudo to use
 
 WSL2 also works per the community
 * Not for LinuxVSM 6.4.x
