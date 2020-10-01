@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.4.5"
+VERSIONID="6.4.6"
 
 # args: stmt error
 function colorecho() {
@@ -2502,7 +2502,7 @@ function getSymdir()
 {
 	# used for fake symlinks, mostly UAG
 	symdir=''
-	_v=`echo $choice | sed 's/[a-z-]\+-\([0-9]\.[0-9]\+\.[0-9]\).*/\1/' | sed 's/\.0$//' |sed 's/\.//g'`
+	_v=`echo $choice | sed 's/[a-z-]\+-\([0-9]\+\.[0-9]\+\.[0-9]\).*/\1/' | sed 's/\.0$//' |sed 's/\.//g'`
 	debugecho "$choice => $_v"
 	case "$choice" in
 		euc-access-point*)
