@@ -1,5 +1,5 @@
 ---
-# version: 1.0.4
+# version: 1.0.5
 
 - hosts: localhost
   gather_facts: true
@@ -84,6 +84,13 @@
          state: latest
        when: ansible_distribution == "MacOSX"
 
+     - name: Install Dependencies for Photon
+       homebrew:
+         name:
+           - go
+         state: latest
+       when: ansible_distribution == "VMware Photon OS"
+
      - name: Set profile.d BASH settings
        become: yes
        blockinfile:
@@ -134,7 +141,8 @@
          executable: /bin/bash
        when: (ansible_os_family == "RedHat") or
              (ansible_distribution == "MacOSX") or
-             (ansible_os_family == "Debian" and ansible_distribution_major_version is version("9",'!='))
+             (ansible_os_family == "Debian" and ansible_distribution_major_version is version("9",'!=')) or
+             (ansible_os_family == "VMware Photon OS")
 
      - name: Create bin diretory
        file:
@@ -145,6 +153,7 @@
              (ansible_distribution == "MacOSX") or
              (ansible_os_family == "Debian" and ansible_distribution_major_version is version("9",'!='))
 
+# This fails on Photon OS due to current build issues
      - name: Install vctui
        copy: 
          src: "{{ansible_user_dir}}/go/bin/vctui"

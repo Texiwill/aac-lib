@@ -180,16 +180,6 @@
        become: yes
        shell: '{{pwsh_cmd}} -c "Install-Module -Name PowerVRA -Scope AllUsers -Force"'
 
-     - name: Update Directory Permissions Photon
-       become: yes
-       file: path=/usr/local/share/powershell mode=0755 state=directory recurse=yes
-       when: ansible_os_family == "VMware Photon OS"
-
-     - name: Update File Permissions Photon
-       become: yes
-       command: find /usr/local/share/powershell -type f ! -perm 0644 -exec chmod 0644 {} \;
-       when: ansible_os_family == "VMware Photon OS"
-
      - name: Create Start-PowerCLI.ps1
        become: yes
        blockinfile:

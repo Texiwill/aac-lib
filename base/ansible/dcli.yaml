@@ -30,16 +30,6 @@
          name: dcli
        when: ansible_distribution == "MacOSX"
 
-     - name: Update Directory Permissions Photon
-       become: yes
-       file: path=/usr/lib/python2.7/site-packages mode=0755 state=directory recurse=yes
-       when: ansible_os_family == "VMware Photon OS"
-
-     - name: Update File Permissions Photon
-       become: yes
-       command: find /usr/lib/python2.7/site-packages -type f ! -perm 0644 -exec chmod 0644 {} \;
-       when: ansible_os_family == "VMware Photon OS"
-
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml
 ...
