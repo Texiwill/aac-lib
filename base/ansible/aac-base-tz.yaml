@@ -37,6 +37,8 @@
          - ntp
          - git
          - python-pip
+         - python-pexpect
+         - expect
        when: ansible_os_family == "VMware Photon OS"
 
      - name: install the latest ntp and other required dependencies for RHEL >= 8
@@ -114,6 +116,14 @@
        become: yes
        shell: tdnf list | cut -d\. -f1
        register: packages_facts
+       when: ansible_os_family == "VMware Photon OS"
+
+     - name: Change umask for Photon
+       become: yes
+       lineinfile:
+         path: /etc/profile
+         regexp: umask 027
+         line: umask 022
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Register Photon Packages
