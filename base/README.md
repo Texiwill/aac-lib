@@ -96,7 +96,7 @@ Installs the base AAC setup. This is mostly setting timezones and ensuring wget 
 #### powercli - 1.0.5
 Installs Powershell and VMware PowerCLI: run command 'powercli' to start
 
-#### vcli - 1.0.2
+#### vcli - 1.0.3
 Installs vSphere CLI using LinuxVSM to download the latest file.
 
 #### dcli - 1.0.2
@@ -127,6 +127,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+2.1.5 Changes to always ask for password when using ansible/vCLI updates for Photon OS and RHEL8
+
 2.1.4 Changes to support Photon OS 3
 
 2.1.3 Change to improve Ubuntu on WSL

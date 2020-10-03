@@ -7,7 +7,7 @@
 # Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS
 #
 ###
-VERSIONID="2.1.4"
+VERSIONID="2.1.5"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -326,9 +326,9 @@ function get_wget() {
 			fi
 			brew install wget
 		fi
-	else
-		askpass="-K"
 	fi
+	# fix for long running playbook issues
+	askpass="-K"
 }
 
 function tz() {

@@ -1,5 +1,5 @@
 ---
-# version: 1.0.2
+# version: 1.0.3
 
 - hosts: localhost
   become_user: root
@@ -21,6 +21,7 @@
            - libuuid-devel
            - perl-Module-Build
            - perl-CPAN
+           - e2fsprogs-devel
          state: latest
        when: ansible_os_family == "RedHat"
 
@@ -69,6 +70,7 @@
            - perl-IO-Socket-INET6
            - perl-Net-INET6Glue
            - perl-Try-Tiny
+           - expect
          state: latest
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')
 
@@ -90,6 +92,7 @@
            - perl-IO-Compress
            - perl-IO-Compress
            - perl-URI
+           - perl-Net-SSLeay
            - perl-XML-NamespaceSupport
            - perl-XML-LibXML
            - perl-Socket6
@@ -100,8 +103,9 @@
            - perl-IO-Socket-INET6
            - perl-Net-INET6Glue
            - perl-Try-Tiny
+           - expect
          state: latest
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=')
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>')
 
      - name: install the latest version of vCLI dependencies for Debian
        become: yes
@@ -124,7 +128,21 @@
            - libxml-libxml-perl
            - libsocket6-perl
            - libcrypt-ssleay-perl
+           - expect
        when: ansible_os_family == "Debian"
+
+     - name: install the required dependencies for Photon
+       become: yes
+       command: "tdnf -y install {{ item }}"
+       with_items:
+         - openssl-devel
+         - perl
+         - perl-Module-Build
+         - perl-Try-Tiny
+         - libxml2-devel
+         - util-linux-devel
+         - expect
+       when: ansible_os_family == "VMware Photon OS"
 
      - name: Check if Credential exists
        stat:
@@ -163,12 +181,20 @@
          executable: /bin/bash
        when: stat_cli_result.stat.exists
 
-     - name: Update installed_ssl_version in vmware_install.pl for Debian/Ubuntu
+     - name: Update installed_ssl_version in vmware_install.pl for Debian/Ubuntu/RHEL8
        lineinfile:
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: 'my .installed_ssl_version =' 
          line: "   my $installed_ssl_version = '1.0.0';"
-       when: ansible_os_family == "Debian"
+       when: (ansible_os_family == "Debian") or
+             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+
+     - name: Update to remove Crypt::SSLeay module
+       replace:
+         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+         regexp: "{'module' => 'Crypt::SSLeay'"
+         replace: "#{'module' => 'Crypt::SSLeay'"
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
 
      - name: Update ssleay_installed in vmware_install.pl for Debian/Ubuntu
        lineinfile:
@@ -212,23 +238,92 @@
          line: "   my $e2fsprogs_version = '1.42';"
        when: ansible_os_family == "Debian"
 
-     - name: Update install_rhel55_local in vmware_install.pl for Debian/Ubuntu
+     - name: Update install_rhel55_local in vmware_install.pl for Debian/Ubuntu/RHEL8
        lineinfile:
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: 'my .install_rhel55_local = 0'
          line: '   my $install_rhel55_local = 1;'
-       when: ansible_os_family == "Debian"
+       when: (ansible_os_family == "Debian") or
+             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+
+     - name: Create etcdir for vCLI
+       become: yes
+       file: path=/etc/vmware-vcli state=directory
+
+     - name: Remove vCLI Locations
+       become: yes
+       file: path=/etc/vmware-vcli/locations state=absent
+
+     - name: Re/create vCLI locations
+       become: yes
+       blockinfile:
+         path: "/etc/vmware-vcli/locations"
+         marker: ""
+         marker_begin: ""
+         marker_end: ""
+         block: |
+           directory /etc/vmware-vcli
+           file /etc/vmware-vcli/locations
+           answer BINDIR /usr/bin
+           answer EULA_AGREED yes
+           answer INSTALL_CYLE yes
+         mode: 0644
+         create: yes
+
+     - name: Copy vCLI file1
+       become: yes
+       copy:
+         src: /tmp/vmware-vsphere-cli-distrib/bin/vmware-uninstall-vSphere-CLI.pl
+         dest: /usr/bin/vmware-uninstall-vSphere-CLI.pl
+         mode: 0755   
+         force: no
+
+     - name: Copy vCLI file2
+       become: yes
+       copy:
+         src: /tmp/vmware-vsphere-cli-distrib/etc/installer.sh
+         dest: /etc/vmware-vcli/installer.sh
+         mode: 0755   
+         force: no
+
+     - name: Remove Expect script
+       become: yes
+       file: path=/tmp/vmware-vsphere-cli-distrib/expinstall state=absent
+
+     - name: Write Expect Script
+       become: yes
+       blockinfile:
+         path: /tmp/vmware-vsphere-cli-distrib/expinstall
+         marker: ""
+         marker_begin: ""
+         marker_end: ""
+         block: |
+           set timeout 1800
+           spawn /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+           expect {
+                "\\\[yes]" {
+                     send "yes\r"
+                     exp_continue
+                }
+                "Do you want to continue? (yes/no)" {
+                     send "yes\r"
+                     exp_continue
+                }
+                "\\\[/usr/bin]" {
+                     send "\r"
+                     exp_continue
+                }
+           }
+         mode: 0755
+         create: yes
 
      - name: Install vCLI
        become: yes
-       expect:
-         command: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         responses:
-           'Press enter to display it.': 'n'
-           '.*--More--.*': 'q'
-           'Do you accept.*': 'yes'
-           '[yes]': 'yes'
-           '[/usr/bin]': '/usr/bin'
+       command: "/usr/bin/expect /tmp/vmware-vsphere-cli-distrib/expinstall"
+
+     - name: Remove vCLI Installer
+       become: yes
+       file: path=/tmp/vmware-vsphere-cli-distrib state=absent
 
      - name: uninstall RHEL development tools
        become: yes
@@ -239,23 +334,16 @@
            - libmpc
            - mpfr
            - perl-YAML
-           - libuuid-devel
-           - perl-Module-Build
-           - perl-CPAN
          state: absent
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')
 
-     # other tools required by go-toolset used by vctui
-     - name: uninstall RHEL 8 development tools
+     - name: remove Photon Development tools
        become: yes
-       package:
-         name:
-           - perl-YAML
-           - libuuid-devel
-           - perl-Module-Build
-           - perl-CPAN
-         state: absent
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=')
+       command: "tdnf -y remove {{ item }}"
+       with_items:
+         - openssl-devel
+         - libxml2-devel
+       when: ansible_os_family == "VMware Photon OS"
 
      - name: uninstall Debian development tools
        become: yes
@@ -266,7 +354,6 @@
            - libmpc-dev
            - libmpfr-dev
            - libyaml-perl
-           - libuuid-perl
            - libmodule-build-perl
          state: absent
        when: ansible_os_family == "Debian"
