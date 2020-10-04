@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.4.6"
+VERSIONID="6.4.7"
 
 # args: stmt error
 function colorecho() {
@@ -232,14 +232,6 @@ function findCk()
 	fi
 }
 
-function getJSON()
-{
-	if [ ! -e $rcdir/newlocs.json ] || [ $rebuild -eq 1 ]
-	then
-		mywget $rcdir/newlocs.json https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/newlocs.json >& /dev/null
-	fi
-}
-
 function mywget() {
 	ou=$1
 	hr=$2
@@ -357,6 +349,15 @@ function mywget() {
 		wgeterror $err $fname
 	fi
 }
+
+function getJSON()
+{
+	if [ ! -e $rcdir/newlocs.json ] || [ $rebuild -eq 1 ]
+	then
+		wget -O $rcdir/newlocs.json https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/newlocs.json >& /dev/null
+	fi
+}
+
 
 function checkForUpdate()
 {

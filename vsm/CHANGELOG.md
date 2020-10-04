@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.4.7 - Fix to --dlgl
+
 6.4.6 - Fix for UAG 20.09
 
 6.4.5 - Photon OS 3 support and dependency cleanup
