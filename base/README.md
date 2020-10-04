@@ -24,6 +24,8 @@ The problem is that you need to install a few things before you can
 begin to use Ansible. The main script installs all those necessary bits,
 then switches to use Ansible.
 
+LinuxVMA documentation is at <a href=https://github.com/Texiwill/aac-lib/tree/base/LinuxVMA.md>Here</a>.
+
 #### Supported Operating Systems
 Full support for LinuxVMA/LinuxVSM is available for:
 
