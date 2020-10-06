@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.4.7"
+VERSIONID="6.4.8"
 
 # args: stmt error
 function colorecho() {
@@ -1600,7 +1600,7 @@ related_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDL
 # referer https://my.vmware.com/group/vmware/downloads/details?downloadGroup=DLG&productId=.dlgList[].productId&rPId=.dlgList[].releasePackageId
 dlghdr_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getDLGHeader?locale=en_US&' #downloadGroup=DLG&productID=.dlgList[].productId
 betahdr_xhr='https://my.vmware.com/channel/public/api/v1.0/dlg/beta/header?locale=en_US&' #downloadGroup=DLG
-beta_xhr='https://my.vmware.com/channel/public/api/v1.0/dlg/beta/details?locale=en_US&' #downloadGroup=DLG
+beta_xhr='https://my.vmware.com/channel/api/v1.0/dlg/beta/details?locale=en_US&' #downloadGroup=DLG
 dlg_xhr='https://my.vmware.com/channel/public/api/v1.0/dlg/details?locale=en_US&' # downloadGroup=DLG&productId=.product[].id&rPId=.product[].releasePackageId
 dlgrel_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getDLGRelatedDLGList?locale=en_US&'
 eula_xhr='https://my.vmware.com/channel/api/v1.0/dlg/eula/accept?locale=en_US&' #downloadGroup=DLG
@@ -2235,12 +2235,35 @@ function processCode()
 	downloadGroup=`jq '.dlg.code' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
 	dlgType=`jq '.dlg.type' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/amp;//g'`
 	productFamily=`jq '.product.name' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
-	# This should change for betas
+	if [ Z"$productFamily" = Z"null" ]
+	then
+		productFamily=`jq '.productDisplayName' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
+	fi
+	if [ Z"$dlgVersion" = Z"null" ]
+	then
+		dlgVersion=`jq '.version' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
+	fi
 	isBetaFlow='false'
+	if [ Z"$dlgid" = Z"beta" ]
+	then
+		dlgType="Product Binaries"
+		downloadGroup=$dlgroup
+		isBetaFlow='true'
+	fi
+	if [ Z"$productId" = Z"null" ]
+	then
+		productId=""
+	fi
+	# This should change for betas
 	payload=""
 	if [ Z"$uUId" != Z"null" ]
 	then
-		payload="{\"locale\":\"en_US\",\"downloadGroup\":\"$downloadGroup\",\"productId\":\"$productId\",\"md5checksum\":\"$md5checksum\",\"tagId\":$tagId,\"uUId\":\"$uUId\",\"dlgType\":\"$dlgType\",\"productFamily\":\"$productFamily\",\"releaseDate\":\"$releaseDate\",\"dlgVersion\":\"$dlgVersion\",\"isBetaFlow\":$isBetaFlow}"
+		if [ Z"$tagId" = Z"null" ]
+		then
+			payload="{\"locale\":\"en_US\",\"downloadGroup\":\"$downloadGroup\",\"productId\":\"$productId\",\"md5checksum\":\"$md5checksum\",\"tagId\":\"\",\"uUId\":\"$uUId\",\"dlgType\":\"$dlgType\",\"productFamily\":\"$productFamily\",\"releaseDate\":\"$releaseDate\",\"dlgVersion\":\"$dlgVersion\",\"isBetaFlow\":$isBetaFlow}"
+		else
+			payload="{\"locale\":\"en_US\",\"downloadGroup\":\"$downloadGroup\",\"productId\":\"$productId\",\"md5checksum\":\"$md5checksum\",\"tagId\":$tagId,\"uUId\":\"$uUId\",\"dlgType\":\"$dlgType\",\"productFamily\":\"$productFamily\",\"releaseDate\":\"$releaseDate\",\"dlgVersion\":\"$dlgVersion\",\"isBetaFlow\":$isBetaFlow}"
+		fi
 	fi
 	debugecho $payload
 	#payload=`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$pre_payload" 2>/dev/null`
