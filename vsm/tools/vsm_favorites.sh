@@ -12,7 +12,7 @@
 VERSIONID="2.0.2"
 
 function usage () {
-	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][-v|--version]"
+	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--arm][-v|--version]"
 	echo "	--latest - get the latest only (default)"
 	echo "	--n+1 - get the latest + 1 previous version"
 	echo "	--n+2 - get the latest + 2 previous versions"
@@ -23,6 +23,7 @@ function usage () {
 	echo "	--all - get everything"
 	echo "	--euc - Add Additional EUC components"
 	echo "	--vcd - Add Additional VCD components"
+	echo "	--arm - Add ESXi on ARM components"
 	echo "	-mr   - Clear 1st time use"
 	echo "	-h|--help - this help"
 	echo "	-s|--save - save get and --euc options to \$HOME/.vsmfavsrc"
@@ -36,6 +37,7 @@ nc=1 # default
 save=0
 euc=0
 vcd=0
+arm=0
 future=0
 mr=''
 if [ -e $HOME/.vsmfavsrc ]
@@ -54,11 +56,13 @@ do
 		--n+6) nc=6;;
 		--euc) euc=1;;
 		--vcd) vcd=1;;
+		--arm) arm=1;;
 		--all) nc=1000;;
 		-mr) mr='-mr';;
 		-s|--save) save=1;;
 		-v|--version) echo "LinuxVSM Favorites:"; echo "	`basename $0`: $VERSIONID"; exit;;
 		-h|--help) usage;;
+		-f|--future) future=1;;
 		*) usage ;; 
 	esac 
 	shift 
@@ -69,6 +73,7 @@ then
 	echo "nc=$nc" > $HOME/.vsmfavsrc
 	echo "euc=$euc" >> $HOME/.vsmfavsrc
 	echo "vcd=$vcd" >> $HOME/.vsmfavsrc
+	echo "arm=$arm" >> $HOME/.vsmfavsrc
 fi
 
 # local overrides default path
@@ -76,6 +81,26 @@ vsm=`which vsm.sh`
 if [ -e ./vsm.sh ]
 then
 	vsm='./vsm.sh'
+fi
+
+if [ $future -eq 1 ]
+then
+	# Get the Versions from VMware directly
+	apiout=`wget -O - 'https://my.vmware.com/channel/public/api/v1.0/products/getAllProducts?locale=en_US&isPrivate=false' 2>/dev/null`
+	sluglist=`echo $apiout | jq '.productCategoryList[].productList[].actions[0].target' | egrep '/vmware_vsphere/|/vmware_vrealize_suite/|/vmware_nsx_t_data_center/|/vmware_horizon/|/vmware_horizon_clients/'|sed 's/"//g'`
+	eucsluglist=`echo $apiout | jq '.productCategoryList[].productList[].actions[0].target' | egrep '/vmware_workstation_player/|/vmware_workspace_one/|/vmware_app_volumes/|/vmware_dynamic_environment_manager/'|sed 's/"//g'`
+	
+	for x in $sluglist
+	do
+		echo $x
+		xhdr=`echo $x|sed 's#./info/slug/#category=#' | sed 's#/#\&product=#'  | sed 's#/#\&version=#'`
+		modlist=`wget -O - "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${xhdr}&dlgType=PRODUCT_BINARY" 2>/dev/null | jq '.dlgEditionsLists[].name'|sed 's/"//g' | sed 's/ /_/g'`
+		verlist=`wget -O - "https://my.vmware.com/channel/public/api/v1.0/products/getProductHeader?locale=en_US&${xhdr}" 2>/dev/null|jq '.versions[].slugUrl'|sed 's/"//g'|sed 's#./info/slug/##'|sed 's#/#_#g'`
+		# array for easier access
+		echo $verlist
+		echo $modlist
+	done
+	exit
 fi
 
 echo "Getting vSphere ..."
@@ -231,4 +256,10 @@ then
 			break;
 		fi
 	done
+fi
+
+if [ $arm -eq 1 ]
+then
+	echo "ESXi on ARM"
+	$vsm -y --debug --patches --dlgroup ESXI-ARM beta
 fi

@@ -1,3 +1,5 @@
+10/07/20 - v2.0.2 of vsm_favorites.sh with ESXI-ARM support
+10/01/20 - v2.0.1 of vsm_favorites.sh with VCD options
 09/15/20 - v2.0 of vsm_favorites.sh with much more logic to get current +
 N previous versions.
 09/09/20 - Updated vsm_favorites.sh logic to contain loops by group
