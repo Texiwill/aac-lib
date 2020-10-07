@@ -44,6 +44,12 @@ MacOSX support exists:
 * Not for LinuxVSM 6.4.x
 
 ### Installation
+Run the following:
+
+	wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
+	./aac-base.install -u
+
+### Usage
 Run the script and if root access is required you will be asked to
 provide sudo credentials
 
