@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.4.8"
+VERSIONID="6.4.9"
 
 # args: stmt error
 function colorecho() {
@@ -498,23 +498,42 @@ function get_patch_list() {
 	then
 		# Patch List
 		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $patchUrl >& /dev/null
-		#wget $_PROGRESS_OPT -O $rcdir/_eol_patches.xhtml --load-cookies $cdir/ocookies.txt  --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $eolUrl >& /dev/null
-		#wget $_PROGRESS_OPT -O $rcdir/_locale_patches.xhtml --load-cookies $cdir/ocookies.txt  --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $localeUrl >& /dev/null
+		#mywget ${rcdir}/_userdata.xhtml $myvmware_template "" $mypatches_ref
+		#mywget ${rcdir}/_token.xhtml $myvmware_token "" $mypatches_ref
 		d=`date +"%s"`
+		dn=$(($(date +%s%N)/1000000))
 		grep SpryMedia_DataTables_patchResultTblVc_patch ${cdir}/ocookies.txt >& /dev/null
 		if [ $? -eq 1 ]
 		then
-			echo "my.vmware.com	FALSE	/group/vmware/	FALSE	$d	SpryMedia_DataTables_patchResultTblVc_patch	%7B%22iCreate%22%3A1596458287473%2C%22iStart%22%3A0%2C%22iEnd%22%3A0%2C%22iLength%22%3A10%2C%22sFilter%22%3A%22%22%2C%22sFilterEsc%22%3Atrue%2C%22aaSorting%22%3A%5B%20%5B1%2C%22desc%22%5D%5D%2C%22aaSearchCols%22%3A%5B%20%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%5D%2C%22abVisCols%22%3A%5B%20true%2Ctrue%2Ctrue%2Ctrue%2Cfalse%2Cfalse%2Cfalse%2Cfalse%2Ctrue%5D%7D" >> ${cdir}/ocookies.txt
+			e=`echo '{"iCreate":'${dn}',"iStart":0,"iEnd":0,"iLength":10,"sFilter":"","sFilterEsc":true,"aaSorting":[ [1,"desc"]],"aaSearchCols":[ ["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true]],"abVisCols":[ true,true,true,true,false,false,false,false,true]}'`
+			de=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$e" 2>/dev/null`)
+			echo "my.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTblVc_patch	${de}" >> ${cdir}/ocookies.txt
 		fi
 		grep SpryMedia_DataTables_patchResultTblGVc_patch ${cdir}/ocookies.txt >& /dev/null
 		if [ $? -eq 1 ]
 		then
-			echo "my.vmware.com	FALSE	/group/vmware/	FALSE	$d	SpryMedia_DataTables_patchResultTblGVc_patch	%7B%22iCreate%22%3A1596458287482%2C%22iStart%22%3A0%2C%22iEnd%22%3A0%2C%22iLength%22%3A10%2C%22sFilter%22%3A%22%22%2C%22sFilterEsc%22%3Atrue%2C%22aaSorting%22%3A%5B%20%5B1%2C%22desc%22%5D%5D%2C%22aaSearchCols%22%3A%5B%20%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%5D%2C%22abVisCols%22%3A%5B%20true%2Ctrue%2Ctrue%2Ctrue%2Cfalse%2Cfalse%2Cfalse%2Cfalse%2Ctrue%5D%7D" >> ${cdir}/ocookies.txt
+			e=`echo '{"iCreate":'${dn}',"iStart":0,"iEnd":0,"iLength":10,"sFilter":"","sFilterEsc":true,"aaSorting":[ [1,"desc"]],"aaSearchCols":[ ["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true]],"abVisCols":[ true,true,true,true,false,false,false,false,true]}'`
+			de=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$e" 2>/dev/null`)
+			echo "my.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTblGVc_patch	${de}" >> ${cdir}/ocookies.txt
 		fi
 		grep SpryMedia_DataTables_patchResultTbl5x_patch ${cdir}/ocookies.txt >& /dev/null
 		if [ $? -eq 1 ]
 		then
-			echo "my.vmware.com	FALSE	/group/vmware/	FALSE	$d	SpryMedia_DataTables_patchResultTbl5x_patch	%7B%22iCreate%22%3A1596477217092%2C%22iStart%22%3A0%2C%22iEnd%22%3A0%2C%22iLength%22%3A10%2C%22sFilter%22%3A%22%22%2C%22sFilterEsc%22%3Atrue%2C%22aaSorting%22%3A%5B%20%5B2%2C%22desc%22%5D%5D%2C%22aaSearchCols%22%3A%5B%20%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%5D%2C%22abVisCols%22%3A%5B%20true%2Ctrue%2Ctrue%2Ctrue%2Cfalse%2Cfalse%2Cfalse%2Ctrue%2Cfalse%2Cfalse%2Ctrue%5D%7D" >> ${cdir}/ocookies.txt
+			echo "my.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTbl5x_patch	%7B%22iCreate%22%3A${dn}2%2C%22iStart%22%3A0%2C%22iEnd%22%3A0%2C%22iLength%22%3A10%2C%22sFilter%22%3A%22%22%2C%22sFilterEsc%22%3Atrue%2C%22aaSorting%22%3A%5B%20%5B2%2C%22desc%22%5D%5D%2C%22aaSearchCols%22%3A%5B%20%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%5D%2C%22abVisCols%22%3A%5B%20true%2Ctrue%2Ctrue%2Ctrue%2Cfalse%2Cfalse%2Cfalse%2Ctrue%2Cfalse%2Cfalse%2Ctrue%5D%7D" >> ${cdir}/ocookies.txt
+		fi
+		grep SpryMedia_DataTables_patchResultTbl3x_patch ${cdir}/ocookies.txt >& /dev/null
+		if [ $? -eq 1 ]
+		then
+			e=`echo '{"iCreate":'${dn}',"iStart":0,"iEnd":0,"iLength":10,"sFilter":"","sFilterEsc":true,"aaSorting":[ [2,"desc"]],"aaSearchCols":[ ["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true]],"abVisCols":[ true,true,true,true,false,false,false,true,false,true]}'`
+			de=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$e" 2>/dev/null`)
+			echo "my.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTbl3x_patch	${de}" >> ${cdir}/ocookies.txt
+		fi
+		grep SpryMedia_DataTables_patchResultTbl4x_patch ${cdir}/ocookies.txt >& /dev/null
+		if [ $? -eq 1 ]
+		then
+			e=`echo '{"iCreate":'${dn}',"iStart":0,"iEnd":0,"iLength":10,"sFilter":"","sFilterEsc":true,"aaSorting":[ [2,"desc"]],"aaSearchCols":[ ["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true]],"abVisCols":[ true,true,true,true,false,false,false,true,false,true]}'`
+			de=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$e" 2>/dev/null`)
+			echo "my.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTbl4x_patch	${de}" >> ${cdir}/ocookies.txt
 		fi
 	fi
 }
@@ -526,6 +545,8 @@ function get_patch_url()
 	#eolUrl=`grep eolUrl: ${rcdir}/patch.html | cut -d\' -f 2`
 	searchUrl=`grep searchResultUrl: ${rcdir}/patch.html | cut -d\' -f 2`
 	#localeUrl=`grep localeSelectorUrl: ${rcdir}/patch.html | grep -v '//' | cut -d\' -f 2`
+	wget $_PROGRESS_OPT -O $rcdir/_userdata.xhtml --cookies=on --load-cookies $cdir/ocookies.txt --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $myvmware_template >& /dev/null
+	wget $_PROGRESS_OPT -O $rcdir/_token.xhtml --cookies=on --load-cookies $cdir/ocookies.txt --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $myvmware_token >& /dev/null
 	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ] && [ $oauth_err -eq 1 ]
 	then
 		rm -f $rcdir/_*patch*.xhtml >& /dev/null
@@ -1595,6 +1616,8 @@ myvmware_login='https://my.vmware.com/web/vmware/login'
 #myvmware_oauth='https://my.vmware.com/oam/server/auth_cred_submit'
 myvmware_oauth='https://auth.vmware.com/oam/server/auth_cred_submit?Auth-AppID=WMVMWR'
 myvmware_prod='https://my.vmware.com/channel/public/api/v1.0/products/getAllProducts?locale=en_US&isPrivate=true'
+myvmware_template='https://my.vmware.com/group/vmware/gateway/api/v1.0/navigation/template?locale=us&source=myvmware'
+myvmware_token='https://my.vmware.com/channel/public/api/v1.0/navigation/coveo/token'
 prod_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getProductHeader?locale=en_US&'
 related_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&'
 # referer https://my.vmware.com/group/vmware/downloads/details?downloadGroup=DLG&productId=.dlgList[].productId&rPId=.dlgList[].releasePackageId
@@ -2685,7 +2708,7 @@ function getFavPaths()
 {
 	# path version Grouping
 	#favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]\+_[0-9x]\+\|[0-9]\+\)_\(.*\)/\1 \2 \3/i'`)
-	favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]\+_[0-9x]\+\|[0-9]\+\)\($\|_[a-z].*\)/\1 \2 \3/i'`)
+	favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]\+[_0-9x]\+\|[0-9]\+\)\($\|_[a-z].*\)/\1 \2 \3/i'`)
 	# Get First Path Entry (productCategory)
 	pc=-1
 	for x in `jq ".productCategoryList[].name" _h_downloads.xhtml|sed 's/ /_/g'`
@@ -2704,29 +2727,43 @@ function getFavPaths()
 	if [ $pc -ge 0 ]
 	then
 		#pc=$(($pc-1))
-		shortPro=`echo ${prodCat[1]}|sed "s/${y}_//" |sed 's/[_-]/./g'`
+		shortPro=`echo ${prodCat[1]}|sed "s/${y}_//"|sed 's/[_-]/./g'`
+		# horizon clients have oddifies
+		#	need to strip out 'horizon$' but leave it as the missname
+		shortProFix=`echo ${prodCat[1]}|sed "s/${y}_//"|sed 's/Clients_horizon/Clients/'|sed 's/[_-]/./g'`
 		# Get Second path entry (productList)
-		productList=(`jq ".productCategoryList[$pc].productList[].name" _h_downloads.xhtml | grep -in "${shortPro}\"" | sed 's/:/ /'`)
+		productList=(`jq ".productCategoryList[$pc].productList[].name" _h_downloads.xhtml | grep -in "${shortProFix}\"" | sed 's/:/ /'`)
 		lr=${productList[0]}
 		# build up front layers
+		if [ Z"$lr" = Z"" ]
+		then
+			colorecho "Unknown Favorite $favorite" 1
+			exit
+		fi
 		if [ $lr -gt 0 ]
 		then
 			lr=$(($lr-1))
 			layer=("productCategoryList[$pc]")
 			layer+=("productList[$lr]")
 			layer+=("actions")
-			missname=`echo $shortPro | sed 's/\./_/g'`
+			missname=`echo ${shortProFix} | sed 's/\./_/g'`
+			missnamePro=`echo ${shortPro} | sed 's/\./_/g'`
 			choice=$missname
 			getLayerPkgs
 			layer=("productCategoryList[$pc]")
 			layer+=("productList[$lr]")
 			layer+=("$missname")
-			choice=${missname}_${favpaths[1]}
+			choice=`echo ${missnamePro}_${favpaths[1]}|sed 's/_$//'`
 			#choice=`echo $favorite | sed "s/${pName}_//"`
 			layer+=("$choice")
 			longReply=`echo $pkgs|sed 's/ /\n/g'|grep -in $choice |cut -d: -f1`
 			longReply=$(($longReply-1))
 			getLayerPkgs
+			# usually handled by createMenu
+			if [ ${#pkgs} -eq 0 ]
+			then
+				longReply=1
+			fi
 			# no mversions so why do favpaths 2
 			if [ Z"$mversions" != Z"" ]
 			then
