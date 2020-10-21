@@ -9,7 +9,7 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="2.0.2"
+VERSIONID="2.0.3"
 
 function usage () {
 	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--arm][-v|--version]"
@@ -130,7 +130,7 @@ done
 
 echo "Getting Horizon ..."
 c=0
-for x in 2006_Horizon 7_12_Horizon_7.12 7_11_Horizon_7.11 7_10_Horizon_7.10 7_9_Horizon_7.9 7_8_Horizon_7.8 7_7_Horizon_7.7 7_6_Horizon_7.6 7_5_Horizon_7.5 7_4_Horizon_7.4 7_3_Horizon_7.3 7_2_Horizon_7.2 7_0_Horizon_7.0 6_2_Horizon_6.2 6_1_Horizon_6.1
+for x in 2006_Horizon 7_13_Horizon_7.13 7_12_Horizon_7.12 7_11_Horizon_7.11 7_10_Horizon_7.10 7_9_Horizon_7.9 7_8_Horizon_7.8 7_7_Horizon_7.7 7_6_Horizon_7.6 7_5_Horizon_7.5 7_4_Horizon_7.4 7_3_Horizon_7.3 7_2_Horizon_7.2 7_0_Horizon_7.0 6_2_Horizon_6.2 6_1_Horizon_6.1
 do
 	c=$(($c+1))
 	$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Horizon_${x}_Enterprise
@@ -142,12 +142,12 @@ done
 
 echo "Getting Horizon Clients ..."
 c=0
-for x in 2006 5_0 4_0
+for x in 8 8_ 7_5_0 7_4_0
 do
 	c=$(($c+1))
 	for y in Windows Mac Linux Chrome
 	do
-		$vsm $mr -y --debug -q --patches --fav Desktop_End-User_Computing_VMware_Horizon_Clients_${x}_VMware_Horizon_Client_for_${y}
+		$vsm $mr -y --debug -q --patches --fav Desktop_End-User_Computing_VMware_Horizon_Clients_horizon_${x}_VMware_Horizon_Client_for_${y}
 	done
 	if [ $c -ge $nc ]
 	then
@@ -172,7 +172,7 @@ then
 	
 	echo "Getting Dynamic Environment Manager (DEM) ..."
 	c=0
-	for x in 2006_VMware_Dynamic_Environment_Manager_Enterprise 9_11 9_10 9_9 9_8 9_7 9_6 9_5 9_4 9_3 9_2
+	for x in 2009_VMware_Dynamic_Environment_Manager_Enterprise 2006_VMware_Dynamic_Environment_Manager_Enterprise 9_11 9_10 9_9 9_8 9_7 9_6 9_5 9_4 9_3 9_2
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Dynamic_Environment_Manager_${x}
@@ -223,7 +223,7 @@ if [ $vcd -eq 1 ]
 then
 	echo "Getting vCloud Director ..."
 	c=0
-	for x in 10_1 10_0 9_7 9_5 9_1 9_0 8_20 8_10
+	for x in 10_2 10_1 10_0 9_7 9_5 9_1 9_0 8_20 8_10
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_${x}_VMware_vCloud_Director
@@ -247,10 +247,22 @@ then
 
 	echo "Getting vCloud Director Object Storage Extension ..."
 	c=0
-	for x in 1_5 1_0
+	for x in 2_0 1_5 1_0
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_Object_Storage_Extension_${x}
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
+
+	echo "Getting vCloud Director App Launchpad..."
+	c=0
+	for x in 2_0 1_0
+	do
+		c=$(($c+1))
+		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_App_Launchpad_${x}
 		if [ $c -ge $nc ]
 		then
 			break;
