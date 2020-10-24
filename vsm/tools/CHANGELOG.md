@@ -1,3 +1,4 @@
+10/24/20 - v2.0.4 of vsm_favorites.sh with --everything --tanzu options
 10/20/20 - v2.0.3 of vsm_favorites.sh with Horizon Clients name change
 10/07/20 - v2.0.2 of vsm_favorites.sh with ESXI-ARM support
 10/01/20 - v2.0.1 of vsm_favorites.sh with VCD options
