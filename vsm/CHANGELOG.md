@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.5.0 - Fix for --fav bug related to *_x version naming convention
+
 6.4.9 - Fix for Horizon clients and --fav bug
 
 6.4.8 - Fix for --dlgroup ESXI-ARM beta

@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.4.9"
+VERSIONID="6.5.0"
 
 # args: stmt error
 function colorecho() {
@@ -2709,6 +2709,12 @@ function getFavPaths()
 	# path version Grouping
 	#favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]\+_[0-9x]\+\|[0-9]\+\)_\(.*\)/\1 \2 \3/i'`)
 	favpaths=(`echo $favorite | sed 's/\([a-z_]\+\)_\([0-9]\+[_0-9x]\+\|[0-9]\+\)\($\|_[a-z].*\)/\1 \2 \3/i'`)
+	# _x at end is usually part of a version, edge case due to lack of greedy
+	if [ Z"${favpaths[2]}" = Z"_x" ]
+	then
+		favpaths[2]=""
+		favpaths[1]="${favpaths[1]}_x"
+	fi
 	# Get First Path Entry (productCategory)
 	pc=-1
 	for x in `jq ".productCategoryList[].name" _h_downloads.xhtml|sed 's/ /_/g'`
