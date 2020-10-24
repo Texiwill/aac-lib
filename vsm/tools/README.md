@@ -22,7 +22,7 @@ space saving features. Note as of v2.0.0 of vsm_favorites.sh there are
 many new arguments to get current plus previous versions.
 
 ```
-vsm_favorites.sh [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][-v|--version]
+./vsm_favorites.sh [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--vsphere|--novsphere][-v|--version][--everything]
 	--latest - get the latest only (default)
 	--n+1 - get the latest + 1 previous version
 	--n+2 - get the latest + 2 previous versions
@@ -32,12 +32,18 @@ vsm_favorites.sh [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|
 	--n+6 - get the latest + 6 previous versions
 	--all - get everything
 	--euc - Add Additional EUC components
+	--vcd - Add VCD components
+	--tanzu - Add Tanzu components
+	--vsphere - Add vsphere components (default)
+	--novsphere - remove vsphere components from get
+	--arm - Add ESXi on ARM components
+	--everything - Add all components
 	-mr   - Clear 1st time use
 	-h|--help - this help
 	-s|--save - save get and --euc options to $HOME/.vsmfavsrc
 	-v|--version - version information
 
-Uses contents of $HOME/.vsmfavsrc to set Get and EUC options.
+Uses contents of $HOME/.vsmfavsrc to set Get and other options.
 ```
 
 ## vami.sh
