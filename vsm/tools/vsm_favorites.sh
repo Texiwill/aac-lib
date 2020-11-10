@@ -9,7 +9,7 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="2.0.2"
+VERSIONID="2.0.3"
 
 function usage () {
 	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--vsphere|--novsphere][-v|--version][--everything]"
@@ -254,6 +254,18 @@ then
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_Availability_${x}
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
+
+	echo "Getting vCloud Usage Meter..."
+	c=0
+	for x in 4_3 4_2
+	do
+		c=$(($c+1))
+		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_vCloud_Usage_Meter_${x}
 		if [ $c -ge $nc ]
 		then
 			break;

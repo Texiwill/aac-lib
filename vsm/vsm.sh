@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.5.0"
+VERSIONID="6.5.1"
 
 # args: stmt error
 function colorecho() {
@@ -905,7 +905,8 @@ function gotodir() {
 	if [ Z"$symdir" != Z"" ] && [ $symlink -eq 1 ]
 	then
 		dotdir=1
-		additional="Additional"
+		#additional="Additional"
+		additional=$nestdir
 		tdir="$symdir"
 		debugecho "DEBUG: tdir => $additional $tdir ($dotdir)"
 	fi
@@ -920,8 +921,11 @@ function gotodir() {
 		mkdir dlg_$ldir
 	fi
 	cd dlg_$ldir 
+
+	vtdir=`echo $ldir | sed 's/\([A-Z]\+\)[0-9x]\+/\1/'`
+
 	# do not make for Additional
-	if [ Z"$additional" != Z"base" ] && [ Z"$additional" != Z"Additional" ]
+	if [ Z"$additional" != Z"base" ] && [ Z"$additional" != Z"Additional" ] && [ Z"$vtdir" != Z"VMTOOLS" ]
 	then
 		if [ ! -e $additional ]
 		then
@@ -936,7 +940,7 @@ function gotodir() {
 	if [ $symlink -eq 1 ] && [ $dotdir -eq 1 ]
 	then
 		cd "$repo"
-		if [ ! -e dlg_$tdir ] || [ Z"$additional" = Z"Additional" ]
+		if [ ! -e dlg_$tdir ] || [ Z"$nestdir" != Z"" ]
 		then
 			mkdir -p $additional/dlg_$tdir
 		fi
@@ -952,7 +956,7 @@ function mksymlink() {
 		if  [ ! -e ${rdir}/${fn} ] && [ -e $fn ]
 		then 
 			echo -n "$fn: symlink "
-			if [ Z"$additional" = Z"Additional" ]
+			if [ Z"$additional" = Z"Additional" ] || [ Z"$vtdir" != Z"" ]
 			then
 				ln -s ../$additional/dlg_$tdir/$fn $rdir
 			else
@@ -2548,8 +2552,10 @@ function uag_test() {
 function getSymdir()
 {
 	# used for fake symlinks, mostly UAG
+	nestdir="Additional"
 	symdir=''
-	_v=`echo $choice | sed 's/[a-z-]\+-\([0-9]\+\.[0-9]\+\.[0-9]\).*/\1/' | sed 's/\.0$//' |sed 's/\.//g'`
+	_v=`echo $choice | sed 's/[A-Za-z-]\+-\([0-9]\+\.[0-9]\+\.[0-9]\).*/\1/' | sed 's/\.0$//' |sed 's/\.//g'`
+	_vt=`echo $choice | sed 's/[A-Za-z-]\+-\([0-9]\+\.[0-9]\+\.[0-9]\).*/\1/' |sed 's/\.//g'`
 	debugecho "$choice => $_v"
 	case "$choice" in
 		euc-access-point*)
@@ -2560,6 +2566,10 @@ function getSymdir()
 			;;
 		uagdeploy*)
 			uag_test $_v
+			;;
+		VMware-[tT]ools*)
+			symdir="VMTOOLS${_vt}"
+			nestdir="DriversTools"
 			;;
 	esac
 }
@@ -2613,6 +2623,7 @@ function getFile()
 		nr=$(($nr-1))
 		choice=${layer[$nr]}
 		symdir=''
+		nestdir=''
 	fi
 }
 
