@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.5.1"
+VERSIONID="6.5.2"
 
 # args: stmt error
 function colorecho() {
@@ -956,7 +956,7 @@ function mksymlink() {
 		if  [ ! -e ${rdir}/${fn} ] && [ -e $fn ]
 		then 
 			echo -n "$fn: symlink "
-			if [ Z"$additional" = Z"Additional" ] || [ Z"$vtdir" != Z"" ]
+			if [ Z"$additional" = Z"Additional" ] || [ Z"$vtdir" = Z"VMTOOLS" ]
 			then
 				ln -s ../$additional/dlg_$tdir/$fn $rdir
 			else
@@ -1182,7 +1182,7 @@ function finddeps {
 	#Packages required by Enterprise Linux and derivatives (including fedora)
 	el_checkdep="ncurses xorg-x11-server-Xvfb libXScrnSaver at-spi2-atk gcc-c++ make nss gtk3"
 	#Packages required by Fedora 
-	fedora_checkdep="$linux_checkdep $el_checkdep python2 python2-urllib3 mesa-libgbm alsa-lib"
+	fedora_checkdep="$linux_checkdep $el_checkdep python3 python3-urllib3 mesa-libgbm alsa-lib"
 	#Packages required by RedHat and derivatives 
 	redhat_checkdep="$linux_checkdep $el_checkdep python python-urllib3"
 	#Packages required by Debian and derivatives 
