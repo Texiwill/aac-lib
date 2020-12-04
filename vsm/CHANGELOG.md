@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.5.3 - Added --nocompress option
+
 6.5.2 - Fix for Fedora 33
 
 6.5.1 - Fix for VMTOOLS not going into DriversTools
