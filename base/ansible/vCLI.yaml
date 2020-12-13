@@ -156,7 +156,7 @@
 
      - name: Download the latest version of vCLI
        become: no
-       shell: "/usr/local/bin/vsm.sh -y -f --dlg CLI.*.x86_64.tar.gz | grep Local"
+       shell: "/usr/local/bin/vsm.sh -y -f --dlg 'SDK.*.x86_64.tar.gz' | grep Local"
        args:
          executable: /bin/bash
        register: vsm_local

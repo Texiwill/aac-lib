@@ -1,5 +1,5 @@
 ---
-# version: 1.0.2
+# version: 1.0.3
 
 - hosts: localhost
   become_user: root
@@ -26,7 +26,8 @@
          name:
            - hiera
          state: latest
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=')
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=') or
+             ansible_distribution == "Fedora"
 
      - name: Install fuseiso for RHEL8
        become: yes
@@ -66,10 +67,10 @@
          dest: "{{ansible_user_dir}}/.ov-defaults"
          mode: 0600
 
-     - name: Check if Credential exists
-       stat:
-         path: "/tmp/vsm.{{ ansible_env.USER }}/.credstore"
-       register: stat_result
+     #- name: Check if Credential exists
+     # stat:
+     #   path: "/tmp/vsm.{{ ansible_env.USER }}/.credstore"
+     # register: stat_result
 
      - name: Download the latest version of ovftool
        become: no
@@ -77,11 +78,20 @@
        args:
          executable: /bin/bash
        register: vsm_local
-       when: stat_result.stat.exists
+     # when: stat_result.stat.exists
 
      - name: Get Local Filename
        set_fact:
          file_local: "{{ vsm_local.stdout | regex_replace('^Local:(..)','\\1') }}"
+
+     - name: Get Local gunzip name
+       set_fact:
+         gzip_local: "{{ file_local | regex_replace('^(..).gz','\\1') }}"
+
+    #- name: Uncompress Local Filename
+    #  become: no
+    #  shell: "gunzip {{ file_local }}"
+    #  when: "{{gzip_local}}" != "{{file_local}}"
 
      - name: Debug
        debug:
@@ -94,17 +104,23 @@
 
      - name: Installing ovftool
        become: yes
-       shell: "{{file_local}} --eulas-agreed --required"
+       shell: "{{gzip_local}} --eulas-agreed --required"
        args:
          executable: /bin/bash
        when: ansible_os_family != "VMware Photon OS"
 
      - name: Installing ovftool Photon
        become: yes
-       shell: "{{file_local}} --eulas-agreed --required -s vmware-installer initdir /etc/rc.d/init.d"
+       shell: "{{gzip_local}} --eulas-agreed --required -s vmware-installer initdir /etc/rc.d/init.d"
        args:
          executable: /bin/bash
        when: ansible_os_family == "VMware Photon OS"
+
+    #- name: Compress Local Filename
+    #  become: no
+    #  shell: "gzip {{ file_local }}"
+    #  when: "{{gzip_local}}" != "{{file_local}}"
+
       
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

@@ -18,7 +18,8 @@
          url: https://rpm.nodesource.com/setup_14.x
          dest: /tmp
          mode: 0750
-       when: ansible_os_family == "RedHat"
+       when: (ansible_os_family == "RedHat") and
+             (ansible_distribution != "Fedora")
 
      - name: Get Deb NodeJS
        get_url:
@@ -33,7 +34,8 @@
        args:
          executable: /bin/bash
        when: (ansible_distribution != "MacOSX") and
-             (ansible_os_family != "VMware Photon OS")
+             (ansible_os_family != "VMware Photon OS") and
+             (ansible_distribution != "Fedora")
 
      - name: install RHEL < 8 dependencies
        become: yes
@@ -67,8 +69,9 @@
 
      - name: Need Power Tools for RHEL 8
        become: yes
-       shell: "yum-config-manager --enable PowerTools"
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("7",">")
+       shell: "yum-config-manager --enable powertools"
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("7",">") and
+             ansible_distribution != "Fedora"
 
      - name: install the RHEL >= 8 dependencies
        become: yes
@@ -94,7 +97,34 @@
            - mesa-libgbm
            - alsa-lib
          state: latest
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("7",">")
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("7",">") and
+             ansible_distribution != "Fedora"
+
+     - name: install the Fedora dependencies
+       become: yes
+       package:
+         name:
+           - wget
+           - libxml2
+           - ncurses
+           - bc
+           - jq
+           - sharutils
+           - python3
+           - python3-urllib3
+           - nodejs
+           - xorg-x11-server-Xvfb
+           - libXScrnSaver
+           - at-spi2-atk
+           - gcc
+           - gcc-c++
+           - make
+           - nss
+           - gtk3
+           - mesa-libgbm
+           - alsa-lib
+         state: latest
+       when: ansible_distribution == "Fedora"
 
      - name: install the Debian dependencies for LinuxVSM
        become: yes

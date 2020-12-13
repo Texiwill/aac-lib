@@ -1,5 +1,5 @@
 ---
-# version: 1.0.5
+# version: 1.0.6
 
 - hosts: localhost
   gather_facts: true
@@ -13,12 +13,29 @@
 
 - hosts: localhost
   tasks:
-     - name: Set Facts RHEL
+     - name: Set Facts RHEL < 8
        set_fact: 
           tgtdir: "/etc/yum.repos.d"
           myos: "rhel"
           prod: "repo"
+          vers: "{{ansible_distribution_major_version}}"
        when: ansible_os_family == "RedHat"
+
+     - name: Set Facts RHEL 8
+       set_fact: 
+          tgtdir: "/etc/yum.repos.d"
+          myos: "rhel"
+          prod: "repo"
+          vers: "7"
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=')
+
+     - name: Set Facts Fedora
+       set_fact: 
+          tgtdir: "/etc/yum.repos.d"
+          myos: "rhel"
+          prod: "repo"
+          vers: "7"
+       when: ansible_distribution == "Fedora"
 
      - name: Set Facts Debian
        set_fact: 
@@ -30,25 +47,18 @@
      - name: Download the latest PowerShell Repo
        become: yes
        get_url:
-         url: "https://packages.microsoft.com/config/{{myos}}/{{ansible_distribution_major_version}}/prod.{{prod}}"
+         url: "https://packages.microsoft.com/config/{{myos}}/{{vers}}/prod.{{prod}}"
          dest: "{{tgtdir}}/microsoft.{{prod}}"
          mode: 0644
-       when: ansible_os_family == "RedHat"
-
-     - name: Download the latest PowerShell Repo RHEL 8
-       become: yes
-       get_url:
-         url: "https://packages.microsoft.com/config/{{myos}}/7/prod.{{prod}}"
-         dest: "{{tgtdir}}/microsoft.{{prod}}"
-         mode: 0644
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=')
+       when: (ansible_os_family == "RedHat")
 
      - name: Get Microsoft Key
        get_url:
          url: "https://packages.microsoft.com/keys/microsoft.asc"
          dest: "/tmp/microsoft.key"
          mode: 0600
-       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<'))
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<')) or
+             (ansible_distribution == "Fedora")
 
      - name: Install Key
        become: yes
@@ -84,6 +94,13 @@
        args:
          executable: /bin/bash
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
+
+     - name: Install Microsoft Signature Key Fedora
+       become: yes
+       shell: rpm --import /tmp/microsoft.key
+       args:
+         executable: /bin/bash
+       when: ansible_distribution == "Fedora"
 
      - name: Install powershell Debian/Ubuntu 18/RHEL
        become: yes

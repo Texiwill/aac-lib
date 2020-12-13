@@ -1,5 +1,5 @@
 ---
-# version: 1.0.5
+# version: 1.0.6
 
 - hosts: localhost
   gather_facts: true
@@ -43,7 +43,8 @@
            - golang
          state: latest
        when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')) or
-             (ansible_os_family == "Debian" and ansible_distribution_major_version is version("9",'!='))
+             (ansible_os_family == "Debian" and ansible_distribution_major_version is version("9",'!=')) or
+             (ansible_distribution == "Fedora")
 
      - name: install golang RHEL/CentOS > 7
        become: yes
@@ -51,7 +52,8 @@
          name:
            - go-toolset
          state: latest
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>')) and
+             (ansible_distribution != "Fedora")
 
      - name: Download Go for Debian 9
        get_url:

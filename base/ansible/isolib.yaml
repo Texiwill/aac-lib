@@ -1,0 +1,50 @@
+---
+# version: 1.0.8
+
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- hosts: localhost
+  tasks:
+     - name: add Negativo17 GPG Keys
+       become: yes
+       rpm_key:
+         state: present
+         key: https://negativo17.org/repos/RPM-GPG-KEY-slaanesh
+
+     - name: install Schilling Repo
+       become: yes
+       package:
+         name:
+           - https://negativo17.org/repos/fedora-cdrtools.repo
+         state: latest
+       when: ansible_distribution != "MacOSX"
+
+     - name: install dependencies
+       become: yes
+       package:
+         name:
+           - dvd+rw-tools
+           - udftools
+           - cdrecord
+           - mkisofs
+           - cdda2wav
+         state: latest
+       when: ansible_distribution != "MacOSX"
+
+     - name: Download the latest version of isolib.sh
+       get_url:
+         url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/isolib/isolib.sh
+         dest: "{{ansible_user_dir}}/bin"
+         mode: 0755
+
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...

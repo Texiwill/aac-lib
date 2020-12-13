@@ -4,6 +4,7 @@
 - hosts: localhost
   gather_facts: true
   become_user: root
+
   tasks:
      - name: install system updates for redhat systems
        become: yes
@@ -37,6 +38,7 @@
          - ntp
          - git
          - python-pip
+         - python3-pip
          - python-pexpect
          - expect
        when: ansible_os_family == "VMware Photon OS"
@@ -49,7 +51,8 @@
            - git
            - python2-pip
          state: latest
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>')
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>') and
+             ansible_distribution != "Fedora"
 
      - name: install the other required dependencies Ubuntu
        become: yes
@@ -71,7 +74,8 @@
            - python3-pip
          state: latest
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) or
-             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>'))
+             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>')) or
+             (ansible_distribution == "Fedora")
 
      - name: install the other required dependencies Debian
        become: yes
@@ -86,7 +90,9 @@
        pip:
          name: pip
          state: latest
-       when: ansible_distribution != "MacOSX"
+       when: (ansible_distribution != "MacOSX") and
+             (ansible_os_family != "VMware Photon OS") and
+             (ansible_os_family != "RedHat")
 
      - name: Install pexpect
        become: yes
