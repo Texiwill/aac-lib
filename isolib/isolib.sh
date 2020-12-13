@@ -1,7 +1,13 @@
 #!/bin/bash
+# vim: set tabstop=4 shiftwidth=4:
 #
-# Copyright (c) AstroArch Consulting, Inc.  2016-2018
+# Copyright (c) AstroArch Consulting, Inc.  2018-2020
 # All rights reserved
+#
+# A Linux ISO Library creator
+#
+# Requires:
+# Joerg Schilling cdrecord
 
 device=/dev/sr0
 if [ X"$1" = X"--device" ]
@@ -135,10 +141,10 @@ then
 
 		### Get Media info
 		dvd+rw-mediainfo $device 2>/dev/null > /tmp/bd$$
-		grep "no media" /tmp/bd$$ >& /dev/null
-		if [ $? = 0 ]
+		egrep "no media" /tmp/bd$$ >& /dev/null
+		if [ $? -eq 0 ]
 		then
-			echo "Missing Media"
+			echo "Missing/Bad Media"
 			exit
 		fi
 		sz=`grep 32h /tmp/bd$$ | tail -1 | awk -F= '{print $2}'`
@@ -146,6 +152,11 @@ then
 		rm /tmp/bd$$
 
 		echo "Creating $sz image with $bytes addressable"
+		if [ Z"$sz" = Z"" ]
+		then
+			echo "Cannot read disk"
+			exit
+		fi
 
 		### Current Count of Disks
 		cnt=`ls [A-Z]* | wc -l`
@@ -189,7 +200,7 @@ then
 				then
 					mkdir -p "/mnt/$fn/$din"
 				fi
-				(cd $2; cp "$ffn" "/mnt/$fn/$ffn" )
+				(cd $2; cp -P "$ffn" "/mnt/$fn/$ffn" )
 
 				bytesleft=$((bytesleft - $fsz))
 				echo $bytesleft
@@ -200,16 +211,21 @@ then
 		sudo rmdir /mnt/ISO_Library*
 		sudo umount /mnt/$fn
 
-		### Need to use Joerg Schilling's version
-		if [ -f /usr/local/bin/cdrecord ]
+		which cdrecord 2>& /dev/null
+		if [ $? -eq 1 ]
 		then
-			/usr/local/bin/cdrecord --version |grep ProBD > /dev/null
-			if [ $? -eq 0 ]
-			then
-				/usr/local/bin/cdrecord -v -dao driveropts=burnfree dev=$device /tmp/${fn}.udf
-			else
-				echo "Cannot burn need Cdrecord-ProDVD-ProBD version"
-			fi
+			echo "Joerg Schilling's cdrecord is required"
+			exit
+		fi
+
+		### Need to use Joerg Schilling's version
+		cdrecord --version |grep ProBD > /dev/null
+		if [ $? -eq 0 ]
+		then
+			cdrecord -v -dao driveropts=burnfree dev=$device /tmp/${fn}.udf
+		else
+			echo "Cannot burn need Cdrecord-ProDVD-ProBD version"
+			echo "The Joerg Schilling version"
 		fi
 		#growisofs -Z $device=/tmp/ISO_Library_18 -overburn -V $fn
 		#if [ -f /usr/bin/nerocmd ]
