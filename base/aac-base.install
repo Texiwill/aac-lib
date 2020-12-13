@@ -219,6 +219,18 @@ function call_playbook() {
 	fi
 	if [ Z"$choice" != Z"" ]
 	then
+		#fixcompress=0
+		# for these we need to handle an existing .vsmrc file 
+		# compress=1 could mess up our approach
+		#grep "compress=1" $HOME/.vsmrc >& /dev/null
+		#if [ $? -eq 0 ]
+		#then
+		#	# change the compress line to be compress=0
+		#	fixcompress=1
+		#	cp $HOME/.vsmrc $HOME/.vsmrc.orig
+		#	sed 's/compress=1/compress=0/' $HOME/.vsmrc > $HOME/.vsmrc.base
+		#	mv $HOME/.vsmrc.base $HOME/.vsmrc
+		#fi
 		if [ Z"$choice" = Z"vCLI" ] || [ Z"$choice" = Z"ovftool" ] || [ Z"$choice" = Z"LinuxVMA" ]
 		then
 			# create the LinuxVSM credstore since we use it
@@ -226,6 +238,10 @@ function call_playbook() {
 			handlecredstore
 		fi
 		ansible-playbook $askpass $vansible $extraargs ansible/${choice}.yaml
+		#if [ $fixcompress -eq 1 ]
+		#then
+		#	mv $HOME/.vsmrc.orig $HOME/.vsmrc
+		#fi
 	fi
 }
 
@@ -364,7 +380,7 @@ function tz() {
 }
 
 function epel() {
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ]
 	then
 		echo "Checking for EPEL repository"
 		checkdep epel-release
