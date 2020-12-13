@@ -94,6 +94,13 @@
              (ansible_os_family != "VMware Photon OS") and
              (ansible_os_family != "RedHat")
 
+     - name: Upgrade PIP el7
+       become: yes
+       pip:
+         name: pip
+         state: latest
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<'))
+
      - name: Install pexpect
        become: yes
        pip:
