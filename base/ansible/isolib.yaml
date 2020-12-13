@@ -1,5 +1,5 @@
 ---
-# version: 1.0.8
+# version: 1.0.0
 
 - hosts: localhost
   gather_facts: true

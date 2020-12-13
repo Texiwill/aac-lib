@@ -38,10 +38,10 @@ Full support for LinuxVMA/LinuxVSM is available for:
 * PhotonOS 3 - requires creating an account and installing sudo to use
 
 WSL2 also works per the community
-* Not for LinuxVSM 6.4.x
+* Now for LinuxVSM 6.4.x
 
 MacOSX support exists:
-* Not for LinuxVSM 6.4.x
+* Now for LinuxVSM 6.4.x
 
 ### Installation
 Run the following:
@@ -101,7 +101,7 @@ chmod +x aac-base.install
 #### Base - 2.x
 Installs the base AAC setup. This is mostly setting timezones and ensuring wget and ansible are availabile
 
-#### powercli - 1.0.5
+#### powercli - 1.0.6
 Installs Powershell and VMware PowerCLI: run command 'powercli' to start
 
 #### vcli - 1.0.3
@@ -110,18 +110,18 @@ Installs vSphere CLI using LinuxVSM to download the latest file.
 #### dcli - 1.0.2
 Installs Datacenter CLI (DCLI)
 
-#### ovftool - 1.0.2
+#### ovftool - 1.0.3
 Installs ovftool using LinuxVSM to download the latest file.
 
-#### LinuxVMA - 1.0.2
+#### LinuxVMA - 1.0.3
 Installs LinuxVSM, PowerCLI, ov-import.sh, ovftool, DCLI, and vcli to create
 a Linux vSphere Management Appliance.  PowerCLI includes Powershell,
 PowerCLI, PowerNSX, and PowerVRA.
 
-#### LinuxVSM - 1.0.5
+#### LinuxVSM - 1.0.8
 Install a port of VMware's Software Manager to Linux - LinuxVSM.
 
-#### vctui - 1.0.3
+#### vctui - 1.0.6
 Installs the vctui tool for connecting to vCenter.
 
 #### dropbox - 1.0.0
@@ -129,6 +129,12 @@ Installs the Docker Container version of Dropbox for system wide use
 
 #### dnscrypt - 1.0.0
 Installs DNSCrypt Proxy 2.x
+
+#### isolib - 1.0.0
+Installs isolib.sh 
+
+#### LinuxVDI - 1.0.0
+Linux based VDI install
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
