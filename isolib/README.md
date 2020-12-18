@@ -43,6 +43,8 @@ Email elh at astroarch dot com for assistance or if you want to check
 for more items.
 
 ### ChangeLog
+1.2.0 - Upgrades for Fedora 33
+
 1.0.2 - Ignored ASCII trademarks in uncompress/bad format list
 
 1.0.1 - Added support for .enc (encrypted files) which are already compressed and support to output the version # as part of the --help argument.

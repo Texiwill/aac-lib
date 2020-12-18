@@ -1,13 +1,15 @@
 #!/bin/bash
 # vim: set tabstop=4 shiftwidth=4:
 #
-# Copyright (c) AstroArch Consulting, Inc.  2018-2020
+# Copyright (c) AstroArch Consulting, Inc.  2017-2020
 # All rights reserved
 #
-# A Linux ISO Library creator
+# A Linux ISO Library manager and BD burner
 #
 # Requires:
 # Joerg Schilling cdrecord
+
+VERSION="1.2.0"
 
 device=/dev/sr0
 if [ X"$1" = X"--device" ]
@@ -84,7 +86,7 @@ then
 
 			### determine if top level directories exist and if not
 			### add to ignore list
-			cat .difflibrary  | awk -F\/ '{printf "ls %s >& /dev/null; if [ $? != 0 ]; then echo %s; fi\n",$2,$2}' | uniq > /tmp/iiso$$
+			cat .difflibrary  | awk -F\/ '{printf "ls -N %s >& /dev/null; if [ $? != 0 ]; then echo %s; fi\n",$2,$2}' | uniq > /tmp/iiso$$
 			rm .ignlibrary .dolibrary
 			xray=`(cd $2; sh /tmp/iiso$$)`
 			dray=""
@@ -115,12 +117,12 @@ then
 			echo "	computing size ... "
 
 			### Size of files in list and any missing
-			awk '{printf "ls -l \"%s\"\n",$0}' .baklist > /tmp/biso$$
+			awk '{printf "ls -Nl \"%s\"\n",$0}' .baklist > /tmp/biso$$
 			(cd $2; sh /tmp/biso$$ 2> ~/.isolibrary/.missinglist| awk '{sum=sum+$5} END {sum=sum/1000/1024/1024; cnt=sum/98; printf "	%f GB / %s Discs",sum,cnt}')
 			echo ""
 			rm /tmp/biso$$
 
-			cat .missinglist | sed 's/ls: cannot access //' | sed 's/: No such file or directory//' > .misslist
+			cat .missinglist | sed 's/ls: cannot access //' | sed 's/: No such file or directory//' | sed "s/^'//" | sed "s/'$//" > .misslist
 
 			### The true list of files
 			
@@ -159,7 +161,7 @@ then
 		fi
 
 		### Current Count of Disks
-		cnt=`ls [A-Z]* | wc -l`
+		cnt=`ls -N [A-Z]* | wc -l`
 		cnt=$((cnt + 1))
 		fn="ISO_Library_$cnt"
 
@@ -170,8 +172,9 @@ then
 			exit;
 		fi
 		### Size of files in list and any missing
-		awk '{printf "ls -l \"%s\"\n",$0}' .backup > /tmp/biso$$
+		awk '{printf "ls -Nl \"%s\"\n",$0}' .backup > /tmp/biso$$
 		(cd $2; sh /tmp/biso$$) > .itinerary
+
 		rm /tmp/biso$$ 2>&1 | grep -v "No such file or directory"
 		if [ $? = 0 ]
 		then
@@ -247,6 +250,7 @@ fi
 if [ X"$1" = X"--help" ]
 then
 	echo "Usage: $0 [--device <devname>] [--rebuild|--compile <src directory>|--prepare <src directory>|--create <src directory>|--help]"
+	echo "Version: $VERSION"
 	echo "use --rebuild to rebuild from Discs"
 	echo "Best to use --prepare then --compile then --create"
 fi
