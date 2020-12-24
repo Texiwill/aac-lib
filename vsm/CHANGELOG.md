@@ -11,6 +11,9 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.5.4 - Fix for writability test for NFS mounts ('test -w' reported
+not-writable but the user could write.)
+
 6.5.3 - Added --nocompress option
 
 6.5.2 - Fix for Fedora 33

@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.5.3"
+VERSIONID="6.5.4"
 
 # args: stmt error
 function colorecho() {
@@ -1476,17 +1476,27 @@ then
 fi
 
 # Check Cdir
-if [ ! -w $cdir ]
+touch $cdir/.test >& /dev/null
+if [ $? -eq 1 ]
 then
 	colorecho "$cdir is not writable by ${xu}." 1
 	exit
 fi
+if [ -e "${cdir}/.test" ]
+then
+	rm $cdir/.test
+fi
 
 # Check Repo
-if [ ! -w "$repo" ]
+touch $repo/.test >& /dev/null
+if [ $? -eq 1 ]
 then
 	colorecho "$repo is not writable by ${xu}." 1
 	exit
+fi
+if [ -e "${repo}/.test" ]
+then
+	rm $repo/.test
 fi
 
 if [ $noheader -eq 0 ]
