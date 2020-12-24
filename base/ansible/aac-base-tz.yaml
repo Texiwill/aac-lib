@@ -1,5 +1,5 @@
 ---
-# version: 1.0.6
+# version: 1.0.7
 
 - hosts: localhost
   gather_facts: true
@@ -233,7 +233,8 @@
        service:
          name: "{{set_time}}"
          enabled: yes
-       when: ansible_distribution != "MacOSX" and "microsoft" not in ansible_kernel
+       when: (aac_base_tz is defined) and 
+             (ansible_distribution != "MacOSX" and "microsoft" not in ansible_kernel)
 
      - name: Stop postfix
        become: yes
