@@ -1,5 +1,5 @@
 ---
-# version: 1.0.7
+# version: 1.0.8
 
 - hosts: localhost
   gather_facts: true
@@ -120,6 +120,10 @@
        when: (ansible_distribution != "MacOSX") and
              (ansible_os_family != "VMware Photon OS")
 
+     - name: Service Facts
+       service_facts:
+       when: ansible_distribution != "MacOSX"
+
      - name: Package Facts MacOSX
        package_facts:
          manager: "rpm"
@@ -206,6 +210,13 @@
          set_time: chronyd
        when: ('"chrony" in ansible_facts.packages') and
              (ansible_os_family != "VMware Photon OS")
+     
+     - name: Set Facts
+       set_fact:
+         set_time: chrony
+       when: (ansible_facts.services["chronyd.service"] is defined) and
+             (ansible_facts.services["chronyd.service"].status == "alias") and
+             (ansible_facts.services["chrony.service"] is defined)
 
      - name: Set Facts
        set_fact:
