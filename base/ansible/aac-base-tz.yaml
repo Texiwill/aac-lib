@@ -120,8 +120,17 @@
        when: (ansible_distribution != "MacOSX") and
              (ansible_os_family != "VMware Photon OS")
 
+# Switch back to 'service_facts:' after Ansible is fixed for Ubuntu, 
+# for now do our own.
+     - name: Raw Service Data
+       shell: /usr/bin/systemctl list-unit-files |grep -v "unit files listed" |egrep -v '^$'
+       register: systemd_facts
+       when: ansible_distribution != "MacOSX"
+
      - name: Service Facts
-       service_facts:
+       set_fact: 
+          service_facts: "{{ service_facts|default({}) | combine( {item.split()[0]: {'name': item.split()[0],'status': item.split()[1]}} ) }}"
+       with_items: "{{ systemd_facts.stdout.split('\n') }}"
        when: ansible_distribution != "MacOSX"
 
      - name: Package Facts MacOSX
@@ -132,7 +141,6 @@
      - name: Package Facts Photon
        become: yes
        shell: tdnf list | cut -d\. -f1
-       register: packages_facts
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Change umask for Photon
@@ -214,9 +222,9 @@
      - name: Set Facts
        set_fact:
          set_time: chrony
-       when: (ansible_facts.services["chronyd.service"] is defined) and
-             (ansible_facts.services["chronyd.service"].status == "alias") and
-             (ansible_facts.services["chrony.service"] is defined)
+       when: (service_facts["chronyd.service"] is defined) and
+             (service_facts["chronyd.service"].status == "alias") and
+             (service_facts["chrony.service"] is defined)
 
      - name: Set Facts
        set_fact:
