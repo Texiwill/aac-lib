@@ -1,5 +1,5 @@
 ---
-# version: 1.0.8
+# version: 1.0.9
 
 - hosts: localhost
   gather_facts: true
@@ -120,18 +120,20 @@
        when: (ansible_distribution != "MacOSX") and
              (ansible_os_family != "VMware Photon OS")
 
-# Switch back to 'service_facts:' after Ansible is fixed for Ubuntu, 
+# Switch back to 'service_facts:' after Ansible is fixed for Ubuntu 20, 
 # for now do our own.
      - name: Raw Service Data
-       shell: /usr/bin/systemctl list-unit-files |grep -v "unit files listed" |egrep -v '^$'
+       shell: systemctl list-unit-files |grep -v "unit files listed" |egrep -v '^$'
        register: systemd_facts
-       when: ansible_distribution != "MacOSX"
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) and
+             ("microsoft" not in ansible_kernel)
 
      - name: Service Facts
        set_fact: 
           service_facts: "{{ service_facts|default({}) | combine( {item.split()[0]: {'name': item.split()[0],'status': item.split()[1]}} ) }}"
        with_items: "{{ systemd_facts.stdout.split('\n') }}"
-       when: ansible_distribution != "MacOSX"
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) and
+             ("microsoft" not in ansible_kernel)
 
      - name: Package Facts MacOSX
        package_facts:
@@ -222,7 +224,9 @@
      - name: Set Facts
        set_fact:
          set_time: chrony
-       when: (service_facts["chronyd.service"] is defined) and
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) and
+             ("microsoft" not in ansible_kernel) and
+             (service_facts["chronyd.service"] is defined) and
              (service_facts["chronyd.service"].status == "alias") and
              (service_facts["chrony.service"] is defined)
 
