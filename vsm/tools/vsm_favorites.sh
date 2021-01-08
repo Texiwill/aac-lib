@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) AstroArch Consulting, Inc. 2018-2020
+# Copyright (c) AstroArch Consulting, Inc. 2018-2021
 # All rights reserved
 #
 # vim: tabstop=4 shiftwidth=4
@@ -9,7 +9,7 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="2.0.3"
+VERSIONID="2.0.4"
 
 function usage () {
 	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--vsphere|--novsphere][-v|--version][--everything]"
@@ -159,7 +159,7 @@ if [ $euc -eq 1 ]
 then
 	echo "Getting Horizon ..."
 	c=0
-	for x in 2006_Horizon 7_13_Horizon_7.13 7_12_Horizon_7.12 7_11_Horizon_7.11 7_10_Horizon_7.10 7_9_Horizon_7.9 7_8_Horizon_7.8 7_7_Horizon_7.7 7_6_Horizon_7.6 7_5_Horizon_7.5 7_4_Horizon_7.4 7_3_Horizon_7.3 7_2_Horizon_7.2 7_0_Horizon_7.0 6_2_Horizon_6.2 6_1_Horizon_6.1
+	for x in 2012_Horizon 2006_Horizon 7_13_Horizon_7.13 7_12_Horizon_7.12 7_11_Horizon_7.11 7_10_Horizon_7.10 7_9_Horizon_7.9 7_8_Horizon_7.8 7_7_Horizon_7.7 7_6_Horizon_7.6 7_5_Horizon_7.5 7_4_Horizon_7.4 7_3_Horizon_7.3 7_2_Horizon_7.2 7_0_Horizon_7.0 6_2_Horizon_6.2 6_1_Horizon_6.1
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Horizon_${x}_Enterprise
@@ -250,7 +250,7 @@ then
 
 	echo "Getting vCloud Director Availability ..."
 	c=0
-	for x in 4_0 3_5_vCloud_Availability_3.5_Appliance_for_Cloud_Providers 3_0_vCloud_Availability_3.0_Appliance_for_Cloud_Providers
+	for x in 4_1 4_0 3_5_vCloud_Availability_3.5_Appliance_for_Cloud_Providers 3_0_vCloud_Availability_3.0_Appliance_for_Cloud_Providers
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_Availability_${x}
