@@ -1,7 +1,7 @@
 #!/bin/bash
 # vim: set tabstop=4 shiftwidth=4:
 #
-# Copyright (c) AstroArch Consulting, Inc.  2017-2020
+# Copyright (c) AstroArch Consulting, Inc.  2017-2021
 # All rights reserved
 #
 # A Linux version of VMware Software Manager (VSM) with some added intelligence
@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.5.4"
+VERSIONID="6.5.5"
 
 # args: stmt error
 function colorecho() {
@@ -1186,6 +1186,7 @@ function finddeps {
 	fedora_checkdep="$linux_checkdep $el_checkdep python3 python3-urllib3 mesa-libgbm alsa-lib"
 	#Packages required by RedHat and derivatives 
 	redhat_checkdep="$linux_checkdep $el_checkdep python python-urllib3"
+	redhat8_checkdep="$linux_checkdep $el_checkdep python2 python2-urllib3"
 	#Packages required by Debian and derivatives 
 	debian_checkdep="$linux_checkdep python python-urllib3 libxml2-utils ncurses-base xvfb libnss3 libgtk-3-0 libgbm1 libasound2 libxss1"
 	ubuntu20_checkdep="$linux_checkdep python3 python3-urllib3 libxml2-utils ncurses-base xvfb libgtk-3-0 g++ libnss3 libgbm1 libxss1 make"
@@ -1212,7 +1213,7 @@ function finddeps {
 		if [ $myver -ge 8 ]
 		then
 			python="python2"
-			loopdeps "$fedora_checkdep"
+			loopdeps "$redhat8_checkdep"
 		else
 			loopdeps "$redhat_checkdep"
 		fi
