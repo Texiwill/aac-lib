@@ -9,7 +9,7 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="2.0.4"
+VERSIONID="2.0.6"
 
 function usage () {
 	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--vsphere|--novsphere][-v|--version][--everything]"
@@ -20,8 +20,8 @@ function usage () {
 	echo "	--n+4 - get the latest + 4 previous versions"
 	echo "	--n+5 - get the latest + 5 previous versions"
 	echo "	--n+6 - get the latest + 6 previous versions"
-	echo "	--all - get everything"
-	echo "	--euc - Add Additional EUC components"
+	echo "	--all - get all versions"
+	echo "	--euc - Add EUC components"
 	echo "	--vcd - Add VCD components"
 	echo "	--tanzu - Add Tanzu components"
 	echo "	--vsphere - Add vsphere components (default)"
@@ -159,7 +159,7 @@ if [ $euc -eq 1 ]
 then
 	echo "Getting Horizon ..."
 	c=0
-	for x in 2012_Horizon 2006_Horizon 7_13_Horizon_7.13 7_12_Horizon_7.12 7_11_Horizon_7.11 7_10_Horizon_7.10 7_9_Horizon_7.9 7_8_Horizon_7.8 7_7_Horizon_7.7 7_6_Horizon_7.6 7_5_Horizon_7.5 7_4_Horizon_7.4 7_3_Horizon_7.3 7_2_Horizon_7.2 7_0_Horizon_7.0 6_2_Horizon_6.2 6_1_Horizon_6.1
+	for x in 2103_Horizon 2012_Horizon 2006_Horizon 7_13_Horizon_7.13 7_12_Horizon_7.12 7_11_Horizon_7.11 7_10_Horizon_7.10 7_9_Horizon_7.9 7_8_Horizon_7.8 7_7_Horizon_7.7 7_6_Horizon_7.6 7_5_Horizon_7.5 7_4_Horizon_7.4 7_3_Horizon_7.3 7_2_Horizon_7.2 7_0_Horizon_7.0 6_2_Horizon_6.2 6_1_Horizon_6.1
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Horizon_${x}_Enterprise
