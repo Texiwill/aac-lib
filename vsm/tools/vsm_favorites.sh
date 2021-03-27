@@ -223,7 +223,7 @@ then
 
 	echo "Getting VMware Workstation Player ..."
 	c=0
-	for x in 16_0_VMware_Workstation_Player_16.0 15_0_VMware_Workstation_Player_15.5.6 14_0_VMware_Workstation_Player_14.1.8
+	for x in 16_0_VMware_Workstation_Player_16.1.0 15_0_VMware_Workstation_Player_15.5.7 14_0_VMware_Workstation_Player_14.1.8
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Workstation_Player_${x}
