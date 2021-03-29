@@ -17,9 +17,10 @@ Usage: ./allpkg.sh package refinement
 Download all packages specified by Suite name.
 
 ### Description
-Download all packages and patches specified by Suite names using new
-space saving features. Note as of v2.0.0 of vsm_favorites.sh there are
-many new arguments to get current plus previous versions.
+Download all packages and patches specified by Suite names using new space
+saving features. Note as of v3.0.0 of vsm_favorites.sh the versions are
+picked up automatically via the VMware API and a new option --dryrun to
+show what it will do before doing anything.
 
 ```
 ./vsm_favorites.sh [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--vsphere|--novsphere][-v|--version][--everything]
@@ -30,7 +31,7 @@ many new arguments to get current plus previous versions.
 	--n+4 - get the latest + 4 previous versions
 	--n+5 - get the latest + 5 previous versions
 	--n+6 - get the latest + 6 previous versions
-	--all - get everything
+	--all - get all versions
 	--euc - Add Additional EUC components
 	--vcd - Add VCD components
 	--tanzu - Add Tanzu components
@@ -38,6 +39,7 @@ many new arguments to get current plus previous versions.
 	--novsphere - remove vsphere components from get
 	--arm - Add ESXi on ARM components
 	--everything - Add all components
+	--dryrun - Echo out commands issued
 	-mr   - Clear 1st time use
 	-h|--help - this help
 	-s|--save - save get and --euc options to $HOME/.vsmfavsrc

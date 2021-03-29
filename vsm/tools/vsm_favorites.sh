@@ -9,7 +9,7 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="2.0.6"
+VERSIONID="3.0.0"
 
 function usage () {
 	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--vsphere|--novsphere][-v|--version][--everything]"
@@ -28,6 +28,7 @@ function usage () {
 	echo "	--novsphere - remote vsphere components"
 	echo "	--arm - Add ESXi on ARM components"
 	echo "	--everything - Add all components"
+	echo "	--dryrun - Echo out commands issued"
 	echo "	-mr   - Clear 1st time use"
 	echo "	-h|--help - this help"
 	echo "	-s|--save - save get and --euc options to \$HOME/.vsmfavsrc"
@@ -37,6 +38,13 @@ function usage () {
 	exit
 }
 
+function vsmfav_get_versions() {
+	product=$1
+	slug=`jq '.productCategoryList[].productList[].actions[0].target' ${cdir}/api.json| egrep "/${product}/"|sed 's/"//g'|sed 's#./info/slug/#category=#' | sed 's#/#\&product=#'  | sed 's#/#\&version=#'`
+	versions=`wget -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getProductHeader?locale=en_US&${slug}" 2>/dev/null|jq '.versions[].id' - 2>/dev/null|sed 's/"//g'`
+}
+
+hdr='User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.0 Safari/537.36'
 nc=1 # default
 save=0
 euc=0
@@ -44,7 +52,7 @@ vcd=0
 arm=0
 tan=0
 vsp=1
-future=0
+dry=0
 mr=''
 if [ -e $HOME/.vsmfavsrc ]
 then
@@ -68,11 +76,11 @@ do
 		--novsphere) vsp=0;;
 		--everything) vsp=1; euc=1; vcd=1; arm=1; tan=1;;
 		--all) nc=1000;;
+		--dryrun) dry=1;;
 		-mr) mr='-mr';;
 		-s|--save) save=1;;
 		-v|--version) echo "LinuxVSM Favorites:"; echo "	`basename $0`: $VERSIONID"; exit;;
 		-h|--help) usage;;
-		-f|--future) future=1;;
 		*) usage ;; 
 	esac 
 	shift 
@@ -95,31 +103,33 @@ then
 	vsm='./vsm.sh'
 fi
 
-if [ $future -eq 1 ]
+if [ $dry -eq 1 ]
 then
-	# Get the Versions from VMware directly
-	apiout=`wget -O - 'https://my.vmware.com/channel/public/api/v1.0/products/getAllProducts?locale=en_US&isPrivate=false' 2>/dev/null`
-	sluglist=`echo $apiout | jq '.productCategoryList[].productList[].actions[0].target' | egrep '/vmware_vsphere/|/vmware_vrealize_suite/|/vmware_nsx_t_data_center/|/vmware_horizon/|/vmware_horizon_clients/'|sed 's/"//g'`
-	eucsluglist=`echo $apiout | jq '.productCategoryList[].productList[].actions[0].target' | egrep '/vmware_workstation_player/|/vmware_workspace_one/|/vmware_app_volumes/|/vmware_dynamic_environment_manager/'|sed 's/"//g'`
-	
-	for x in $sluglist
-	do
-		echo $x
-		xhdr=`echo $x|sed 's#./info/slug/#category=#' | sed 's#/#\&product=#'  | sed 's#/#\&version=#'`
-		modlist=`wget -O - "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${xhdr}&dlgType=PRODUCT_BINARY" 2>/dev/null | jq '.dlgEditionsLists[].name'|sed 's/"//g' | sed 's/ /_/g'`
-		verlist=`wget -O - "https://my.vmware.com/channel/public/api/v1.0/products/getProductHeader?locale=en_US&${xhdr}" 2>/dev/null|jq '.versions[].slugUrl'|sed 's/"//g'|sed 's#./info/slug/##'|sed 's#/#_#g'`
-		# array for easier access
-		echo $verlist
-		echo $modlist
-	done
-	exit
+	vsm='echo vsm.sh '
 fi
+
+# get cdir or use default
+cdir="/tmp/vsm.$HOME"
+x=`grep cdir $HOME/.vsmrc`
+if [ Z"$x" != Z"" ]
+then
+	eval $x
+fi
+
+if [ ! -d $cdir ]
+then
+	mkdir $cdir
+fi
+
+rm $cdir/api.json 2>/dev/null
+wget -O $cdir/api.json --header="$hdr" 'https://my.vmware.com/channel/public/api/v1.0/products/getAllProducts?locale=en_US&isPrivate=true' 2>/dev/null
 
 if [ $vsp -eq 1 ]
 then
 	echo "Getting vSphere ..."
+	vsmfav_get_versions vmware_vsphere
 	c=0
-	for x in 7_0 6_7 6_5 6_0 5_5 5_0
+	for x in $versions
 	do
 		c=$(($c+1))
 		$vsm $mr -y --debug -q --patches --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_${x}_Enterprise_Plus
@@ -132,7 +142,8 @@ then
 
 	echo "Getting NSX ..."
 	c=0;
-	for x in 3_x 2_x 1_x
+	vsmfav_get_versions vmware_nsx_t_data_center
+	for x in $versions
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Networking_Security_VMware_NSX_T_Data_Center_${x}_VMware_NSX_Data_Center_Enterprise_Plus
@@ -144,7 +155,8 @@ then
 
 	echo "Getting vRealize Suite ..."
 	c=0
-	for x in 2019 2018 2017 7_0
+	vsmfav_get_versions vmware_vrealize_suite
+	for x in $versions
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Infrastructure_Operations_Management_VMware_vRealize_Suite_${x}_Enterprise
@@ -159,8 +171,17 @@ if [ $euc -eq 1 ]
 then
 	echo "Getting Horizon ..."
 	c=0
-	for x in 2103_Horizon 2012_Horizon 2006_Horizon 7_13_Horizon_7.13 7_12_Horizon_7.12 7_11_Horizon_7.11 7_10_Horizon_7.10 7_9_Horizon_7.9 7_8_Horizon_7.8 7_7_Horizon_7.7 7_6_Horizon_7.6 7_5_Horizon_7.5 7_4_Horizon_7.4 7_3_Horizon_7.3 7_2_Horizon_7.2 7_0_Horizon_7.0 6_2_Horizon_6.2 6_1_Horizon_6.1
+	vsmfav_get_versions vmware_horizon
+	for x in $versions
 	do
+		y=$x
+		z=`echo $x |sed 's/_.*//'`
+		if [ $z -gt 10 ]
+		then
+			x="${y}_Horizon"
+		else
+			x="${y}_Horizon_${z}"
+		fi
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Horizon_${x}_Enterprise
 		if [ $c -ge $nc ]
@@ -171,12 +192,13 @@ then
 	
 	echo "Getting Horizon Clients ..."
 	c=0
-	for x in 8 8_ 7_5_0 7_4_0
+	vsmfav_get_versions vmware_horizon_clients
+	for x in $versions
 	do
 		c=$(($c+1))
 		for y in Windows Mac Linux Chrome
 		do
-			$vsm $mr -y --debug -q --patches --fav Desktop_End-User_Computing_VMware_Horizon_Clients_horizon_${x}_VMware_Horizon_Client_for_${y}
+			$vsm $mr -y --debug -q --patches --fav Desktop_End-User_Computing_VMware_Horizon_Clients_${x}_VMware_Horizon_Client_for_${y}
 		done
 		if [ $c -ge $nc ]
 		then
@@ -186,9 +208,21 @@ then
 
 	echo "Getting AppVolumes ..."
 	c=0
+	vsmfav_get_versions vmware_app_volumes
 	# 2_x does not work today
-	for x in 4_x_App_Volumes_Advanced_Edition 3_x_App_Volumes_3_Advanced_Edition #2_x
+	vers=`echo $versions | sed 's/2_x//'`
+	for x in $vers
 	do
+		# fix versions
+		if [ $x = '3_x' ]
+		then
+			y=$x
+			z=`echo $x |sed 's/_x//'`
+			x="${y}_App_Volumes_${z}_Advanced_Edition"
+		else
+			y=$x
+			x="${y}_App_Volumes_Advanced_Edition"
+		fi
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_App_Volumes_${x}
 		if [ $c -ge $nc ]
@@ -199,8 +233,15 @@ then
 	
 	echo "Getting Dynamic Environment Manager (DEM) ..."
 	c=0
-	for x in 2009_VMware_Dynamic_Environment_Manager_Enterprise 2006_VMware_Dynamic_Environment_Manager_Enterprise 9_11 9_10 9_9 9_8 9_7 9_6 9_5 9_4 9_3 9_2
+	vsmfav_get_versions vmware_dynamic_environment_manager
+	for x in $versions
 	do
+		y=$x
+		z=`echo $x |sed 's/_.*//'`
+		if [ $z -gt 10 ]
+		then
+			x="${y}_VMware_Dynamic_Environment_Manager_Enterprise"
+		fi
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Dynamic_Environment_Manager_${x}
 		if [ $c -ge $nc ]
@@ -211,10 +252,15 @@ then
 
 	echo "Getting Workspace ONE ..."
 	c=0
-	for x in '_-_Horizon_Apps_Advanced' '_for_VDI_–_Horizon_Enterprise' '_&_Workspace_ONE_Enterprise_for_VDI_-_Horizon_Cloud'
+	vsmfav_get_versions vmware_workspace_one
+	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Workspace_ONE_1_0_Workspace_ONE_Enterprise${x}
+		names=`wget -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${slug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
+		for y in $names
+		do
+			$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Workspace_ONE_${x}_${y}
+		done
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -223,10 +269,21 @@ then
 
 	echo "Getting VMware Workstation Player ..."
 	c=0
-	for x in 16_0_VMware_Workstation_Player_16.0 15_0_VMware_Workstation_Player_15.5.6 14_0_VMware_Workstation_Player_14.1.8
+	vsmfav_get_versions vmware_workstation_player
+	# need first version listed
+	xv=($versions)
+	n=${xv[0]}
+	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Workstation_Player_${x}
+		# need more available information
+		xslug=`echo $slug | sed "s/${n}/${x}/"`
+		names=`wget -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${xslug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
+		for y in $names
+		do
+			z="${x}_${y}"
+			$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Workstation_Player_${z}
+		done
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -237,8 +294,9 @@ fi
 if [ $vcd -eq 1 ]
 then
 	echo "Getting vCloud Director ..."
+	vsmfav_get_versions vmware_cloud_director
 	c=0
-	for x in 10_2 10_1 10_0 9_7 9_5 9_1 9_0 8_20 8_10
+	for x in $versions
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_${x}_VMware_vCloud_Director
@@ -250,8 +308,15 @@ then
 
 	echo "Getting vCloud Director Availability ..."
 	c=0
-	for x in 4_1 4_0 3_5_vCloud_Availability_3.5_Appliance_for_Cloud_Providers 3_0_vCloud_Availability_3.0_Appliance_for_Cloud_Providers
+	vsmfav_get_versions vmware_cloud_director_availability
+	for x in $versions
 	do
+		if [ $x = "3_5" ] || [ $x = "3_0" ]
+		then
+			y=$x
+			z=`echo $x | sed 's/_/./'`
+			x="${y}_vCloud_Availability_${z}_Appliance_for_Cloud_Providers"
+		fi
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_Availability_${x}
 		if [ $c -ge $nc ]
@@ -262,7 +327,8 @@ then
 
 	echo "Getting vCloud Usage Meter..."
 	c=0
-	for x in 4_3 4_2
+	vsmfav_get_versions vmware_vcloud_usage_meter
+	for x in $versions
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_vCloud_Usage_Meter_${x}
@@ -274,7 +340,8 @@ then
 
 	echo "Getting vCloud Director Object Storage Extension ..."
 	c=0
-	for x in 2_0 1_5 1_0
+	vsmfav_get_versions vmware_cloud_director_object_storage_extension
+	for x in $versions
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_Object_Storage_Extension_${x}
@@ -286,7 +353,8 @@ then
 
 	echo "Getting vCloud Director App Launchpad..."
 	c=0
-	for x in 2_0 1_0
+	vsmfav_get_versions vmware_cloud_director_app_launchpad
+	for x in $versions
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_App_Launchpad_${x}
@@ -301,7 +369,8 @@ if [ $tan -eq 1 ]
 then
 	echo "Getting Tanzu"
 	c=0
-	for x in 1_x
+	vsmfav_get_versions vmware_tanzu_kubernetes_grid
+	for x in $versions
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Infrastructure_Operations_Management_VMware_Tanzu_Kubernetes_Grid_${x}
@@ -310,7 +379,8 @@ then
 			break;
 		fi
 	done
-	for x in 1_1 1_0
+	vsmfav_get_versions vmware_tanzu_toolkit_for_kubernetes
+	for x in $versions
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Infrastructure_Operations_Management_VMware_Tanzu_Toolkit_for_Kubernetes_${x}_VMware_Tanzu_Tookit_for_Kubernetes
@@ -319,7 +389,8 @@ then
 			break;
 		fi
 	done
-	for x in 1_9 1_8
+	vsmfav_get_versions vmware_tanzu_kubernetes_grid_integrated_edition
+	for x in $versions
 	do
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Infrastructure_Operations_Management_VMware_Tanzu_Kubernetes_Grid_Integrated_Edition_${x}_TKG_Integrated_Edition

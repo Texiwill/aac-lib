@@ -1,3 +1,4 @@
+03/28/21 - v3.0.0 of vsm_favorites.sh improved to use API to get the versions available
 01/8/21 - v2.0.6 of vsm_favorites.sh with Horizon 2012
 11/09/20 - v2.0.5 of vsm_favorites.sh with Usage Meter inclusion
 10/24/20 - v2.0.4 of vsm_favorites.sh with --everything --tanzu options
