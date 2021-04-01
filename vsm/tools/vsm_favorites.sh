@@ -9,7 +9,7 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="3.0.0"
+VERSIONID="3.0.1"
 
 function usage () {
 	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--vsphere|--novsphere][-v|--version][--everything]"
@@ -260,6 +260,29 @@ then
 		for y in $names
 		do
 			$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Workspace_ONE_${x}_${y}
+		done
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
+
+	echo "Getting VMware Workstation ..."
+	c=0
+	vsmfav_get_versions vmware_workstation_pro
+	# need first version listed
+	xv=($versions)
+	n=${xv[0]}
+	for x in $versions
+	do
+		c=$(($c+1))
+		# need more available information
+		xslug=`echo $slug | sed "s/${n}/${x}/"`
+		names=`wget -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${xslug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
+		for y in $names
+		do
+			z="${x}_${y}"
+			$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Workstation_Pro_${z}
 		done
 		if [ $c -ge $nc ]
 		then
