@@ -1,3 +1,4 @@
+04/05/21 - v3.0.2 of vsm_favorites.sh added --wkstn option which is implied by --euc for separate download of Workstation Pro/Player
 04/01/21 - v3.0.1 of vsm_favorites.sh added Workstation Pro as its own part of EUC
 03/28/21 - v3.0.0 of vsm_favorites.sh improved to use API to get the versions available
 01/8/21 - v2.0.6 of vsm_favorites.sh with Horizon 2012

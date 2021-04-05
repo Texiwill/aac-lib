@@ -9,10 +9,10 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="3.0.1"
+VERSIONID="3.0.2"
 
 function usage () {
-	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--vsphere|--novsphere][-v|--version][--everything]"
+	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--wkstn][--vsphere|--novsphere][-v|--version][--everything]"
 	echo "	--latest - get the latest only (default)"
 	echo "	--n+1 - get the latest + 1 previous version"
 	echo "	--n+2 - get the latest + 2 previous versions"
@@ -21,8 +21,9 @@ function usage () {
 	echo "	--n+5 - get the latest + 5 previous versions"
 	echo "	--n+6 - get the latest + 6 previous versions"
 	echo "	--all - get all versions"
-	echo "	--euc - Add EUC components"
+	echo "	--euc - Add EUC components (implies --wkstn)"
 	echo "	--vcd - Add VCD components"
+	echo "	--wkstn - Add Workstation/Player components"
 	echo "	--tanzu - Add Tanzu components"
 	echo "	--vsphere - Add vsphere components (default)"
 	echo "	--novsphere - remote vsphere components"
@@ -48,6 +49,7 @@ hdr='User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like
 nc=1 # default
 save=0
 euc=0
+wkstn=0
 vcd=0
 arm=0
 tan=0
@@ -73,6 +75,7 @@ do
 		--arm) arm=1;;
 		--tanzu) tan=1;;
 		--vsphere) vsp=1;;
+		--wkstn) wkstn=1;;
 		--novsphere) vsp=0;;
 		--everything) vsp=1; euc=1; vcd=1; arm=1; tan=1;;
 		--all) nc=1000;;
@@ -94,6 +97,7 @@ then
 	echo "arm=$arm" >> $HOME/.vsmfavsrc
 	echo "tan=$tan" >> $HOME/.vsmfavsrc
 	echo "vsp=$vsp" >> $HOME/.vsmfavsrc
+	echo "wkstn=$wkstn" >> $HOME/.vsmfavsrc
 fi
 
 # local overrides default path
@@ -169,6 +173,7 @@ fi
 
 if [ $euc -eq 1 ]
 then
+	wkstn=1
 	echo "Getting Horizon ..."
 	c=0
 	vsmfav_get_versions vmware_horizon
@@ -267,6 +272,10 @@ then
 		fi
 	done
 
+fi
+
+if [ $wkstn -eq 1 ]
+then
 	echo "Getting VMware Workstation ..."
 	c=0
 	vsmfav_get_versions vmware_workstation_pro
