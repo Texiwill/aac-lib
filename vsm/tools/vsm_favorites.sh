@@ -9,7 +9,7 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="3.0.2"
+VERSIONID="3.0.3"
 
 function usage () {
 	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--wkstn][--vsphere|--novsphere][-v|--version][--everything]"
@@ -249,6 +249,21 @@ then
 		fi
 		c=$(($c+1))
 		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Dynamic_Environment_Manager_${x}
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
+
+	echo "Getting Unified Access Gateway"
+	c=0
+	vsmfav_get_versions vmware_unified_access_gateway
+	for x in $versions
+	do
+		y=$x
+		c=$(($c+1))
+		z=`echo $x|sed 's/_/./'`
+		$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Unified_Access_Gateway_${x}_VMware_Unified_Access_Gateway_${z}
 		if [ $c -ge $nc ]
 		then
 			break;
