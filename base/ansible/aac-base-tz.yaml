@@ -1,5 +1,5 @@
 ---
-# version: 1.0.9
+# version: 1.1.1
 
 - hosts: localhost
   gather_facts: true
@@ -28,6 +28,7 @@
            - ntp
            - git
            - python2-pip
+           - gzip
          state: latest
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')
 
@@ -41,6 +42,7 @@
          - python3-pip
          - python-pexpect
          - expect
+         - gzip
        when: ansible_os_family == "VMware Photon OS"
 
      - name: install the latest ntp and other required dependencies for RHEL >= 8
@@ -50,6 +52,7 @@
            - chrony
            - git
            - python2-pip
+           - gzip
          state: latest
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>') and
              ansible_distribution != "Fedora"
@@ -61,6 +64,7 @@
            - ntp
            - git
            - python-pip
+           - gzip
          state: latest
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
              (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<'))
@@ -72,6 +76,7 @@
            - chrony
            - git
            - python3-pip
+           - gzip
          state: latest
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) or
              (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>')) or
@@ -82,6 +87,7 @@
        package:
          name: 
            - python-pip
+           - gzip
          state: latest
        when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>'))
 
@@ -97,8 +103,7 @@
      - name: Upgrade PIP el7
        become: yes
        pip:
-         name: pip
-         state: latest
+         name: pip<21.0
        when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<'))
 
      - name: Install pexpect
