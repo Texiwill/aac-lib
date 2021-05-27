@@ -9,7 +9,7 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="3.0.3"
+VERSIONID="3.0.4"
 
 function usage () {
 	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--wkstn][--vsphere|--novsphere][-v|--version][--everything]"
@@ -21,9 +21,10 @@ function usage () {
 	echo "	--n+5 - get the latest + 5 previous versions"
 	echo "	--n+6 - get the latest + 6 previous versions"
 	echo "	--all - get all versions"
-	echo "	--euc - Add EUC components (implies --wkstn)"
+	echo "	--euc - Add EUC components (implies --wkstn --fusion)"
 	echo "	--vcd - Add VCD components"
 	echo "	--wkstn - Add Workstation/Player components"
+	echo "	--fusion - Add Fusion components"
 	echo "	--tanzu - Add Tanzu components"
 	echo "	--vsphere - Add vsphere components (default)"
 	echo "	--novsphere - remote vsphere components"
@@ -174,6 +175,7 @@ fi
 if [ $euc -eq 1 ]
 then
 	wkstn=1
+	fusion=1
 	echo "Getting Horizon ..."
 	c=0
 	vsmfav_get_versions vmware_horizon
@@ -287,6 +289,31 @@ then
 		fi
 	done
 
+fi
+
+if [ $fusion -eq 1 ]
+then
+	echo "Getting VMware Fusion ..."
+	c=0
+	vsmfav_get_versions vmware_fusion
+	# need first version listed
+	xv=($versions)
+	n=${xv[0]}
+	for x in $versions
+	do
+		c=$(($c+1))
+		# need more available information
+		xslug=`echo $slug | sed "s/${n}/${x}/"`
+		names=`wget -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${xslug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
+		for y in $names
+		do
+			$vsm -y --debug --patches --fav Desktop_End-User_Computing_VMware_Fusion_${x}_VMware_Fusion_${y}
+		done
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
 fi
 
 if [ $wkstn -eq 1 ]
