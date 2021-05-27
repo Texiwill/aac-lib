@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.5.6 - Fixed Login Failures with VMware site updates
+
 6.5.5 - Fix to CentOS/RedHat dependency checks
 
 6.5.4 - Fix for writability test for NFS mounts ('test -w' reported

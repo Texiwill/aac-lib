@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.5.5"
+VERSIONID="6.5.6"
 
 # args: stmt error
 function colorecho() {
@@ -607,7 +607,7 @@ function oauth_login() {
 		if [ ! -e ${cdir}/node_modules ]
 		then
 			colorecho "	Installing necessary modules"
-			npm install puppeteer --unsafe-perm=true >& /dev/null
+			npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth --unsafe-perm=true >& /dev/null
 			if [ $? -eq 1 ]
 			then
 				colorecho "	Not enough space in $cdir; please add more" 1
@@ -625,7 +625,7 @@ function oauth_login() {
 		then
 			cat >> $cdir/node-bm.js << EOF
 const os = require('os');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
 const fs = require('fs').promises;
 const Xvfb = require('xvfb');
 process.on('unhandledRejection', function(err) {
@@ -637,6 +637,8 @@ function delay(time) {
        setTimeout(resolve, time)
    });
 }
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+puppeteer.use(StealthPlugin());
 const platform=os.platform();
 var data='${auth}';
 let buff = new Buffer.from(data,'base64');
@@ -675,8 +677,6 @@ const words = text.split(':');
 	await page.keyboard.press('Enter');
 	await navigationPromise;
 	await page.waitForSelector('.ng-star-inserted',{timeout: 90000});
-	await page.goto('https://my.vmware.com/group/vmware/home',{waitUntil: 'networkidle0'});
-	await page.waitForSelector('.ng-star-inserted');
 	//await page.goto('https://my.vmware.com/group/vmware/patch',{waitUntil: 'networkidle2'});
 	//await page.waitForSelector('.eaSelector');
 	const { cookies } = await page._client.send('Network.getAllCookies');
@@ -754,10 +754,10 @@ EOF
 	grep OAMAuthnCookie $cdir/ocookies.txt >& /dev/null
 	oauth_err=$?
 
-	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
-	then
-		get_patch_url # get the url for patches
-	fi
+	#if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
+	#then
+	#	get_patch_url # get the url for patches
+	#fi
 }
 
 function get_product_patches() {
@@ -766,41 +766,15 @@ function get_product_patches() {
 	if [ Z"$ppr" = Z"ESXI" ] || [ Z"$ppr" = Z"VC" ]
 	then
 		oauth_login 0
-		if [ $ppr = "ESXI" ]
-		then
-			ppr="ESXi"
-		fi
 		ppv=`echo $v | sed 's/.\{1\}/&./g' | sed 's/\.$//'`
 		if [ ${#ppv} -eq 3 ]
 		then
 			ppv="${ppv}.0"
 		fi
 		# patches only work for VC/ESXi
-		if [ ! -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ] 
+		if [ ! -e $rcdir/patches_${ppr}_${ppv}.html ]
 		then
-			if [ -e ${rcdir}/_patches.xhtml ]
-			then
-				## First get index
-				pin=`jq .[].prodList[].name ${rcdir}/_patches.xhtml | awk "/$ppr/{print NR-1}"`
-				## Get 'productName'
-				pnn=`jq ".[].prodList[${pin}].name" ${rcdir}/_patches.xhtml`
-				## Get 'product'
-				pvn=`jq ".[].prodList[${pin}].value" ${rcdir}/_patches.xhtml`
-		
-				# Get 'Details'
-				pini=`jq ".[].prodList[${pin}].versions[].name" ${rcdir}/_patches.xhtml |awk "/$ppv/{print NR-1}"`
-				pnam=`jq ".[].prodList[${pin}].versions[${pini}].name" ${rcdir}/_patches.xhtml`
-				pinv=`jq ".[].prodList[${pin}].versions[${pini}].value" ${rcdir}/_patches.xhtml`
-				prt=`jq ".[].prodList[${pin}].versions[${pini}].resultType" ${rcdir}/_patches.xhtml`
-
-				# Patch Data per version
-				pd=`echo "product=${pvn}&productName=${pnn}&version=${pinv}&versionName=${pnam}&resultType=${prt}&releasedate=YYYY-MM-DD&severity=All+Severities&category=All+Categories&classify=All+Classifications&releasenumber=Enter+Release+Name&buildnumber=Enter+Build+Number&bulletinnumber=Enter+Bulletin+Number&dependency=true" |sed 's/"//g' | sed 's/ /+/g'`
-				#xsrf=`grep -i xsrf-token $cdir/$ck|cut -f7`
-				#dtpc=`grep -i dtpc $cdir/$ck|cut -f7`
-				echo $pd
-				echo "wget -O ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml --load-cookies $cdir/ocookies.txt --post-data=\"$pd\" --header=\"User-Agent: $oaua\" --header=\"Referer: $mypatches_ref\" --header=\"Accept: application/json\" --header=\"X-Requested-With: XMLHttpRequest\" $searchUrl"
-				wget -O ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml --cookies=on --load-cookies $cdir/ocookies.txt --post-data="$pd" --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" --header="Accept: application/json" --header="X-Requested-With: XMLHttpRequest" $searchUrl
-			fi
+			node $cdir/node-pt.js $ppr $ppv $rcdir
 		fi
 	else
 		debugecho "Cannot get patches for $ppr"
@@ -814,11 +788,6 @@ function download_patches() {
 		if [ Z"$ppr" = Z"ESXI" ] || [ Z"$ppr" = Z"VC" ]
 		then
 			dnr=1
-			if [ $ppr = "ESXI" ]
-			then
-				ppr="ESXi"
-				dnr=5
-			fi
 			ppv=`echo $v | sed 's/.\{1\}/&./g' | sed 's/\.$//'`
 			if [ ${#ppv} -eq 3 ]
 			then
@@ -829,7 +798,7 @@ function download_patches() {
 				gotodir $missname "Patches" ${ppr}${ppv}
 				
 				# Download links as array
-				darr=(`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | awk "/download/{print NR-$dnr}"`)
+				darr=(`jq . ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | awk "/path/{print NR-$dnr}"`)
 				downloads=(`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml |grep download | sed 's/[,"]//g'`)
 				#jq .[] ${rcdir}/${prod}_patchlist.xhtml |grep download
 				d=0
@@ -1254,6 +1223,31 @@ EOF
 		echo "$NC"
 		sleep 1
 	fi
+	if [ $mon -eq 2 ] && [ $day -gt 9 ] && [ $day -lt 11 ]
+	then
+		ac=$((1+RANDOM % 2))
+		echo `tput setaf $ac`
+		cat << "EOF"
+                   _    _                         
+                  | |  | |                        
+                  | |__| | __ _ _ __  _ __  _   _ 
+                  |  __  |/ _` | '_ \| '_ \| | | |
+                  | |  | | (_| | |_) | |_) | |_| |
+                  |_|  |_|\__,_| .__/| .__/ \__, |
+                               | |   | |     __/ |
+                               |_|   |_|    |___/ 
+ ______                    _           _       _____              
+|  ____|                  | |         ( )     |  __ \             
+| |__ ___  _   _ _ __   __| | ___ _ __|/ ___  | |  | | __ _ _   _ 
+|  __/ _ \| | | | '_ \ / _` |/ _ \ '__| / __| | |  | |/ _` | | | |
+| | | (_) | |_| | | | | (_| |  __/ |    \__ \ | |__| | (_| | |_| |
+|_|  \___/ \__,_|_| |_|\__,_|\___|_|    |___/ |_____/ \__,_|\__, |
+                                                             __/ |
+                                                            |___/ 
+EOF
+		echo "$NC"
+		sleep 1
+	fi
 	if [[ ($mon -eq 12 && $day -gt 20) || ($mon -eq 1 && $day -lt 3) ]]
 	then
 		echo "${TEAL}"
@@ -1576,7 +1570,7 @@ then
 		rm $cdir/vex_auth.html
 	fi
 	rm -rf $HOME/.vsm/.key >& /dev/null
-	rm -rf ${cdir}/node* ${cdir}/*.json ${cdir}/*.txt ${cdir}/node-bm.js
+	rm -rf ${cdir}/node* ${cdir}/*.json ${cdir}/*.txt ${cdir}/node-bm.js ${cdir}/node-pt.js
 	pkill -9 Xvfb
 	colorecho "Removed all Temporary Files"
 	exit
@@ -1676,7 +1670,7 @@ fi
 if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
 then
 	# force patch oauth
-	get_patch_list
+	#get_patch_list
 	if [ $noheader -eq 0 ]; then colorecho "	Patches:	1"; fi
 fi
 
@@ -1685,9 +1679,6 @@ if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
 then
 	# Get JSON
 	mywget ${rcdir}/_h_downloads.xhtml $myvmware_prod
-	#mywget ${rcdir}/_h_downloads.html https://my.vmware.com/group/vmware/downloads
-	#mywget ${rcdir}/_h_downloads.html https://my.vmware.com/en/web/vmware/downloads
-	#tab2url=`grep allProducts ${rcdir}/_h_downloads.html | cut -d\" -f4`
 
 	grep "Temporary Maintenance" ${rcdir}/_h_downloads.xhtml >& /dev/null
 	if [ $? -eq 0 ]
@@ -1695,8 +1686,6 @@ then
 		colorecho "Error: My VMware Temporary Maintenance" 1
 		exit;
 	fi
-
-	#mywget ${rcdir}/_h_downloads.xhtml $tab2url "--post-data=''"
 
 	if [ ! -e ${rcdir}/_h_downloads.xhtml ]
 	then
@@ -1992,6 +1981,82 @@ function getMyPatches()
 	patcnt=0
 	if [ $dopatch -eq 1 ]
 	then
+		if [ ! -e ${cdir}/node-pt.js ]
+		then
+			cat >> $cdir/node-pt.js << EOF
+const os = require('os');
+const puppeteer = require('puppeteer');
+const fs = require('fs').promises;
+const Xvfb = require('xvfb');
+process.on('unhandledRejection', function(err) {
+	console.log(err);
+	process.exit(1);
+});
+function delay(time) {
+   return new Promise(function(resolve) { 
+       setTimeout(resolve, time)
+   });
+}
+
+const platform=os.platform();
+(async () => {
+	var browser;
+	if (platform != 'darwin') {
+		var xvfb = new Xvfb({
+			silent: true,
+			xvfb_args: ["-screen", "0", '1280x1024x24', '-ac'],
+		});
+		xvfb.start((err)=>{if (err) {console.error(err); process.exit(1);}})
+		browser = await puppeteer.launch({
+			headless: false,
+			defaultViewport: null,
+			args: ['--no-sandbox', '--remote-debugging-port=9222','--start-fullscreen', '--display='+xvfb._display]
+		});
+	} else {
+		browser = await puppeteer.launch({
+				headless: false,
+				defaultViewport: {width: 100,height: 100},
+				args: ['--no-sandbox', '--window-size=50,50',
+				'--disable-background-timer-throttling',
+				'--disable-backgrounding-occluded-windows',
+				'--disable-renderer-backgrounding',
+				'--window-position=-500,0'
+				]
+		});
+	}
+	const page = await browser.newPage();
+	const cookieString = await fs.readFile('./ocookies.json');
+	const cookies = JSON.parse(cookieString);
+	await page.setCookie(...cookies);
+	await page.goto('https://my.vmware.com/group/vmware/patch#search',{waitUntil: 'networkidle0'});
+	await page.waitForSelector('.optionsHolder');
+
+	var fname = process.argv[4]+'/patches_'+process.argv[2]+'_'+process.argv[3]+'.html';
+	var popt = '.dropdownOpt[title="'+process.argv[3]+'"]';
+	// Get patch information
+	await page.click('.optionsHolder');
+	if (process.argv[2] == 'ESXI') {
+		await page.click('.dropdownOpt[name="3"]');
+	} else {
+		await page.click('.dropdownOpt[name="81"]');
+	}
+	await page.hover('#eaSelectorWidgetDiv1.eaSelector');
+	await page.click('#eaSelectorWidgetDiv1.eaSelector');
+	await page.click(popt);
+	await page.click('.searchBtn');
+	await page.waitForSelector('.downloadLnk');
+	await page.waitForTimeout(1000);
+	const html1 = await page.content();
+	await fs.writeFile(fname,html1);
+
+	// Close Browser and Stop
+	await browser.close()
+	if (platform != 'darwin') {
+		xvfb.stop();
+	}
+})();
+EOF
+		fi
 		echo $missname | egrep '_[0-9]|-[0-9]' >& /dev/null
 		if [ $? -eq 0 ]
 		then
@@ -2004,9 +2069,10 @@ function getMyPatches()
 			v=0
 		fi
 		get_product_patches
-		if [ -e $rcdir/_${ppr}_${ppv}_patchlist.xhtml ]
+		if [ -e ${rcdir}/patches_${ppr}_${ppv}.xhtml ]
 		then
-			patcnt=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml |grep download | sed 's/[,"]//g'|wc -l`
+			xmllint --html --xpath '//button[@class="downloadLnk"]/@name | //td[@class="rlsName"]//p[1]/span[@class="key"][1]/text()' ${rcdir}/patches_${ppr}_${ppv}.xhtml 2>/dev/null | sed 's/"$/"}/'|sed '1~2s/^/"/'|sed '1~2s/$/"/' |sed 's/name=/{"path":/' |sed 's/"$/"/' | tr '\012' ' ' > ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml
+			patcnt=`jq . ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | grep path | wc -l`
 		fi
 	fi
 }
