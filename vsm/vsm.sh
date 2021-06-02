@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.5.6"
+VERSIONID="6.5.7"
 
 # args: stmt error
 function colorecho() {
@@ -302,26 +302,26 @@ function mywget() {
 				then
 					if [ Z"$hd" = Z"xhr" ]
 					then
-						wget $_PROGRESS_OPT --progress=bar:force --header="Referer: $4" --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
+						wget $_PROGRESS_OPT $cc --progress=bar:force --header="Referer: $4" --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
 					else
-						wget $_PROGRESS_OPT --progress=bar:force $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
+						wget $_PROGRESS_OPT $cc --progress=bar:force $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
 					fi
 					err=${PIPESTATUS[0]}
 				else
 					if [ Z"$hd" = Z"xhr" ]
 					then
-						wget $_PROGRESS_OPT --progress=bar:force --header="Referer: $4" --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr
+						wget $_PROGRESS_OPT $cc --progress=bar:force --header="Referer: $4" --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr
 					else
-						wget $_PROGRESS_OPT --progress=bar:force $hd --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr
+						wget $_PROGRESS_OPT $cc --progress=bar:force $hd --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr
 					fi
 					err=$?
 				fi
 			else
 				if [ Z"$hd" = Z"xhr" ]
 				then
-					wget $_PROGRESS_OPT --header="Referer: $4" --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
+					wget $_PROGRESS_OPT $cc --header="Referer: $4" --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
 				else
-					wget $_PROGRESS_OPT $hd --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
+					wget $_PROGRESS_OPT $hd $cc --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
 				fi
 				err=$?
 			fi
@@ -332,9 +332,9 @@ function mywget() {
 		else
 			if [ Z"$hd" = Z"xhr" ]
 			then
-				wget $_PROGRESS_OPT --header="Referer: $4" --progress=bar:force --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
+				wget $_PROGRESS_OPT $cc --header="Referer: $4" --progress=bar:force --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
 			else
-				wget $_PROGRESS_OPT $hd --progress=bar:force --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
+				wget $_PROGRESS_OPT $hd $cc --progress=bar:force --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
 			fi
 			err=$?
 		fi
@@ -604,6 +604,10 @@ function oauth_login() {
 		#pd="username=${rd[0]}&password=${rd[1]}"
 		# does node exist?
 		pushd ${cdir} >& /dev/null
+		if [ $renodejs -eq 1 ]
+		then
+			rm -rf ${cdir}/node-bm.js ${cdir}/node_modules
+		fi
 		if [ ! -e ${cdir}/node_modules ]
 		then
 			colorecho "	Installing necessary modules"
@@ -945,7 +949,7 @@ function version() {
 
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--clean] [--dlgroup dlgcode productId] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12]"
+	echo "$0 [-c|--check] [--clean] [--dlgroup dlgcode productId] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12] [-mn] [--nocertcheck]"
 	echo "	-c|--check - do sha256 check against download"
 	echo "	--clean - remove all temporary files and exit"
 	echo "	--dlgroup - download a specifc package by dlgcode and productId (in the URL)"
@@ -959,6 +963,8 @@ function usage() {
 	echo "	-e|--exit - reset and exit"
 	echo "	-h|--help - this help"
 	echo "	-mr - remove temporary files"
+	echo "	-mn - remove NodeJS files"
+	echo "  --nocertcheck - do not check for SSL certificates"
 	echo "	--historical - display older versions when you select a package"
 	echo "	--nohistorical - disable --historical"
 	echo "	-nh|--noheader - leave off the header bits"
@@ -1432,6 +1438,8 @@ dlgroup=''
 dlgid=''
 allmissing=0
 olde=12
+certcheck=1
+renodejs=0
 mycolumns=`tput cols`
 
 xu=`id -un`
@@ -1447,10 +1455,17 @@ checkForUpdate
 # import values from .vsmrc
 load_vsmrc
 
-while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --olde) olde=$2; shift;; *) usage ;; esac; shift; done
+while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; *) usage ;; esac; shift; done
 
 # remove when fixed
 dopatch=0
+
+# Certcheck
+cc=''
+if [ $certcheck -eq 0 ]
+then
+	cc='--no-check-certificate'
+fi
 
 if [ $myquiet -eq 1 ] && [ $myq -eq 0 ]
 then
