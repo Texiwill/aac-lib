@@ -1,3 +1,4 @@
+06/02/21 - v3.0.5 of vsm_favorites.sh added -mn option to clear Login debris
 05/27/21 - v3.0.4 of vsm_favorites.sh added --fusion as its own download
 04/07/21 - v3.0.3 of vsm_favorites.sh added UAG as its own download
 04/05/21 - v3.0.2 of vsm_favorites.sh added --wkstn option which is implied by --euc for separate download of Workstation Pro/Player
