@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.5.8 - Fixed --dlg/dlgl
+
 6.5.7 - Added --nocertcheck -mn options to handle failed login or SSL issues after LinuxVSM upgrades
 
 6.5.6 - Fixed Login Failures with VMware site updates

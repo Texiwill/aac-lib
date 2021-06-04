@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.5.7"
+VERSIONID="6.5.8"
 
 # args: stmt error
 function colorecho() {
@@ -1455,7 +1455,7 @@ checkForUpdate
 # import values from .vsmrc
 load_vsmrc
 
-while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; *) usage ;; esac; shift; done
+while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --keeplocs) rebuild=2 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; *) usage ;; esac; shift; done
 
 # remove when fixed
 dopatch=0
@@ -1522,6 +1522,7 @@ then
 	echo "	VSM XML Dir:	$cdir"
 	echo "	Repo Dir:	$repo"
 	echo "	Dryrun:		$dryrun"
+	echo "	Rebuild:	$rebuild"
 	echo "	Force Download:	$doforce"
 	echo "	Checksum:	$doshacheck"
 	echo "	Historical Mode:$historical"
@@ -2453,7 +2454,7 @@ function doFixSymlinks()
 
 function writeJSON()
 {
-	if [ $rebuild -eq 1 ]
+	if [ $rebuild -ge 1 ]
 	then
 		if [ -e $rcdir/newlocs.json ]
 		then
@@ -2914,20 +2915,28 @@ function getDlg()
 	dlgInfo=(`jq --arg s "$mydlg" '[.dlgList[] | select(.name | test($s))][0]|.name,.target,.dlg,.parent' $rcdir/newlocs.json | sed 's/"//g'`)
 	favorite=${dlgInfo[1]}
 	getFavPaths
-	pkg=`echo ${dlgInfo[3]}|awk -F[0-9] '{print $1}'`
-	lchoice=(`echo $pkgs |sed 's/ /\n/g' | egrep -n "^${pkg}"|sed 's/:/ /'`)
+	if [ Z"${dlgInfo[3]}" = Z"" ]
+	then
+		thedlg=${dlgInfo[2]}
+		pkg=`echo ${dlgInfo[2]}|awk -F[0-9] '{print $1}'`
+	else
+		thedlg=${dlgInfo[3]}
+		pkg=`echo ${dlgInfo[3]}|awk -F[0-9] '{print $1}'`
+	fi
+	lchoice=(`echo $pkgs |sed 's/All //'|sed 's/ /\n/g' | egrep -n "^${pkg}"|sed 's/:/ /'`)
 	missname=${lchoice[1]}
 	choice=$missname
 	longReply=${lchoice[0]}
-	lr=$(($longReply-1))
+	#lr=$(($longReply-1))
+	lr=$longReply
 	getMyDlgVersions 1
 	getMyFiles 1
 	createLayer
 	nr=${#layer[@]}
 	# now is it in this layer or 'additional'
-	if [ $choice != ${dlgInfo[3]} ]
+	if [ Z"$choice" != Z"$thedlg" ]
 	then
-		choice=${dlgInfo[3]}
+		choice=${thedlg}
 		createLayer
 		nr=${#layer[@]}
 		#missname=${choice}
@@ -2936,6 +2945,8 @@ function getDlg()
 	fi
 	if [[ "$xpkgs" == *"${dlgInfo[0]}"* ]]
 	then
+		getSymdir
+		gotodir $missname "base"
 		getDlgFile
 	elif [[ ${dtslist[@]} == *"${dlgInfo[2]}"* ]] 
 	then
@@ -2966,7 +2977,7 @@ then
 	then
 		favorite=$fav
 	fi
-	rebuild=0
+	#rebuild=0
 	getFavPaths
 	getAll
 	exit
@@ -2981,10 +2992,11 @@ then
 	if [ -e $rcdir/newlocs.json ]
 	then
 		rebuild=0
+		historical=0
 		getDlg
 		endOfDownload
 		# needed for aac-base scripts
-		echo "Local:$repo/dlg_${dlgInfo[3]}${eou}/$name"
+		echo "Local:$repo/dlg_${thedlg}${eou}/$name"
 	fi
 	exit
 fi

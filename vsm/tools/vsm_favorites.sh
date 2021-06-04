@@ -84,7 +84,7 @@ do
 		--everything) vsp=1; euc=1; vcd=1; arm=1; tan=1;;
 		--all) nc=1000;;
 		--dryrun) dry=1;;
-		--rebuild) rebuild='--rebuild';;
+		--rebuild) rebuild='--keeplocs';;
 		-mr) mr="$mr -mr";;
 		-mn) mr="$mr -mn";;
 		-s|--save) save=1;;
@@ -94,6 +94,8 @@ do
 	esac 
 	shift 
 done
+
+echo $rebuild
 
 if [ $save -eq 1 ]
 then
