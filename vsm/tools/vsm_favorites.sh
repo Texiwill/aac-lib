@@ -9,7 +9,7 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="3.0.6"
+VERSIONID="3.0.7"
 
 function usage () {
 	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--wkstn][--fusion][--vsphere|--novsphere][-v|--version][--everything][--rebuild][-mn][-mr]"
@@ -94,8 +94,6 @@ do
 	esac 
 	shift 
 done
-
-echo $rebuild
 
 if [ $save -eq 1 ]
 then

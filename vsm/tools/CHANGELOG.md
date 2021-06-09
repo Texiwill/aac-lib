@@ -1,3 +1,4 @@
+06/09/21 - v3.0.7 of vsm_favorites.sh removed extraneaous debug message
 06/04/21 - v3.0.6 of vsm_favorites.sh added --rebuild option to allow rebuild of the --dlg/--dlgl location file
 06/02/21 - v3.0.5 of vsm_favorites.sh added -mn option to clear Login debris
 05/27/21 - v3.0.4 of vsm_favorites.sh added --fusion as its own download
