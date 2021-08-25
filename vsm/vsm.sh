@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.5.8"
+VERSIONID="6.6.0"
 
 # args: stmt error
 function colorecho() {
@@ -507,33 +507,33 @@ function get_patch_list() {
 		then
 			e=`echo '{"iCreate":'${dn}',"iStart":0,"iEnd":0,"iLength":10,"sFilter":"","sFilterEsc":true,"aaSorting":[ [1,"desc"]],"aaSearchCols":[ ["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true]],"abVisCols":[ true,true,true,true,false,false,false,false,true]}'`
 			de=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$e" 2>/dev/null`)
-			echo "my.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTblVc_patch	${de}" >> ${cdir}/ocookies.txt
+			echo "customerconnect.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTblVc_patch	${de}" >> ${cdir}/ocookies.txt
 		fi
 		grep SpryMedia_DataTables_patchResultTblGVc_patch ${cdir}/ocookies.txt >& /dev/null
 		if [ $? -eq 1 ]
 		then
 			e=`echo '{"iCreate":'${dn}',"iStart":0,"iEnd":0,"iLength":10,"sFilter":"","sFilterEsc":true,"aaSorting":[ [1,"desc"]],"aaSearchCols":[ ["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true]],"abVisCols":[ true,true,true,true,false,false,false,false,true]}'`
 			de=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$e" 2>/dev/null`)
-			echo "my.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTblGVc_patch	${de}" >> ${cdir}/ocookies.txt
+			echo "customerconnect.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTblGVc_patch	${de}" >> ${cdir}/ocookies.txt
 		fi
 		grep SpryMedia_DataTables_patchResultTbl5x_patch ${cdir}/ocookies.txt >& /dev/null
 		if [ $? -eq 1 ]
 		then
-			echo "my.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTbl5x_patch	%7B%22iCreate%22%3A${dn}2%2C%22iStart%22%3A0%2C%22iEnd%22%3A0%2C%22iLength%22%3A10%2C%22sFilter%22%3A%22%22%2C%22sFilterEsc%22%3Atrue%2C%22aaSorting%22%3A%5B%20%5B2%2C%22desc%22%5D%5D%2C%22aaSearchCols%22%3A%5B%20%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%5D%2C%22abVisCols%22%3A%5B%20true%2Ctrue%2Ctrue%2Ctrue%2Cfalse%2Cfalse%2Cfalse%2Ctrue%2Cfalse%2Cfalse%2Ctrue%5D%7D" >> ${cdir}/ocookies.txt
+			echo "customerconnect.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTbl5x_patch	%7B%22iCreate%22%3A${dn}2%2C%22iStart%22%3A0%2C%22iEnd%22%3A0%2C%22iLength%22%3A10%2C%22sFilter%22%3A%22%22%2C%22sFilterEsc%22%3Atrue%2C%22aaSorting%22%3A%5B%20%5B2%2C%22desc%22%5D%5D%2C%22aaSearchCols%22%3A%5B%20%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%5D%2C%22abVisCols%22%3A%5B%20true%2Ctrue%2Ctrue%2Ctrue%2Cfalse%2Cfalse%2Cfalse%2Ctrue%2Cfalse%2Cfalse%2Ctrue%5D%7D" >> ${cdir}/ocookies.txt
 		fi
 		grep SpryMedia_DataTables_patchResultTbl3x_patch ${cdir}/ocookies.txt >& /dev/null
 		if [ $? -eq 1 ]
 		then
 			e=`echo '{"iCreate":'${dn}',"iStart":0,"iEnd":0,"iLength":10,"sFilter":"","sFilterEsc":true,"aaSorting":[ [2,"desc"]],"aaSearchCols":[ ["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true]],"abVisCols":[ true,true,true,true,false,false,false,true,false,true]}'`
 			de=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$e" 2>/dev/null`)
-			echo "my.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTbl3x_patch	${de}" >> ${cdir}/ocookies.txt
+			echo "customerconnect.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTbl3x_patch	${de}" >> ${cdir}/ocookies.txt
 		fi
 		grep SpryMedia_DataTables_patchResultTbl4x_patch ${cdir}/ocookies.txt >& /dev/null
 		if [ $? -eq 1 ]
 		then
 			e=`echo '{"iCreate":'${dn}',"iStart":0,"iEnd":0,"iLength":10,"sFilter":"","sFilterEsc":true,"aaSorting":[ [2,"desc"]],"aaSearchCols":[ ["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true]],"abVisCols":[ true,true,true,true,false,false,false,true,false,true]}'`
 			de=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$e" 2>/dev/null`)
-			echo "my.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTbl4x_patch	${de}" >> ${cdir}/ocookies.txt
+			echo "customerconnect.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTbl4x_patch	${de}" >> ${cdir}/ocookies.txt
 		fi
 	fi
 }
@@ -674,14 +674,14 @@ const words = text.split(':');
 		});
 	}
 	const page = await browser.newPage();
-	await page.goto('https://my.vmware.com/web/vmware/login',{waitUntil: 'networkidle0'});
+	await page.goto('https://customerconnect.vmware.com/web/vmware/login',{waitUntil: 'networkidle0'});
 	const navigationPromise = page.waitForNavigation();
 	await page.type('#email',words[0]);
 	await page.type('#password',words[1]);
 	await page.keyboard.press('Enter');
 	await navigationPromise;
 	await page.waitForSelector('.ng-star-inserted',{timeout: 90000});
-	//await page.goto('https://my.vmware.com/group/vmware/patch',{waitUntil: 'networkidle2'});
+	//await page.goto('https://customerconnect.vmware.com/group/vmware/patch',{waitUntil: 'networkidle2'});
 	//await page.waitForSelector('.eaSelector');
 	const { cookies } = await page._client.send('Network.getAllCookies');
 	var cookieContent=\`# HTTP cookie file.
@@ -1636,24 +1636,24 @@ cd depot.vmware.com/PROD/channel
 
 # Patches
 oauth_err=0
-mydl_ref='https://my.vmware.com/group/vmware/downloads#tab1'
-mypatches_ref='https://my.vmware.com/group/vmware/patch'
-myvmware_login='https://my.vmware.com/web/vmware/login'
-#myvmware_oauth='https://my.vmware.com/oam/server/auth_cred_submit'
+mydl_ref='https://customerconnect.vmware.com/group/vmware/downloads#tab1'
+mypatches_ref='https://customerconnect.vmware.com/group/vmware/patch'
+myvmware_login='https://customerconnect.vmware.com/web/vmware/login'
+#myvmware_oauth='https://customerconnect.vmware.com/oam/server/auth_cred_submit'
 myvmware_oauth='https://auth.vmware.com/oam/server/auth_cred_submit?Auth-AppID=WMVMWR'
-myvmware_prod='https://my.vmware.com/channel/public/api/v1.0/products/getAllProducts?locale=en_US&isPrivate=true'
-myvmware_template='https://my.vmware.com/group/vmware/gateway/api/v1.0/navigation/template?locale=us&source=myvmware'
-myvmware_token='https://my.vmware.com/channel/public/api/v1.0/navigation/coveo/token'
-prod_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getProductHeader?locale=en_US&'
-related_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&'
-# referer https://my.vmware.com/group/vmware/downloads/details?downloadGroup=DLG&productId=.dlgList[].productId&rPId=.dlgList[].releasePackageId
-dlghdr_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getDLGHeader?locale=en_US&' #downloadGroup=DLG&productID=.dlgList[].productId
-betahdr_xhr='https://my.vmware.com/channel/public/api/v1.0/dlg/beta/header?locale=en_US&' #downloadGroup=DLG
-beta_xhr='https://my.vmware.com/channel/api/v1.0/dlg/beta/details?locale=en_US&' #downloadGroup=DLG
-dlg_xhr='https://my.vmware.com/channel/public/api/v1.0/dlg/details?locale=en_US&' # downloadGroup=DLG&productId=.product[].id&rPId=.product[].releasePackageId
-dlgrel_xhr='https://my.vmware.com/channel/public/api/v1.0/products/getDLGRelatedDLGList?locale=en_US&'
-eula_xhr='https://my.vmware.com/channel/api/v1.0/dlg/eula/accept?locale=en_US&' #downloadGroup=DLG
-download_xhr='https://my.vmware.com/channel/api/v1.0/dlg/download' # POST
+myvmware_prod='https://customerconnect.vmware.com/channel/public/api/v1.0/products/getAllProducts?locale=en_US&isPrivate=true'
+myvmware_template='https://customerconnect.vmware.com/group/vmware/gateway/api/v1.0/navigation/template?locale=us&source=myvmware'
+myvmware_token='https://customerconnect.vmware.com/channel/public/api/v1.0/navigation/coveo/token'
+prod_xhr='https://customerconnect.vmware.com/channel/public/api/v1.0/products/getProductHeader?locale=en_US&'
+related_xhr='https://customerconnect.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&'
+# referer https://customerconnect.vmware.com/group/vmware/downloads/details?downloadGroup=DLG&productId=.dlgList[].productId&rPId=.dlgList[].releasePackageId
+dlghdr_xhr='https://customerconnect.vmware.com/channel/public/api/v1.0/products/getDLGHeader?locale=en_US&' #downloadGroup=DLG&productID=.dlgList[].productId
+betahdr_xhr='https://customerconnect.vmware.com/channel/public/api/v1.0/dlg/beta/header?locale=en_US&' #downloadGroup=DLG
+beta_xhr='https://customerconnect.vmware.com/channel/api/v1.0/dlg/beta/details?locale=en_US&' #downloadGroup=DLG
+dlg_xhr='https://customerconnect.vmware.com/channel/public/api/v1.0/dlg/details?locale=en_US&' # downloadGroup=DLG&productId=.product[].id&rPId=.product[].releasePackageId
+dlgrel_xhr='https://customerconnect.vmware.com/channel/public/api/v1.0/products/getDLGRelatedDLGList?locale=en_US&'
+eula_xhr='https://customerconnect.vmware.com/channel/api/v1.0/dlg/eula/accept?locale=en_US&' #downloadGroup=DLG
+download_xhr='https://customerconnect.vmware.com/channel/api/v1.0/dlg/download' # POST
 vex_login='https://vexpert.vmware.com/login'
 vex_ref='https://vexpert.vmware.com/my/downloads/'
 oaua='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.0 Safari/537.36'
@@ -1723,8 +1723,8 @@ fi
 vexpert_login
 
 # start of history
-myvmware_root="https://my.vmware.com/group/vmware/"
-myvmware_ref="https://my.vmware.com/group/vmware/downloads#tab1"
+myvmware_root="https://customerconnect.vmware.com/group/vmware/"
+myvmware_ref="https://customerconnect.vmware.com/group/vmware/downloads#tab1"
 choice="root"
 name=""
 sha256=""
@@ -1979,7 +1979,7 @@ function getMyDlgVersions()
 	vurl=`jq ".dlgEditionsLists[$snr].dlgList[$pnr]|.code,.productId" $rcdir/_${specname}.xhtml|sed 's/"//g'|tr '\n' ' ' |sed 's/^/downloadGroup=/' |sed 's/ /\&productId=/'`
 	#downloadGroup=DLG&productID=.dlgList[].productId&rPId=.dlgList[].releasePackageId
 	vhr=`jq ".dlgEditionsLists[$snr].dlgList[$pnr]|.code,.productId,.releasePackageId" $rcdir/_${specname}.xhtml|sed 's/"//g'|tr '\n' ' ' |sed 's/^/downloadGroup=/' |sed 's/ /\&productId=/'|sed 's/ /\&rPId=/' | sed 's/ //'`
-	xhr="https://my.vmware.com/group/vmware/downloads/details?${vhr}"
+	xhr="https://customerconnect.vmware.com/group/vmware/downloads/details?${vhr}"
 	if [ ! -e ${rcdir}/_${missname}_ver.xhtml ] || [ $doreset -eq 1 ]
 	then
 		mywget ${rcdir}/_${missname}_ver.xhtml ${dlghdr_xhr}${vurl} xhr $xhr
@@ -2044,7 +2044,7 @@ const platform=os.platform();
 	const cookieString = await fs.readFile('./ocookies.json');
 	const cookies = JSON.parse(cookieString);
 	await page.setCookie(...cookies);
-	await page.goto('https://my.vmware.com/group/vmware/patch#search',{waitUntil: 'networkidle0'});
+	await page.goto('https://customerconnect.vmware.com/group/vmware/patch#search',{waitUntil: 'networkidle0'});
 	await page.waitForSelector('.optionsHolder');
 
 	var fname = process.argv[4]+'/patches_'+process.argv[2]+'_'+process.argv[3]+'.html';
@@ -2115,7 +2115,7 @@ function getMyFiles()
 		d=`jq ".versions[]|if (.id|test(\"${icode}$\")) then .id else \"\" end" ${rcdir}/_${missname}_ver.xhtml|sed '/""/d'|sed 's/"//g'`
 		vhr=`echo $vhr | sed "s/$iname/$d/"`
 		mhr=`echo $vhr | sed "s/\&rPId=.*//"`
-		xhr="https://my.vmware.com/group/vmware/downloads/details?${vhr}"
+		xhr="https://customerconnect.vmware.com/group/vmware/downloads/details?${vhr}"
 		missname=${ichoice}
 		if [ ! -e ${rcdir}/_${missname}_ver.xhtml ] || [ $doreset -eq 1 ]
 		then
@@ -2124,10 +2124,10 @@ function getMyFiles()
 	else
 		if [ Z"$dlgid" = Z"beta" ]
 		then
-			xhr="https://my.vmware.com/group/vmware/downloads/get-download?${vhr}"
+			xhr="https://customerconnect.vmware.com/group/vmware/downloads/get-download?${vhr}"
 			use_xhr=$beta_xhr
 		else
-			xhr="https://my.vmware.com/group/vmware/downloads/details?${vhr}"
+			xhr="https://customerconnect.vmware.com/group/vmware/downloads/details?${vhr}"
 		fi
 	fi
 	if [ ! -e ${rcdir}/_${missname}.xhtml ] || [ $doreset -eq 1 ]
@@ -2563,10 +2563,25 @@ function downloadFile()
 				fi
 			fi
 		fi
-		if [ -e $name ] || [ -e ${name}.gz ] || [ $doforce -eq 1 ]
+		# do not operate on 0 file
+		sz=0
+		if [ -e $name ]
 		then
-			compress_file $name
-			mksymlink $name
+			sz=`stat -c %s $name`
+		fi
+		if [ $sz -ne 0 ]
+		then
+			if [ -e $name ] || [ -e ${name}.gz ] || [ $doforce -eq 1 ]
+			then
+				compress_file $name
+				mksymlink $name
+			fi
+		else
+			# do not save 0 file
+			if [ -e $name ]
+			then
+				rm $name
+			fi
 		fi
 	fi
 }
@@ -3011,11 +3026,11 @@ then
 	if [ Z"$dlgid" = Z"beta" ]
 	then
 		vurl="downloadGroup=$choice"
-		xhr="https://my.vmware.com/group/vmware/downloads/get-download?${vurl}"
+		xhr="https://customerconnect.vmware.com/group/vmware/downloads/get-download?${vurl}"
 		usehdr_xhr=$betahdr_xhr
 	else
 		vurl="downloadGroup=$choice&productId=$dlgid"
-		xhr="https://my.vmware.com/group/vmware/downloads/details?${vurl}"
+		xhr="https://customerconnect.vmware.com/group/vmware/downloads/details?${vurl}"
 	fi
 	if [ ! -e ${rcdir}/_${missname}_ver.xhtml ] || [ $doreset -eq 1 ]
 	then

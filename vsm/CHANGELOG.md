@@ -11,6 +11,10 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.6.0 - Updates due to site name change
+
+6.5.9 - Updated --rebuild
+
 6.5.8 - Fixed --dlg/dlgl
 
 6.5.7 - Added --nocertcheck -mn options to handle failed login or SSL issues after LinuxVSM upgrades

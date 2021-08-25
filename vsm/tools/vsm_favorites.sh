@@ -9,10 +9,10 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="3.0.7"
+VERSIONID="3.0.8"
 
 function usage () {
-	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--wkstn][--fusion][--vsphere|--novsphere][-v|--version][--everything][--rebuild][-mn][-mr]"
+	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--wkstn][--fusion][--vsphere|--novsphere][-v|--version][--everything][--rebuild][-mn][-mr][--nocertcheck]"
 	echo "	--latest - get the latest only (default)"
 	echo "	--n+1 - get the latest + 1 previous version"
 	echo "	--n+2 - get the latest + 2 previous versions"
@@ -45,7 +45,7 @@ function usage () {
 function vsmfav_get_versions() {
 	product=$1
 	slug=`jq '.productCategoryList[].productList[].actions[0].target' ${cdir}/api.json| egrep "/${product}/"|sed 's/"//g'|sed 's#./info/slug/#category=#' | sed 's#/#\&product=#'  | sed 's#/#\&version=#'`
-	versions=`wget -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getProductHeader?locale=en_US&${slug}" 2>/dev/null|jq '.versions[].id' - 2>/dev/null|sed 's/"//g'`
+	versions=`wget $ncc -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getProductHeader?locale=en_US&${slug}" 2>/dev/null|jq '.versions[].id' - 2>/dev/null|sed 's/"//g'`
 }
 
 hdr='User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.0 Safari/537.36'
@@ -85,6 +85,7 @@ do
 		--all) nc=1000;;
 		--dryrun) dry=1;;
 		--rebuild) rebuild='--keeplocs';;
+		--nocertcheck) ncc='--no-check-certificate'; rebuild="$rebuild --nocertcheck";;
 		-mr) mr="$mr -mr";;
 		-mn) mr="$mr -mn";;
 		-s|--save) save=1;;
@@ -132,7 +133,15 @@ then
 fi
 
 rm $cdir/api.json 2>/dev/null
-wget -O $cdir/api.json --header="$hdr" 'https://my.vmware.com/channel/public/api/v1.0/products/getAllProducts?locale=en_US&isPrivate=true' 2>/dev/null
+wget -O $cdir/api.json $ncc --header="$hdr" 'https://my.vmware.com/channel/public/api/v1.0/products/getAllProducts?locale=en_US&isPrivate=true' 2>/dev/null
+if [ $? -eq 5 ] && [ Z"$ncc" = Z"" ]
+then
+		# retry but use no cert check
+		echo "SSL Retry"
+		ncc='--no-check-certificate'
+		rebuild="$rebuild --nocertcheck"
+		wget -O $cdir/api.json $ncc --header="$hdr" 'https://my.vmware.com/channel/public/api/v1.0/products/getAllProducts?locale=en_US&isPrivate=true' 2>/dev/null
+fi
 
 if [ $vsp -eq 1 ]
 then
@@ -283,7 +292,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		names=`wget -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${slug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
+		names=`wget $ncc -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${slug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
 		for y in $names
 		do
 			$vsm $rebuild -y --debug --patches --fav Desktop_End-User_Computing_VMware_Workspace_ONE_${x}_${y}
@@ -309,7 +318,7 @@ then
 		c=$(($c+1))
 		# need more available information
 		xslug=`echo $slug | sed "s/${n}/${x}/"`
-		names=`wget -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${xslug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
+		names=`wget $ncc -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${xslug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
 		for y in $names
 		do
 			$vsm $rebuild -y --debug --patches --fav Desktop_End-User_Computing_VMware_Fusion_${x}_VMware_Fusion_${y}
@@ -334,7 +343,7 @@ then
 		c=$(($c+1))
 		# need more available information
 		xslug=`echo $slug | sed "s/${n}/${x}/"`
-		names=`wget -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${xslug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
+		names=`wget $ncc -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${xslug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
 		for y in $names
 		do
 			z="${x}_${y}"
@@ -357,7 +366,7 @@ then
 		c=$(($c+1))
 		# need more available information
 		xslug=`echo $slug | sed "s/${n}/${x}/"`
-		names=`wget -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${xslug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
+		names=`wget $ncc -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${xslug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
 		for y in $names
 		do
 			z="${x}_${y}"
