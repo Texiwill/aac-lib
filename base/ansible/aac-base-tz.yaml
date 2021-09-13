@@ -1,5 +1,5 @@
 ---
-# version: 1.1.1
+# version: 1.1.2
 
 - hosts: localhost
   gather_facts: true
@@ -89,7 +89,7 @@
            - python-pip
            - gzip
          state: latest
-       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>'))
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<'))
 
      - name: Upgrade PIP
        become: yes

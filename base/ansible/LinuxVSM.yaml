@@ -1,5 +1,5 @@
 ---
-# version: 1.0.9
+# version: 1.1.0
 
 - hosts: localhost
   gather_facts: true
@@ -148,7 +148,7 @@
            - libxss1
          state: latest
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
-             (ansible_distribution == "Debian")
+              (ansible_distribution == "Debian" and ansible_distribution_major_version is version("11,'<'))
 
      - name: install the Ubuntu dependency for LinuxVSM
        become: yes
@@ -173,7 +173,8 @@
            - libgbm1
            - libxss1
          state: latest
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'>='))
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'>=')) or
+             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'>'))
 
 # Photon is missing several critical packages
      - name: Remove Vivace YUM file for Photon
