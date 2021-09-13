@@ -1,5 +1,5 @@
 ---
-# version: 1.0.8
+# version: 1.0.9
 
 - hosts: localhost
   gather_facts: true
@@ -301,6 +301,7 @@
        when: ansible_distribution == "MacOSX"
 
      - name: Install Cask Dependencies for MacOSX
+       ignore_errors: yes
        homebrew_cask:
          name: xquartz
        when: ansible_distribution == "MacOSX"

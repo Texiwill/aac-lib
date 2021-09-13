@@ -7,7 +7,7 @@
 # Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS
 #
 ###
-VERSIONID="2.1.5"
+VERSIONID="2.1.6"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -437,7 +437,7 @@ function ansible() {
 			checkdep pip
 			if [ $needdep -eq 1 ]
 			then
-				curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py 2>/dev/null
+				curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o /tmp/get-pip.py 2>/dev/null
 				python /tmp/get-pip.py --user
 			fi
 			PATH=${PATH}:${HOME}/Library/Python/2.7/bin

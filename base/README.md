@@ -141,6 +141,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+2.1.6 Changes to support Big Sur
+
 2.1.5 Changes to always ask for password when using ansible/vCLI updates for Photon OS and RHEL8
 
 2.1.4 Changes to support Photon OS 3
