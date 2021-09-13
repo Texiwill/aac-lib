@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.6.0"
+VERSIONID="6.6.1"
 
 # args: stmt error
 function colorecho() {
@@ -1549,10 +1549,19 @@ fi
 rm -f index.html.* 2>/dev/null
 
 # Get Olde Time and remove temp files if time limited reached, default 12 hours
+fopt="-c"
+ffmt="%Y"
+sfmt="%s"
+if [ Z"$theos" = Z"macos" ]
+then
+	fopt="-f"
+	ffmt="%m"
+	sfmt="%z"
+fi
 if [ -e ${rcdir}/_downloads.xhtml ]
 then
 	mrt=$((olde*3600))
-	ot=$((($(date +%s) - $(stat -c %Y -- ${rcdir}/_downloads.xhtml)) - $mrt))
+	ot=$((($(date +%s) - $(stat $fopt $ffmt -- ${rcdir}/_downloads.xhtml)) - $mrt))
 	debugvecho "	Cache Timeout: 	$ot" 
 	if [ $ot -gt 0 ]
 	then
@@ -1671,7 +1680,7 @@ save_vsmrc
 need_login=0
 if [ -f ${cdir}/ocookies.txt ]
 then
-	need_login=`stat --format "%Y" ${cdir}/ocookies.txt 2> /dev/null`
+	need_login=`stat $fopt $ffmt ${cdir}/ocookies.txt 2> /dev/null`
 fi
 # Authenticate
 oauth_login 0
@@ -2567,7 +2576,7 @@ function downloadFile()
 		sz=0
 		if [ -e $name ]
 		then
-			sz=`stat -c %s $name`
+			sz=`stat $fopt $sfmt $name`
 		fi
 		if [ $sz -ne 0 ]
 		then
