@@ -148,7 +148,7 @@
            - libxss1
          state: latest
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
-              (ansible_distribution == "Debian" and ansible_distribution_major_version is version("11,'<'))
+              (ansible_distribution == "Debian" and ansible_distribution_major_version is version("11",'<'))
 
      - name: install the Ubuntu dependency for LinuxVSM
        become: yes
@@ -173,8 +173,33 @@
            - libgbm1
            - libxss1
          state: latest
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'>=')) or
-             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'>'))
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'>='))
+
+     - name: install the Debian dependency for LinuxVSM
+       become: yes
+       package:
+         name:
+           - wget
+           - libxml2
+           - libxml2-utils
+           - ncurses-base
+           - bc
+           - jq
+           - sharutils
+           - python
+           - python3-urllib3
+           - xvfb
+           - nodejs
+           - gcc
+           - g++
+           - make
+           - libasound2
+           - libgtk-3-0
+           - libnss3
+           - libgbm1
+           - libxss1
+         state: latest
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'>'))
 
 # Photon is missing several critical packages
      - name: Remove Vivace YUM file for Photon
