@@ -33,6 +33,7 @@ Full support for LinuxVMA/LinuxVSM is available for:
 * RHEL/CentOS 8
 * Debian 9
 * Debian 10
+* Debian 11
 * Ubuntu 18.04
 * Ubuntu 20.04
 * PhotonOS 3 - requires creating an account and installing sudo to use
@@ -141,6 +142,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.1.0 LinuxVSM - Support for Debian 11
+
 2.1.6 Changes to support Big Sur
 
 2.1.5 Changes to always ask for password when using ansible/vCLI updates for Photon OS and RHEL8
