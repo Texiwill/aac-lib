@@ -9,7 +9,7 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="3.0.8"
+VERSIONID="3.0.9"
 
 function usage () {
 	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--wkstn][--fusion][--vsphere|--novsphere][-v|--version][--everything][--rebuild][-mn][-mr][--nocertcheck]"
@@ -486,6 +486,19 @@ then
 		then
 			break;
 		fi
+	done
+	for y in basic standard community
+	do
+		vsmfav_get_versions vmware_tanzu_${y}_edition
+		for x in $versions
+		do
+			c=$(($c+1))
+			$vsm $rebuild -y --debug --patches --fav Infrastructure_Operations_Management_VMware_Tanzu_${y^}_Edition_${x}_VMware_Tanzu_${y^}_Edition
+			if [ $c -ge $nc ]
+			then
+				break;
+			fi
+		done
 	done
 fi
 

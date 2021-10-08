@@ -1,3 +1,4 @@
+10/08/21 - v3.0.9 of vsm_favorites.sh added Tanzu editions
 08/24/21 - v3.0.8 of vsm_favorites.sh autodetect SSL errors
 06/09/21 - v3.0.7 of vsm_favorites.sh removed extraneaous debug message
 06/04/21 - v3.0.6 of vsm_favorites.sh added --rebuild option to allow rebuild of the --dlg/--dlgl location file
