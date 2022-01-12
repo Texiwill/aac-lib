@@ -228,7 +228,7 @@ Existing ESXI67U2 in /mnt/rainbow/iso/vmware/depot/content/dlg_ESXI67U2/DriversT
 7) CustomIso
 8) Back
 9) Exit
-#? 9
+#? 9 or e or E
 ```
 
 ### Installation

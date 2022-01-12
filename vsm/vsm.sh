@@ -1,7 +1,7 @@
 #!/bin/bash
 # vim: set tabstop=4 shiftwidth=4:
 #
-# Copyright (c) AstroArch Consulting, Inc.  2017-2021
+# Copyright (c) AstroArch Consulting, Inc.  2017-2022
 # All rights reserved
 #
 # A Linux version of VMware Software Manager (VSM) with some added intelligence
@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.6.1"
+VERSIONID="6.6.3"
 
 # args: stmt error
 function colorecho() {
@@ -1195,10 +1195,19 @@ function finddeps {
 	elif [ Z"$theos" = Z"fedora" ]
 	then
 		loopdeps "$fedora_checkdep"
-	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
+	elif [ Z"$theos" = Z"ubuntu" ]
 	then
 		myver=`echo $VERSION_ID | cut -d\. -f1`
 		if [ $myver -ge 20 ]
+		then
+			loopdeps "$ubuntu20_checkdep"
+		else
+			loopdeps "$debian_checkdep"
+		fi
+	elif [ Z"$theos" = Z"debian" ]
+	then
+		myver=`echo $VERSION_ID | cut -d\. -f1`
+		if [ $myver -ge 10 ]
 		then
 			loopdeps "$ubuntu20_checkdep"
 		else
@@ -2313,6 +2322,24 @@ function createMenu()
 		select choice in $pkgs $mark $back Exit
 		do
 			longReply=$REPLY
+			if [ $REPLY = "e" ] || [ $REPLY = "E" ]
+			then
+				choice="Exit"
+			fi
+			if [ Z"$mark" != Z"" ]
+			then
+				if [ $REPLY = "m" ] || [ $REPLY = "M" ]
+				then
+					choice="Mark"
+				fi
+			fi
+			if [ Z"$back" != Z"" ]
+			then
+				if [ $REPLY = "b" ] || [ $REPLY = "B" ]
+				then
+					choice="Back"
+				fi
+			fi
 			if [ Z"$choice" != Z"" ]
 			then
 				## needed if we allow

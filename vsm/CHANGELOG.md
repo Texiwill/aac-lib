@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.6.3 - Updates to add e or E for Exit, b or B for Back, and m or M for Mark
+
 6.6.1 - Updates for Big Sur
 
 6.6.0 - Updates due to site name change
