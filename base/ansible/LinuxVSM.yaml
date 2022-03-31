@@ -1,5 +1,5 @@
 ---
-# version: 1.1.0
+# version: 1.1.1
 
 - hosts: localhost
   gather_facts: true
@@ -35,7 +35,8 @@
          executable: /bin/bash
        when: (ansible_distribution != "MacOSX") and
              (ansible_os_family != "VMware Photon OS") and
-             (ansible_distribution != "Fedora")
+             (ansible_distribution != "Fedora") and
+             (ansible_distribution != "Alpine")
 
      - name: install RHEL < 8 dependencies
        become: yes
@@ -60,6 +61,32 @@
            - alsa-lib
          state: latest
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("8","<")
+
+     - name: install Alpine dependencies
+       become: yes
+       package:
+         name:
+           - wget
+           - libxml2
+           - ncurses
+           - bc
+           - jq
+           - sharutils
+           - python3
+           - py3-urllib3
+           - nodejs
+           - xvfb
+           - libxscrnsaver
+           - at-spi2-atk
+           - gcc
+           - g++
+           - openssl
+           - chromium-chromedriver
+           - make
+           - gtk+3.0
+           - alsa-lib
+         state: latest
+       when: ansible_os_family == "Alpine"
 
      - name: Need Yum Utils
        become: yes

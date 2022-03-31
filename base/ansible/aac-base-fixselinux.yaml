@@ -1,5 +1,5 @@
 ---
-# version: 1.0.2
+# version: 1.0.3
 
 - hosts: localhost
   become_user: root
@@ -8,5 +8,6 @@
        become: yes
        command: restorecon -R -v /dev
        when: (ansible_distribution != "MacOSX") and
-             (ansible_os_family != "VMware Photon OS")
+             (ansible_os_family != "VMware Photon OS") and
+             (ansible_os_family != "Alpine)
 
