@@ -15,6 +15,8 @@ missing definition files that cause the VMware version to stop working. It
 also finds packages not in the definitions yet. It is also possible to find
 the latest of every package.
 
+As of v6.7.1 LinuxVSM now supports Alpine Linux. To use Alpine Linux read <a href=https://github.com/Texiwill/aac-lib/blob/master/vsm/Alpine.md>Alpine.md</a>.
+
 As of v6.7.0 LinuxVSM now supports the use of MFA on the MyVMware
 account. To use be sure to run ```vsm.sh --clean``` at least once before trying.
 
@@ -364,6 +366,7 @@ the DNS server you are working is not working correctly.
   * Debian 9/10, Ubuntu 18.04/20.04
   * Microsoft WSL2 (NOT WSL1)
   * MacOSX
+  * Alpine Linux 3.15
   * ArchLinux (community tested - @WikiITWizard)
 
 * I cannot download a package, says not found or nothing appears

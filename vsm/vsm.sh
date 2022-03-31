@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.7.0"
+VERSIONID="6.7.1"
 
 # args: stmt error
 function colorecho() {
@@ -1130,6 +1130,14 @@ function checkdep() {
 				needdep=1
 			fi
 		fi
+	elif [ Z"$theos" = Z"alpine" ]
+	then
+		apk -e info $dep >& /dev/null
+		if [ $? -eq 1 ]
+		then
+			echo "Missing Dependency $dep"
+			needdep=1
+		fi
 	elif [ Z"$theos" = Z"unknown" ]
 	then
 		if [ Z"$dep" = Z"libxml2" ]
@@ -1186,6 +1194,8 @@ function finddeps {
 	ubuntu20_checkdep="$linux_checkdep python3 python3-urllib3 libxml2-utils ncurses-base xvfb libgtk-3-0 g++ libnss3 libgbm1 libxss1 make"
 	#Packages required by PhotonOS
 	photon_checkdep="$linux_checkdep python2 python-urllib3 xorg-server xorg-applications libXScrnSaver at-spi2-atk gtk3 make alsa-lib"
+	#Packages required by Alpine
+	alpine_checkdep="$linux_checkdep python3 py3-urllib3 xvfb libxscrnsaver at-spi2-atk gtk-3.0 make alsa-lib"
 	if [ Z"$theos" = Z"macos" ]
 	then
 		. $HOME/.bash_profile
@@ -1234,8 +1244,10 @@ function finddeps {
 		fi
 	elif [ Z"$theos" = Z"photon" ]
 	then
-		myver=`echo $VERSION_ID | cut -d\. -f1`
 		loopdeps "$photon_checkdep"
+	elif [ Z"$theos" = Z"alpine" ]
+	then
+		loopdeps "$alpine_checkdep"
 	fi
 }
 
