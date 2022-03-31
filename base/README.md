@@ -142,6 +142,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+2.1.7 Changes to support Alpine 
+
 1.1.0 LinuxVSM - Support for Debian 11
 
 2.1.6 Changes to support Big Sur

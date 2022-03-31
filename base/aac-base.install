@@ -1,13 +1,13 @@
 #!/bin/bash
 #
-# Copyright (c) 2016-2020 AstroArch Consulting, Inc. All rights reserved
+# Copyright (c) 2016-2022 AstroArch Consulting, Inc. All rights reserved
 #
 # Create a Base Install to use Ansible for further installs
 #
-# Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS
+# Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS/Alpine
 #
 ###
-VERSIONID="2.1.6"
+VERSIONID="2.1.8"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -114,6 +114,14 @@ function checkdep() {
 			echo "Missing Dependency $dep"
 			needdep=1
 		fi
+	elif [ Z"$theos" = Z"alpine" ]
+	then
+		apk -e info $dep >& /dev/null
+		if [ $? -ne 0 ]
+		then
+			echo "Missing Dependency $dep"
+			needdep=1
+		fi
 	elif [ Z"$theos" = Z"unknown" ]
 	then
 		echo "Cannot Check Dependenty $dep"
@@ -145,6 +153,12 @@ function installdep() {
 				sudo apt install -y $installopts $DINSTALL $DDEVEL
 			fi
 			changes=1
+		fi
+	elif [ Z"$theos" = Z"alpine" ]
+	then
+		if [ Z"$DINSTALL" != Z"" ] || [ Z"$DDEVEL" != Z"" ]
+		then
+			sudo apk add $DINSTALL $DDEVEL
 		fi
 	fi
 }
