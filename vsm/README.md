@@ -7,13 +7,16 @@ AAC Library of Tools
 Linux Version of VMware Software Manager
 
 ### NOTICE
-__As of v6.4.2 support for MacOSX has been readded. As of v6.4.1 WSL2 support has been added, NOT WS1. Please upgrade to WSL2. As of v6.4.5 support for Photon OS 3 has been added.__
+__As of v6.7.0, MFA Support has been added. As of v6.4.2 support for MacOSX has been readded. As of v6.4.1 WSL2 support has been added, NOT WS1. Please upgrade to WSL2. As of v6.4.5 support for Photon OS 3 has been added.__
 
 ### Description
 A slightly more intelligent version of VSM for Linux. It ignores
 missing definition files that cause the VMware version to stop working. It
 also finds packages not in the definitions yet. It is also possible to find
 the latest of every package.
+
+As of v6.7.0 LinuxVSM now supports the use of MFA on the MyVMware
+account. To use be sure to run ```vsm.sh --clean``` at least once before trying.
 
 As of v6.4.0 LinuxVSM now uses the My VMware API for all things but
 login. This has made the code more resilient to changes from VMware.

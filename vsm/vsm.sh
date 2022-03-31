@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.6.3"
+VERSIONID="6.7.0"
 
 # args: stmt error
 function colorecho() {
@@ -611,7 +611,7 @@ function oauth_login() {
 		if [ ! -e ${cdir}/node_modules ]
 		then
 			colorecho "	Installing necessary modules"
-			npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth --unsafe-perm=true >& /dev/null
+			npm install inquirer puppeteer puppeteer-extra puppeteer-extra-plugin-stealth --unsafe-perm=true >& /dev/null
 			if [ $? -eq 1 ]
 			then
 				colorecho "	Not enough space in $cdir; please add more" 1
@@ -629,6 +629,7 @@ function oauth_login() {
 		then
 			cat >> $cdir/node-bm.js << EOF
 const os = require('os');
+const inquirer = require('inquirer');
 const puppeteer = require('puppeteer-extra');
 const fs = require('fs').promises;
 const Xvfb = require('xvfb');
@@ -647,6 +648,7 @@ const platform=os.platform();
 var data='${auth}';
 let buff = new Buffer.from(data,'base64');
 let text = buff.toString('ascii');
+var mfa=true;
 const words = text.split(':');
 (async () => {
 	var browser;
@@ -680,6 +682,18 @@ const words = text.split(':');
 	await page.type('#password',words[1]);
 	await page.keyboard.press('Enter');
 	await navigationPromise;
+	try {
+		await page.waitForSelector('#passcode-visible',{timeout: 1000});
+		const answer = await inquirer.prompt([{
+			type: 'input',
+			name: 'passCode',
+			message: 'Enter MFA pass code: '
+		}]);
+		await page.type('#passcode-visible',answer.passCode);
+		await page.keyboard.press('Enter');
+	} catch (error) {
+		mfa=false;
+	}
 	await page.waitForSelector('.ng-star-inserted',{timeout: 90000});
 	//await page.goto('https://customerconnect.vmware.com/group/vmware/patch',{waitUntil: 'networkidle2'});
 	//await page.waitForSelector('.eaSelector');
@@ -717,34 +731,37 @@ EOF
 			chmod -R 600 node-bm.js
 			chmod 700 node_modules
 		fi
-		nj=`node node-bm.js 2>&1`
-		echo $nj | grep .ng-star-inserted >& /dev/null
+		node node-bm.js 2>&1 |tee $cdir/bm.txt
+		grep .ng-star-inserted $cdir/bm.txt >& /dev/null
 		if [ $? -eq 0 ]
 		then
 			colorecho "	Login Failure Bad or Missing Credential" 1
 			pkill -9 Xvfb
+			rm $cdir/bm.txt
 			if [ $debugv -eq 0 ]
 			then
 				rm node-bm.js
 			fi
 			exit
 		fi
-		echo $nj | grep Navigation >& /dev/null
+		grep Navigation $cdir/bm.txt >& /dev/null
 		if [ $? -eq 0 ]
 		then
 			colorecho "	DNS or WSL1 issue? Unable to reach My VMware" 1
 			pkill -9 Xvfb
+			rm $cdir/bm.txt
 			if [ $debugv -eq 0 ]
 			then
 				rm node-bm.js
 			fi
 			exit
 		fi
-		echo $nj | egrep 'Cannot find module|loading shared libraries' >& /dev/null
+		egrep 'Cannot find module|loading shared libraries' $cdir/bm.txt >& /dev/null
 		if [ $? -eq 0 ]
 		then
 			colorecho "	Installation Issue, run vsm.sh --clean" 1
 			colorecho "	if problem continues reinstall using install.sh" 1
+			rm $cdir/bm.txt
 			pkill -9 Xvfb
 			if [ $debugv -eq 0 ]
 			then
@@ -754,6 +771,8 @@ EOF
 		fi
 		popd >& /dev/null
 	fi
+	#rm $cdir/bm.txt >& /dev/null
+
 	# recheck, just in case
 	grep OAMAuthnCookie $cdir/ocookies.txt >& /dev/null
 	oauth_err=$?
@@ -1604,7 +1623,7 @@ then
 		rm $cdir/vex_auth.html
 	fi
 	rm -rf $HOME/.vsm/.key >& /dev/null
-	rm -rf ${cdir}/node* ${cdir}/*.json ${cdir}/*.txt ${cdir}/node-bm.js ${cdir}/node-pt.js
+	rm -rf ${cdir}/node* ${cdir}/*.json ${cdir}/*.txt ${cdir}/node-bm.js ${cdir}/node-pt.js ${cdir}/bm.txt
 	pkill -9 Xvfb
 	colorecho "Removed all Temporary Files"
 	exit
@@ -2303,6 +2322,8 @@ function createMenu()
 	then
 		prevChoice=$choice
 		if [ Z"$pkgs" = Z"All " ]; then pkgs=''; fi # Nothing so Drop the All!
+		echo $pkgs | grep "All" >& /dev/null
+		all_h=$?
 		old_lr=$longReply
 		if [ Z"$choice" != Z"Back" ] || [ Z"$choice" != Z"Mark" ] || [ Z"$choice" != Z"All" ]
 		then
@@ -2318,28 +2339,45 @@ function createMenu()
 		then
 			debugvecho "Fav Potential: ${pName}_${layer[4]}"
 		fi
+		cnt_r=`echo "$pkgs $mark $back Exit" | wc -w`
 		export COLUMNS=8
 		select choice in $pkgs $mark $back Exit
 		do
-			longReply=$REPLY
+			# letter substitutions, we also need longReply to mean something
 			if [ $REPLY = "e" ] || [ $REPLY = "E" ]
 			then
+				#always last
 				choice="Exit"
+				REPLY=$cnt_r
+			fi
+			if [ $all_h -eq 0 ]
+			then
+				if [ $REPLY = "a" ] || [ $REPLY = "A" ]
+				then
+					#always first
+					choice="All"
+					REPLY=1
+				fi
 			fi
 			if [ Z"$mark" != Z"" ]
 			then
 				if [ $REPLY = "m" ] || [ $REPLY = "M" ]
 				then
+					#always 3rd to last
 					choice="Mark"
+					REPLY=$(($cnt_r-2))
 				fi
 			fi
 			if [ Z"$back" != Z"" ]
 			then
 				if [ $REPLY = "b" ] || [ $REPLY = "B" ]
 				then
+					#always 2nd to last
 					choice="Back"
+					REPLY=$(($cnt_r-1))
 				fi
 			fi
+			longReply=$REPLY
 			if [ Z"$choice" != Z"" ]
 			then
 				## needed if we allow
