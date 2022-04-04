@@ -9,5 +9,5 @@
        command: restorecon -R -v /dev
        when: (ansible_distribution != "MacOSX") and
              (ansible_os_family != "VMware Photon OS") and
-             (ansible_os_family != "Alpine)
+             (ansible_os_family != "Alpine")
 
