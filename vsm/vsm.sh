@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.7.1"
+VERSIONID="6.7.2"
 
 # args: stmt error
 function colorecho() {
@@ -575,6 +575,7 @@ function vexpert_login() {
 		if [ $vex_err -eq 0 ]
 		then
 			colorecho "Incorrect vExpert Credentials" 0
+			rm -rf ${cdir}/bm.txt >& /dev/null
 			exit
 		fi
 
@@ -731,13 +732,15 @@ EOF
 			chmod -R 600 node-bm.js
 			chmod 700 node_modules
 		fi
+		# just to be sure
+		rm $cdir/bm.txt >& /dev/null
 		node node-bm.js 2>&1 |tee $cdir/bm.txt
 		grep .ng-star-inserted $cdir/bm.txt >& /dev/null
 		if [ $? -eq 0 ]
 		then
 			colorecho "	Login Failure Bad or Missing Credential" 1
 			pkill -9 Xvfb
-			rm $cdir/bm.txt
+			rm $cdir/bm.txt >& /dev/null
 			if [ $debugv -eq 0 ]
 			then
 				rm node-bm.js
@@ -749,7 +752,7 @@ EOF
 		then
 			colorecho "	DNS or WSL1 issue? Unable to reach My VMware" 1
 			pkill -9 Xvfb
-			rm $cdir/bm.txt
+			rm $cdir/bm.txt >& /dev/null
 			if [ $debugv -eq 0 ]
 			then
 				rm node-bm.js
@@ -761,7 +764,7 @@ EOF
 		then
 			colorecho "	Installation Issue, run vsm.sh --clean" 1
 			colorecho "	if problem continues reinstall using install.sh" 1
-			rm $cdir/bm.txt
+			rm $cdir/bm.txt >& /dev/null
 			pkill -9 Xvfb
 			if [ $debugv -eq 0 ]
 			then
@@ -1677,6 +1680,7 @@ then
 	then
 		jq --arg s "$mydlg" '.dlgList[] | select(.name | test($s)).name' $rcdir/newlocs.json | sed 's/"//g'
 	fi
+	rm -rf ${cdir}/bm.txt >& /dev/null
 	exit
 fi
 
@@ -1730,6 +1734,7 @@ then
 else
 	colorecho "	Oauth:		Error" 1
 	dopatch=0
+	rm -rf ${cdir}/bm.txt >& /dev/null
 	exit
 fi
 if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
@@ -1749,12 +1754,14 @@ then
 	if [ $? -eq 0 ]
 	then
 		colorecho "Error: My VMware Temporary Maintenance" 1
+		rm -rf ${cdir}/bm.txt >& /dev/null
 		exit;
 	fi
 
 	if [ ! -e ${rcdir}/_h_downloads.xhtml ]
 	then
 		colorecho "Error: Could not get My VMware Downloads File" 1
+		rm -rf ${cdir}/bm.txt >& /dev/null
 		exit;
 	fi
 
@@ -1763,6 +1770,7 @@ then
 
 	if [ $err -ne 0 ]
 	then
+		rm -rf ${cdir}/bm.txt >& /dev/null
 		exit $err
 	fi
 fi
@@ -2396,6 +2404,7 @@ function createMenu()
 				stripcolor
 				if [ $choice = "Exit" ]
 				then
+					rm ${cdir}/bm.txt >& /dev/null
 					exit
 				elif [ $choice = "Mark" ]
 				then
@@ -3081,6 +3090,7 @@ then
 	#rebuild=0
 	getFavPaths
 	getAll
+	rm -rf ${cdir}/bm.txt >& /dev/null
 	exit
 fi
 
@@ -3099,6 +3109,7 @@ then
 		# needed for aac-base scripts
 		echo "Local:$repo/dlg_${thedlg}${eou}/$name"
 	fi
+	rm -rf ${cdir}/bm.txt >& /dev/null
 	exit
 fi
 
@@ -3151,6 +3162,7 @@ then
 	fi
 	getMyFiles 1
 	getAllChoice
+	rm -rf ${cdir}/bm.txt >& /dev/null
 	exit
 fi
 
@@ -3181,3 +3193,4 @@ do
 		createLayer
 	fi
 done
+

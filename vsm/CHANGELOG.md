@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.7.2 - MFA cleanup; newlocs update
+
 6.7.1 - Alpine Linux support
 
 6.7.0 - Updates to support MFA, please use --clean or -mn option to enable, if you previously used LinuxVSM. Both are 1 time options
