@@ -1,5 +1,5 @@
 ---
-# version: 1.1.1
+# version: 1.1.2
 
 - hosts: localhost
   gather_facts: true
@@ -188,19 +188,37 @@
            - bc
            - jq
            - sharutils
-           - python
-           - python3-urllib3
            - xvfb
            - nodejs
            - gcc
            - g++
            - make
            - libgtk-3-0
+           - libasound2
            - libnss3
            - libgbm1
            - libxss1
          state: latest
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'>='))
+
+     - name: install Ubuntu20 python dependencies
+       become: yes
+       package:
+         name:
+           - python
+           - python3-urllib3
+         state: latest
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'='))
+
+     - name: install Ubuntu22 python dependencies
+       become: yes
+       package:
+         name:
+           - python3
+           - python3-urllib3
+         state: latest
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("22",'>='))
+
 
      - name: install the Debian dependency for LinuxVSM
        become: yes
