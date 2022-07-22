@@ -36,6 +36,7 @@ Full support for LinuxVMA/LinuxVSM is available for:
 * Debian 11
 * Ubuntu 18.04
 * Ubuntu 20.04
+* Ubuntu 22.04
 * PhotonOS 3 - requires creating an account and installing sudo to use
 
 WSL2 also works per the community
@@ -119,7 +120,7 @@ Installs LinuxVSM, PowerCLI, ov-import.sh, ovftool, DCLI, and vcli to create
 a Linux vSphere Management Appliance.  PowerCLI includes Powershell,
 PowerCLI, PowerNSX, and PowerVRA.
 
-#### LinuxVSM - 1.0.8
+#### LinuxVSM - 1.1.2
 Install a port of VMware's Software Manager to Linux - LinuxVSM.
 
 #### vctui - 1.0.6
@@ -142,6 +143,10 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
+1.1.2 LinuxVMS - Support for Ubuntu 22.04
+
+1.1.1 LinuxVSM - Support for Alpine
+
 2.1.7 Changes to support Alpine 
 
 1.1.0 LinuxVSM - Support for Debian 11
