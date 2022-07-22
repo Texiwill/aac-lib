@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.7.4 - Change to nodejs modules installed
+
 6.7.2 - MFA cleanup; newlocs update
 
 6.7.1 - Alpine Linux support
