@@ -143,7 +143,7 @@ Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
 ### Changelog
-1.1.2 LinuxVMS - Support for Ubuntu 22.04
+1.1.2 LinuxVSM - Support for Ubuntu 22.04
 
 1.1.1 LinuxVSM - Support for Alpine
 
