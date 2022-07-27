@@ -351,13 +351,15 @@ This is often due to either a VMware website issue, DNS, or bad credentials.
 
 * I receive a "Credential Error Getting" error
 
-This has three solutions, one is not solvable except by VMware. 
+This has four solutions, one is not solvable except by VMware. 
 
 1. If your My VMware account has not been used recently or has no entitlements or trials, it is possible that your VMware Software Manager entitlement has been removed or is not working. You can verify this by using the VMware provided VMware Software Manager on a Windows system and attempt to login. If that works, then it is one of the other issues.
 
 2. If your DNS server is acting up, you may get Credential errors, check that DNS is working.
 
 3. Your credential may be incorrect. Remove your "VSM XML Dir", usually /tmp/vsm (rm /tmp/vsm)  and start over.
+
+4. Use the --clean option and try again.
 
 * I receive a "Network Error Getting" error
 
@@ -366,10 +368,19 @@ unavailable. Verify you can reach https://my.vmware.com to verify the
 site and DNS. Occassionally VMware does maintenance that causes issues. Or
 the DNS server you are working is not working correctly.
 
+* Do I have to always type in numbers to exit and go backwards, etc?
+
+No, as of version 6.6.3 you can use the following for common commands:
+
+  * a or A - All
+  * b or B - Back
+  * e or E - Exit
+  * m or M - Mark
+
 * On What operating systems will LinuxVSM run?
 
   * RHEL 6/7/8, Centos 6/7/8, Fedora
-  * Debian 9/10, Ubuntu 18.04/20.04
+  * Debian 9/10, Ubuntu 18.04/20.04/22.04
   * Microsoft WSL2 (NOT WSL1)
   * MacOSX
   * Alpine Linux 3.15
