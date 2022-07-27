@@ -336,7 +336,7 @@ LinuxVSM in scripts
 ### Support
 
 #### Frequently Asked Questions
-* I received the following error: 
+##### I received the following error: 
 
 __UnhandledPromiseRejectionWarning: TimeoutError: Timed out after 30000 ms__
 
@@ -345,11 +345,11 @@ it is not a WSL issue, rerun with --clean option as the nodejs libraries
 are out-of-date or you have a bad credential. Alternatively, there is
 a DNS issue (see below).
 
-* I receive a Long Error message during Login
+##### I receive a Long Error message during Login
 
 This is often due to either a VMware website issue, DNS, or bad credentials.
 
-* I receive a "Credential Error Getting" error
+##### I receive a "Credential Error Getting" error
 
 This has four solutions, one is not solvable except by VMware. 
 
@@ -361,14 +361,14 @@ This has four solutions, one is not solvable except by VMware.
 
 4. Use the --clean option and try again.
 
-* I receive a "Network Error Getting" error
+##### I receive a "Network Error Getting" error
 
 This is usually a sign that DNS is not working or the site is
 unavailable. Verify you can reach https://my.vmware.com to verify the
 site and DNS. Occassionally VMware does maintenance that causes issues. Or
 the DNS server you are working is not working correctly.
 
-* Do I have to always type in numbers to exit and go backwards, etc?
+##### Do I have to always type in numbers to exit and go backwards, etc?
 
 No, as of version 6.6.3 you can use the following for common commands:
 
@@ -377,7 +377,7 @@ No, as of version 6.6.3 you can use the following for common commands:
   * e or E - Exit
   * m or M - Mark
 
-* On What operating systems will LinuxVSM run?
+##### On What operating systems will LinuxVSM run?
 
   * RHEL 6/7/8, Centos 6/7/8, Fedora
   * Debian 9/10, Ubuntu 18.04/20.04/22.04
@@ -386,12 +386,12 @@ No, as of version 6.6.3 you can use the following for common commands:
   * Alpine Linux 3.15
   * ArchLinux (community tested - @WikiITWizard)
 
-* I cannot download a package, says not found or nothing appears
+##### I cannot download a package, says not found or nothing appears
 
 VMware has changed the download process to require entitlement for
 everything. LinuxVSM does not bypass VMware's entitlement checks.
 
-* How do I use --dlg, --dlgl
+##### How do I use --dlg, --dlgl
 
 As of Version 6.0.3 the seed datafile is downloaded automatically and
 contains those items pertaining to vSphere only. You can add to this
