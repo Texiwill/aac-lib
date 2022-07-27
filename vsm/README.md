@@ -116,10 +116,16 @@ can be downloaded without traversing the menus.
     Caveat: Access to these downloads does not imply you are entitled
     for the material. Please see My VMware for your entitlements.
 
+    Instead of using numbers for everything you can use the following as well:
+	a or A - All
+	b or B - Back
+	e or E - Exit
+	m or M - Mark
+
 Example Run:
 
 $ vsm.sh -mr -y -c
-ing the following options:
+Using the following options:
 	Version:	6.0.0
 	OS Mode:        centos
 	VSM XML Dir:	/tmp/vsm
