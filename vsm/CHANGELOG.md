@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.7.5 - added --retries option and defaul retry on Server Failure notices as they could be due to authentication timeouts
+
 6.7.4 - Change to nodejs modules installed
 
 6.7.2 - MFA cleanup; newlocs update

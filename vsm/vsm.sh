@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.7.4"
+VERSIONID="6.7.5"
 
 # args: stmt error
 function colorecho() {
@@ -419,6 +419,7 @@ function save_vsmrc() {
 			echo "compress=$compress" >> $vsmrc
 			echo "symlink=$symlink" >> $vsmrc
 			echo "olde=$olde" >> $vsmrc
+			echo "retrycount=$retrycount" >> $vsmrc
 		fi
 	fi
 }
@@ -787,6 +788,11 @@ EOF
 	#fi
 }
 
+function background_oauth() {
+	sleep 901
+	oauth_login 0
+}
+
 function get_product_patches() {
 	ppr=`echo $missname | sed 's/\([A-Z]\+\)[0-9][0-9A-Z]\+/\1/'`
 	# TODO: Expand to all listed patches!
@@ -972,7 +978,7 @@ function version() {
 
 function usage() {
 	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--clean] [--dlgroup dlgcode productId] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--nested] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12] [-mn] [--nocertcheck]"
+	echo "$0 [-c|--check] [--clean] [--dlgroup dlgcode productId] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--nested] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [[--retries count] [--save] [--olde 12] [-mn] [--nocertcheck]"
 	echo "	-c|--check - do sha256 check against download"
 	echo "	--clean - remove all temporary files and exit"
 	echo "	--dlgroup - download a specifc package by dlgcode and productId (in the URL)"
@@ -1023,6 +1029,7 @@ function usage() {
 	echo "	--debug - debug mode"
 	echo "	--repo path - specify path of repo"
 	echo "		          saved to configuration file"
+	echo "	--retries count - specify the number of retries to make for auth timeouts"
 	echo "	--save - save settings to \$HOME/.vsmrc, favorite always saved on Mark"
 	echo ""
 	#echo "	All-style downloads include: All, All_No_OpenSource, Minimum_Required"
@@ -1486,6 +1493,7 @@ olde=12
 certcheck=1
 renodejs=0
 nested=0
+retrycount=8
 mycolumns=`tput cols`
 
 xu=`id -un`
@@ -1501,7 +1509,7 @@ checkForUpdate
 # import values from .vsmrc
 load_vsmrc
 
-while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --nested) nested=1 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; -V|--version) version ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --keeplocs) rebuild=2 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; *) usage ;; esac; shift; done
+while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --nested) nested=1 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; --retries) retrycount=$2; shift;; -V|--version) version ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --keeplocs) rebuild=2 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; *) usage ;; esac; shift; done
 
 # remove when fixed
 dopatch=0
@@ -1575,6 +1583,7 @@ then
 	echo "	Symlink Mode:	$symlink"
 	echo "	Reset XML Dir:	$doreset"
 	echo "	Nested: $nested"
+	echo "	Retry Count:	$retrycount"
 	if [ $myfav -eq 1 ]
 	then
 		echo "	Favorite: $favorite"
@@ -2667,8 +2676,27 @@ function downloadFile()
 				then
 					echo "mywget $name $lurl '--progress=bar:force' 1"
 				else
+					retries=1
 					echo "Downloading $name to `pwd`:"
 					mywget $name $lurl '--progress=bar:force' 1
+					# Retry loop w/continue in case file is too large for
+					# server timeout on auth
+					while [ $err -eq 8 ]
+					do
+						echo -n "Continueing $retries ..."
+						err=0
+						oauth_login 0
+						getPreUrl $download_xhr
+						if [ ${#lurl} -gt 0 ]
+						then
+							mywget $name $lurl '-c --progress=bar:force' 1
+						fi
+						((retries++))
+						if [ $retries -gt $retrycount ]
+						then
+							err=9
+						fi
+					done
 					if [ $err -eq 0 ]
 					then
 						if [ $doshacheck -eq 1 ]
