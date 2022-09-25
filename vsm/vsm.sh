@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.7.5"
+VERSIONID="6.7.6"
 
 # args: stmt error
 function colorecho() {
@@ -977,70 +977,107 @@ function version() {
 }
 
 function usage() {
-	echo "LinuxVSM Help"
-	echo "$0 [-c|--check] [--clean] [--dlgroup dlgcode productId] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--nested] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [[--retries count] [--save] [--olde 12] [-mn] [--nocertcheck]"
-	echo "	-c|--check - do sha256 check against download"
-	echo "	--clean - remove all temporary files and exit"
-	echo "	--dlgroup - download a specifc package by dlgcode and productId (in the URL)"
-	echo "	--dlg - download specific package by name or part of name (regex)"
-	echo "	--dlgl - list all packages by name or part of name (regex)"
-	echo "	-d|--dryrun - dryrun, do not download"
-	echo "	-f|--force - force download of packages"
-	echo "	--fav favorite - specify favorite on command line"
-	echo "	--favorite - download suite marked as favorite"
-	echo "	--fixsymlink - convert old repo to symlink based repo"
-	echo "	-e|--exit - reset and exit"
-	echo "	-h|--help - this help"
-	echo "	-mr - remove temporary files"
-	echo "	-mn - remove NodeJS files"
-	echo "  --nocertcheck - do not check for SSL certificates"
-	echo "	--historical - display older versions when you select a package"
-	echo "	--nohistorical - disable --historical"
-	echo "	-nh|--noheader - leave off the header bits"
-	echo "	-nq|--noquiet - disable quiet mode"
-	echo "	-ns|--nostore - do not store credential data and remove if exists"
-	echo "	-nc|--nocolor - do not output with color"
-	echo "	--nested - download William Lam's NestedEsxi images"
-	echo "  --olde - number of hours (default 12) before -mr enforced"
-	echo "	-p|--password - specify password"
-	echo "	--progress - show progress for OEM, OSS, and DriverTools"
-	echo "	-q|--quiet - be less verbose"
-	echo "	--rebuid - rebuild/add to JSON used by --dlgl and --dlg"
-	echo "	--symlink - use space saving symlinks"
-	echo "	--nosymlink - disable --symlink mode"
-	echo "	-u|--username - specify username"
-	echo "	-v|--vsmdir path - set VSM directory - saved to configuration file"
-	echo "	-V|--version - version number"
-	echo "	-y - do not ask to continue"
-	echo "	-z|--compress - compress files that can be compressed"
-	echo "  --nocompress - do not compress files"
-	echo "	--dts - include DriversTools in All-style downloads"
-	echo "		    saved to configuration file"
-	echo "	--nodts - do not include DriversTools in All-style downloads"
-	echo "		      saved to configuration file"
-	echo "	--oss - include OpenSource in All-style downloads"
-	echo "		    saved to configuration file"
-	echo "	--nooss - do not include OpenSource in All-style downloads"
-	echo "		      saved to configuration file"
-	echo "	--oem - include CustomIso in All-style downloads"
-	echo "		    saved to configuration file"
-	echo "	--nooem - do not include CustomIso in All-style downloads"
-	echo "		      saved to configuration file"
-	echo "	--debug - debug mode"
-	echo "	--repo path - specify path of repo"
-	echo "		          saved to configuration file"
-	echo "	--retries count - specify the number of retries to make for auth timeouts"
-	echo "	--save - save settings to \$HOME/.vsmrc, favorite always saved on Mark"
-	echo ""
-	#echo "	All-style downloads include: All, All_No_OpenSource, Minimum_Required"
-	#echo ""
-	echo "To Download the latest Perl CLI use "
-	echo "	(to escape the wild cards used by the internal regex):"
-	echo "	./vsm.sh --dlg CLI\.\*\\.x86_64.tar.gz"
-	echo ""
-	echo "Use of the Mark option, marks the current product suite as the" 
-	echo "favorite. There is only 1 favorite slot available. Favorites"
-	echo "can be downloaded without traversing the menus."
+	use_pager="`which more` -e"
+	if [ Z"$PAGER" != Z"" ]
+	then
+		use_pager=$PAGER
+	fi
+
+	cat << EOF | $use_pager
+LinuxVSM $VERSIONID Help
+$0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12]
+	-c|--check - do sha256 check against download
+	--clean - remove all temporary files and exit
+	--dlg - download specific package by name or part of name (regex)
+	--dlgl - list all packages by name or part of name (regex)
+	-d|--dryrun - dryrun, do not download
+	-f|--force - force download of packages
+	--fav favorite - specify favorite on command line
+	--favorite - download suite marked as favorite
+	--fixsymlink - convert old repo to symlink based repo
+	-e|--exit - reset and exit
+	-h|--help - this help
+	-mr - remove temporary files
+	--historical - display older versions when you select a package
+	--nohistorical - disable --historical
+	-nh|--noheader - leave off the header bits
+	-nq|--noquiet - disable quiet mode
+	-ns|--nostore - do not store credential data and remove if exists
+	-nc|--nocolor - do not output with color
+        --olde # - number of hours (default 12) before -mr enforced
+	-p|--password - specify password
+	--progress - show progress for OEM, OSS, and DriverTools
+	-q|--quiet - be less verbose
+	--rebuid - rebuild/add to JSON used by --dlgl and --dlg
+	--symlink - use space saving symlinks
+	--nosymlink - disable --symlink mode
+	-u|--username - specify username
+	-v|--vsmdir path - set VSM directory - saved to configuration file
+	-V|--version - version number
+	-y - do not ask to continue
+	-z|--compress - compress files that can be compressed
+	--dts - include DriversTools in All-style downloads
+		    saved to configuration file
+	--nodts - do not include DriversTools in All-style downloads
+		      saved to configuration file
+	--oss - include OpenSource in All-style downloads
+		    saved to configuration file
+	--nooss - do not include OpenSource in All-style downloads
+		      saved to configuration file
+	--oem - include CustomIso in All-style downloads
+		    saved to configuration file
+	--nooem - do not include CustomIso in All-style downloads
+		      saved to configuration file
+	--debug - debug mode
+	--retries count - number of retries to do, default is 8
+	--repo path - specify path of repo
+		          saved to configuration file
+	--save - save settings to $HOME/.vsmrc, favorite always saved on Mark
+
+To Download the latest Perl CLI use 
+	(to escape the wild cards used by the internal regex):
+	./vsm.sh --dlg CLI\.\*\.x86_64.tar.gz
+
+Use of the Mark option, marks the current product suite as the
+favorite. There is only 1 favorite slot available. Favorites
+can be downloaded without traversing the menus.
+    To Download the latest Perl CLI use 
+	(to escape the wild cards used by the internal regex):
+	./vsm.sh --dlg CLI\.\*\.x86_64.tar.gz
+
+    Use of the Mark option, marks the current product suite as the
+    favorite. There is only 1 favorite slot available. Favorites
+    can be downloaded without traversing the menus. To download your 
+    favorite use:
+	$ vsm.sh -mr -y --favorite -q --progress
+
+    Those items that show up in Cyan are those where My VMware meta data has    
+    not been downloaded yet.
+
+    Those items that show up in Grey are those too which you are not
+    entitled.
+
+    Those items in reverse color (white on black or cyan) are those items
+    not downloaded. For packages and not files, the reverse color only
+    shows up if the directory is not in the repo and is not related to 
+    missing files or new files.
+
+    Caveat: Access to these downloads does not imply you are entitled
+    for the material. Please see My VMware for your entitlements.
+
+    Instead of using numbers for everything you can use the following as well:
+	a or A - All
+	b or B - Back
+	e or E - Exit
+	x or X - Exit
+	q or Q - Exit
+	m or M - Mark
+	r or R - redraw the menu
+	p or P - Print where you are in the Menus
+	/searchString - Search for string in current menu, if it exists,
+			go to menu option, or list multiple options
+			(case insensitive)
+EOF
 
 	exit;
 }
@@ -2380,67 +2417,156 @@ function createMenu()
 			debugvecho "Fav Potential: ${pName}_${layer[4]}"
 		fi
 		cnt_r=`echo "$pkgs $mark $back Exit" | wc -w`
+		redraw=1
 		export COLUMNS=8
-		select choice in $pkgs $mark $back Exit
+		while [ $redraw -eq 1 ]
 		do
-			# letter substitutions, we also need longReply to mean something
-			if [ $REPLY = "e" ] || [ $REPLY = "E" ]
-			then
-				#always last
-				choice="Exit"
-				REPLY=$cnt_r
-			fi
-			if [ $all_h -eq 0 ]
-			then
-				if [ $REPLY = "a" ] || [ $REPLY = "A" ]
+			select choice in $pkgs $mark $back Exit
+			do
+				sfail=0
+				redraw=0
+				# search for text
+				if [ ${REPLY:0:1} = "/" ]
 				then
-					#always first
-					choice="All"
-					REPLY=1
+					search=`echo "$pkgs $mark $back Exit" | sed 's/ /\n/g' | grep -in ${REPLY:1}`
+					if [ $? -eq 0 ]
+					then
+						OREPLY=$REPLY
+						# single item or multiple?
+						# Multiple == submenu
+						cnt_s=`echo $search | sed 's/ /\n/g' |wc -l`
+						if [ $cnt_s -eq 1 ]
+						then
+							choice=`echo $search|awk -F: '{print $2}'`	
+							REPLY=`echo $search|awk -F: '{print $1}'`
+						else
+							sdraw=1
+							tput bold
+							echo "Multiple results found for ${REPLY:1}"
+							while [ $sdraw -eq 1 ]
+							do
+								select schoice in $search "Back"
+								do
+									sdraw=0
+									if [ $REPLY = "b" ] || [ $REPLY = "B" ]
+									then
+										#always last
+										schoice="Back"
+										REPLY=$OREPLY
+										redraw=1
+									fi
+									if [ Z"$schoice" != Z"" ]
+									then
+										choice=`echo $schoice|awk -F: '{print $2}'`	
+										REPLY=`echo $schoice|awk -F: '{print $1}'`
+									else
+										echo "${RED}Please enter a valid numeric number or b${NC}"
+										tput bold
+										sdraw=1
+									fi
+									if [ $sdraw -eq 0 ]
+									then
+										break
+									fi
+								done
+							done
+							#echo "\t`echo $search|sed 's/ /\n\t/g'`"
+							echo -n $NC
+						fi
+					else
+						echo "${RED}Search failed for ${REPLY:1}${NC}"
+						sfail=1
+					fi
 				fi
-			fi
-			if [ Z"$mark" != Z"" ]
-			then
-				if [ $REPLY = "m" ] || [ $REPLY = "M" ]
+				# Need to do something on redraw (break) and redraw
+				if [ $REPLY = "r" ] || [ $REPLY = "R" ]
 				then
-					#always 3rd to last
-					choice="Mark"
-					REPLY=$(($cnt_r-2))
+					redraw=1
 				fi
-			fi
-			if [ Z"$back" != Z"" ]
-			then
-				if [ $REPLY = "b" ] || [ $REPLY = "B" ]
+				if [ $REPLY = "p" ] || [ $REPLY = "P" ]
 				then
-					#always 2nd to last
-					choice="Back"
-					REPLY=$(($cnt_r-1))
+					if [ Z"$pName" = Z"" ]
+					then
+						echo "Top Menu"
+					else
+						echo $pName
+					fi
+					sfail=1
 				fi
-			fi
-			longReply=$REPLY
-			if [ Z"$choice" != Z"" ]
-			then
-				## needed if we allow
-				stripcolor
-				if [ $choice = "Exit" ]
+				# letter substitutions, we also need longReply to mean something
+				if [ $REPLY = "e" ] || [ $REPLY = "E" ] || [ $REPLY = "x" ] || [ $REPLY = "X" ] || [ $REPLY = "q" ] || [ $REPLY = "Q" ]
 				then
-					rm ${cdir}/bm.txt >& /dev/null
-					exit
-				elif [ $choice = "Mark" ]
-				then
-					favorite="${pName}_${layer[4]}"
-					colorecho "Favorite: $favorite"
-					save_vsmrc
-					continue
+					#always last
+					choice="Exit"
+					REPLY=$cnt_r
 				fi
-				if [ $nr -eq 2 ]
+				if [ $all_h -eq 0 ]
 				then
-					pName=`echo $choice|sed 's/&_//g'`
+					if [ $REPLY = "a" ] || [ $REPLY = "A" ]
+					then
+						#always first
+						choice="All"
+						REPLY=1
+					fi
 				fi
-				break
-			else
-				echo -n "Please enter a valid numeric number:"
-			fi
+				if [ Z"$mark" != Z"" ]
+				then
+					if [ $REPLY = "m" ] || [ $REPLY = "M" ]
+					then
+						#always 3rd to last
+						choice="Mark"
+						REPLY=$(($cnt_r-2))
+					fi
+				fi
+				if [ Z"$back" != Z"" ]
+				then
+					if [ $REPLY = "b" ] || [ $REPLY = "B" ]
+					then
+						#always 2nd to last
+						choice="Back"
+						REPLY=$(($cnt_r-1))
+					fi
+				fi
+				longReply=$REPLY
+				if [ Z"$choice" != Z"" ]
+				then
+					## needed if we allow
+					stripcolor
+					if [ $choice = "Exit" ]
+					then
+						rm ${cdir}/bm.txt >& /dev/null
+						exit
+					elif [ $choice = "Mark" ]
+					then
+						favorite="${pName}_${layer[4]}"
+						colorecho "Favorite: $favorite"
+						save_vsmrc
+						continue
+					fi
+					if [ $nr -eq 2 ]
+					then
+						pName=`echo $choice|sed 's/&_//g'`
+					fi
+				else
+					if [ $redraw -eq 0 ] && [ $sfail -eq 0 ]
+					then
+						if [ Z"$mark" != Z"" ]
+						then
+							m=" m,"
+						fi
+						if [ Z"$back" != Z"" ]
+						then
+							b=" b,"
+						fi
+						echo "${RED}Please enter a valid numeric number or one of a, e, x, p,${b}${m} /string${NC}"
+						sfail=1
+					fi
+				fi
+				if [ $sfail -eq 0 ]
+				then
+					break
+				fi
+			done
 		done
 	else
 		longReply=1 # use this value for follow on elements

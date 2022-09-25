@@ -7,13 +7,15 @@ AAC Library of Tools
 Linux Version of VMware Software Manager
 
 ### NOTICE
-__As of v6.7.5, support for retry on server failure has been added. The default # of retries is 8. Server failures could be the result of authentication expiration.__
+__As of v6.7.6, support for case insensitive search has been added.__
 
 ### Description
 A slightly more intelligent version of VSM for Linux. It ignores
 missing definition files that cause the VMware version to stop working. It
 also finds packages not in the definitions yet. It is also possible to find
 the latest of every package.
+
+As of v6.7.5, support for retry on server failure has been added. The default # of retries is 8. Server failures could be the result of authentication expiration.
 
 As of v6.7.1 LinuxVSM now supports Alpine Linux. To use Alpine Linux read <a href=https://github.com/Texiwill/aac-lib/blob/master/vsm/Alpine.md>Alpine.md</a>.
 
@@ -121,7 +123,13 @@ can be downloaded without traversing the menus.
 	a or A - All
 	b or B - Back
 	e or E - Exit
+	x or X - Exit
+	q or Q - Exit
 	m or M - Mark
+	r or R - Redraw menu
+	p or P - Print where you are in the menus
+	/searchString - Search for string in current menu, if it exists, 
+	go to menu option, or list multiple options (case insensitive)
 
 Example Run:
 
@@ -371,12 +379,17 @@ the DNS server you are working is not working correctly.
 
 ##### Do I have to always type in numbers to exit and go backwards, etc?
 
-No, as of version 6.6.3 you can use the following for common commands:
+No, as of version 6.7.6 you can use the following for common commands:
 
   * a or A - All
   * b or B - Back
   * e or E - Exit
+  * x or X - Exit
+  * q or Q - Exit
   * m or M - Mark
+  * r or R - Redraw menu
+  * p or P - Print where you are in the menus
+  * /searchString - Search for string in current menu, if it exists, go to menu option, or list multiple options (case insensitive)
 
 ##### On What operating systems will LinuxVSM run?
 
