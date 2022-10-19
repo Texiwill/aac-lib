@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.7.7 - added support to download ESXi and VC patches
+
 6.7.6 - added /searchString which performs a case insensitive search on the menu items. If the item exists it will go to that menu option. If more than 1 item exists a submenu of the multiple items will be listed
 
 6.7.5 - added --retries option and defaul retry on Server Failure notices as they could be due to authentication timeouts

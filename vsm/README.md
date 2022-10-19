@@ -7,13 +7,15 @@ AAC Library of Tools
 Linux Version of VMware Software Manager
 
 ### NOTICE
-__As of v6.7.6, support for case insensitive search has been added.__
+__As of v6.7.7, Patch Download Support was added for VC and ESXi only.__
 
 ### Description
 A slightly more intelligent version of VSM for Linux. It ignores
 missing definition files that cause the VMware version to stop working. It
 also finds packages not in the definitions yet. It is also possible to find
 the latest of every package.
+
+As of v6.7.6, support for case insensitive search has been added.
 
 As of v6.7.5, support for retry on server failure has been added. The default # of retries is 8. Server failures could be the result of authentication expiration.
 
@@ -126,8 +128,9 @@ can be downloaded without traversing the menus.
 	x or X - Exit
 	q or Q - Exit
 	m or M - Mark
+	p or P - Patches
 	r or R - Redraw menu
-	p or P - Print where you are in the menus
+	d or D - Print where you are in the menus
 	/searchString - Search for string in current menu, if it exists, 
 	go to menu option, or list multiple options (case insensitive)
 
@@ -387,8 +390,9 @@ No, as of version 6.7.6 you can use the following for common commands:
   * x or X - Exit
   * q or Q - Exit
   * m or M - Mark
+  * p or P - Patches
   * r or R - Redraw menu
-  * p or P - Print where you are in the menus
+  * d or D - Print where you are in the Menus
   * /searchString - Search for string in current menu, if it exists, go to menu option, or list multiple options (case insensitive)
 
 ##### On What operating systems will LinuxVSM run?

@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.7.6"
+VERSIONID="6.7.7"
 
 # args: stmt error
 function colorecho() {
@@ -224,12 +224,12 @@ function findCk()
 		ua=$oaua
 		ck='ocookies.txt'
 	fi
-	if [ -e $cdir/pcookies.txt ] && [ $myoauth -eq 1 ]
-	then
-		debugecho "Pcookies"
-		ua=$oaua
-		ck='pcookies.txt'
-	fi
+	#if [ -e $cdir/pcookies.txt ] && [ $myoauth -eq 1 ]
+	#then
+	#	debugecho "Pcookies"
+	#	ua=$oaua
+	#	ck='pcookies.txt'
+	#fi
 }
 
 function mywget() {
@@ -261,14 +261,14 @@ function mywget() {
 	dopost=0
 	newck=0
 	findCk # okay, cookies change with vExpert, so reset, then check
-	if [ Z"$hd" = Z"pcookies" ]
-	then
-		debugecho "Real Pcookies"
-		ua=$oaua
-		ck='pcookies.txt'
-		hd="--progress=bar:force --header='Referer: $mypatches_ref'" 
-		newck=1
-	fi
+	#if [ Z"$hd" = Z"pcookies" ]
+	#then
+	#	debugecho "Real Pcookies"
+	#	ua=$oaua
+	#	ck='pcookies.txt'
+	#	hd="--progress=bar:force --header='Referer: $mypatch_ref'" 
+	#	newck=1
+	#fi
 	if [ Z"$hd" = Z"vacookies" ]
 	then
 		debugecho "vExpert cookies"
@@ -303,27 +303,30 @@ function mywget() {
 					if [ Z"$hd" = Z"xhr" ]
 					then
 						wget $_PROGRESS_OPT $cc --progress=bar:force --header="Referer: $4" --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
+						err=${PIPESTATUS[0]}
 					else
 						wget $_PROGRESS_OPT $cc --progress=bar:force $hd --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr 2>&1 | progressfilt 
+						err=${PIPESTATUS[0]}
 					fi
-					err=${PIPESTATUS[0]}
 				else
 					if [ Z"$hd" = Z"xhr" ]
 					then
 						wget $_PROGRESS_OPT $cc --progress=bar:force --header="Referer: $4" --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr
+						err=$?
 					else
 						wget $_PROGRESS_OPT $cc --progress=bar:force $hd --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr
+						err=$?
 					fi
-					err=$?
 				fi
 			else
 				if [ Z"$hd" = Z"xhr" ]
 				then
 					wget $_PROGRESS_OPT $cc --header="Referer: $4" --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
+					err=$?
 				else
 					wget $_PROGRESS_OPT $hd $cc --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr >& /dev/null
+					err=$?
 				fi
-				err=$?
 			fi
 			#if [ $doprogress -eq 1 ]
 			#then
@@ -333,10 +336,11 @@ function mywget() {
 			if [ Z"$hd" = Z"xhr" ]
 			then
 				wget $_PROGRESS_OPT $cc --header="Referer: $4" --progress=bar:force --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
+				err=$?
 			else
 				wget $_PROGRESS_OPT $hd $cc --progress=bar:force --save-cookies $cdir/new.txt --load-cookies $cdir/$ck --header="User-Agent: $ua" $ou $hr # 2>&1 | progressfilt
+				err=$?
 			fi
-			err=$?
 		fi
 		if [ $err -ne 0 ]
 		then
@@ -414,6 +418,7 @@ function save_vsmrc() {
 			echo "myquiet=$doquiet" >> $vsmrc
 			echo "myprogress=$doprogress" >> $vsmrc
 			echo "doshacheck=$doshacheck" >> $vsmrc
+			echo "dopatch=$dopatch" >> $vsmrc
 			echo "dovexxi=$dovexxi" >> $vsmrc
 			echo "historical=$historical" >> $vsmrc
 			echo "compress=$compress" >> $vsmrc
@@ -495,63 +500,10 @@ function compress_file() {
 
 function get_patch_list() {
 	# do not get if not there already
-	if [ ! -e $rcdir/_patches.xhtml ]
+	if [ ! -e $rcdir/_patch_versions.xhtml ]
 	then
 		# Patch List
-		wget $_PROGRESS_OPT -O $rcdir/_patches.xhtml --cookies=on --load-cookies $cdir/ocookies.txt --save-cookies $cdir/pcookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $patchUrl >& /dev/null
-		#mywget ${rcdir}/_userdata.xhtml $myvmware_template "" $mypatches_ref
-		#mywget ${rcdir}/_token.xhtml $myvmware_token "" $mypatches_ref
-		d=`date +"%s"`
-		dn=$(($(date +%s%N)/1000000))
-		grep SpryMedia_DataTables_patchResultTblVc_patch ${cdir}/ocookies.txt >& /dev/null
-		if [ $? -eq 1 ]
-		then
-			e=`echo '{"iCreate":'${dn}',"iStart":0,"iEnd":0,"iLength":10,"sFilter":"","sFilterEsc":true,"aaSorting":[ [1,"desc"]],"aaSearchCols":[ ["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true]],"abVisCols":[ true,true,true,true,false,false,false,false,true]}'`
-			de=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$e" 2>/dev/null`)
-			echo "customerconnect.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTblVc_patch	${de}" >> ${cdir}/ocookies.txt
-		fi
-		grep SpryMedia_DataTables_patchResultTblGVc_patch ${cdir}/ocookies.txt >& /dev/null
-		if [ $? -eq 1 ]
-		then
-			e=`echo '{"iCreate":'${dn}',"iStart":0,"iEnd":0,"iLength":10,"sFilter":"","sFilterEsc":true,"aaSorting":[ [1,"desc"]],"aaSearchCols":[ ["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true]],"abVisCols":[ true,true,true,true,false,false,false,false,true]}'`
-			de=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$e" 2>/dev/null`)
-			echo "customerconnect.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTblGVc_patch	${de}" >> ${cdir}/ocookies.txt
-		fi
-		grep SpryMedia_DataTables_patchResultTbl5x_patch ${cdir}/ocookies.txt >& /dev/null
-		if [ $? -eq 1 ]
-		then
-			echo "customerconnect.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTbl5x_patch	%7B%22iCreate%22%3A${dn}2%2C%22iStart%22%3A0%2C%22iEnd%22%3A0%2C%22iLength%22%3A10%2C%22sFilter%22%3A%22%22%2C%22sFilterEsc%22%3Atrue%2C%22aaSorting%22%3A%5B%20%5B2%2C%22desc%22%5D%5D%2C%22aaSearchCols%22%3A%5B%20%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%2C%5B%22%22%2Ctrue%5D%5D%2C%22abVisCols%22%3A%5B%20true%2Ctrue%2Ctrue%2Ctrue%2Cfalse%2Cfalse%2Cfalse%2Ctrue%2Cfalse%2Cfalse%2Ctrue%5D%7D" >> ${cdir}/ocookies.txt
-		fi
-		grep SpryMedia_DataTables_patchResultTbl3x_patch ${cdir}/ocookies.txt >& /dev/null
-		if [ $? -eq 1 ]
-		then
-			e=`echo '{"iCreate":'${dn}',"iStart":0,"iEnd":0,"iLength":10,"sFilter":"","sFilterEsc":true,"aaSorting":[ [2,"desc"]],"aaSearchCols":[ ["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true]],"abVisCols":[ true,true,true,true,false,false,false,true,false,true]}'`
-			de=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$e" 2>/dev/null`)
-			echo "customerconnect.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTbl3x_patch	${de}" >> ${cdir}/ocookies.txt
-		fi
-		grep SpryMedia_DataTables_patchResultTbl4x_patch ${cdir}/ocookies.txt >& /dev/null
-		if [ $? -eq 1 ]
-		then
-			e=`echo '{"iCreate":'${dn}',"iStart":0,"iEnd":0,"iLength":10,"sFilter":"","sFilterEsc":true,"aaSorting":[ [2,"desc"]],"aaSearchCols":[ ["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true],["",true]],"abVisCols":[ true,true,true,true,false,false,false,true,false,true]}'`
-			de=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$e" 2>/dev/null`)
-			echo "customerconnect.vmware.com	FALSE	/	FALSE	$d	SpryMedia_DataTables_patchResultTbl4x_patch	${de}" >> ${cdir}/ocookies.txt
-		fi
-	fi
-}
-
-function get_patch_url()
-{
-	wget -O ${rcdir}/patch.html $_PROGRESS_OPT --save-headers --cookies=on --load-cookies $cdir/ocookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $bmctx" $mypatches_ref >& /dev/null
-	patchUrl=`grep searchPageUrl: ${rcdir}/patch.html | cut -d\' -f 2`
-	#eolUrl=`grep eolUrl: ${rcdir}/patch.html | cut -d\' -f 2`
-	searchUrl=`grep searchResultUrl: ${rcdir}/patch.html | cut -d\' -f 2`
-	#localeUrl=`grep localeSelectorUrl: ${rcdir}/patch.html | grep -v '//' | cut -d\' -f 2`
-	wget $_PROGRESS_OPT -O $rcdir/_userdata.xhtml --cookies=on --load-cookies $cdir/ocookies.txt --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $myvmware_template >& /dev/null
-	wget $_PROGRESS_OPT -O $rcdir/_token.xhtml --cookies=on --load-cookies $cdir/ocookies.txt --header="User-Agent: $oaua" --header="Referer: $mypatches_ref" $myvmware_token >& /dev/null
-	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ] && [ $oauth_err -eq 1 ]
-	then
-		rm -f $rcdir/_*patch*.xhtml >& /dev/null
-		get_patch_list
+		wget $_PROGRESS_OPT -O $rcdir/_patch_versions.xhtml --cookies=on --load-cookies $cdir/ocookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $mypatch_ref" $mypatch_versions >& /dev/null
 	fi
 }
 
@@ -698,8 +650,8 @@ const words = text.split(':');
 		mfa=false;
 	}
 	await page.waitForSelector('.ng-star-inserted',{timeout: 90000});
-	//await page.goto('https://customerconnect.vmware.com/group/vmware/patch',{waitUntil: 'networkidle2'});
-	//await page.waitForSelector('.eaSelector');
+	await page.goto('https://customerconnect.vmware.com/patch',{waitUntil: 'networkidle0'});
+	await page.waitForSelector('.patchSearch',{timeout: 90000});
 	const { cookies } = await page._client.send('Network.getAllCookies');
 	var cookieContent=\`# HTTP cookie file.
 # Generated for Wget
@@ -799,28 +751,52 @@ function get_product_patches() {
 	if [ Z"$ppr" = Z"ESXI" ] || [ Z"$ppr" = Z"VC" ]
 	then
 		oauth_login 0
+		# may need ##U# to translate to ### for VC
 		ppv=`echo $v | sed 's/.\{1\}/&./g' | sed 's/\.$//'`
+		# Now use the API
+		get_patch_list  # call just in case
+		xsrf=`grep -i xsrf-token $cdir/$ck|cut -f7`
+		# create payload
+		pson=`jq --arg s "$ppr" '.prodList[] | select(.productName|test($s; "i"))' $rcdir/_patch_versions.xhtml`
+		p_pid=`echo $pson | jq ".productId"`
+		p_name=`echo $pson | jq ".productName"`
+		vson=`echo $pson | jq --arg v "^$ppv" '.versions[]|select(.versionName|test($v))'`
+		# making an assumption we only want the last one
+		v_id=`echo $vson|jq '.versionId'|head -1`
+		v_name=`echo $vson|jq '.versionName'|head -1`
+		rType=`echo $vson|jq '.resultType'|head -1`
+		p_payload="{\"productId\":$p_pid,\"productName\":$p_name,\"versionId\":$v_id,\"versionName\":$v_name,\"releaseDate\":null,\"severity5x\":\"\",\"severity\":\"\",\"category\":\"\",\"classification\":\"\",\"releaseName\":null,\"buildNumber\":null,\"bulletinNumber\":null,\"resultType\":$rType,\"includeDependencies\":true}"
+		p_cl=`echo -n $p_payload | wc -c`
+		# filename is different than search name for some
 		if [ ${#ppv} -eq 3 ]
 		then
 			ppv="${ppv}.0"
 		fi
-		# patches only work for VC/ESXi
-		if [ ! -e $rcdir/patches_${ppr}_${ppv}.html ]
-		then
-			node $cdir/node-pt.js $ppr $ppv $rcdir
-		fi
+		wget -O $rcdir/_${ppr}_${ppv}_patchlist.xhtml --load-cookies $cdir/$ck --post-data="$p_payload" --header="Referer: $mypatch_ref" --header="Content-length: $p_cl" --header="Content-Type: application/json" --header="User-Agent: $ua" --header="X-XSRF-TOKEN: $xsrf" $mypatch_search >& /dev/null
 	else
 		debugecho "Cannot get patches for $ppr"
 	fi
 }
 
-function download_patches() {
+function getPatchArrays() {
+	darr=(`jq ".patchResult[]|.downloadUrl" ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml|sed 's/"//g'`)
+	shah=(`jq ".patchResult[]|.sha1Checksum" ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml|sed 's/"//g'`)
+	if [ ${darr[0]} = "null" ]
+	then
+		darr=(`jq ".patchResult[]|.files[]|.downloadUrl" ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml|sed 's/"//g'`)
+		shah=(`jq ".patchResult[]|.files[]|.sha1checksum" ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml|sed 's/"//g'`)
+	fi
+}
+
+function downloadPatches() {
+	ospecname=$specname
+	omissname=$missname
+	olongReply=$longReply
 	if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
 	then
 		ppr=`echo $missname | sed 's/\([A-Z]\+\)[0-9][0-9A-Z]\+/\1/'`
 		if [ Z"$ppr" = Z"ESXI" ] || [ Z"$ppr" = Z"VC" ]
 		then
-			dnr=1
 			ppv=`echo $v | sed 's/.\{1\}/&./g' | sed 's/\.$//'`
 			if [ ${#ppv} -eq 3 ]
 			then
@@ -831,39 +807,86 @@ function download_patches() {
 				gotodir $missname "Patches" ${ppr}${ppv}
 				
 				# Download links as array
-				darr=(`jq . ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | awk "/path/{print NR-$dnr}"`)
-				downloads=(`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml |grep download | sed 's/[,"]//g'`)
 				#jq .[] ${rcdir}/${prod}_patchlist.xhtml |grep download
 				d=0
-				for px in ${downloads[@]}
+				sha='sha1sum'
+				getPatchArrays
+				for px in ${darr[@]}
 				do
 					# this causes a 'break'
-					# need to restart download_patches
+					# need to restart downloadPatches
 					oauth_login 1
 					if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 					then
-						echo -n "."
+						if [ $shaVerify -eq 0 ]
+						then
+							echo -n "."
+						fi
 					fi
-					px=`echo $px | cut -d\! -f 1`
 					py=`echo $px | cut -d\? -f 1`
 					f=`basename $py`
 					name=$f
-					if  [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
+					sha256=${shah[$d]}
+					shaForce=0
+					if [ $shaVerify -eq 1 ]
+					then
+						# Hash data comes from elsewhere
+						# Upgrade Hash History
+						grep $name  $repo/.hashHistory >& /dev/null
+						if [ $? -ne 0 ]
+						then
+							echo "$sha	$sha256	$name" >> $repo/.hashHistory
+						fi
+						# Verify Hash
+						verifyHash $name $sha $sha256
+					fi
+					if  [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ] || [ $shaForce -eq 1 ]
 					then
 						#echo `pwd` $name
 						if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 						then
-							echo -n "p"
+							if [ $shaVerify -eq 0 ]
+							then
+								echo -n "p"
+							fi
 						fi
 						# just in case we are not at beginning of line
 						echo ""
 						echo "Downloading $name to `pwd`:"
-						mywget $name "$px" 'pcookies' 1
+						retries=1
+						err=0
+						mywget $name "$px" '--progress=bar:force' 1
+						oname=$name
+						while [ $err -eq 8 ]
+						do
+							# need to redownload the patch list
+							get_product_patches
+							getPatchArrays
+							px=${darr[$d]}
+							# in the few moments, the name could have changed
+							py=`echo $px | cut -d\? -f 1`
+							f=`basename $py`
+							name=$f
+							sha256=${shah[$d]}
+							# filename changed for array element, get rid of old
+							if [ $oname != $name ]
+							then
+								rm -rf $oname
+							fi
+							echo -n "Continueing $retries ..."
+							err=0
+							oauth_login 0
+							mywget $name "$px" '-c --progress=bar:force' 1
+							((retries++))
+							if [ $retries -gt $retrycount ]
+							then
+								err=9
+							fi
+						done
 						if [ $doshacheck -eq 1 ]
 						then
-							sha256=`jq .[] ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | sed -n "${darr[$d]}p" | cut -d^ -f2 | sed 's/",//'`
+							shadownload=1
 							#echo ${darr[$d]}
-							sha='sha1sum'
 							shacheck_file $name
 						fi
 						compress_file $name
@@ -878,13 +901,19 @@ function download_patches() {
 				done
 				if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ]
 				then
-					echo "!"
+					if [ $shaVerify -eq 0 ]
+					then
+						echo "!"
+					fi
 				fi
 				colorecho "Patches to $repo/dlg_${missname}/Patches"
 				cd ${cdir}/depot.vmware.com/PROD/channel
 			fi
 		fi
 	fi
+	specname=$ospecname
+	missname=$omissname
+	longReply=$olongReply
 }
 
 function gotodir() {
@@ -955,14 +984,28 @@ function mksymlink() {
 	if [ $symlink -eq 1 ]
 	then
 		# now create as symlink if it does not already exist
+		if [ -e ${fn}.gz ]
+		then
+			fn=${fn}.gz
+		fi
 		if  [ ! -e ${rdir}/${fn} ] && [ -e $fn ]
 		then 
 			echo -n "$fn: symlink "
 			if [ Z"$additional" = Z"Additional" ] || [ Z"$vtdir" = Z"VMTOOLS" ]
 			then
 				ln -s ../$additional/dlg_$tdir/$fn $rdir
+				if [ $? -eq 1 ]
+				then
+					rm $rdir/$fn
+					ln -s ../$additional/dlg_$tdir/$fn $rdir
+				fi
 			else
 				ln -s ../../$additional/dlg_$tdir/$fn $rdir
+				if [ $? -eq 1 ]
+				then
+					rm $rdir/$fn
+					ln -s ../../$additional/dlg_$tdir/$fn $rdir
+				fi
 			fi
 			echo " ... done "
 		fi
@@ -985,7 +1028,7 @@ function usage() {
 
 	cat << EOF | $use_pager
 LinuxVSM $VERSIONID Help
-$0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12]
+$0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--verify] [--veriforce] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12]
 	-c|--check - do sha256 check against download
 	--clean - remove all temporary files and exit
 	--dlg - download specific package by name or part of name (regex)
@@ -1033,6 +1076,9 @@ $0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--for
 	--repo path - specify path of repo
 		          saved to configuration file
 	--save - save settings to $HOME/.vsmrc, favorite always saved on Mark
+	--verify - verify hashes of files downloaded
+	--veriforce - verify hashes of files downloaded and if hash does not 
+			verify then download once more
 
 To Download the latest Perl CLI use 
 	(to escape the wild cards used by the internal regex):
@@ -1072,8 +1118,9 @@ can be downloaded without traversing the menus.
 	x or X - Exit
 	q or Q - Exit
 	m or M - Mark
+	p or P - Patches
 	r or R - redraw the menu
-	p or P - Print where you are in the Menus
+	d or D - Print where you are in the Menus
 	/searchString - Search for string in current menu, if it exists,
 			go to menu option, or list multiple options
 			(case insensitive)
@@ -1483,6 +1530,8 @@ dryrun=0
 dosave=0
 historical=0
 compress=0
+shaVerify=0
+veriforce=0
 symlink=0
 symdir=''
 fixsymlink=0
@@ -1546,10 +1595,7 @@ checkForUpdate
 # import values from .vsmrc
 load_vsmrc
 
-while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --nested) nested=1 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; --retries) retrycount=$2; shift;; -V|--version) version ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --keeplocs) rebuild=2 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; *) usage ;; esac; shift; done
-
-# remove when fixed
-dopatch=0
+while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --nested) nested=1 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; --retries) retrycount=$2; shift;; -V|--version) version ;; --verify) shaVerify=1;; --veriforce) shaVerify=1; veriforce=1 ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --keeplocs) rebuild=2 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; *) usage ;; esac; shift; done
 
 # Certcheck
 cc=''
@@ -1620,6 +1666,7 @@ then
 	echo "	Symlink Mode:	$symlink"
 	echo "	Reset XML Dir:	$doreset"
 	echo "	Nested: $nested"
+	echo "	Verify Mode:	$shaVerify"
 	echo "	Retry Count:	$retrycount"
 	if [ $myfav -eq 1 ]
 	then
@@ -1666,11 +1713,13 @@ fi
 if [ $remyvmware -eq 1 ]
 then
 	rm -rf ${rcdir}/_* ${cdir}/*.txt
+	rm -rf $repo/.hashHistory
 fi
 
 if [ $doreset -eq 1 ]
 then
 	rm -rf ${rcdir}/* ${cdir}/*.txt
+	rm -rf $repo/.hashHistory
 fi
 
 handlecredstore
@@ -1687,6 +1736,7 @@ then
 	then
 		rm $cdir/vex_auth.html
 	fi
+	rm -rf $repo/.hashHistory
 	rm -rf $HOME/.vsm/.key >& /dev/null
 	rm -rf ${cdir}/node* ${cdir}/*.json ${cdir}/*.txt ${cdir}/node-bm.js ${cdir}/node-pt.js ${cdir}/bm.txt
 	pkill -9 Xvfb
@@ -1747,7 +1797,9 @@ cd depot.vmware.com/PROD/channel
 # Patches
 oauth_err=0
 mydl_ref='https://customerconnect.vmware.com/group/vmware/downloads#tab1'
-mypatches_ref='https://customerconnect.vmware.com/group/vmware/patch'
+mypatch_ref='https://customerconnect.vmware.com/patch'
+mypatch_versions='https://customerconnect.vmware.com/channel/api/v1.0/patch/loadproductsandversions'
+mypatch_search='https://customerconnect.vmware.com/channel/api/v1.0/patch/search'
 myvmware_login='https://customerconnect.vmware.com/web/vmware/login'
 #myvmware_oauth='https://customerconnect.vmware.com/oam/server/auth_cred_submit'
 myvmware_oauth='https://auth.vmware.com/oam/server/auth_cred_submit?Auth-AppID=WMVMWR'
@@ -1796,8 +1848,6 @@ else
 fi
 if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
 then
-	# force patch oauth
-	#get_patch_list
 	if [ $noheader -eq 0 ]; then colorecho "	Patches:	1"; fi
 fi
 
@@ -2108,85 +2158,8 @@ function getMyDlgVersions()
 
 function getMyPatches()
 {
-	patcnt=0
 	if [ $dopatch -eq 1 ]
 	then
-		if [ ! -e ${cdir}/node-pt.js ]
-		then
-			cat >> $cdir/node-pt.js << EOF
-const os = require('os');
-const puppeteer = require('puppeteer');
-const fs = require('fs').promises;
-const Xvfb = require('xvfb');
-process.on('unhandledRejection', function(err) {
-	console.log(err);
-	process.exit(1);
-});
-function delay(time) {
-   return new Promise(function(resolve) { 
-       setTimeout(resolve, time)
-   });
-}
-
-const platform=os.platform();
-(async () => {
-	var browser;
-	if (platform != 'darwin') {
-		var xvfb = new Xvfb({
-			silent: true,
-			xvfb_args: ["-screen", "0", '1280x1024x24', '-ac'],
-		});
-		xvfb.start((err)=>{if (err) {console.error(err); process.exit(1);}})
-		browser = await puppeteer.launch({
-			headless: false,
-			defaultViewport: null,
-			args: ['--no-sandbox', '--remote-debugging-port=9222','--start-fullscreen', '--display='+xvfb._display]
-		});
-	} else {
-		browser = await puppeteer.launch({
-				headless: false,
-				defaultViewport: {width: 100,height: 100},
-				args: ['--no-sandbox', '--window-size=50,50',
-				'--disable-background-timer-throttling',
-				'--disable-backgrounding-occluded-windows',
-				'--disable-renderer-backgrounding',
-				'--window-position=-500,0'
-				]
-		});
-	}
-	const page = await browser.newPage();
-	const cookieString = await fs.readFile('./ocookies.json');
-	const cookies = JSON.parse(cookieString);
-	await page.setCookie(...cookies);
-	await page.goto('https://customerconnect.vmware.com/group/vmware/patch#search',{waitUntil: 'networkidle0'});
-	await page.waitForSelector('.optionsHolder');
-
-	var fname = process.argv[4]+'/patches_'+process.argv[2]+'_'+process.argv[3]+'.html';
-	var popt = '.dropdownOpt[title="'+process.argv[3]+'"]';
-	// Get patch information
-	await page.click('.optionsHolder');
-	if (process.argv[2] == 'ESXI') {
-		await page.click('.dropdownOpt[name="3"]');
-	} else {
-		await page.click('.dropdownOpt[name="81"]');
-	}
-	await page.hover('#eaSelectorWidgetDiv1.eaSelector');
-	await page.click('#eaSelectorWidgetDiv1.eaSelector');
-	await page.click(popt);
-	await page.click('.searchBtn');
-	await page.waitForSelector('.downloadLnk');
-	await page.waitForTimeout(1000);
-	const html1 = await page.content();
-	await fs.writeFile(fname,html1);
-
-	// Close Browser and Stop
-	await browser.close()
-	if (platform != 'darwin') {
-		xvfb.stop();
-	}
-})();
-EOF
-		fi
 		echo $missname | egrep '_[0-9]|-[0-9]' >& /dev/null
 		if [ $? -eq 0 ]
 		then
@@ -2199,10 +2172,14 @@ EOF
 			v=0
 		fi
 		get_product_patches
-		if [ -e ${rcdir}/patches_${ppr}_${ppv}.xhtml ]
+		patcnt=0
+		if [ -e ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml ]
 		then
-			xmllint --html --xpath '//button[@class="downloadLnk"]/@name | //td[@class="rlsName"]//p[1]/span[@class="key"][1]/text()' ${rcdir}/patches_${ppr}_${ppv}.xhtml 2>/dev/null | sed 's/"$/"}/'|sed '1~2s/^/"/'|sed '1~2s/$/"/' |sed 's/name=/{"path":/' |sed 's/"$/"/' | tr '\012' ' ' > ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml
-			patcnt=`jq . ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml | grep path | wc -l`
+			patcnt=`jq '.patchResult|length' ${rcdir}/_${ppr}_${ppv}_patchlist.xhtml`
+			if [ Z"$patcnt" = Z"" ]
+			then
+				patcnt=0
+			fi
 		fi
 	fi
 }
@@ -2304,6 +2281,7 @@ function getMyFiles()
 				pkgs="$pkgs CustomIso"
 			fi
 		fi
+		patcnt=0
 		getMyPatches
 		if [ $patcnt -gt 0 ]
 		then
@@ -2483,7 +2461,8 @@ function createMenu()
 				then
 					redraw=1
 				fi
-				if [ $REPLY = "p" ] || [ $REPLY = "P" ]
+				# Debug
+				if [ $REPLY = "d" ] || [ $REPLY = "D" ]
 				then
 					if [ Z"$pName" = Z"" ]
 					then
@@ -2516,6 +2495,15 @@ function createMenu()
 						#always 3rd to last
 						choice="Mark"
 						REPLY=$(($cnt_r-2))
+					fi
+				fi
+				if [ $patcnt -gt 0 ]
+				then
+					if [ $REPLY = "p" ] || [ $REPLY = "P" ]
+					then
+						#always 3rd to last
+						choice="Patches"
+						REPLY=$(($cnt_r-3))
 					fi
 				fi
 				if [ Z"$back" != Z"" ]
@@ -2558,7 +2546,11 @@ function createMenu()
 						then
 							b=" b,"
 						fi
-						echo "${RED}Please enter a valid numeric number or one of a, e, x, p,${b}${m} /string${NC}"
+						if [ $patcnt -gt 0 ]
+						then
+							p=" p,"
+						fi
+						echo "${RED}Please enter a valid numeric number or one of a, e, x, d,${p}${b}${m} /string${NC}"
 						sfail=1
 					fi
 				fi
@@ -2650,6 +2642,14 @@ function getSHAData()
 		fi
 	else
 		sha='sha256sum'
+	fi
+	if [ $shaVerify -eq 1 ]
+	then
+		grep $name  $repo/.hashHistory >& /dev/null
+		if [ $? -ne 0 ]
+		then
+			echo "$sha	$sha256	$name" >> $repo/.hashHistory
+		fi
 	fi
 }
 
@@ -2773,6 +2773,29 @@ function getPreUrl()
 	debugecho $lurl
 }
 
+function verifyHash() {
+	vv=$1
+	sha2run=$2
+	vshah=$3
+	echo "Verifying $vv"
+	if [ -e ${vv}.gz ]
+	then
+		v=`gunzip -c $vv | $sha2run | awk '{print $1}'`
+	else
+		v=`$sha2run ${vv}| awk '{print $1}'`
+	fi
+	if [ Z"$v" != Z"$vshah" ]
+	then
+		echo "${RED}FAIL${NC} to verify $vv"
+		if [ $veriforce -eq 1 ]
+		then
+			shaForce=1
+		fi
+	else
+		echo "VERIFIED $vv"
+	fi
+}
+
 shavexdl=0
 function downloadFile()
 {
@@ -2789,11 +2812,24 @@ function downloadFile()
 		doFixSymlinks
 		if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
 		then
-			echo -n "."
+			if [ $shaVerify -eq 0 ]
+			then
+				echo -n "."
+			fi
 		fi
-		if [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
+		# since we can verify we always get this data
+		getSHAData
+		shaForce=0
+		if [ $shaVerify -eq 1 ]
+		then
+			shav=(`grep ${name} $repo/.hashHistory 2>/dev/null`)
+			if [ $? -eq 0 ]
+			then
+				verifyHash $name ${shav[0]} ${shav[1]}
+			fi
+		fi
+		if [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ] || [ $shaForce -eq 1 ]
 		then 
-			getSHAData
 			processCode
 			getPreUrl $download_xhr
 			if [ ${#lurl} -gt 0 ]
@@ -2834,6 +2870,7 @@ function downloadFile()
 				fi
 				diddownload=1
 			else
+				echo "${PURPLE}DownloadURL for $name not available${NC}"
 				# only if downloadURL not valid
 				if [ $dovexxi -eq 1 ]
 				then
@@ -2866,7 +2903,7 @@ function downloadFile()
 		fi
 		if [ $sz -ne 0 ]
 		then
-			if [ -e $name ] || [ -e ${name}.gz ] || [ $doforce -eq 1 ]
+			if [ -e $name ] || [ -e ${name}.gz ] || [ $doforce -eq 1 ] || $shaForce -eq 1 ]
 			then
 				compress_file $name
 				mksymlink $name
@@ -2893,7 +2930,10 @@ function getAdditionalDlg()
 	then
 		if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
 		then
-			echo -n "-"
+			if [ $shaVerify -eq 0 ]
+			then
+				echo -n "-"
+			fi
 		fi
 		mywget ${rcdir}/_${missname}_ver.xhtml ${dlghdr_xhr}${vurl} xhr $xhr
 		mywget ${rcdir}/__${missname}.xhtml ${dlg_xhr}${vurl} xhr $xhr
@@ -2982,7 +3022,10 @@ function endOfDownload()
 {
 	if [ $doprogress -eq 1 ] || [ $debugv -eq 1 ] && [ $dodlg -ne 1 ]
 	then
-		echo "!"
+		if [ $shaVerify -eq 0 ]
+		then
+			echo "!"
+		fi
 	fi
 	eou=''
 	if [ Z"$additional" != Z"base" ]
@@ -3001,7 +3044,11 @@ function getFile()
 {
 	if [ Z"$choice" = Z"Patches" ]
 	then
-		download_patches
+		# currently does not verify patches
+		downloadPatches
+		nr=${#layer[@]}
+		nr=$(($nr-1))
+		choice=${layer[$nr]}
 		endOfDownload
 	elif [ Z"$choice" = Z"CustomIso" ]
 	then
@@ -3073,11 +3120,12 @@ function getAllChoice()
 			endOfDownload
 		fi
 	#fi
+	patcnt=0
 	getMyPatches
 	if [ $patcnt -gt 0 ]
 	then
 		diddownload=0
-		download_patches
+		downloadPatches
 	fi
 }
 
