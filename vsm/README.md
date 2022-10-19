@@ -7,7 +7,7 @@ AAC Library of Tools
 Linux Version of VMware Software Manager
 
 ### NOTICE
-__As of v6.7.7, Patch Download Support was added for VC and ESXi only.__
+__As of v6.7.7, Patch Download Support was added for VC and ESXi only. Use --clean to enable this functionality__
 
 ### Description
 A slightly more intelligent version of VSM for Linux. It ignores
