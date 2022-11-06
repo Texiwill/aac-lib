@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) AstroArch Consulting, Inc. 2018-2021
+# Copyright (c) AstroArch Consulting, Inc. 2018-2022
 # All rights reserved
 #
 # vim: tabstop=4 shiftwidth=4
@@ -9,10 +9,10 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="3.0.9"
+VERSIONID="3.1.0"
 
 function usage () {
-	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--wkstn][--fusion][--vsphere|--novsphere][-v|--version][--everything][--rebuild][-mn][-mr][--nocertcheck]"
+	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--wkstn][--fusion][--vsphere|--novsphere][-v|--version][--everything][--rebuild][-mn][-mr][--nocertcheck][--verify][--veriforce][--patches]"
 	echo "	--latest - get the latest only (default)"
 	echo "	--n+1 - get the latest + 1 previous version"
 	echo "	--n+2 - get the latest + 2 previous versions"
@@ -32,6 +32,7 @@ function usage () {
 	echo "	--everything - Add all components"
 	echo "	--dryrun - Echo out commands issued"
 	echo "	--rebuild - rebuild --dlg seed file for your use"
+	echo "	--patches - include patches in download"
 	echo "	-mr   - Clear 1st time use"
 	echo "	-mn   - Clear Loging files"
 	echo "	-h|--help - this help"
@@ -88,6 +89,8 @@ do
 		--nocertcheck) ncc='--no-check-certificate'; rebuild="$rebuild --nocertcheck";;
 		-mr) mr="$mr -mr";;
 		-mn) mr="$mr -mn";;
+		--veriforce) mr="$mr --veriforce";;
+		--verify) mr="$mr --verify";;
 		-s|--save) save=1;;
 		-v|--version) echo "LinuxVSM Favorites:"; echo "	`basename $0`: $VERSIONID"; exit;;
 		-h|--help) usage;;
@@ -171,6 +174,26 @@ then
 			break;
 		fi
 	done
+	vsmfav_get_versions vmware_nsx
+	for x in $versions
+	do
+		c=$(($c+1))
+		$vsm $rebuild -y --debug --patches --fav Networking_Security_VMware_NSX_${x}_VMware_NSX_Enterprise_Plus
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
+	vsmfav_get_versions vmware_nsx_intelligence
+	for x in $versions
+	do
+		c=$(($c+1))
+		$vsm $rebuild -y --debug --patches --fav Networking_Security_VMware_NSX_Intelligence_${x}_VMware_NSX_Datace_center_Enterprise_Plus
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
 
 	echo "Getting vRealize Suite ..."
 	c=0
@@ -221,6 +244,19 @@ then
 		do
 			$vsm $rebuild -y --debug -q --patches --fav Desktop_End-User_Computing_VMware_Horizon_Clients_${x}_VMware_Horizon_Client_for_${y}
 		done
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
+
+	echo "Getting Horizon Optimization Tool..."
+	c=0
+	vsmfav_get_versions windows_os_optimization_tool_for_vmware_horizon
+	for x in $versions
+	do
+		c=$(($c+1))
+		$vsm $rebuild -y --debug -q --patches --fav Desktop_End-User_Computing_Windows_OS_Optimization_Tool_for_VMware_Horizon_${x}
 		if [ $c -ge $nc ]
 		then
 			break;
