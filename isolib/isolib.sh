@@ -9,8 +9,7 @@
 # Requires:
 # Joerg Schilling cdrecord
 
-VERSION="1.2.0"
-
+VERSION="1.2.1"
 device=/dev/sr0
 if [ X"$1" = X"--device" ]
 then
@@ -184,7 +183,7 @@ then
 
 		### Create a Disk
 		truncate --size=$sz /tmp/${fn}.udf
-		mkudffs --vid="${fn}" /tmp/${fn}.udf
+		mkudffs --label="${fn}" --vsid="${fn}" --fsid="${fn}" --blocksize=2048 --udfrev=0x0201 /tmp/${fn}.udf
 		sudo mkdir /mnt/$fn
 		sudo mount -oloop,rw /tmp/${fn}.udf /mnt/$fn
 		sudo chown -R $USER.$USER /mnt/$fn
@@ -211,10 +210,10 @@ then
 		done
 
 		### Unmount & Burn the Bluray
-		sudo rmdir /mnt/ISO_Library*
 		sudo umount /mnt/$fn
+		sudo rmdir /mnt/ISO_Library*
 
-		which cdrecord 2>& /dev/null
+		which cdrecord >& /dev/null
 		if [ $? -eq 1 ]
 		then
 			echo "Joerg Schilling's cdrecord is required"

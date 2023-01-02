@@ -43,6 +43,8 @@ Email elh at astroarch dot com for assistance or if you want to check
 for more items.
 
 ### ChangeLog
+1.2.1 - Upgrades to better detect proper ProBD and reorder commands to remove error.
+
 1.2.0 - Upgrades for Fedora 33
 
 1.0.2 - Ignored ASCII trademarks in uncompress/bad format list
