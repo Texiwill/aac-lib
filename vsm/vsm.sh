@@ -3269,9 +3269,14 @@ function getDlg()
 	mydts=1
 	myoem=1
 	historical=1
-	# Get first item into array
-	dlgInfo=(`jq --arg s "$mydlg" '[.dlgList[] | select(.name | test($s))][0]|.name,.target,.dlg,.parent' $rcdir/newlocs.json | sed 's/"//g'`)
+	# Get LAST item into array
+	dlgInfo=(`jq --arg s "$mydlg" '[.dlgList[] | select(.name | test($s))][-1]|.name,.target,.dlg,.parent' $rcdir/newlocs.json | sed 's/"//g'`)
 	favorite=${dlgInfo[1]}
+	if [ Z"$favorite" = Z"null" ]
+	then
+		colorecho "No package matching pattern: $mydlg"
+		exit
+	fi
 	getFavPaths
 	if [ Z"${dlgInfo[3]}" = Z"" ]
 	then

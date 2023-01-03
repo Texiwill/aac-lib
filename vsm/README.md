@@ -415,8 +415,8 @@ As of Version 6.0.3 the seed datafile is downloaded automatically and
 contains those items pertaining to vSphere only. You can add to this
 seed file with your specific items by visiting those packages. For
 DriversTools and CustomIso's you will actually need to select that option
-as well. Once the file is updated with --rebuild you can then use --dlg
-and --dlgl with your specific items in addition ot the seed data.
+as well. Once the file is updated with "--rebuild --dryrun" you can then use 
+--dlg and --dlgl with your specific items in addition ot the seed data.
 
 #### Email
 Email elh at astroarch dot com for assistance or if you want to add
