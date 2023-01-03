@@ -90,16 +90,16 @@ LinuxVSM Help
 		          saved to configuration file
 	--save - save settings to $HOME/.vsmrc, favorite always saved on Mark
 
-To Download the latest Perl CLI use 
+To Download the latest Perl SDK use 
 	(to escape the wild cards used by the internal regex):
-	./vsm.sh --dlg CLI\.\*\.x86_64.tar.gz
+	./vsm.sh --dlg Perl-SDK-7\.\*\.x86_64.tar.gz
 
 Use of the Mark option, marks the current product suite as the
 favorite. There is only 1 favorite slot available. Favorites
 can be downloaded without traversing the menus.
-    To Download the latest Perl CLI use 
+    To Download the latest Perl SDK use 
 	(to escape the wild cards used by the internal regex):
-	./vsm.sh --dlg CLI\.\*\.x86_64.tar.gz
+	./vsm.sh --dlg Perl-SDK-7\.\*\.x86_64.tar.gz
 
     Use of the Mark option, marks the current product suite as the
     favorite. There is only 1 favorite slot available. Favorites
