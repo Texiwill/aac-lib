@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) AstroArch Consulting, Inc.  2018
+# Copyright (c) AstroArch Consulting, Inc.  2018-2023
 # All rights reserved
 #
 # vim: tabstop=4 shiftwidth=4

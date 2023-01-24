@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) AstroArch Consulting, Inc. 2018-2022
+# Copyright (c) AstroArch Consulting, Inc. 2018-2023
 # All rights reserved
 #
 # vim: tabstop=4 shiftwidth=4
@@ -9,7 +9,7 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="3.1.0"
+VERSIONID="3.1.1"
 
 function usage () {
 	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--wkstn][--fusion][--vsphere|--novsphere][-v|--version][--everything][--rebuild][-mn][-mr][--nocertcheck][--verify][--veriforce][--patches]"

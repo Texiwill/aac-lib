@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) AstroArch Consulting, Inc.  2018
+# Copyright (c) AstroArch Consulting, Inc.  2018-2023
 # All rights reserved
 #
 # vim: tabstop=4 shiftwidth=4
@@ -12,7 +12,7 @@
 #
 
 # Create a VAMI repository out of VSM Repo
-VERSIONID="1.0.0"
+VERSIONID="1.0.1"
 
 # args: stmt error
 function colorecho() {
