@@ -1,13 +1,13 @@
 #!/bin/bash
 #
-# Copyright (c) 2016-2022 AstroArch Consulting, Inc. All rights reserved
+# Copyright (c) 2016-2023 AstroArch Consulting, Inc. All rights reserved
 #
 # Create a Base Install to use Ansible for further installs
 #
 # Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS/Alpine
 #
 ###
-VERSIONID="2.1.8"
+VERSIONID="2.1.9"
 
 function version() {
 	echo "$0 version is $VERSIONID"
