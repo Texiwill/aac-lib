@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.7.9"
+VERSIONID="6.8.0"
 
 # args: stmt error
 function colorecho() {
@@ -1043,11 +1043,12 @@ $0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--for
 	-mr - remove temporary files
 	--historical - display older versions when you select a package
 	--nohistorical - disable --historical
+    --nested - download nested ESXi images
 	-nh|--noheader - leave off the header bits
 	-nq|--noquiet - disable quiet mode
 	-ns|--nostore - do not store credential data and remove if exists
 	-nc|--nocolor - do not output with color
-        --olde # - number of hours (default 12) before -mr enforced
+    --olde # - number of hours (default 12) before -mr enforced
 	-p|--password - specify password
 	--progress - show progress for OEM, OSS, and DriverTools
 	-q|--quiet - be less verbose
@@ -1487,6 +1488,61 @@ EOF
 	fi
 }
 
+function getNested()
+{
+	if [ ! -e ${repo}/Nested ]
+	then
+		mkdir -p ${repo}/Nested
+	fi
+	cd ${repo}/Nested
+	for x in `wget -O -  http://vmwa.re/nestedesxi 2>&1 | grep '<li>' |grep nested-esxi |awk -F\" '{print $2}'`; 
+	do 
+		name=`basename $x` 
+		if [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
+		then
+			mywget $name $x
+		fi
+		sz=0
+		if [ -e $name ]
+		then
+			sz=`stat $fopt $sfmt $name`
+		fi
+		if [ $sz -ne 0 ]
+		then
+			if [ -e $name ] || [ $doforce -eq 1 ]
+			then
+				compress_file $name
+			fi
+		else
+			# do not save 0 file
+			if [ -e $name ]
+			then
+				rm $name
+			fi
+		fi
+	done
+}
+
+function getLicenses() {
+	# need eval
+	eval_ref="https://customerconnect.vmware.com/eval"
+	eval_post='{"searchText":"","filter":"ACTIVE","sortByField":"PRODUCT_NAME","sortOrder":"ASC","page":1,"size":100}'
+	eval_api='https://customerconnect.vmware.com/channel/api/v1.0/custom-license/product-list'
+	lic_api='https://customerconnect.vmware.com/channel/api/v1.0/custom-license/license-list'
+	# get eval_list
+	xsrf=`grep -i xsrf-token $cdir/$ck|cut -f7`
+	cl=`echo -n $eval_post | wc -c`
+	eval_list=`wget -q -O - $cc --load-cookies $cdir/$ck --post-data="$eval_post" --header="Referer: $xhr" --header="Content-length: $cl" --header="Content-Type: application/json" --header="User-Agent: $ua" --header="x-dtpc: $dtpc" --header="X-XSRF-TOKEN: $xsrf" --header='TE: Trailers' $eval_api 2>/dev/null`
+	prod_list=`echo $eval_list | jq '.result[].productId'`
+	for prodId in $prod_list
+	do
+		lic_post="{\"productId\":$prodId,\"searchText\":\"\",\"filter\":\"ACTIVE\",\"sortByField\":\"DAYS_REMAINING\",\"sortOrder\":\"DESC\",\"page\":1,\"size\":10}"
+		cl=`echo -n $lic_post | wc -c`
+		lic_list=`wget -q -O - $cc --load-cookies $cdir/$ck --post-data="$lic_post" --header="Referer: $xhr" --header="Content-length: $cl" --header="Content-Type: application/json" --header="User-Agent: $ua" --header="x-dtpc: $dtpc" --header="X-XSRF-TOKEN: $xsrf" --header='TE: Trailers' $lic_api 2>/dev/null`
+		echo $lic_list | jq '.result.productName+"\t"+(.result.licenses[]|.serialKey+"\t"+.expirationDate)' | sed 's/\\t/\t/g'|sed 's/"//g'
+	done
+}
+
 # onscreen colors
 RED=`tput setaf 1`
 PURPLE=`tput setaf 5`
@@ -1580,6 +1636,7 @@ certcheck=1
 renodejs=0
 nested=0
 retrycount=8
+getlicenses=0
 mycolumns=`tput cols`
 
 xu=`id -un`
@@ -1595,7 +1652,7 @@ checkForUpdate
 # import values from .vsmrc
 load_vsmrc
 
-while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --nested) nested=1 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; --retries) retrycount=$2; shift;; -V|--version) version ;; --verify) shaVerify=1;; --veriforce) shaVerify=1; veriforce=1 ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --keeplocs) rebuild=2 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; *) usage ;; esac; shift; done
+while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --nested) nested=1 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; --retries) retrycount=$2; shift;; -V|--version) version ;; --verify) shaVerify=1;; --veriforce) shaVerify=1; veriforce=1 ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --keeplocs) rebuild=2 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; --licenses) getlicenses=1 ;; *) usage ;; esac; shift; done
 
 # Certcheck
 cc=''
@@ -1769,13 +1826,6 @@ fi
 # Clear any cached elements
 rm -f ${cdir}/*.html 2>/dev/null
 
-if [ $nested -eq 1 ]
-then
-	# does not require a login so get and exit
-	getNested
-	exit
-fi
-
 # no need to login for this option, list what is in the file
 if [ $dodlglist -eq 1 ]
 then
@@ -1852,6 +1902,24 @@ then
 fi
 
 findCk
+
+if [ $nested -eq 1 ] && [ $dovexxi -eq 1 ]
+then
+	# does not require a login so get and exit
+	if [ $noheader -eq 0 ]; then colorecho "	Nested:	1"; fi
+	getNested
+	exit
+fi
+
+# Get Eval Licenses
+if [ $getlicenses -eq 1 ] && [ $dovexxi -eq 1 ]
+then
+	if [ $noheader -eq 0 ]; then colorecho "	Licenses:	1"; fi
+	getLicenses
+	exit
+fi
+
+# normal downloads
 if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
 then
 	# Get JSON
@@ -2693,40 +2761,6 @@ function doFixSymlinks()
 	fi
 }
 
-function getNested()
-{
-	if [ ! -e ${repo}/Nested ]
-	then
-		mkdir -p ${repo}/Nested
-	fi
-	cd ${repo}/Nested
-	for x in `wget -O -  http://vmwa.re/nestedesxi 2>&1 | grep '<li>' |grep nested-esxi |awk -F\" '{print $2}'`; 
-	do 
-		name=`basename $x` 
-		if [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
-		then
-			mywget $name $x
-		fi
-		sz=0
-		if [ -e $name ]
-		then
-			sz=`stat $fopt $sfmt $name`
-		fi
-		if [ $sz -ne 0 ]
-		then
-			if [ -e $name ] || [ $doforce -eq 1 ]
-			then
-				compress_file $name
-			fi
-		else
-			# do not save 0 file
-			if [ -e $name ]
-			then
-				rm $name
-			fi
-		fi
-	done
-}
 
 function writeJSON()
 {
