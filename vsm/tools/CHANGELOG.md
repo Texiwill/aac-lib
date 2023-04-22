@@ -1,4 +1,5 @@
-01/24/23 - updated for 2023 copyright
+11/06/22 - v3.1.2 of vsm_favorites.sh added new Aria editions
+01/24/23 - v3.1.1 updated for 2023 copyright
 11/06/22 - v3.1.0 of vsm_favorites.sh added new NSX editions
 10/08/21 - v3.0.9 of vsm_favorites.sh added Tanzu editions
 08/24/21 - v3.0.8 of vsm_favorites.sh autodetect SSL errors
