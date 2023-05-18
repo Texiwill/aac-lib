@@ -1,5 +1,5 @@
 ---
-# version: 1.0.3
+# version: 1.0.4
 
 - hosts: localhost
   become_user: root
@@ -86,12 +86,11 @@
 
      - name: Get Local gunzip name
        set_fact:
-         gzip_local: "{{ file_local | regex_replace('^(..).gz','\\1') }}"
+         gzip_local: "{{ file_local | regex_replace('^(.*).gz$','\\1') }}"
 
-    #- name: Uncompress Local Filename
-    #  become: no
-    #  shell: "gunzip {{ file_local }}"
-    #  when: "{{gzip_local}}" != "{{file_local}}"
+     - name: Uncompress Local Filename
+       shell: "gunzip -kf {{ file_local }}"
+       when: gzip_local != file_local
 
      - name: Debug
        debug:
