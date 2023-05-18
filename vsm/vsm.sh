@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.8.0"
+VERSIONID="6.8.1"
 
 # args: stmt error
 function colorecho() {
@@ -564,11 +564,13 @@ function oauth_login() {
 		fi
 		if [ ! -e ${cdir}/node_modules ]
 		then
+			colorecho "	Cleaning Module Cache"
+			npm cache clean --force
 			colorecho "	Installing necessary modules"
 			npm install inquirer@8.2.3 puppeteer@14.3.0 puppeteer-extra puppeteer-extra-plugin-stealth --unsafe-perm=true >& /dev/null
 			if [ $? -eq 1 ]
 			then
-				colorecho "	Not enough space in $cdir; please add more" 1
+				colorecho "	Error installing nodejs modules" 1
 				exit
 			fi
 			npm install xvfb --unsafe-perm=true >& /dev/null

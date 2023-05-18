@@ -11,6 +11,10 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.8.1 - Fixed nodejs error and forced cache clean
+
+6.8.0 - Fixed and added some new vExpert only options.
+
 6.7.9 - fixed copyright
 
 6.7.8 - fixed --dlg/--dlgl when no package can be found. updated newlocs.json seed file.
