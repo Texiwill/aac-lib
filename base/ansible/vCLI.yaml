@@ -196,12 +196,13 @@
          replace: "#{'module' => 'Crypt::SSLeay'"
        when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
 
-     - name: Update ssleay_installed in vmware_install.pl for Debian/Ubuntu
+     - name: Update ssleay_installed in vmware_install.pl
        lineinfile:
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: 'my .ssleay_installed = 0'
          line: '   my $ssleay_installed = 1;'
-       when: ansible_os_family == "Debian"
+       when: (ansible_os_family == "Debian") or
+             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
 
      - name: Update OpenSSL_installed in vmware_install.pl for Debian/Ubuntu
        lineinfile:
@@ -210,12 +211,20 @@
          line: '   my $OpenSSL_installed = 1;'
        when: ansible_os_family == "Debian"
 
-     - name: Update LibXML2_installed in vmware_install.pl for Debian/Ubuntu
+     - name: Update LibXML2_installed in vmware_install.pl
        lineinfile:
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: 'my .LibXML2_installed = 0'
          line: '   my $LibXML2_installed = 1;'
-       when: ansible_os_family == "Debian"
+       when: (ansible_os_family == "Debian") or
+             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+
+     - name: Update LibXML2_installed #2 in vmware_install.pl
+       lineinfile:
+         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+         regexp: '$LibXML2_installed = 0;'
+         line: ' #$LibXML2_installed = 0;'
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
 
      - name: Update OpenSSL_dev_installed in vmware_install.pl for Debian/Ubuntu
        lineinfile:
