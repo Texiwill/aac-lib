@@ -57,7 +57,7 @@
          url: "https://packages.microsoft.com/keys/microsoft.asc"
          dest: "/tmp/microsoft.key"
          mode: 0600
-       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<')) or
+       when: (ansible_distribution == "Debian") or
              (ansible_distribution == "Fedora")
 
      - name: Install Key
@@ -72,13 +72,18 @@
          url: "https://packages.microsoft.com/config/{{myos}}/{{ansible_distribution_major_version}}/packages-microsoft-prod.deb"
          dest: "/tmp/packages-microsoft-prod.deb"
          mode: 0600
-       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>')) or
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'==')) or
              (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
 
      - name: Install Repo Debian 9
        become: yes
        shell: sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-debian-stretch-prod stretch main" > /etc/apt/sources.list.d/microsoft.list'
-       when: ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<')
+       when: ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'==')
+
+     - name: Install Repo Debian 11
+       become: yes
+       shell: sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-debian-bullseye-prod bullseye main" > /etc/apt/sources.list.d/microsoft.list'
+       when: ansible_distribution == "Debian" and ansible_distribution_major_version is version("11",'==')
 
      - name: Install Repo
        become: yes
