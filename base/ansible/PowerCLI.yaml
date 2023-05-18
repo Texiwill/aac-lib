@@ -130,7 +130,7 @@
 
      - name: Install powershell Ubuntu 20
        become: yes
-       shell: "snap install powershell-preview --classic"
+       shell: "snap install powershell --classic"
        when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')
 
      - name: Get Powershell Version
@@ -159,8 +159,8 @@
 
      - name: Set PowerShell Fact
        set_fact:
-         pwsh_path: "/snap/powershell-preview/current/opt/powershell"
-         pwsh_cmd: "/snap/bin/powershell-preview"
+         pwsh_path: "/snap/powershell/current/opt/powershell"
+         pwsh_cmd: "/snap/bin/powershell"
        when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')
 
      - name: Set profile.d BASH settings
