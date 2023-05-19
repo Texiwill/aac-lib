@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.8.1"
+VERSIONID="6.8.2"
 
 # args: stmt error
 function colorecho() {
@@ -565,7 +565,7 @@ function oauth_login() {
 		if [ ! -e ${cdir}/node_modules ]
 		then
 			colorecho "	Cleaning Module Cache"
-			npm cache clean --force
+			npm cache clean --force >& /dev/null
 			colorecho "	Installing necessary modules"
 			npm install inquirer@8.2.3 puppeteer@14.3.0 puppeteer-extra puppeteer-extra-plugin-stealth --unsafe-perm=true >& /dev/null
 			if [ $? -eq 1 ]
