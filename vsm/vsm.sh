@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.8.2"
+VERSIONID="6.8.3"
 
 # args: stmt error
 function colorecho() {
@@ -1497,12 +1497,17 @@ function getNested()
 		mkdir -p ${repo}/Nested
 	fi
 	cd ${repo}/Nested
-	for x in `wget -O -  http://vmwa.re/nestedesxi 2>&1 | grep '<li>' |grep nested-esxi |awk -F\" '{print $2}'`; 
+	for x in `wget -O -  https://williamlam.com/nested-virtualization/nested-esxi-virtual-appliance 2>/dev/null | grep '<li>' |grep nested-esxi |awk -F\" '{print $2}'`
 	do 
 		name=`basename $x` 
+		echo -n "Looking for $name in repo"
 		if [ ! -e ${name} ] && [ ! -e ${name}.gz ] || [ $doforce -eq 1 ]
 		then
+			echo ""
+			echo "Getting $name"
 			mywget $name $x
+		else
+			echo " ... Found"
 		fi
 		sz=0
 		if [ -e $name ]
@@ -2659,7 +2664,7 @@ function processCode()
 	downloadGroup=`jq '.dlg.code' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
 	dlgType=`jq '.dlg.type' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'|sed 's/amp;//g'`
 	productFamily=`jq '.product.name' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
-	if [ Z"$productFamily" = Z"null" ]
+	if [ Z"$productFamily" = Z"null" ] || [ Z"$productFamily" = Z"" ]
 	then
 		productFamily=`jq '.productDisplayName' ${rcdir}/_${missname}_ver.xhtml|sed 's/"//g'`
 	fi

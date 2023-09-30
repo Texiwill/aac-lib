@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.8.3 - Fixed issued with --nested
+
 6.8.2 - Removed inadvertent message
 
 6.8.1 - Fixed nodejs error and forced cache clean
