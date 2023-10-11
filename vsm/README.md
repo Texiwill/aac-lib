@@ -41,7 +41,7 @@ Here is an example run and help:
 ```
 $ vsm.sh --help
 LinuxVSM Help
-./vsm.sh [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12]
+./vsm.sh [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12] [--timeout #secs]
 	-c|--check - do sha256 check against download
 	--clean - remove all temporary files and exit
 	--dlg - download specific package by name or part of name (regex)
@@ -89,6 +89,7 @@ LinuxVSM Help
 	--repo path - specify path of repo
 		          saved to configuration file
 	--save - save settings to $HOME/.vsmrc, favorite always saved on Mark
+    --timeout #secs - Number of seconds to wait for login timeout (D: 90)
 
 To Download the latest Perl SDK use 
 	(to escape the wild cards used by the internal regex):

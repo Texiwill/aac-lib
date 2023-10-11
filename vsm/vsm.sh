@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.8.3"
+VERSIONID="6.8.4"
 
 # args: stmt error
 function colorecho() {
@@ -286,7 +286,7 @@ function mywget() {
 	if [ Z"$1" = "-" ]
 	then
 		# getting pre-url
-		lurl=`wget --max-redirect 0 --load-cookies $cdir/$ck --header="User-Agent: $ua" -O - $hr 2>&1 | grep Location | awk '{print $2}'`
+		lurl=`wget --max-redirect 0 --load-cookies $cdir/$ck --header="User-Agent: $ua" -O - $hr 2>/dev/null | grep Location | awk '{print $2}'`
 		err=${PIPESTATUS[0]}
 	else
 		debugecho "doquiet => $doquiet : $doprogress : $wgprogress"
@@ -543,6 +543,7 @@ function vexpert_login() {
 }
 
 #need_login=0
+timeout=90000
 function oauth_login() {
 	dl=$1
 	z=`date +"%s"`
@@ -651,9 +652,9 @@ const words = text.split(':');
 	} catch (error) {
 		mfa=false;
 	}
-	await page.waitForSelector('.ng-star-inserted',{timeout: 90000});
+	await page.waitForSelector('.ng-star-inserted',{timeout: $timeout});
 	await page.goto('https://customerconnect.vmware.com/patch',{waitUntil: 'networkidle0'});
-	await page.waitForSelector('.patchSearch',{timeout: 90000});
+	await page.waitForSelector('.patchSearch',{timeout: $timeout});
 	const { cookies } = await page._client.send('Network.getAllCookies');
 	var cookieContent=\`# HTTP cookie file.
 # Generated for Wget
@@ -1030,7 +1031,7 @@ function usage() {
 
 	cat << EOF | $use_pager
 LinuxVSM $VERSIONID Help
-$0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--verify] [--veriforce] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12]
+$0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--force] [--fav favorite] [--favorite] [--fixsymlink] [-e|--exit] [-h|--help] [--historical] [-mr] [-nh|--noheader] [--nohistorical] [--nosymlink] [-nq|--noquiet] [-ns|--nostore] [-nc|--nocolor] [--dts|--nodts] [--oem|--nooem] [--oss|--nooss] [--oauth] [-p|--password password] [--progress] [-q|--quiet] [--rebuild] [--symlink] [-u|--username username] [-v|--vsmdir VSMDirectory] [-V|--version] [--verify] [--veriforce] [-y] [-z] [--debug] [--repo repopath] [--save] [--olde 12] [--timeout <number>]
 	-c|--check - do sha256 check against download
 	--clean - remove all temporary files and exit
 	--dlg - download specific package by name or part of name (regex)
@@ -1079,6 +1080,7 @@ $0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--for
 	--repo path - specify path of repo
 		          saved to configuration file
 	--save - save settings to $HOME/.vsmrc, favorite always saved on Mark
+	--timeout <number> - number of seconds to wait for login timeout
 	--verify - verify hashes of files downloaded
 	--veriforce - verify hashes of files downloaded and if hash does not 
 			verify then download once more
@@ -1644,6 +1646,7 @@ renodejs=0
 nested=0
 retrycount=8
 getlicenses=0
+outTime=0
 mycolumns=`tput cols`
 
 xu=`id -un`
@@ -1659,7 +1662,21 @@ checkForUpdate
 # import values from .vsmrc
 load_vsmrc
 
-while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --nested) nested=1 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; --retries) retrycount=$2; shift;; -V|--version) version ;; --verify) shaVerify=1;; --veriforce) shaVerify=1; veriforce=1 ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --keeplocs) rebuild=2 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; --licenses) getlicenses=1 ;; *) usage ;; esac; shift; done
+while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --nested) nested=1 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; --retries) retrycount=$2; shift;; -V|--version) version ;; --verify) shaVerify=1;; --veriforce) shaVerify=1; veriforce=1 ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --keeplocs) rebuild=2 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; --timeout) outTime=$2; shift;; --licenses) getlicenses=1 ;; *) usage ;; esac; shift; done
+
+# compute timeout
+re='^[0-9]+$'
+if ! [[ $outTime =~ $re ]]
+then
+	colorecho "Timeout $outTime is not a number" 1
+	exit
+fi
+if [ $outTime -ne 0 ]
+then
+	timeout=$(($outTime*1000))
+else
+	timeout=90000
+fi
 
 # Certcheck
 cc=''
@@ -1713,32 +1730,32 @@ fi
 if [ $noheader -eq 0 ]
 then
 	colorecho "Using the following options:"
-	echo "	Version:	$VERSIONID"
+	echo "	Version:          $VERSIONID"
 	if [ Z"$username" != Z"" ]
 	then
-		echo "	Username:		$username"
-		echo "	Save Credentials:	$nostore"
+		echo "	Username:         $username"
+		echo "	Save Credentials: $nostore"
 	fi
-	echo "	OS Mode:        $theos"
-	echo "	VSM XML Dir:	$cdir"
-	echo "	Repo Dir:	$repo"
-	echo "	Dryrun:		$dryrun"
-	echo "	Rebuild:	$rebuild"
-	echo "	Force Download:	$doforce"
-	echo "	Checksum:	$doshacheck"
-	echo "	Historical Mode:$historical"
-	echo "	Symlink Mode:	$symlink"
-	echo "	Reset XML Dir:	$doreset"
-	echo "	Nested: $nested"
-	echo "	Verify Mode:	$shaVerify"
-	echo "	Retry Count:	$retrycount"
+	echo "	OS Mode:          $theos"
+	echo "	VSM XML Dir:      $cdir"
+	echo "	Repo Dir:         $repo"
+	echo "	Dryrun:           $dryrun"
+	echo "	Rebuild:          $rebuild"
+	echo "	Force Download:   $doforce"
+	echo "	Checksum:         $doshacheck"
+	echo "	Historical Mode:  $historical"
+	echo "	Symlink Mode:     $symlink"
+	echo "	Reset XML Dir:    $doreset"
+	echo "	Nested:           $nested"
+	echo "	Verify Mode:      $shaVerify"
+	echo "	Retry Count:      $retrycount"
 	if [ $myfav -eq 1 ]
 	then
-		echo "	Favorite: $favorite"
+		echo "	Favorite:         $favorite"
 	fi
 	if [ $myfav -eq 2 ]
 	then
-		echo "	Favorite: $fav"
+		echo "	Favorite:         $fav"
 	fi
 fi
 
