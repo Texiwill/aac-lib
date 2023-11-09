@@ -1,0 +1,27 @@
+---
+# version: 1.0.0
+# designed to work with Rocky Linux, not tested on any other Linux distro
+
+- hosts: localhost
+  tasks:
+     - name: TLS Private Key
+       become: yes
+       community.crypto.openssl_privatekey:
+         path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
+     
+     - name: TLS Private Key Permissions
+       become: yes
+       file:
+         path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
+     
+     - name: TLS Certificate
+       become: yes
+       community.crypto.x509_certificate:
+         path: "/etc/pki/tls/certs/{{ ansible_fqdn }}.crt"
+         privatekey_path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
+         provider: selfsigned
+         #subject_alt_name:
+           #- IP:{{ ansible_default_ipv4.address }}
+           #- DNS:{{ ansible_hostname }}
+     
+...

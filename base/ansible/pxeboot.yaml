@@ -1,0 +1,243 @@
+---
+# version: 1.0.0
+# designed to work with Rocky Linux, not tested on any other Linux distro
+
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: TLS
+  import_playbook: aac-base-tls.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- name: NGINX 
+  import_playbook: aac-base-nginx.yaml
+
+- hosts: localhost
+  tasks:
+     - name: install dependencies
+       become: yes
+       package:
+         name:
+           - tftp-server
+           - syslinux-tftpboot
+         state: latest
+       when: ansible_distribution != "MacOSX"
+
+     - name: service stop
+       become: yes
+       service:
+         name: tftp
+         state: stopped
+
+     - name: service stop
+       become: yes
+       systemd:
+         name: tftp
+         state: stopped
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("9",'>='))
+
+     - name: Change tftpboot directory
+       become: yes
+       lineinfile:
+         path: /usr/lib/systemd/system/tftp.service
+         regexp: 'ExecStart=/usr/sbin/in.tftpd -s /var/lib/tftpboot'
+         line: 'ExecStart=/usr/sbin/in.tftpd -s /tftpboot'
+
+     - name: service start
+       become: yes
+       service:
+         name: tftp.socket
+         state: started
+         enabled: yes
+
+     - name: Unmount Isos
+       become: yes
+       ansible.posix.mount:
+         path: "/mnt/{{ item }}"
+         state: unmounted
+       loop:
+         - rocky
+         - debian
+
+     - name: Make Media directories
+       become: yes
+       file:
+         path: '/mnt/{{ item }}'
+         state: directory
+         recurse: yes
+         owner: root
+         group: wheel
+         mode: 0775
+       loop:
+         - isos
+         - rocky
+         - debian
+
+     - name: Get Isos
+       get_url:
+         url: '{{ item }}'
+         dest: '/mnt/isos/{{ item|basename }}'
+       async: 1800
+       poll: 10
+       loop:
+         - https://download.rockylinux.org/pub/rocky/9/isos/x86_64/Rocky-9.2-x86_64-minimal.iso
+         - https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.2.0-amd64-netinst.iso
+
+     - name: Mount Isos
+       become: yes
+       lineinfile:
+         path: '/etc/rc.d/rc.local'
+         line: mount -t iso9660 -o ro /mnt/isos/{{ item.name }} /mnt/{{ item.mnt }}
+       loop:
+         - { name: Rocky-9.2-x86_64-minimal.iso, mnt: rocky }
+         - { name: debian-12.2.0-amd64-netinst.iso, mnt: debian }
+
+     - name: Iso Image Directory
+       become: yes
+       file:
+         path: '/tftpboot/images/{{ item.name }}/{{ item.version}}'
+         state: directory
+         recurse: yes
+         owner: root
+         group: wheel
+         mode: '0755'
+       loop:
+         - { name: rocky, version: 9 }
+         - { name: debian, version: 11 }
+
+     - name: rc.local file permissions
+       become: yes
+       file:
+         path: /etc/rc.d/rc.local
+         mode: '0755'
+
+     - name: Enable rc-local
+       become: yes
+       service:
+         name: rc-local
+         state: restarted
+         enabled: yes
+
+
+     - name:  PXE Menu Directory
+       become: yes
+       file:
+         path: '/tftpboot/pxelinux.cfg'
+         state: directory
+         recurse: yes
+         owner: root
+         group: wheel
+         mode: '0755'
+
+     - name: Iso Image Pxeboot Copy
+       become: yes
+       copy:
+         src: '/mnt/{{ item.name }}/{{ item.dir }}/'
+         dest: '/tftpboot/images/{{ item.name }}/{{ item.version}}/{{ item.arch }}/'
+         mode: '0755'
+         owner: root
+         group: wheel
+       loop:
+         - { name: rocky, dir: images/pxeboot, version: 9, arch: x86_64 }
+         - { name: debian, dir: install.amd, version: 11, arch: amd64 }
+
+     - name: Make PXEBoot Menu Beginning
+       become: yes
+       copy:
+         dest: /tftpboot/pxelinux.cfg/default
+         content: |
+           default vesamenu.c32
+           prompt 0
+           {{ '' }}
+           MENU TITLE PXE Boot Menu
+           MENU INCLUDE pxelinux.cfg/graphics.conf
+           MENU AUTOBOOT Starting Local System in # seconds
+           {{ '' }}
+           LABEL bootlocal
+             MENU LABEL ^Boot from local drive
+             MENU DEFAULT
+             LOCALBOOT 0
+           TIMEOUT 300
+           TOTALTIMEOUT 9000
+           {{ '' }}
+           {{ '' }}
+
+     - name: Make PXEBoot Menu Block
+       become: yes
+       blockinfile:
+         path: '/tftpboot/pxelinux.cfg/default'
+         marker: ''
+         block: |
+           LABEL {{ item.name }} {{ item.version }} {{ item.arch }}
+             MENU LABEL {{ item.name }} {{ item.version }} {{ item.arch }}
+             KERNEL images/{{ item.name }}/{{ item.version }}/{{ item.arch }}/vmlinuz
+       loop:
+         - { name: rocky, version: 9, arch: x86_64 }
+         - { name: debian, version: 11, arch: amd64 }
+
+     - name: Make PXEBoot Graphics Conf
+       become: yes
+       copy:
+         dest: /tftpboot/pxelinux.cfg/graphics.conf
+         content: |
+           MENU COLOR TABMSG    37;40      #80ffffff #00000000
+           MENU COLOR HOTSEL    30;47      #40000000 #20ffffff
+           MENU COLOR SEL       30;47      #40000000 #20ffffff
+           MENU COLOR SCROLLBAR 30;47      #40000000 #20ffffff
+           MENU WIDTH 80
+           MENU MARGIN 22
+           MENU PASSWORDMARGIN 26
+           MENU ROWS 6
+           MENU TABMSGROW 15
+           MENU CMDLINEROW 15
+           MENU ENDROW 24
+           MENU PASSWORDROW 12
+           MENU TIMEOUTROW 13
+           MENU VSHIFT 6
+           MENU PASSPROMPT Enter Password:
+           NOESCAPE 1
+           ALLOWOPTIONS 1
+
+     - name: Stop nginx
+       become: yes
+       service:
+         name: nginx
+         state: stopped
+
+     - name: Symlink to Repo locations
+       become: yes
+       file:
+         src: '/mnt/{{ item }}'
+         dest: '/usr/share/nginx/html/{{ item }}'
+         state: link
+       loop:
+         - rocky
+         - debian
+
+     - name: Restart nginx
+       become: yes
+       service:
+         name: nginx
+         state: started
+
+     - name: Set Firewall Rules
+       become: yes
+       command: firewall-cmd --zone=public --add-service={{ item }} --permanent
+       loop:
+         - https
+         - http
+         - tftp
+
+     - name: Enable Firewall Rules
+       become: yes
+       command: firewall-cmd --reload
+
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...

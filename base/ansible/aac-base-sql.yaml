@@ -1,0 +1,64 @@
+---
+# version: 1.0.0
+- hosts: localhost
+  tasks:
+     - name: install dependencies
+       become: yes
+       package:
+         name:
+           - mariadb-server
+           - "{{ ansible_python.executable|basename }}-PyMySQL"
+         state: latest
+       when: ansible_distribution != "MacOSX"
+
+     - name: start mariadb
+       become: yes
+       service:
+         name: mariadb
+         enabled: true
+         state: started
+
+     - name: set my.cnf
+       become: yes
+       copy:
+         dest: ~/.my.cnf
+         mode: "0600"
+         content: |
+           [client]
+           user=root
+           password={{ mariadb_pwd }}
+       no_log: true
+
+     # Not needed for Mriadb 10.5 uses system root password
+     #- name: mysql_root_password
+     #  become: yes
+     #  community.mysql.mysql_user:
+     #    user: root
+     #    check_implicit_admin: true
+     #    password: "{{ mariadb_pwd }}"
+     #    host: localhost
+     #  become: true
+     
+     - name: Remove MySQL test database
+       become: yes
+       mysql_db:
+         login_unix_socket: /var/lib/mysql/mysql.sock
+         name: test
+         state: absent
+       no_log: true
+     
+     - name: Adjust mariadb bind address
+       become: yes
+       ansible.builtin.lineinfile:
+         path: /etc/mysql/mariadb.conf.d/50-server.cnf
+         regex: '^bind-address.*\= '
+         line: "bind-address = {{ mariadb_bind_address }}"
+       when: ansible_os_family == 'Debian'
+
+     - name: start mariadb
+       become: yes
+       service:
+         name: mariadb
+         enabled: true
+         state: restarted
+       when: ansible_os_family == 'Debian'

@@ -1,0 +1,182 @@
+---
+# version: 1.0.0
+# designed to work with Rocky Linux, not tested on any other Linux distro
+
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: TLS
+  import_playbook: aac-base-tls.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- hosts: localhost
+  tasks:
+     - name: install dependencies
+       become: yes
+       package:
+         name:
+           - git
+           - lighttpd
+           - lighttpd-mod_openssl
+           - net-tools
+         state: latest
+       when: ansible_distribution != "MacOSX"
+
+     # python3.11-selinux missing from Rocky
+     # Will fix with SELinux setup
+     - name: setenforce Permissive
+       become: yes
+       command: setenforce permissive
+       when: (ansible_distribution != "MacOSX") and
+             (ansible_os_family != "VMware Photon OS") and
+             (ansible_os_family != "Alpine")
+
+       # always use TLS for webservers
+     - name: lighttpd TLS
+       become: yes
+       copy:
+         dest: /etc/lighttpd/conf.d/tls.conf
+         mode: 0644
+         owner: root
+         group: root
+         content: |
+           server.modules += ("mod_openssl")
+           $SERVER["socket"] == ":443" {{ '{' }}
+               ssl.engine = "enable"
+               ssl.pemfile = "/etc/pki/tls/certs/{{ ansible_fqdn }}.crt"
+               ssl.privkey = "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
+           {{ '}' }}
+
+     - name: Check if pihole repository exists
+       become: yes
+       stat:
+         path: /tmp/pihole/README.md
+       register: stat_result
+
+     - name: Clone pihole Repository
+       become: yes
+       git:
+         repo: https://github.com/pi-hole/pi-hole.git
+         dest: /tmp/pihole
+         clone: true
+         # version: "{{ json_response.json.tag_name }}"
+         force: true
+       when: not stat_result.stat.exists
+
+     - name: create root's bin
+       become: yes
+       file:
+         path: '/root/bin'
+         state: directory
+         recurse: yes
+         mode: 0755
+
+     - name: create dialog override
+       become: yes
+       copy:
+         dest: '/root/bin/dialog'
+         mode: 0755
+         content: |
+           DIALOG_OK=0
+           if [ "$*" == *"DNS"* ]
+           then
+               echo -n "Cloudflare (DNSSEC)"
+           fi
+           if [ "$*" == *"privacy"* ]
+           then
+               echo -n "0"
+           fi
+           exit $DIALOG_OK
+
+     # this needs some env vars to override some checks and the dialog command
+     - name: pihole basic install
+       become: yes
+       shell: "export PATH='/root/bin:/sbin:/bin:/usr/sbin:/usr/bin'; export PIHOLE_DNS_1=1.1.1.1; export PIHOLE_DNS_2=1.0.0.1; export PIHOLE_SELINUX=true; export PIHOLE_SKIP_OS_CHECK=true; ./basic-install.sh 2>&1 | tee /tmp/pi.out"
+       args:
+         chdir: "/tmp/pihole/automated install"
+         executable: /usr/bin/bash
+
+     - name: Set Pihole Password
+       become: yes
+       command: pihole -a -p {{ pihole_pwd }}
+       no_log: true
+
+     - name: Pihole Gravity Update
+       become: yes
+       command: pihole -g
+
+     - name: Add TLS
+       become: yes
+       lineinfile:
+         path: /etc/lighttpd/lighttpd.conf
+         insertbefore: '.*pihole-admin.conf.*'
+         line: 'include "/etc/lighttpd/conf.d/tls.conf"'
+         state: present
+
+     - name: Permission private key
+       become: yes
+       file:
+         path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
+         owner: lighttpd
+
+     # Need to fix SELinux for Pihole eventually
+     - name: Get SELinux Pihole TE
+       get_url:
+         url: https://raw.githubusercontent.com/nkrgovic/PiHole_SELinux/master/pihole.te
+         dest: '/tmp/pihole.te'
+
+     - name: Commands for SELinux for Pihole
+       become: yes
+       command: '{{ item }}'
+       loop:
+         - setsebool -P nis_enabled on
+         - setsebool -P domain_can_mmap_files on
+         - setsebool -P httpd_run_stickshift on
+         - setsebool -P httpd_setrlimit on
+         - setsebool -P httpd_mod_auth_pam on
+         - setsebool -P httpd_can_network_connect on
+         - checkmodule -M -m -o /tmp/pihole.mod /tmp/pihole.te
+         - semodule_package -o /tmp/pihole.pp -m /tmp/pihole.mod
+         - semodule -i /tmp/pihole.pp
+
+     - name: Move te SELinux 
+       copy:
+         src: "/tmp/pihole.te"
+         dest: "{{ ansible_env.HOME }}/pihole.te"
+
+     - name: Clean up SELinux setup
+       become: yes
+       file:
+         path: "{{ item }}"
+         state: absent
+       loop:
+         - /tmp/pihole.mod 
+         - /tmp/pihole.pp
+         - /tmp/pihole.te
+
+     - name: Stop lighttpd
+       become: yes
+       service:
+         name: lighttpd
+         state: restarted
+
+     - name: Set Firewall Rules
+       become: yes
+       command: firewall-cmd --zone=public --add-service={{ item }} --permanent
+       loop:
+         - https
+         - dns
+
+     - name: Enable Firewall Rules
+       become: yes
+       command: firewall-cmd --reload
+
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...
