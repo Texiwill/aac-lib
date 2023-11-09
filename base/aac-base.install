@@ -7,7 +7,7 @@
 # Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS/Alpine
 #
 ###
-VERSIONID="2.1.9"
+VERSIONID="2.2.1"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -54,6 +54,7 @@ function findos() {
         	then
             		theos=`echo $ID_LIKE | tr [:upper:] [:lower:]`
         	fi
+		VERSION_ID=`echo $VERSION_ID | awk -F. '{print $1}'`
 	elif [ -e /etc/centos-release ]
 	then
 		theos=`cut -d' ' -f1 < /etc/centos-release | tr [:upper:] [:lower:]`
@@ -88,7 +89,7 @@ function findos() {
 function checkdep() {
 	dep=$1
 	needdep=0
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ] || [ Z"$theos" = Z"rocky" ]
 	then
 		rpm -q $dep >& /dev/null
 		if [ $? -ne 0 ]
@@ -134,11 +135,16 @@ function installdep() {
 	then
 		installopts=$1
 	fi
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ] || [ Z"$theos" = Z"rocky" ]
 	then
 		if [ Z"$INSTALL" != Z"" ] || [ Z"$DEVEL" != Z"" ]
 		then
-			sudo yum -y $installopts install $INSTALL $DEVEL
+			if [ $VERSION_ID -lt 8 ] && [ Z"$theos" != Z"photon" ]
+			then
+				sudo yum -y $installopts install $INSTALL $DEVEL
+			else
+				sudo dnf -y $installops install $INSTALL $DEVEL
+			fi
 		fi
 		changes=1	
 	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
@@ -219,9 +225,30 @@ function call_playbook() {
 		askpass=""
 	fi
 	extraargs=""
-	if [ Z"TZ" != Z"" ]
+	# special case to import passwords, could be more secure
+	if [ Z"$choice" = Z"librenms" ]
 	then
-		extraargs="--extra-vars=\"aac_base_tz=$TZ\""
+		# Get mariadb/librenms passwords
+		echo -n "Enter mariadb root Password: "
+		read -s mariadb_pwd
+		echo ""
+		echo -n "Enter librenms Password: "
+		read -s librenms_pwd
+		echo ""
+		extraargs="aac_base_tz=$TZ mariadb_pwd=$mariadb_pwd librenms_pwd=$librenms_pwd"
+		askpass="-K"
+	elif [ Z"$choice" = Z"pihole" ]
+	then
+		echo -n "Enter pihole Password: "
+		read -s pihole_pwd
+		echo ""
+		extraargs="aac_base_tz=$TZ pihole_pwd=$pihole_pwd"
+		askpass="-K"
+	else
+		if [ Z"TZ" != Z"" ]
+		then
+			extraargs="aac_base_tz=$TZ"
+		fi
 	fi
 	if [ Z"$choice" = Z"vsm" ]
 	then
@@ -251,7 +278,12 @@ function call_playbook() {
 			# within the playbook
 			handlecredstore
 		fi
-		ansible-playbook $askpass $vansible $extraargs ansible/${choice}.yaml
+		if [ Z"$extraargs" != Z"" ]
+		then
+			ansible-playbook $askpass $vansible --extra-vars="$extraargs" ansible/${choice}.yaml
+		else
+			ansible-playbook $askpass $vansible ansible/${choice}.yaml
+		fi
 		#if [ $fixcompress -eq 1 ]
 		#then
 		#	mv $HOME/.vsmrc.orig $HOME/.vsmrc
@@ -394,10 +426,10 @@ function tz() {
 }
 
 function epel() {
+	checkdep epel-release
 	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ]
 	then
 		echo "Checking for EPEL repository"
-		checkdep epel-release
 		if [ $needdep -eq 1 ]
 		then
 			echo "Installing EPEL repository"
@@ -407,6 +439,15 @@ function epel() {
 		else
 			askpass="-K"
 		fi
+	elif [ Z"$theos" = Z"rocky" ]
+	then
+		if [ $needdep -eq 1 ]
+		then
+			INSTALL=epel-release
+			DINSTALL=$INSTALL
+			installdep
+		fi
+		askpass="-K"
 	else
 		askpass="-K"
 	fi
@@ -436,9 +477,13 @@ function ansible() {
 			fi
 			echo "Installing Ansible"
 			INSTALL="ansible"
-			DINSTALL="ansible"
+			DINSTALL="ansible pip"
 			installdep
 			askpass=""
+			if [ Z"$theos" = Z"debian" ]
+			then
+				pip install markupsafe=2.0.1
+			fi
 			if [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 			then
 				sudo cp /tmp/sources.list.orig /etc/apt/sources.list
@@ -583,7 +628,7 @@ do
 			exit
 			;;
 		--verbose|-v)
-			vansible="-v"
+			vansible="-vvv"
 			;;
 		--noansible|-n)
 			ansible=0
