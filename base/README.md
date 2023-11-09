@@ -38,6 +38,7 @@ Full support for LinuxVMA/LinuxVSM is available for:
 * Ubuntu 20.04
 * Ubuntu 22.04
 * PhotonOS 3 - requires creating an account and installing sudo to use
+* Rocky 9
 
 WSL2 also works per the community
 * Now for LinuxVSM 6.4.x
@@ -137,6 +138,12 @@ Installs isolib.sh
 
 #### LinuxVDI - 1.0.0
 Linux based VDI install
+
+#### pxeboot - 1.0.0
+Linux pxeboot server setup for OS Images. Tested only on Rocky 9
+
+#### pihole - 1.0.0
+Linux pihole server setup including TLS and SELinux support. Tested only on Rocky 9
 
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
