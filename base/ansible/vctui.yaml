@@ -1,5 +1,5 @@
 ---
-# version: 1.0.6
+# version: 1.0.7
 
 - hosts: localhost
   gather_facts: true
@@ -138,27 +138,18 @@
 
      - name: Getting vctui
        become: no
-       shell: "go get -u github.com/thebsdbox/vctui"
-       args:
-         executable: /bin/bash
-       when: (ansible_os_family == "RedHat") or
-             (ansible_distribution == "MacOSX") or
-             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'!=')) or
-             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("22",'<')) or
-             (ansible_os_family == "VMware Photon OS")
-
-     - name: Getting vctui for Ubuntu 2204
-       become: no
        shell: "go install github.com/thebsdbox/vctui@latest"
        args:
          executable: /bin/bash
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("22",'<'))
+       when: (ansible_os_family == "Debian" and ansible_distribution_major_version is version("9",'!=')) or
+             (ansible_os_family != "Debian")
 
      - name: Create bin diretory
        file:
-         path: "{{ansible_user_dir}}/bin"
+         path: "{{ ansible_user_dir }}/bin"
          state: directory
          mode: 0755
+       ignore_errors: yes
        when: (ansible_os_family == "RedHat") or
              (ansible_distribution == "MacOSX") or
              (ansible_os_family == "Debian" and ansible_distribution_major_version is version("9",'!='))

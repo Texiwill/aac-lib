@@ -1,5 +1,5 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 
 - hosts: localhost
   gather_facts: true
@@ -13,19 +13,35 @@
 
 - hosts: localhost
   tasks:
+     - name: No Debian Family Support Output
+       debug:
+         msg: "No Debian Family Support for Isolib, use RedHat-like OS"
+       when: ansible_os_family == "Debian"
+
+     - name: No Debian Family Support
+       meta: end_host
+       when: ansible_os_family == "Debian"
+
      - name: add Negativo17 GPG Keys
        become: yes
        rpm_key:
          state: present
          key: https://negativo17.org/repos/RPM-GPG-KEY-slaanesh
+       when: ansible_os_family == "RedHat"
 
-     - name: install Schilling Repo
+     - name: install Schilling Fedora Repo
        become: yes
-       package:
-         name:
-           - https://negativo17.org/repos/fedora-cdrtools.repo
-         state: latest
-       when: ansible_distribution != "MacOSX"
+       get_url:
+         url: https://negativo17.org/repos/fedora-cdrtools.repo
+         dest: /etc/yum.repos.d
+       when: ansible_distribution == "Fedora"
+
+     - name: install Schilling EPEL Repo
+       become: yes
+       get_url:
+         url: https://negativo17.org/repos/epel-cdrtools.repo
+         dest: /etc/yum.repos.d
+       when: ansible_os_family == "RedHat" and ansible_distribution != "Fedora"
 
      - name: install dependencies
        become: yes
@@ -37,13 +53,22 @@
            - mkisofs
            - cdda2wav
          state: latest
-       when: ansible_distribution != "MacOSX"
+       when: ansible_os_family == "RedHat"
+
+     - name: Create Bin Directory
+       file:
+         path: "{{ansible_user_dir}}/bin"
+         mode: 0755
+         state: directory
+       ignore_errors: yes
+       when: ansible_os_family == "RedHat"
 
      - name: Download the latest version of isolib.sh
        get_url:
          url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/isolib/isolib.sh
          dest: "{{ansible_user_dir}}/bin"
          mode: 0755
+       when: ansible_os_family == "RedHat"
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

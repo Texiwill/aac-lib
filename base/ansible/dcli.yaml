@@ -1,5 +1,5 @@
 ---
-# version: 1.0.3
+# version: 1.0.4
 - hosts: localhost
   gather_facts: true
   become_user: root
@@ -21,8 +21,21 @@
 
      - name: Install RedHat 7 dependencies
        become: yes
+       package: 
+         name: python-devel
+         state: latest
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<'))
+
+     - name: Updrade Pip
+       become: yes
+       command: python -m pip install pip==9.0.3
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<'))
+
+     - name: Install RedHat 7 dependencies
+       become: yes
        pip:
-         name: pyasn1
+         name: 
+           - pyasn1
          state: latest
        when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<'))
 
