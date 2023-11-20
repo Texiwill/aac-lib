@@ -39,6 +39,7 @@ Full support for LinuxVMA/LinuxVSM is available for:
 * Ubuntu 22.04
 * PhotonOS 3 - requires creating an account and installing sudo to use
 * Rocky 9
+* AlmaLinux 9
 
 WSL2 also works per the community
 * Now for LinuxVSM 6.4.x
@@ -149,7 +150,19 @@ Linux pihole server setup including TLS and SELinux support. Tested only on Rock
 Email elh at astroarch dot com for assistance or if you want to add
 more items.
 
+Base 2.2.1, LinuxVSM, dCLI, vctui, and isolib tested against CentOS 7,8,9; Rocky 9, AlmaLinux 9, Fedora 39, Ubuntu 22.04.3
+
 ### Changelog
+2.2.1 Base - Support for AlmaLinux, Rocky
+
+1.1.3 LinuxVSM - Support for Rocky/AlmaLinux and better support for all other OSes
+
+1.0.3 dCLI - Updated for latest dCLI
+
+1.0.7 vctui - Updated for latest vctui
+
+1.0.1 isolib - Updated for only RedHat Family of OS
+
 1.1.2 LinuxVSM - Support for Ubuntu 22.04
 
 1.1.1 LinuxVSM - Support for Alpine

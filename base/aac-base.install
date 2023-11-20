@@ -89,7 +89,7 @@ function findos() {
 function checkdep() {
 	dep=$1
 	needdep=0
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ] || [ Z"$theos" = Z"rocky" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ] || [ Z"$theos" = Z"rocky" ] || [ Z"$theos" = Z"almalinux" ]
 	then
 		rpm -q $dep >& /dev/null
 		if [ $? -ne 0 ]
@@ -135,7 +135,7 @@ function installdep() {
 	then
 		installopts=$1
 	fi
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ] || [ Z"$theos" = Z"rocky" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ] || [ Z"$theos" = Z"rocky" ] || [ Z"$theos" = Z"almalinux" ]
 	then
 		if [ Z"$INSTALL" != Z"" ] || [ Z"$DEVEL" != Z"" ]
 		then
@@ -224,7 +224,7 @@ function call_playbook() {
 		# no need if already root or local installs only
 		askpass=""
 	fi
-	extraargs=""
+	extraargs="$adebug"
 	# special case to import passwords, could be more secure
 	if [ Z"$choice" = Z"librenms" ]
 	then
@@ -235,19 +235,19 @@ function call_playbook() {
 		echo -n "Enter librenms Password: "
 		read -s librenms_pwd
 		echo ""
-		extraargs="aac_base_tz=$TZ mariadb_pwd=$mariadb_pwd librenms_pwd=$librenms_pwd"
+		extraargs="$adebug aac_base_tz=$TZ mariadb_pwd=$mariadb_pwd librenms_pwd=$librenms_pwd"
 		askpass="-K"
 	elif [ Z"$choice" = Z"pihole" ]
 	then
 		echo -n "Enter pihole Password: "
 		read -s pihole_pwd
 		echo ""
-		extraargs="aac_base_tz=$TZ pihole_pwd=$pihole_pwd"
+		extraargs="$adebug aac_base_tz=$TZ pihole_pwd=$pihole_pwd"
 		askpass="-K"
 	else
 		if [ Z"TZ" != Z"" ]
 		then
-			extraargs="aac_base_tz=$TZ"
+			extraargs="$adebug aac_base_tz=$TZ"
 		fi
 	fi
 	if [ Z"$choice" = Z"vsm" ]
@@ -439,7 +439,7 @@ function epel() {
 		else
 			askpass="-K"
 		fi
-	elif [ Z"$theos" = Z"rocky" ]
+	elif [ Z"$theos" = Z"rocky" ] || [ Z"$theos" = Z"almalinux" ]
 	then
 		if [ $needdep -eq 1 ]
 		then
@@ -455,7 +455,13 @@ function epel() {
 
 function ansible() {
 	echo "Checking for Ansible"
-	checkdep ansible
+	if [ Z"$theos" = Z"almalinux" ] || [ Z"$theos" = Z"rocky" ]
+	then
+		checkdep ansible-core
+		checkdep ansible-collection-community-general
+	else
+		checkdep ansible
+	fi
 	if [ $needdep -eq 1 ]
 	then
 		if [ Z"$theos" != Z"macos" ]
@@ -478,8 +484,28 @@ function ansible() {
 			echo "Installing Ansible"
 			INSTALL="ansible"
 			DINSTALL="ansible pip"
+			if [ Z"$theos" = Z"almalinux" ] || [ Z"$theos" = Z"rocky" ]
+			then
+				INSTALL="ansible-core"
+				DINSTALL="ansible-core pip"
+			fi
 			installdep
 			askpass=""
+			if [ Z"$theos" = Z"almalinux" ] || [ Z"$theos" = Z"rocky" ]
+			then
+				INSTALL="ansible-collection-community-general"
+				DINSTALL=$INSTALL
+				installdep
+				INSTALL="ansible-collection-ansible-posix"
+				DINSTALL=$INSTALL
+				installdep
+				INSTALL="ansible-collection-community-crypto"
+				DINSTALL=$INSTALL
+				installdep
+				INSTALL="ansible-collection-community-mysql"
+				DINSTALL=$INSTALL
+				installdep
+			fi
 			if [ Z"$theos" = Z"debian" ]
 			then
 				pip install markupsafe=2.0.1
@@ -553,6 +579,7 @@ function usage() {
 	echo "	-i|--install => Install"
 	echo "	-V|--version => version"
 	echo "	-v|--verbose => verbose Ansible"
+	echo "	-d|--debug => debug Ansible"
 	echo "	-n|--noansible => No Ansible, older shell script approach"
 	echo "	Last Argument is used to set the timezone"
 	echo "	Default timezone $TZ"
@@ -591,6 +618,7 @@ installer=""
 ansible=1
 vansible=""
 askpass=""
+adebug=""
 INSTALL=""
 DINSTALL=""
 DDEVEL=""
@@ -622,6 +650,9 @@ do
 			;;
 		-u|--update)
 			update=1
+			;;
+		-d|--debug)
+			adebug="aac_base_debug=1"
 			;;
 		--version|-V)
 			version
