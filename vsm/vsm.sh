@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.8.4"
+VERSIONID="6.8.5"
 
 # args: stmt error
 function colorecho() {
@@ -48,7 +48,7 @@ function shaecho() {
 	if [ $doshacheck -eq 1 ] && [ Z"$shafail" != Z"" ]
 	then
 		colorecho "Following $sha Check Sums Failed
-	${shafail}" 1
+		${shafail}" 1
 	elif [ $doshacheck -eq 1 ] && [ $shadownload -eq 1 ]
 	then
 		colorecho "All $sha Check Sums Passed"
@@ -56,6 +56,14 @@ function shaecho() {
 	shadownload=0
 	shafail=''
 }
+
+# Get rid of obsolescent message
+strings /usr/bin/egrep|grep obsolescent >& /dev/null
+vegrep="/usr/bin/egrep"
+if [ $? -eq 0 ]
+then
+	vegrep="/usr/bin/grep -E"
+fi
 
 credfile=.credstore
 credname="My VMware"
@@ -634,6 +642,7 @@ const words = text.split(':');
 		});
 	}
 	const page = await browser.newPage();
+	await page.setDefaultNavigationTimeout($timeout);
 	await page.goto('https://customerconnect.vmware.com/web/vmware/login',{waitUntil: 'networkidle0'});
 	const navigationPromise = page.waitForNavigation();
 	await page.type('#email',words[0]);
@@ -716,7 +725,7 @@ EOF
 			fi
 			exit
 		fi
-		egrep 'Cannot find module|loading shared libraries' $cdir/bm.txt >& /dev/null
+		$vegrep 'Cannot find module|loading shared libraries' $cdir/bm.txt >& /dev/null
 		if [ $? -eq 0 ]
 		then
 			colorecho "	Installation Issue, run vsm.sh --clean" 1
@@ -1170,7 +1179,7 @@ function findos() {
 
 function checkdep() {
 	dep=$1
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"photon" ] || [ Z"$theos" = Z"rocky" ] || [ Z"$theos" = Z"almalinux" ]
 	then
 		rpm -q $dep > /dev/null
 		if [ $? -eq 1 ]
@@ -1274,8 +1283,30 @@ function loopdeps {
 	fi
 }
 
-python="python"
+python=""
 function finddeps {
+	# find python
+	r=`which python 2> /dev/null`
+	if [ $? -eq 0 ]
+	then
+		python=$r
+	fi
+	r=`which python2 2> /dev/null`
+	if [ $? -eq 0 ]
+	then
+		python=$r
+	fi
+	r=`which python3 2> /dev/null`
+	if [ $? -eq 0 ]
+	then
+		python=$r
+	fi
+	if [ Z"$python" = Z"" ]
+	then
+		echo "Missing Dependency python (prefer v3.x)"
+		needdep=1
+	fi
+	py=`basename $python`
 	#Packages required by all OS
 	all_checkdep="bc jq wget"
 	#Packages required by MacOS
@@ -1286,17 +1317,16 @@ function finddeps {
 	#Packages required by Enterprise Linux and derivatives (including fedora)
 	el_checkdep="ncurses xorg-x11-server-Xvfb libXScrnSaver at-spi2-atk gcc-c++ make nss gtk3"
 	#Packages required by Fedora 
-	fedora_checkdep="$linux_checkdep $el_checkdep python3 python3-urllib3 mesa-libgbm alsa-lib"
+	fedora_checkdep="$linux_checkdep $el_checkdep mesa-libgbm alsa-lib"
 	#Packages required by RedHat and derivatives 
-	redhat_checkdep="$linux_checkdep $el_checkdep python python-urllib3"
-	redhat8_checkdep="$linux_checkdep $el_checkdep python2 python2-urllib3"
+	redhat_checkdep="$linux_checkdep $el_checkdep"
 	#Packages required by Debian and derivatives 
-	debian_checkdep="$linux_checkdep python python-urllib3 libxml2-utils ncurses-base xvfb libnss3 libgtk-3-0 libgbm1 libasound2 libxss1"
-	ubuntu20_checkdep="$linux_checkdep python3 python3-urllib3 libxml2-utils ncurses-base xvfb libgtk-3-0 g++ libnss3 libgbm1 libxss1 make"
+	debian_checkdep="$linux_checkdep libxml2-utils ncurses-base xvfb libnss3 libgtk-3-0 libgbm1 libasound2 libxss1"
+	ubuntu20_checkdep="$linux_checkdep libxml2-utils ncurses-base xvfb libgtk-3-0 g++ libnss3 libgbm1 libxss1 make"
 	#Packages required by PhotonOS
-	photon_checkdep="$linux_checkdep python2 python-urllib3 xorg-server xorg-applications libXScrnSaver at-spi2-atk gtk3 make alsa-lib"
+	photon_checkdep="$linux_checkdep xorg-server xorg-applications libXScrnSaver at-spi2-atk gtk3 make alsa-lib"
 	#Packages required by Alpine
-	alpine_checkdep="$linux_checkdep python3 py3-urllib3 xvfb libxscrnsaver at-spi2-atk gtk-3.0 make alsa-lib"
+	alpine_checkdep="$linux_checkdep xvfb libxscrnsaver at-spi2-atk gtk-3.0 make alsa-lib"
 	if [ Z"$theos" = Z"macos" ]
 	then
 		. $HOME/.bash_profile
@@ -1307,21 +1337,26 @@ function finddeps {
 		alias sha1sum="`which shasum`"
 	else
 		# set language to English
-		LANG=en_US.utf8
-		export LANG
+		if [ Z"$theos" != Z"almalinux" ]
+		then
+			LANG=en_US.utf8
+			export LANG
+		else
+			LANG=C.UTF-8
+			export LANG
+		fi
 		#loopdeps "$linux_checkdep"
 		#alias uudecode="`which uudecode` -o -"
 	fi
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ]
+	$python -c "help('modules')" 2>/dev/null | grep urllib >& /dev/null
+	if [ $? -eq 1 ]
 	then
-		myver=`echo $VERSION_ID | cut -d\. -f1`
-		if [ $myver -ge 8 ]
-		then
-			python="python2"
-			loopdeps "$redhat8_checkdep"
-		else
-			loopdeps "$redhat_checkdep"
-		fi
+		echo "Missing Dependency urllib"
+		needdep=1
+	fi
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"rocky" ] || [ Z"$theos" = Z"almalinux" ]
+	then
+		loopdeps "$redhat_checkdep"
 	elif [ Z"$theos" = Z"fedora" ]
 	then
 		loopdeps "$fedora_checkdep"
@@ -1965,7 +2000,7 @@ then
 	fi
 
 	# Parse JSON
-	cat ${rcdir}/_h_downloads.xhtml | jq '.[][].productList[]|.name,.actions[]'| tr '\n' ' ' | sed 's/} {/}\n{/g' | sed 's/} "/}\n"/g' | sed 's/" {/"\n{/g' |egrep '^"|Download'|tr '\n' ' '|sed 's/} "/}\n"/g' > ${rcdir}/_downloads.xhtml
+	cat ${rcdir}/_h_downloads.xhtml | jq '.[][].productList[]|.name,.actions[]'| tr '\n' ' ' | sed 's/} {/}\n{/g' | sed 's/} "/}\n"/g' | sed 's/" {/"\n{/g' |$vegrep '^"|Download'|tr '\n' ' '|sed 's/} "/}\n"/g' > ${rcdir}/_downloads.xhtml
 
 	if [ $err -ne 0 ]
 	then
@@ -2252,7 +2287,7 @@ function getMyPatches()
 {
 	if [ $dopatch -eq 1 ]
 	then
-		echo $missname | egrep '_[0-9]|-[0-9]' >& /dev/null
+		echo $missname | $vegrep '_[0-9]|-[0-9]' >& /dev/null
 		if [ $? -eq 0 ]
 		then
 			v=`echo ${missname} | sed 's/[0-9A-Z]\+[-_]\([0-9]\+\).*$/\1/' 2>/dev/null | awk -F_ '{print $NF}'`
@@ -3243,7 +3278,7 @@ function getFavPaths()
 		# reverse grep
 		pc=$(($pc+1))
 		y=`echo $x|sed 's/_&_/.*/g'|sed 's/[_-]/./g'|sed 's/"//g'`
-		z=`echo ${favpaths[0]}|egrep -in $y 2>/dev/null`
+		z=`echo ${favpaths[0]}|$vegrep -in $y 2>/dev/null`
 		if [ $? -eq 0 ]
 		then
 			prodCat=(`echo $z | sed 's/:/ /'`)
@@ -3344,7 +3379,7 @@ function getDlg()
 		thedlg=${dlgInfo[3]}
 		pkg=`echo ${dlgInfo[3]}|awk -F[0-9] '{print $1}'`
 	fi
-	lchoice=(`echo $pkgs |sed 's/All //'|sed 's/ /\n/g' | egrep -n "^${pkg}"|sed 's/:/ /'`)
+	lchoice=(`echo $pkgs |sed 's/All //'|sed 's/ /\n/g' | $vegrep -n "^${pkg}"|sed 's/:/ /'`)
 	missname=${lchoice[1]}
 	choice=$missname
 	longReply=${lchoice[0]}

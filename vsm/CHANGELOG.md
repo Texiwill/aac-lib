@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.8.5 - Added Support for AlmaLinux9 and Rocky9, fixed dependency checks
+
 6.8.4 - Added a login --timeout #seconds option
 
 6.8.3 - Fixed issued with Nested
