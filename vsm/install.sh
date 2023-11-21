@@ -34,6 +34,7 @@ function findos() {
 	then
 		. /etc/os-release
 		theos=`echo $ID | tr [:upper:] [:lower:]`
+		ver=`echo $VERSION_ID | awk -F. '{print $1'}`
 	elif [ -e /etc/centos-release ]
 	then
 		theos=`cut -d' ' -f1 < /etc/centos-release | tr [:upper:] [:lower:]`
@@ -71,28 +72,31 @@ do
 		#	shift
 		#	;;
 		*)
-			tz=$1
+			atz=$1
 			;;
 	esac
 	shift
 done
 
-#us=`id -un`
-#if [ Z"$us" = Z"root" ]
-#then
-#	colorecho "Error: Requires a valid non-root username as an argument" 1
-#	usage
-#	exit
-#fi
+tz=$atz
+if [ Z"$atz" = Z"" ]
+then
+	tz=`ls -l /etc/localtime|awk -F/ '{printf "%s/%s",$(NF-1),$NF}'`
+fi
 
 theos=''
 findos
 which wget >& /dev/null
 if [ $? -eq 1 ]
 then
-	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ]
+	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"fedora" ] || [ Z"$theos" = Z"rocky" ] || [ Z"$theos" = Z"almalinux" ]
 	then
+		if [ $ver -lt 8 ]
+		then
         	sudo yum -y install wget
+		else
+        	sudo dnf -y install wget
+		fi
 	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 	then
         	sudo apt-get install -y wget
@@ -103,14 +107,9 @@ mkdir aac-base
 cd aac-base
 wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
 chmod +x aac-base.install
-#if [ Z"$us" != "" ]
-#then
-#	./aac-base.install -u --user $us $tz
-#	./aac-base.install -i LinuxVSM --user $us $tz
-#else
-	./aac-base.install -u $tz
-	./aac-base.install -i LinuxVSM $tz
-#fi
+
+./aac-base.install -u $tz
+./aac-base.install -i LinuxVSM $tz
 
 cat > update.sh << EOF
 cd $HOME/aac-base
