@@ -7,7 +7,7 @@
 # Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS/Alpine
 #
 ###
-VERSIONID="2.2.1"
+VERSIONID="2.2.2"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -694,7 +694,7 @@ fi
 ###
 if [ $update -eq 1 ]
 then
-	files=`wget -O - https://github.com/Texiwill/aac-lib/blob/master/base |grep aac-base.install | grep span | awk -F\> '{print $3}' |sed 's#</a##g'`
+	files=`wget -O - https://github.com/Texiwill/aac-lib/tree/master/base |grep aac-base.install | grep span | awk -F\> '{print $3}' |sed 's#</a##g'`
 	for x in $files
 	do
 		wget -O $x https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/$x
@@ -703,7 +703,7 @@ then
 	then
 		if [ $ansible -eq 1 ]
 		then
-			files=`wget -O - https://github.com/Texiwill/aac-lib/blob/master/base/ansible |grep yaml | grep span | awk -F\> '{print $3}' |sed 's#</a##g'`
+			files=`wget -O - https://github.com/Texiwill/aac-lib/tree/master/base/ansible |sed 's/}/}\n/g' |awk -F\" '{print $4}'|grep yaml`
 			if [ ! -e ansible ]; then mkdir ansible; fi
 			cd ansible
 			for x in $files
