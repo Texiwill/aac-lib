@@ -15,97 +15,42 @@
   tasks:
      - name: Set Facts RHEL < 8
        set_fact: 
-          tgtdir: "/etc/yum.repos.d"
           myos: "rhel"
-          prod: "repo"
+          prod: "rpm"
           vers: "{{ansible_distribution_major_version}}"
        when: ansible_os_family == "RedHat"
 
-     - name: Set Facts RHEL 8
-       set_fact: 
-          tgtdir: "/etc/yum.repos.d"
-          myos: "rhel"
-          prod: "repo"
-          vers: "7"
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'=')
-
      - name: Set Facts Fedora
        set_fact: 
-          tgtdir: "/etc/yum.repos.d"
           myos: "rhel"
-          prod: "repo"
-          vers: "7"
+          prod: "rpm"
+          vers: "9"
        when: ansible_distribution == "Fedora"
 
      - name: Set Facts Debian
        set_fact: 
-          tgtdir: "/etc/apt/sources.list.d"
           myos: "{{ansible_distribution | lower}}"
-          prod: "list"
+          vers: "{{ansible_distribution_version}}"
+          prod: "deb"
        when: ansible_os_family == "Debian"
 
      - name: Download the latest PowerShell Repo
        become: yes
        get_url:
-         url: "https://packages.microsoft.com/config/{{myos}}/{{vers}}/prod.{{prod}}"
-         dest: "{{tgtdir}}/microsoft.{{prod}}"
+         url: "https://packages.microsoft.com/config/{{myos}}/{{vers}}/packages-microsoft-prod.{{prod}}"
+         dest: "/tmp"
          mode: 0644
+
+     - name: Install PowerShell Repo RedHat
+       become: yes
+       command: "rpm -Uvh /tmp/packages-microsoft-prod.{{prod}}"
+       ignore_errors: yes
        when: (ansible_os_family == "RedHat")
 
-     - name: Get Microsoft Key
-       get_url:
-         url: "https://packages.microsoft.com/keys/microsoft.asc"
-         dest: "/tmp/microsoft.key"
-         mode: 0600
-       when: (ansible_distribution == "Debian") or
-             (ansible_distribution == "Fedora")
-
-     - name: Install Key
+     - name: Install PowerShell Repo Debian
        become: yes
-       shell: apt-key add /tmp/microsoft.key
-       args:
-         executable: /bin/bash
-       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<'))
-
-     - name: Get Microsoft Repo
-       get_url:
-         url: "https://packages.microsoft.com/config/{{myos}}/{{ansible_distribution_major_version}}/packages-microsoft-prod.deb"
-         dest: "/tmp/packages-microsoft-prod.deb"
-         mode: 0600
-       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'==')) or
-             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
-
-     - name: Install Repo Debian 9
-       become: yes
-       shell: sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-debian-stretch-prod stretch main" > /etc/apt/sources.list.d/microsoft.list'
-       when: ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'==')
-
-     - name: Install Repo Debian 11
-       become: yes
-       shell: sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-debian-bullseye-prod bullseye main" > /etc/apt/sources.list.d/microsoft.list'
-       when: ansible_distribution == "Debian" and ansible_distribution_major_version is version("11",'==')
-
-     - name: Install Repo
-       become: yes
-       shell: dpkg -i /tmp/packages-microsoft-prod.deb
-       args:
-         executable: /bin/bash
-       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("9",'>')) or
-             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
-
-     - name: Add Repo
-       become: yes
-       shell: add-apt-repository universe
-       args:
-         executable: /bin/bash
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
-
-     - name: Install Microsoft Signature Key Fedora
-       become: yes
-       shell: rpm --import /tmp/microsoft.key
-       args:
-         executable: /bin/bash
-       when: ansible_distribution == "Fedora"
+       shell: "dpkg -i /tmp/packages-microsoft-prod.{{prod}}; apt-get update"
+       when: (ansible_os_family == "Debian")
 
      - name: Install powershell Debian/Ubuntu 18/RHEL
        become: yes
@@ -113,10 +58,19 @@
          name: 
            - powershell
          state: latest
-       when: (ansible_os_family == "RedHat") or
-             (ansible_distribution == "Debian") or
-             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",">")) or
+             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",">")) or
+             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",">")) 
 
+     - name: Install powershell RedHat < 8
+       become: yes
+       package:
+         name: 
+           - powershell-lts
+         state: latest
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8","<")) or
+             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19","<")) or
+             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("11","<"))
 
      - name: install the required dependencies for PowerCLI on Photon
        become: yes
@@ -125,48 +79,25 @@
          - powershell
        when: (ansible_os_family == "VMware Photon OS")
 
-     - name: Install HTTPS transport
-       become: yes
-       package:
-         name: 
-           - apt-transport-https
-         state: latest
-       when: (ansible_os_family == "Debian")
-
-     - name: Install powershell Ubuntu 20
-       become: yes
-       shell: "snap install powershell --classic"
-       when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')
-
      - name: Get Powershell Version
        become: no
        shell: "ls -1 /opt/microsoft/powershell | tail -1"
        args:
          executable: /bin/bash
        register: pwsh_local
-       when: (ansible_os_family == "RedHat") or
-             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
-             (ansible_distribution == "Debian")
+       when: (ansible_os_family != "VMware Photon OS")
 
      - name: Set PowerShell Version Fact
        set_fact:
          pwsh_path: "/opt/microsoft/powershell/{{pwsh_local.stdout}}"
          pwsh_cmd: "/usr/bin/pwsh"
-       when: (ansible_os_family == "RedHat") or
-             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<')) or
-             (ansible_distribution == "Debian")
+       when: (ansible_os_family != "VMware Photon OS")
 
      - name: Set PowerShell Version Fact Photon
        set_fact:
          pwsh_path: "/usr/lib/powershell"
          pwsh_cmd: "/usr/bin/pwsh"
        when: (ansible_os_family == "VMware Photon OS")
-
-     - name: Set PowerShell Fact
-       set_fact:
-         pwsh_path: "/snap/powershell/current/opt/powershell"
-         pwsh_cmd: "/snap/bin/powershell"
-       when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')
 
      - name: Set profile.d BASH settings
        become: yes
