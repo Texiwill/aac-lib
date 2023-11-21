@@ -153,6 +153,10 @@ more items.
 Base 2.2.1, LinuxVSM, dCLI, vctui, and isolib tested against CentOS 7,8,9; Rocky 9, AlmaLinux 9, Fedora 39, Ubuntu 22.04.3
 
 ### Changelog
+2.2.2 Base - Fixed update issues
+
+1.0.7 PowerCLI - updates
+
 2.2.1 Base - Support for AlmaLinux, Rocky
 
 1.1.3 LinuxVSM - Support for Rocky/AlmaLinux and better support for all other OSes
