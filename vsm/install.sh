@@ -11,6 +11,9 @@
 # Requires:
 # wget 
 #
+VERSIONID="2.0.0"
+
+###
 docolor=1
 # onscreen colors
 RED=`tput setaf 1`
@@ -82,6 +85,10 @@ tz=$atz
 if [ Z"$atz" = Z"" ]
 then
 	tz=`ls -l /etc/localtime|awk -F/ '{printf "%s/%s",$(NF-1),$NF}'`
+	if [ Z"$tz" = Z"Etc/UTC" ]
+	then
+		tz=""
+	fi
 fi
 
 theos=''
@@ -108,14 +115,24 @@ cd aac-base
 wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
 chmod +x aac-base.install
 
-./aac-base.install -u $tz
-./aac-base.install -i LinuxVSM $tz
-
-cat > update.sh << EOF
+if [ Z"$tz" = Z"" ]
+then
+	./aac-base.install -u
+	./aac-base.install -i LinuxVSM
+	cat > update.sh << EOF
+cd $HOME/aac-base
+./aac-base.install -u
+./aac-base.install -i LinuxVSM
+EOF
+else
+	./aac-base.install -u $tz
+	./aac-base.install -i LinuxVSM $tz
+	cat > update.sh << EOF
 cd $HOME/aac-base
 ./aac-base.install -u $tz
 ./aac-base.install -i LinuxVSM $tz
 EOF
+fi
 chmod +x update.sh
 
 colorecho "VSM is now in /usr/local/bin/vsm.sh"
