@@ -9,6 +9,9 @@
 - name: TZ
   import_playbook: aac-base-tz.yaml
 
+- name: SNMP
+  import_playbook: aac-base-snmp.yaml
+
 - name: TLS
   import_playbook: aac-base-tls.yaml
 
