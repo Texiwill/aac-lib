@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.8.5"
+VERSIONID="6.8.6"
 
 # args: stmt error
 function colorecho() {
@@ -1032,7 +1032,11 @@ function version() {
 }
 
 function usage() {
-	use_pager="`which more` -e"
+	use_pager="`which more` -e 2>/dev/null"
+	if [ $? -eq 1 ]
+	then
+		use_pager="`which more`"
+	fi
 	if [ Z"$PAGER" != Z"" ]
 	then
 		use_pager=$PAGER
@@ -1341,6 +1345,10 @@ function finddeps {
 		then
 			LANG=en_US.utf8
 			export LANG
+		elif [ Z"$theos" != Z"fedora" ]
+		then
+			LANG=en-US.UTF-8
+			export LANG
 		else
 			LANG=C.UTF-8
 			export LANG
@@ -1348,12 +1356,21 @@ function finddeps {
 		#loopdeps "$linux_checkdep"
 		#alias uudecode="`which uudecode` -o -"
 	fi
-	$python -c "help('modules')" 2>/dev/null | grep urllib >& /dev/null
-	if [ $? -eq 1 ]
+	# faster but not entirely accurate
+	brf=`basename $python`
+	c=`ls -d /usr/lib/${brf}*/{site,dist}-packages/urllib* 2>/dev/null| wc -l`
+	if [ $c -eq 0 ]
 	then
 		echo "Missing Dependency urllib"
 		needdep=1
 	fi
+	#removed as too slow on some systems, looks like a hang
+	#$python -c "help('modules')" 2>/dev/null | grep urllib >& /dev/null
+	#if [ $? -eq 1 ]
+	#then
+	#	echo "Missing Dependency urllib"
+	#	needdep=1
+	#fi
 	if [ Z"$theos" = Z"centos" ] || [ Z"$theos" = Z"redhat" ] || [ Z"$theos" = Z"rocky" ] || [ Z"$theos" = Z"almalinux" ]
 	then
 		loopdeps "$redhat_checkdep"
@@ -1523,6 +1540,18 @@ EOF
 #     # #    # #      #        #        9    50 2    ######  #    #   #   
                                       8 8    4197                         
                                        16     93
+EOF
+	fi
+	if [ $mon -eq 11 ] && [ $day -eq 22 ]
+	then
+		ac=$((RANDOM % 8))
+		echo `tput setaf $ac`
+		cat << "EOF"
+
+November 22nd 2023:
+	An End of an Era and Begining of another. 
+	The day the sale of VMware was completed.
+
 EOF
 	fi
 }
