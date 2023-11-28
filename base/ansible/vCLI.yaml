@@ -1,5 +1,5 @@
 ---
-# version: 1.0.3
+# version: 1.0.4
 
 - hosts: localhost
   become_user: root
@@ -9,6 +9,19 @@
 
 - hosts: localhost
   tasks:
+     - name: install yum-utils
+       become: yes
+       package:
+         name:
+           - yum-utils
+         state: latest
+       when: ansible_os_family == "RedHat"
+
+     - name: enable Devel Repo
+       become: yes
+       command: dnf config-manager --set-enabled devel
+       when: ansible_distribution == "Rocky"
+
      - name: install RHEL development tools
        become: yes
        package:
@@ -84,6 +97,7 @@
            - perl-Class-MethodMaker
            - perl-Compress-Raw-Zlib
            - perl-Compress-Zlib
+           - perl-Crypt-SSLeay
            - perl-Crypt-OpenSSL-RSA
            - perl-Crypt-OpenSSL-X509
            - perl-Data-Dump
@@ -101,11 +115,49 @@
            - perl-Path-Class
            - perl-LWP-Protocol-https
            - perl-IO-Socket-INET6
-           - perl-Net-INET6Glue
            - perl-Try-Tiny
            - expect
          state: latest
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>')
+
+     - name: install the more CLI dependencies for Fedora
+       become: yes
+       package:
+         name:
+           - perl-Net-INET6Glue
+       when: ansible_distribution == "Fedora"
+
+     - name: install the more CLI dependencies for Rocky and Fedora
+       become: yes
+       package:
+         name:
+           - uuid-perl
+       when: (ansible_distribution == "Fedora") or
+             (ansible_distribution == "Rocky")
+
+     - name: Set Facts
+       set_fact:
+         get_uuid: no
+       when: ('"uuid-perl" in ansible_facts.packages')
+
+     - name: Get uuid-perl for later versions of RedHat Family
+       become: yes
+       get_url:
+         url: "https://dl.rockylinux.org/pub/rocky/9/devel/x86_64/os/Packages/u/uuid-perl-1.6.2-55.el9.x86_64.rpm"
+         dest: /tmp/uuid-perl.rpm
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("9",'==')) and (get_uuid is undefined)
+
+     - name: Get uuid-perl for later versions of RedHat Family
+       become: yes
+       get_url:
+         url: "https://dl.rockylinux.org/pub/rocky/8/Devel/x86_64/os/Packages/u/uuid-perl-1.6.2-43.el8.x86_64.rpm"
+         dest: /tmp/uuid-perl.rpm
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'==')) and (get_uuid is undefined)
+
+     - name: Install uuid-perl for later versions of RedHat Family
+       become: yes
+       command: yum -y install /tmp/uuid-perl.rpm
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>') and (get_uuid is undefined)
 
      - name: install the latest version of vCLI dependencies for Debian
        become: yes
@@ -156,7 +208,7 @@
 
      - name: Download the latest version of vCLI
        become: no
-       shell: "/usr/local/bin/vsm.sh -y -f --dlg 'SDK.*.x86_64.tar.gz' | grep Local"
+       shell: "/usr/local/bin/vsm.sh -y -f --dlg 'SDK-7.*.x86_64.tar.gz' | grep Local"
        args:
          executable: /bin/bash
        register: vsm_local
@@ -194,6 +246,20 @@
          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
          regexp: "{'module' => 'Crypt::SSLeay'"
          replace: "#{'module' => 'Crypt::SSLeay'"
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+
+     - name: Update to remove UUID module
+       replace:
+         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+         regexp: "{'module' => 'UUID'"
+         replace: "#{'module' => 'UUID'"
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+
+     - name: Update to remove Net::INET6Glue module
+       replace:
+         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+         regexp: "{'module' => 'Net::INET6Glue'"
+         replace: "#{'module' => 'Net::INET6Glue'"
        when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
 
      - name: Update ssleay_installed in vmware_install.pl
@@ -261,7 +327,9 @@
 
      - name: Remove vCLI Locations
        become: yes
-       file: path=/etc/vmware-vcli/locations state=absent
+       file: 
+         path: /etc/vmware-vcli/locations
+         state: absent
 
      - name: Re/create vCLI locations
        become: yes
@@ -279,13 +347,13 @@
          mode: 0644
          create: yes
 
-     - name: Copy vCLI file1
-       become: yes
-       copy:
-         src: /tmp/vmware-vsphere-cli-distrib/bin/vmware-uninstall-vSphere-CLI.pl
-         dest: /usr/bin/vmware-uninstall-vSphere-CLI.pl
-         mode: 0755   
-         force: no
+     #- name: Copy vCLI file1
+     #  become: yes
+     #  copy:
+     #    src: /tmp/vmware-vsphere-cli-distrib/bin/vmware-uninstall-vSphere-CLI.pl
+     #    dest: /usr/bin/vmware-uninstall-vSphere-CLI.pl
+     #    mode: 0755   
+     #    force: no
 
      - name: Copy vCLI file2
        become: yes
@@ -334,38 +402,11 @@
        become: yes
        file: path=/tmp/vmware-vsphere-cli-distrib state=absent
 
-     - name: uninstall RHEL development tools
+     - name: Remove uuid-perl rpm
        become: yes
-       package:
-         name:
-           - gcc
-           - cpp
-           - libmpc
-           - mpfr
-           - perl-YAML
+       file: 
+         path: /tmp/uuid-perl.rpm
          state: absent
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')
-
-     - name: remove Photon Development tools
-       become: yes
-       command: "tdnf -y remove {{ item }}"
-       with_items:
-         - openssl-devel
-         - libxml2-devel
-       when: ansible_os_family == "VMware Photon OS"
-
-     - name: uninstall Debian development tools
-       become: yes
-       package:
-         name:
-           - gcc
-           - cpp
-           - libmpc-dev
-           - libmpfr-dev
-           - libyaml-perl
-           - libmodule-build-perl
-         state: absent
-       when: ansible_os_family == "Debian"
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml
