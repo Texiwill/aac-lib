@@ -7,7 +7,7 @@
 # Target: CentOS/RHEL 7/Debian/Ubuntu/MacOS/Alpine
 #
 ###
-VERSIONID="2.2.2"
+VERSIONID="2.2.3"
 
 function version() {
 	echo "$0 version is $VERSIONID"
@@ -99,13 +99,16 @@ function checkdep() {
 		fi
 	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 	then
-		# to remove dep use 'apt-get purge $dep' so dpkg works
-		#dpkg -s $dep >& /dev/null
-		dpkg-query -W -f='${Status} ${Version}\n' $dep |grep -i '^install' >& /dev/null
-		if [ $? -ne 0 ]
+		if [ Z"$dep" != Z"epel-release" ]
 		then
-			echo "Missing Dependency $dep"
-			needdep=1
+			# to remove dep use 'apt-get purge $dep' so dpkg works
+			#dpkg -s $dep >& /dev/null
+			dpkg-query -W -f='${Status} ${Version}\n' $dep |grep -i '^install' >& /dev/null
+			if [ $? -ne 0 ]
+			then
+				echo "Missing Dependency $dep"
+				needdep=1
+			fi
 		fi
 	elif [ Z"$theos" = Z"macos" ]
 	then
@@ -768,6 +771,12 @@ then
 	else
 		choice=$installer
 		call_playbook
+		if [ $? -eq 0 ]
+		then
+			colorecho "Installed $installer"
+		else
+			colorecho "Failed to install $installer." 1
+		fi
 	fi
 else
 	menu
