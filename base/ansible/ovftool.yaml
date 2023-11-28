@@ -1,5 +1,5 @@
 ---
-# version: 1.0.4
+# version: 1.0.5
 
 - hosts: localhost
   become_user: root
@@ -29,19 +29,23 @@
        when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>') or
              ansible_distribution == "Fedora"
 
+     - name: Set Facts
+       set_fact:
+         get_fuse: no
+       when: ('"fuseiso" in ansible_facts.packages')
+
      - name: Get fuseiso for later versions of RedHat Family
        become: yes
        get_url:
          url: 'http://vault.centos.org/7.7.1908/os/x86_64/Packages/fuseiso-20070708-15.el7.x86_64.rpm'
          dest: /tmp/fuseiso.rpm
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>')) and
-             ('"fuseiso" not in ansible_facts.packages')
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>')) and (get_fuse is undefined)
 
      # This is very old and unsupported package
      - name: Install fuseiso for later versions of RedHat Family
        become: yes
-       command: rpm -ivh /tmp/fuseiso.rpm
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>')
+       command: rpm -Uvh /tmp/fuseiso.rpm
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>') and (get_fuse is undefined)
 
      - name: install the required dependencies for Photon
        become: yes
@@ -90,44 +94,45 @@
      - name: Get Local Filename
        set_fact:
          file_local: "{{ vsm_local.stdout | regex_replace('^Local:(..)','\\1') }}"
-
      - name: Get Local gunzip name
        set_fact:
          gzip_local: "{{ file_local | regex_replace('^(.*).gz$','\\1') }}"
 
      - name: Uncompress Local Filename
        shell: "gunzip -kf {{ file_local }}"
-       when: gzip_local != file_local
+       when: (gzip_local != file_local) and
+             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+
+     - name: Uncompress Local Filename
+       shell: "gunzip -kf {{ file_local }}"
+       when: (gzip_local != file_local) and
+             (ansible_os_family == "Debian")
+
+     - name: Uncompress Local Filename
+       shell: "gunzip -f {{ file_local }}"
+       when: (gzip_local != file_local) and
+             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<'))
 
      - name: Debug
        debug:
-         msg: "Installing {{file_local}}"
+         msg: "Installing {{gzip_local}}"
 
      - name: Permission ovftool
        file:
-         path: "{{file_local}}"
+         path: "{{gzip_local}}"
          mode: 0755
 
      - name: Installing ovftool
        become: yes
-       shell: "{{gzip_local}} --eulas-agreed --required"
-       args:
-         executable: /bin/bash
-       when: ansible_os_family != "VMware Photon OS"
-
-     - name: Installing ovftool Photon
-       become: yes
        shell: "{{gzip_local}} --eulas-agreed --required -s vmware-installer initdir /etc/rc.d/init.d"
        args:
          executable: /bin/bash
-       when: ansible_os_family == "VMware Photon OS"
 
     #- name: Compress Local Filename
     #  become: no
     #  shell: "gzip {{ file_local }}"
     #  when: "{{gzip_local}}" != "{{file_local}}"
 
-      
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml
 ...
