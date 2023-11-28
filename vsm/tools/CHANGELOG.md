@@ -1,3 +1,4 @@
+11/06/22 - v3.1.3 of vsm_favorites.sh added vExpert options
 11/06/22 - v3.1.2 of vsm_favorites.sh added new Aria editions
 01/24/23 - v3.1.1 updated for 2023 copyright
 11/06/22 - v3.1.0 of vsm_favorites.sh added new NSX editions

@@ -9,7 +9,7 @@
 # Requires:
 # LinuxVSM 
 #
-VERSIONID="3.1.2"
+VERSIONID="3.1.3"
 
 function usage () {
 	echo "$0 [--latest][--n+1][--n+2][--n+3][--n+4][--n+5][--n+6][--all][-h|--help][-s|--save][--euc][--vcd][--tanzu][--arm][--wkstn][--fusion][--vsphere|--novsphere][-v|--version][--everything][--rebuild][-mn][-mr][--nocertcheck][--verify][--veriforce][--patches]"
@@ -43,9 +43,17 @@ function usage () {
 	exit
 }
 
+# Get rid of obsolescent message
+strings /usr/bin/egrep|grep obsolescent >& /dev/null
+vegrep="/usr/bin/egrep"
+if [ $? -eq 0 ]
+then
+	vegrep="/usr/bin/grep -E"
+fi
+
 function vsmfav_get_versions() {
 	product=$1
-	slug=`jq '.productCategoryList[].productList[].actions[0].target' ${cdir}/api.json| egrep "/${product}/"|sed 's/"//g'|sed 's#./info/slug/#category=#' | sed 's#/#\&product=#'  | sed 's#/#\&version=#'`
+	slug=`jq '.productCategoryList[].productList[].actions[0].target' ${cdir}/api.json| $vegrep "/${product}/"|sed 's/"//g'|sed 's#./info/slug/#category=#' | sed 's#/#\&product=#'  | sed 's#/#\&version=#'`
 	versions=`wget $ncc -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getProductHeader?locale=en_US&${slug}" 2>/dev/null|jq '.versions[].id' - 2>/dev/null|sed 's/"//g'`
 }
 
@@ -78,6 +86,7 @@ do
 		--euc) euc=1;;
 		--vcd) vcd=1;;
 		--arm) arm=1;;
+		--patches) pat='--patches';;
 		--tanzu) tan=1;;
 		--vsphere) vsp=1;;
 		--wkstn) wkstn=1;;
@@ -154,7 +163,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $mr $rebuild -y --debug -q --patches --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_${x}_Enterprise_Plus
+		$vsm $mr $rebuild -y --debug -q $pat --fav Datacenter_Cloud_Infrastructure_VMware_vSphere_${x}_Enterprise_Plus
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -168,7 +177,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Networking_Security_VMware_NSX_T_Data_Center_${x}_VMware_NSX_Data_Center_Enterprise_Plus
+		$vsm $rebuild -y --debug $pat --fav Networking_Security_VMware_NSX_T_Data_Center_${x}_VMware_NSX_Data_Center_Enterprise_Plus
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -178,7 +187,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Networking_Security_VMware_NSX_${x}_VMware_NSX_Enterprise_Plus
+		$vsm $rebuild -y --debug $pat --fav Networking_Security_VMware_NSX_${x}_VMware_NSX_Enterprise_Plus
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -188,7 +197,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Networking_Security_VMware_NSX_Intelligence_${x}_VMware_NSX_Datace_center_Enterprise_Plus
+		$vsm $rebuild -y --debug $pat --fav Networking_Security_VMware_NSX_Intelligence_${x}_VMware_NSX_Datace_center_Enterprise_Plus
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -201,7 +210,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Infrastructure_Operations_Management_VMware_Aria_Suite_${x}_Enterprise
+		$vsm $rebuild -y --debug $pat --fav Infrastructure_Operations_Management_VMware_Aria_Suite_${x}_Enterprise
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -214,7 +223,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Infrastructure_Operations_Management_VMware_vRealize_Suite_${x}_Enterprise
+		$vsm $rebuild -y --debug $pat --fav Infrastructure_Operations_Management_VMware_vRealize_Suite_${x}_Enterprise
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -240,7 +249,7 @@ then
 			x="${y}_Horizon_${z}"
 		fi
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Desktop_End-User_Computing_VMware_Horizon_${x}_Enterprise
+		$vsm $rebuild -y --debug $pat --fav Desktop_End-User_Computing_VMware_Horizon_${x}_Enterprise
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -255,7 +264,7 @@ then
 		c=$(($c+1))
 		for y in Windows Mac Linux Chrome
 		do
-			$vsm $rebuild -y --debug -q --patches --fav Desktop_End-User_Computing_VMware_Horizon_Clients_${x}_VMware_Horizon_Client_for_${y}
+			$vsm $rebuild -y --debug -q $pat --fav Desktop_End-User_Computing_VMware_Horizon_Clients_${x}_VMware_Horizon_Client_for_${y}
 		done
 		if [ $c -ge $nc ]
 		then
@@ -269,7 +278,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug -q --patches --fav Desktop_End-User_Computing_Windows_OS_Optimization_Tool_for_VMware_Horizon_${x}
+		$vsm $rebuild -y --debug -q $pat --fav Desktop_End-User_Computing_Windows_OS_Optimization_Tool_for_VMware_Horizon_${x}
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -294,7 +303,7 @@ then
 			x="${y}_App_Volumes_Advanced_Edition"
 		fi
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Desktop_End-User_Computing_VMware_App_Volumes_${x}
+		$vsm $rebuild -y --debug $pat --fav Desktop_End-User_Computing_VMware_App_Volumes_${x}
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -313,7 +322,7 @@ then
 			x="${y}_VMware_Dynamic_Environment_Manager_Enterprise"
 		fi
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Desktop_End-User_Computing_VMware_Dynamic_Environment_Manager_${x}
+		$vsm $rebuild -y --debug $pat --fav Desktop_End-User_Computing_VMware_Dynamic_Environment_Manager_${x}
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -328,7 +337,7 @@ then
 		y=$x
 		c=$(($c+1))
 		z=`echo $x|sed 's/_/./'`
-		$vsm $rebuild -y --debug --patches --fav Desktop_End-User_Computing_VMware_Unified_Access_Gateway_${x}_VMware_Unified_Access_Gateway_${z}
+		$vsm $rebuild -y --debug $pat --fav Desktop_End-User_Computing_VMware_Unified_Access_Gateway_${x}_VMware_Unified_Access_Gateway_${z}
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -344,7 +353,7 @@ then
 		names=`wget $ncc -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${slug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
 		for y in $names
 		do
-			$vsm $rebuild -y --debug --patches --fav Desktop_End-User_Computing_VMware_Workspace_ONE_${x}_${y}
+			$vsm $rebuild -y --debug $pat --fav Desktop_End-User_Computing_VMware_Workspace_ONE_${x}_${y}
 		done
 		if [ $c -ge $nc ]
 		then
@@ -370,7 +379,7 @@ then
 		names=`wget $ncc -O - --header="$hdr" "https://my.vmware.com/channel/public/api/v1.0/products/getRelatedDLGList?locale=en_US&${xslug}&dlgType=PRODUCT_BINARY" 2>/dev/null|jq '.dlgEditionsLists[].name' - 2>/dev/null|sed 's/"//g'|sed 's/ /_/g'`
 		for y in $names
 		do
-			$vsm $rebuild -y --debug --patches --fav Desktop_End-User_Computing_VMware_Fusion_${x}_VMware_Fusion_${y}
+			$vsm $rebuild -y --debug $pat --fav Desktop_End-User_Computing_VMware_Fusion_${x}_VMware_Fusion_${y}
 		done
 		if [ $c -ge $nc ]
 		then
@@ -396,7 +405,7 @@ then
 		for y in $names
 		do
 			z="${x}_${y}"
-			$vsm $rebuild -y --debug --patches --fav Desktop_End-User_Computing_VMware_Workstation_Pro_${z}
+			$vsm $rebuild -y --debug $pat --fav Desktop_End-User_Computing_VMware_Workstation_Pro_${z}
 		done
 		if [ $c -ge $nc ]
 		then
@@ -419,7 +428,7 @@ then
 		for y in $names
 		do
 			z="${x}_${y}"
-			$vsm $rebuild -y --debug --patches --fav Desktop_End-User_Computing_VMware_Workstation_Player_${z}
+			$vsm $rebuild -y --debug $pat --fav Desktop_End-User_Computing_VMware_Workstation_Player_${z}
 		done
 		if [ $c -ge $nc ]
 		then
@@ -436,7 +445,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_${x}_VMware_vCloud_Director
+		$vsm $rebuild -y --debug $pat --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_${x}_VMware_vCloud_Director
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -455,7 +464,7 @@ then
 			x="${y}_vCloud_Availability_${z}_Appliance_for_Cloud_Providers"
 		fi
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_Availability_${x}
+		$vsm $rebuild -y --debug $pat --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_Availability_${x}
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -468,7 +477,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_vCloud_Usage_Meter_${x}
+		$vsm $rebuild -y --debug $pat --fav Datacenter_Cloud_Infrastructure_VMware_vCloud_Usage_Meter_${x}
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -481,7 +490,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_Object_Storage_Extension_${x}
+		$vsm $rebuild -y --debug $pat --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_Object_Storage_Extension_${x}
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -494,7 +503,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_App_Launchpad_${x}
+		$vsm $rebuild -y --debug $pat --fav Datacenter_Cloud_Infrastructure_VMware_Cloud_Director_App_Launchpad_${x}
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -510,7 +519,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Infrastructure_Operations_Management_VMware_Tanzu_Kubernetes_Grid_${x}
+		$vsm $rebuild -y --debug $pat --fav Infrastructure_Operations_Management_VMware_Tanzu_Kubernetes_Grid_${x}
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -520,7 +529,7 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Infrastructure_Operations_Management_VMware_Tanzu_Toolkit_for_Kubernetes_${x}_VMware_Tanzu_Tookit_for_Kubernetes
+		$vsm $rebuild -y --debug $pat --fav Infrastructure_Operations_Management_VMware_Tanzu_Toolkit_for_Kubernetes_${x}_VMware_Tanzu_Tookit_for_Kubernetes
 		if [ $c -ge $nc ]
 		then
 			break;
@@ -530,29 +539,62 @@ then
 	for x in $versions
 	do
 		c=$(($c+1))
-		$vsm $rebuild -y --debug --patches --fav Infrastructure_Operations_Management_VMware_Tanzu_Kubernetes_Grid_Integrated_Edition_${x}_TKG_Integrated_Edition
+		$vsm $rebuild -y --debug $pat --fav Infrastructure_Operations_Management_VMware_Tanzu_Kubernetes_Grid_Integrated_Edition_${x}_TKG_Integrated_Edition
 		if [ $c -ge $nc ]
 		then
 			break;
 		fi
 	done
-	for y in basic standard community
+	for y in basic standard advanced
 	do
 		vsmfav_get_versions vmware_tanzu_${y}_edition
 		for x in $versions
 		do
 			c=$(($c+1))
-			$vsm $rebuild -y --debug --patches --fav Infrastructure_Operations_Management_VMware_Tanzu_${y^}_Edition_${x}_VMware_Tanzu_${y^}_Edition
+			$vsm $rebuild -y --debug $pat --fav Infrastructure_Operations_Management_VMware_Tanzu_${y^}_Edition_${x}_VMware_Tanzu_${y^}_Edition
 			if [ $c -ge $nc ]
 			then
 				break;
 			fi
 		done
 	done
+	vsmfav_get_versions vmware_tanzu_CLI
+	for x in $versions
+	do
+		c=$(($c+1))
+		$vsm $rebuild -y --debug $pat --fav Infrastructure_Operations_Management_VMware_Tanzu_CLI_${x}
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
+	vsmfav_get_versions vmware_tanzu_mission_control_\(self-managed\)
+	for x in $versions
+	do
+		c=$(($c+1))
+		$vsm $rebuild -y --debug $pat --fav Infrastructure_Operations_Management_VMware_Tanzu_Mission_Control_\(Self-Managed\)_${x}_Product_Downloads
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
+	vsmfav_get_versions application_transformer_for_vmware_tanzu
+	for x in $versions
+	do
+		c=$(($c+1))
+		for y in Customer Partner
+		do
+			$vsm $rebuild -y --debug $pat --fav Infrastructure_Operations_Management_Application_Transformer_for_VMware_Tanzu_${x}_Application_Transformer_for_${y}
+		done
+		if [ $c -ge $nc ]
+		then
+			break;
+		fi
+	done
 fi
 
 if [ $arm -eq 1 ]
 then
 	echo "Getting ESXi on ARM"
-	$vsm -y --debug --patches --dlgroup ESXI-ARM beta
+	$vsm -y --debug $pat --dlgroup ESXI-ARM beta
 fi
