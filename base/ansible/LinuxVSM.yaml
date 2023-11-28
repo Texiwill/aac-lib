@@ -126,6 +126,7 @@
            - libgbm1
            - libasound2
            - libxss1
+           - g++
          state: latest
        when: (ansible_os_family == "Debian")
 
