@@ -259,7 +259,7 @@
        service:
          name: "{{set_time}}"
          state: stopped
-       when: aac_base_tz is defined and ansible_distribution != "MacOSX"
+       when: aac_base_tz is defined and ansible_distribution != "MacOSX" and ("microsoft" not in ansible_kernel)
 
      - name: Set timezone
        become: yes
@@ -282,4 +282,4 @@
        service:
          name: postfix
          state: stopped
-       when: '"postfix" in ansible_facts.packages'
+       when: ("postfix" in ansible_facts.packages) and ("microsoft" not in ansible_kernel)
