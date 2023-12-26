@@ -1,0 +1,33 @@
+---
+# version: 1.0.0
+
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+  tasks:
+     - name: install the latest open-vm-tools for RHEL
+       become: yes
+       package:
+         name:
+           - open-vm-tools
+         state: latest
+
+     # chmod +x /etc/rc.d/rc.local; systemctl enable vmtoolsd
+     - name: get open-vm-tools running
+       become: yes
+       file:
+         path: /etc/rc.d/rc.local
+         mode: u+x,g+x,o+x
+
+     - name: Enable vmtoolsd
+       become: yes
+       service:
+         name: vmtoolsd
+         enabled: yes
+
+     - name: Start vmtoolsd
+       become: yes
+       service:
+         name: vmtoolsd
+         state: started
