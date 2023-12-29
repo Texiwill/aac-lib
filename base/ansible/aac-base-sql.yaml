@@ -1,12 +1,14 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 - hosts: localhost
   tasks:
      - name: install dependencies
        become: yes
        package:
          name:
+           - mariadb
            - mariadb-server
+           - mariadb-server-utils
            - "{{ ansible_python.executable|basename }}-PyMySQL"
          state: latest
        when: ansible_distribution != "MacOSX"
