@@ -1,0 +1,66 @@
+---
+# version: 1.0.0
+
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+- hosts: localhost
+  tasks:
+    - name: lighttpd dependencies
+      become: yes
+      package:
+        name:
+          - lighttpd
+          - lighttpd-mod_openssl
+        state: latest
+      when: ansible_distribution != "MacOSX"
+
+    - name: stop lighttpd
+      become: yes
+      service:
+        name: lighttpd
+        state: stopped
+
+    - name: lighttpd TLS
+      become: yes
+      copy:
+        dest: /etc/lighttpd/conf.d/tls.conf
+        mode: 0644
+        owner: root
+        group: root
+        content: |
+          server.modules += ("mod_openssl")
+          $SERVER["socket"] == ":443" {{ '{' }}
+              ssl.engine = "enable"
+              ssl.pemfile = "/etc/pki/tls/certs/{{ ansible_fqdn }}.crt"
+              ssl.privkey = "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
+          {{ '}' }}
+
+    - name: remove ipv6
+      become: yes
+      lineinfile:
+        path: /etc/lighttpd/lighttpd.conf
+        regex: ^server.use-ipv6
+        line: #server.use-ipv6 = "enable"
+
+    - name: Add TLS
+      become: yes
+      lineinfile:
+        path: /etc/lighttpd/lighttpd.conf
+        line: 'include "/etc/lighttpd/conf.d/tls.conf"'
+        state: present
+
+    - name: Permission private key
+      become: yes
+      file:
+        path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
+        owner: lighttpd
+
+    - name: start lighttpd
+      become: yes
+      service:
+        name: lighttpd
+        state: started
+        enabled: yes
+
