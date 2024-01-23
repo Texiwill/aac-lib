@@ -1,5 +1,5 @@
 ---
-# version: 1.1.5
+# version: 1.1.6
 
 - hosts: localhost
   gather_facts: true
@@ -111,7 +111,15 @@
          state: latest
        when: (ansible_distribution != "MacOSX") and
              (ansible_os_family != "VMware Photon OS") and
-             (ansible_os_family != "RedHat")
+             (ansible_os_family != "RedHat") and
+             (ansible_distribution != "Ubuntu")
+
+     - name: Upgrade PIP (Ubuntu)
+       become: yes
+       pip:
+         name: pip
+         state: latest
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("23",'<'))
 
      - name: Upgrade PIP el7
        become: yes
@@ -123,7 +131,21 @@
        become: yes
        pip:
          name: pexpect
-       when: ansible_distribution != "MacOSX"
+       when: (ansible_distribution != "MacOSX") and
+             (ansible_distribution != "Ubuntu")
+
+     - name: Install pexepect (Ubuntu)
+       become: yes
+       pip:
+         name: pexpect
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("23",'<'))
+
+     - name: install the required dependencies for Ubuntu23.10
+       become: yes
+       package:
+         name:
+           - python3-pexpect
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("22",'>'))
 
      - name: Install pexpect MacOSX
        pip:
