@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.8.7 - updated vExpert options to require login and updated license retrieval to use vExpert Portal
+
 6.8.6 - update to urllib dependency check
 
 6.8.5 - Added Support for AlmaLinux9 and Rocky9, fixed dependency checks
