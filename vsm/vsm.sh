@@ -2730,8 +2730,8 @@ function createMenu()
 		if [ ${#layer[@]} -gt 2 ]
 		then
 			back="Back"
-		else
-			fling=""
+		#else
+			#fling="Flings"
 		fi
 		if [ Z"$mark" != Z"" ]
 		then
