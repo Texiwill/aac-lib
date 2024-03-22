@@ -14,6 +14,8 @@ packages in full. To do so, you need two logins: My VMware & vExpert Portal.
 And a new option: --vexpertx, that gets stored in your $HOME/.vsmrc file
 so no need to reuse it every time.
 
+Please note that if your vExpert Portal login fails, the vExpert capabilities will not work.
+
 To call LinuxVSM as a vExpert please use the following:
 
 ```
@@ -22,6 +24,7 @@ vsm.sh -y --vexpertx --historical --patches --dts --oem  --symlink --compress
 --vexpertx option adds the following capabilities:
 --patches - download patches as well
 --licenses - download your vExpert licenses
+-o|--output filename - download your vExpert licenses to the specified file
 --nested - download Nested Hypervisor builds
 ```
 

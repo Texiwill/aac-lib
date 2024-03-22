@@ -1,7 +1,7 @@
 #!/bin/bash
 # vim: set tabstop=4 shiftwidth=4:
 #
-# Copyright (c) AstroArch Consulting, Inc.  2017-2023
+# Copyright (c) AstroArch Consulting, Inc.  2017-2024
 # All rights reserved
 #
 # A Linux version of VMware Software Manager (VSM) with some added intelligence
@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.8.6"
+VERSIONID="6.8.8"
 
 # args: stmt error
 function colorecho() {
@@ -65,8 +65,6 @@ then
 	vegrep="/usr/bin/grep -E"
 fi
 
-credfile=.credstore
-credname="My VMware"
 function handlecredstore ()
 {
 	# if we say to no store then remove!
@@ -523,25 +521,36 @@ function vexpert_login() {
 		o_auth=$auth
 		credname="vExpert"
 		credfile=.vex_credstore
+		password="" # clear just to be sure, we may have different passwords
+		username="" # and usernames
 		handlecredstore
 		vauth=$auth
+		# just to be sure
+		rm -f $cdir/vcookies.txt $cdir/vacookies.txt >& /dev/null
 
 		csrf_token=`wget -O - $_PROGRESS_OPT --no-check-certificate --save-headers --cookies=on --save-cookies $cdir/vcookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $vex_login 2>&1 | grep csrf_token | cut -d\" -f6`
 		vex_auth=`echo $vauth | base64 --decode`
-		rd=(`$python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "$vex_auth" 2>/dev/null|sed 's/%3A/ /'`)
+		rd=(`$python -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$vex_auth" 2>/dev/null|sed 's/%3A/ /'`)
 		vd="csrf_token="$csrf_token"&login_email=${rd[0]}&login_password=${rd[1]}"
 		wget -O $cdir/vex_auth.html $_PROGRESS_OPT --no-check-certificate --post-data="$vd" --save-headers --cookies=on --load-cookies $cdir/vcookies.txt --save-cookies $cdir/vacookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $vex_login" $vex_login >& /dev/null #| grep AUTH-ERR >& /dev/null
-		grep 'Error' $cdir/vex_auth.html >& /dev/null
+		# either could be a fail
+		egrep '[eE]rror|Login' $cdir/vex_auth.html >& /dev/null
        	vex_err=$?
 		if [ $vex_err -eq 0 ]
 		then
-			colorecho "Incorrect vExpert Credentials" 0
+			# disable vexpert, no login
+			dovexxi=0
+			colorecho "	Incorrect vExpert Credentials" 1
+			colorecho "	Disabling vExpert Mode" 1
 			rm -rf ${cdir}/bm.txt >& /dev/null
-			exit
+			if [ $debugv -eq 0 ]
+			then
+				rm ${cdir}/node-bm.js >& /dev/null
+			fi
+		else
+			# now get the list of available downloads
+			wget -O - $_PROGRESS_OPT --no-check-certificate --load-cookies $cdir/vacookies.txt --header="User-Agent: $oaua" --header="Referer: $vex_login" $vex_ref 2>&1 | grep data-file | cut -d\" -f6 > $rcdir/_vex_files.txt
 		fi
-
-		# now get the list of available downloads
-		wget -O - $_PROGRESS_OPT --no-check-certificate --load-cookies $cdir/vacookies.txt --header="User-Agent: $oaua" --header="Referer: $vex_login" $vex_ref 2>&1 | grep data-file | cut -d\" -f6 > $rcdir/_vex_files.txt
 
 		# reset settings for other use
 		credfile=$o_credfile
@@ -569,7 +578,11 @@ function oauth_login() {
 		pushd ${cdir} >& /dev/null
 		if [ $renodejs -eq 1 ]
 		then
-			rm -rf ${cdir}/node-bm.js ${cdir}/node_modules
+			rm -rf ${cdir}/bm.txt >& /dev/null
+			if [ $debugv -eq 0 ]
+			then
+				rm ${cdir}/node-bm.js >& /dev/null
+			fi
 		fi
 		if [ ! -e ${cdir}/node_modules ]
 		then
@@ -709,7 +722,7 @@ EOF
 			rm $cdir/bm.txt >& /dev/null
 			if [ $debugv -eq 0 ]
 			then
-				rm node-bm.js
+				rm ${cdir}/node-bm.js >& /dev/null
 			fi
 			exit
 		fi
@@ -721,7 +734,7 @@ EOF
 			rm $cdir/bm.txt >& /dev/null
 			if [ $debugv -eq 0 ]
 			then
-				rm node-bm.js
+				rm ${cdir}/node-bm.js >& /dev/null
 			fi
 			exit
 		fi
@@ -734,7 +747,7 @@ EOF
 			pkill -9 Xvfb
 			if [ $debugv -eq 0 ]
 			then
-				rm node-bm.js
+				rm ${cdir}/node-bm.js >& /dev/null
 			fi
 			exit
 		fi
@@ -1065,6 +1078,7 @@ $0 [-c|--check] [--clean] [--dlg search] [--dlgl search] [-d|--dryrun] [-f|--for
 	-ns|--nostore - do not store credential data and remove if exists
 	-nc|--nocolor - do not output with color
     --olde # - number of hours (default 12) before -mr enforced
+    -o|--output - specify the location to write the licenses file
 	-p|--password - specify password
 	--progress - show progress for OEM, OSS, and DriverTools
 	-q|--quiet - be less verbose
@@ -1596,7 +1610,13 @@ function getNested()
 	done
 }
 
-function getLicenses() {
+function getLicensesExpert() {
+	lic_api="https://vexpert.vmware.com/my/licenses"
+	# simply get the page and convert to CSV
+	wget -O - $_PROGRESS_OPT --no-check-certificate --load-cookies $cdir/vacookies.txt --header="User-Agent: $oaua" --header="Referer: $vex_login" $lic_api 2>/dev/null | xmllint --html --xpath '//table[@id="licensetable"]//td[position() >= 1 and position() <= 3]/text()' - 2>/dev/null | awk '{printf (NR%3==0) ? $0 "\n" : $0 ","}' 2>&1 | tee $licenseoutput
+}
+
+function getLicensesEval() {
 	# need eval
 	eval_ref="https://customerconnect.vmware.com/eval"
 	eval_post='{"searchText":"","filter":"ACTIVE","sortByField":"PRODUCT_NAME","sortOrder":"ASC","page":1,"size":100}'
@@ -1612,8 +1632,26 @@ function getLicenses() {
 		lic_post="{\"productId\":$prodId,\"searchText\":\"\",\"filter\":\"ACTIVE\",\"sortByField\":\"DAYS_REMAINING\",\"sortOrder\":\"DESC\",\"page\":1,\"size\":10}"
 		cl=`echo -n $lic_post | wc -c`
 		lic_list=`wget -q -O - $cc --load-cookies $cdir/$ck --post-data="$lic_post" --header="Referer: $xhr" --header="Content-length: $cl" --header="Content-Type: application/json" --header="User-Agent: $ua" --header="x-dtpc: $dtpc" --header="X-XSRF-TOKEN: $xsrf" --header='TE: Trailers' $lic_api 2>/dev/null`
-		echo $lic_list | jq '.result.productName+"\t"+(.result.licenses[]|.serialKey+"\t"+.expirationDate)' | sed 's/\\t/\t/g'|sed 's/"//g'
+		echo $lic_list | jq '.result.productName+"\t"+(.result.licenses[]|.serialKey+"\t"+.expirationDate)' | sed 's/\\t/\t/g'|sed 's/"//g' 2>&1 | tee $licenseoutput
 	done
+}
+
+getLicenses() {
+	if [ $dovexxi -eq 1 ]
+	then
+		if [ $noheader -eq 0 ]
+		then 
+			colorecho "	Licenses:	1"
+			colorecho "	Output:	$licenseoutput"
+		fi
+		if [ $custconnectlic -eq 1 ]
+		then
+			getLicensesEval
+		else
+			getLicensesExpert
+		fi
+		colorecho "Licenses written to $licenseoutput"
+	fi
 }
 
 # onscreen colors
@@ -1710,6 +1748,7 @@ renodejs=0
 nested=0
 retrycount=8
 getlicenses=0
+liceout=0
 outTime=0
 mycolumns=`tput cols`
 
@@ -1726,7 +1765,7 @@ checkForUpdate
 # import values from .vsmrc
 load_vsmrc
 
-while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --nested) nested=1 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; --retries) retrycount=$2; shift;; -V|--version) version ;; --verify) shaVerify=1;; --veriforce) shaVerify=1; veriforce=1 ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --keeplocs) rebuild=2 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; --timeout) outTime=$2; shift;; --licenses) getlicenses=1 ;; *) usage ;; esac; shift; done
+while [[ $# -gt 0 ]]; do key="$1"; case "$key" in --allmissing) $allmissing=1; shift;; --dlgroup) dlgroup=$2; dlgid=$3; shift;shift;; -c|--check) doshacheck=1 ;; -h|--help) usage ;; -i|--ignore) doignore=1 ;; -l|--latest) dolatest=0 ;; -r|--reset) doreset=1 ;; -f|--force) doforce=1 ;; -e|--exit) doreset=1; doexit=1 ;; -y) myyes=1 ;; -u|--username) username=$2; shift ;; -p|--password) password=$2; shift ;; -ns|--nostore) nostore=1 ;; -nh|--noheader) noheader=1 ;; -d|--dryrun) dryrun=1 ;; -nc|--nocolor) docolor=0 ;; --nested) nested=1 ;; --repo) repo="$2"; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --dlg) mydlg=$2; dodlg=1; shift ;; --dlgl) mydlg=$2; dodlglist=1; shift ;; --vexpertx) dovexxi=1 ;; --patches) if [ $dovexxi -eq 1 ]; then dopatch=1; fi ;; -v|--vsmdir) cdir=$2; if [ Z"$vsmrc" = Z"" ]; then load_vsmrc; fi; shift ;; --save) dosave=1 ;; --symlink) symlink=1 ;; --nosymlink) symlink=0 ;; --fixsymlink) fixsymlink=1; symlink=1 ;; --historical) historical=1 ;; --nohistorical) historical=0 ;; --debug) debugv=1 ;; --debugv) dodebug=1 ;; --clean) cleanall=1; doreset=1; remyvmware=1;; --dts) mydts=1 ;; --oem) myoem=1 ;; --oss) myoss=1 ;; --nodts) mydts=0 ;; --nooem) myoem=0 ;; --nooss) myoss=0 ;; -mr) remyvmware=1;; -mn) renodejs=1;; -q|--quiet) doquiet=1 ;; -nq|--noquiet) doquiet=0 myq=0 ;; --progress) myprogress=1 ;; --favorite) if [ Z"$favorite" != Z"" ]; then myfav=1; fi ;; --fav) fav=$2; myfav=2; shift ;; --retries) retrycount=$2; shift;; -V|--version) version ;; --verify) shaVerify=1;; --veriforce) shaVerify=1; veriforce=1 ;; -z|--compress) compress=1 ;; --nocompress) compress=0 ;; --rebuild) rebuild=1 ;; --keeplocs) rebuild=2 ;; --olde) olde=$2; shift;; --nocertcheck) certcheck=0;; -o|--output) liceout=1;licenseoutput=$2; shift;; --timeout) outTime=$2; shift;; --licenses) getlicenses=1 ;; *) usage ;; esac; shift; done
 
 # compute timeout
 re='^[0-9]+$'
@@ -1867,6 +1906,8 @@ then
 	rm -rf $repo/.hashHistory
 fi
 
+credfile=.credstore
+credname="My VMware"
 handlecredstore
 
 # remove all and clean up
@@ -1926,6 +1967,10 @@ then
 		jq --arg s "$mydlg" '.dlgList[] | select(.name | test($s)).name' $rcdir/newlocs.json | sed 's/"//g'
 	fi
 	rm -rf ${cdir}/bm.txt >& /dev/null
+	if [ $debugv -eq 0 ]
+	then
+		rm ${cdir}/node-bm.js >& /dev/null
+	fi
 	exit
 fi
 
@@ -1967,12 +2012,32 @@ then
 fi
 save_vsmrc
 
+vexpertlic=1
+custconnectlic=0
+# set default location
+if [ $liceout -ne 1 ]
+then
+	licenseoutput=$cdir/licenses.txt
+fi
+# Login to vexpert.vmware.com
+vexpert_login
+# Get Eval Licenses - vexpert Portal
+if [ $vexpertlic -eq 1 ]
+then
+	if [ $getlicenses -eq 1 ]
+	then
+		getLicenses
+		exit
+	fi
+fi
+
 # seed oauth check
 need_login=0
 if [ -f ${cdir}/ocookies.txt ]
 then
 	need_login=`stat $fopt $ffmt ${cdir}/ocookies.txt 2> /dev/null`
 fi
+
 # Authenticate
 oauth_login 0
 if [ $oauth_err -eq 0 ]
@@ -1982,8 +2047,56 @@ else
 	colorecho "	Oauth:		Error" 1
 	dopatch=0
 	rm -rf ${cdir}/bm.txt >& /dev/null
+	if [ $debugv -eq 0 ]
+	then
+		rm ${cdir}/node-bm.js >& /dev/null
+	fi
 	exit
 fi
+
+# normal downloads
+if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
+then
+	# Get JSON
+	mywget ${rcdir}/_h_downloads.xhtml $myvmware_prod
+
+	grep "Temporary Maintenance" ${rcdir}/_h_downloads.xhtml >& /dev/null
+	if [ $? -eq 0 ]
+	then
+		colorecho "Error: My VMware Temporary Maintenance" 1
+		rm -rf ${cdir}/bm.txt >& /dev/null
+		if [ $debugv -eq 0 ]
+		then
+			rm ${cdir}/node-bm.js >& /dev/null
+		fi
+		exit;
+	fi
+
+	if [ ! -e ${rcdir}/_h_downloads.xhtml ]
+	then
+		colorecho "Error: Could not get My VMware Downloads File" 1
+		rm -rf ${cdir}/bm.txt >& /dev/null
+		if [ $debugv -eq 0 ]
+		then
+			rm ${cdir}/node-bm.js >& /dev/null
+		fi
+		exit;
+	fi
+
+	# Parse JSON
+	cat ${rcdir}/_h_downloads.xhtml | jq '.[][].productList[]|.name,.actions[]'| tr '\n' ' ' | sed 's/} {/}\n{/g' | sed 's/} "/}\n"/g' | sed 's/" {/"\n{/g' |$vegrep '^"|Download'|tr '\n' ' '|sed 's/} "/}\n"/g' > ${rcdir}/_downloads.xhtml
+
+	if [ $err -ne 0 ]
+	then
+		rm -rf ${cdir}/bm.txt >& /dev/null
+		if [ $debugv -eq 0 ]
+		then
+			rm ${cdir}/node-bm.js >& /dev/null
+		fi
+		exit $err
+	fi
+fi
+
 if [ $dopatch -eq 1 ] && [ $dovexxi -eq 1 ]
 then
 	if [ $noheader -eq 0 ]; then colorecho "	Patches:	1"; fi
@@ -1999,48 +2112,15 @@ then
 	exit
 fi
 
-# Get Eval Licenses
-if [ $getlicenses -eq 1 ] && [ $dovexxi -eq 1 ]
+# Get Eval Licenses - Cust Connect
+if [ $custconnectlic -eq 1 ]
 then
-	if [ $noheader -eq 0 ]; then colorecho "	Licenses:	1"; fi
-	getLicenses
-	exit
-fi
-
-# normal downloads
-if [ ! -e ${rcdir}/_downloads.xhtml ] || [ $doreset -eq 1 ]
-then
-	# Get JSON
-	mywget ${rcdir}/_h_downloads.xhtml $myvmware_prod
-
-	grep "Temporary Maintenance" ${rcdir}/_h_downloads.xhtml >& /dev/null
-	if [ $? -eq 0 ]
+	if [ $getlicenses -eq 1 ]
 	then
-		colorecho "Error: My VMware Temporary Maintenance" 1
-		rm -rf ${cdir}/bm.txt >& /dev/null
-		exit;
-	fi
-
-	if [ ! -e ${rcdir}/_h_downloads.xhtml ]
-	then
-		colorecho "Error: Could not get My VMware Downloads File" 1
-		rm -rf ${cdir}/bm.txt >& /dev/null
-		exit;
-	fi
-
-	# Parse JSON
-	cat ${rcdir}/_h_downloads.xhtml | jq '.[][].productList[]|.name,.actions[]'| tr '\n' ' ' | sed 's/} {/}\n{/g' | sed 's/} "/}\n"/g' | sed 's/" {/"\n{/g' |$vegrep '^"|Download'|tr '\n' ' '|sed 's/} "/}\n"/g' > ${rcdir}/_downloads.xhtml
-
-	if [ $err -ne 0 ]
-	then
-		rm -rf ${cdir}/bm.txt >& /dev/null
-		exit $err
+		getLicenses
+		exit
 	fi
 fi
-
-
-# Login to vexpert.vmware.com
-vexpert_login
 
 # start of history
 myvmware_root="https://customerconnect.vmware.com/group/vmware/"
@@ -2521,6 +2601,110 @@ function getLayerPkgs()
 	fi
 }
 
+fling_reply=0
+fling_choice=""
+function fling_menu() {
+	fcnt_r=`echo "$* Back Exit" | wc -w`
+	fredraw=1
+	while [ $fredraw -eq 1 ]
+	do
+		select fchoice in $* Back Exit
+		do 
+			fredraw=0
+			fsfail=1
+			# Need to do something on redraw (break) and redraw
+			if [ $REPLY = "r" ] || [ $REPLY = "R" ]
+			then
+				fredraw=1
+			fi
+			# letter substitutions, we also need longReply to mean something
+			if [ $REPLY = "e" ] || [ $REPLY = "E" ] || [ $REPLY = "x" ] || [ $REPLY = "X" ] || [ $REPLY = "q" ] || [ $REPLY = "Q" ]
+			then
+				#always last
+				fchoice="Exit"
+				REPLY=$fcnt_r
+			fi
+			if [ $REPLY = "a" ] || [ $REPLY = "A" ]
+			then
+				#always first
+				fchoice="All"
+				REPLY=1
+			fi
+			if [ $REPLY = "b" ] || [ $REPLY = "B" ]
+			then
+				#always 2nd to last
+				fchoice="Back"
+				REPLY=$(($cnt_r-1))
+			fi
+			if [ Z"$fchoice" != Z"" ]
+			then
+				## needed if we allow
+				stripcolor
+				fling_choice=$fchoice
+				fling_reply=$REPLY
+				if [ $fchoice = "Exit" ]
+				then
+					rm -rf ${cdir}/bm.txt >& /dev/null
+					if [ $debugv -eq 0 ]
+					then
+						rm ${cdir}/node-bm.js >& /dev/null
+					fi
+					exit
+				elif [ $fchoice = "Back" ]
+				then
+					break
+				else
+					if [ $fredraw -eq 0 ] && [ $fsfail -eq 0 ]
+					then
+						echo "${RED}Please enter a valid numeric number or one of a, e, x, b${NC}"
+						sfail=1
+					else
+						break
+					fi
+				fi
+			fi
+		done
+	done
+}
+
+function do_flings() {
+	wget -O ${rcdir}/_flings.xhtml https://flings.vmware.com >& /dev/null
+	flist=`xmllint --html --xpath "//div[@class=\"wrapper\"]/div[@class=\"content\"]/strong" ${rcdir}/_flings.xhtml 2>/dev/null| grep -v "More Coming Soon"|sed 's/<strong>//'|sed 's/<\/strong>//'|sed 's/ /_/g'|sed 's/ESXi_Arm_Edition/All/'`
+	infling=1
+	while [ $infling ]
+	do
+		fling_menu $flist
+		if [ Z"$fling_choice" = Z"Back" ]
+		then
+			infling=0
+			break
+		fi
+		ftop_reply=$fling_reply
+		ftop_choice=$fling_choice
+		fvers=`xmllint --html --xpath "(//div[@class=\"wrapper\"])[$ftop_reply]/div/ul/li/ul/li/a/text()" ${rcdir}/_flings.xhtml 2>/dev/null`
+		echo $fvers | grep '&#13;' >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			fvers=`xmllint --html --xpath "(//div[@class=\"wrapper\"])[$ftop_reply]/div/ul/li/ul/li/a/text()" ${rcdir}/_flings.xhtml 2>/dev/null | sed 's/&#13;//'|sed 's/ //g'|sed 'N;s/\n/_/'`
+		fi
+		infling_item=1
+		while [ $infling_item ]
+		do
+	 		fling_menu $fvers
+			echo $fling_choice
+			if [ Z"$fling_choice" = Z"Back" ]
+			then
+				infling_item=0
+				break
+			fi
+			fver_reply=$fling_reply
+			fver_choice=$fling_choice
+			furls=`xmllint --html --xpath "((//div[@class=\"wrapper\"])[$ftop_reply]/div/ul/li/ul/li/a)[$fver_reply]/@href" ${rcdir}/_flings.xhtml 2>/dev/null`
+			echo $furls
+		done
+	done
+}
+
 pName=''
 prevChoice=$choice
 function createMenu()
@@ -2531,6 +2715,7 @@ function createMenu()
 	##
 	if [ ${#pkgs} -ne 0 ]
 	then
+		fling=""
 		prevChoice=$choice
 		if [ Z"$pkgs" = Z"All " ]; then pkgs=''; fi # Nothing so Drop the All!
 		echo $pkgs | grep "All" >& /dev/null
@@ -2545,17 +2730,19 @@ function createMenu()
 		if [ ${#layer[@]} -gt 2 ]
 		then
 			back="Back"
+		else
+			fling=""
 		fi
 		if [ Z"$mark" != Z"" ]
 		then
 			debugvecho "Fav Potential: ${pName}_${layer[4]}"
 		fi
-		cnt_r=`echo "$pkgs $mark $back Exit" | wc -w`
+		cnt_r=`echo "$pkgs $mark $back $fling Exit" | wc -w`
 		redraw=1
 		export COLUMNS=8
 		while [ $redraw -eq 1 ]
 		do
-			select choice in $pkgs $mark $back Exit
+			select choice in $pkgs $mark $back $fling Exit
 			do
 				sfail=0
 				redraw=0
@@ -2676,9 +2863,18 @@ function createMenu()
 				then
 					## needed if we allow
 					stripcolor
+					#if [ $choice = "Flings" ]
+					#then
+					#	do_flings
+					#	redraw=1
+					#fi
 					if [ $choice = "Exit" ]
 					then
-						rm ${cdir}/bm.txt >& /dev/null
+						rm -rf ${cdir}/bm.txt >& /dev/null
+						if [ $debugv -eq 0 ]
+						then
+							rm ${cdir}/node-bm.js >& /dev/null
+						fi
 						exit
 					elif [ $choice = "Mark" ]
 					then
@@ -3466,6 +3662,10 @@ then
 	getFavPaths
 	getAll
 	rm -rf ${cdir}/bm.txt >& /dev/null
+	if [ $debugv -eq 0 ]
+	then
+		rm ${cdir}/node-bm.js >& /dev/null
+	fi
 	exit
 fi
 
@@ -3485,6 +3685,10 @@ then
 		echo "Local:$repo/dlg_${thedlg}${eou}/$name"
 	fi
 	rm -rf ${cdir}/bm.txt >& /dev/null
+	if [ $debugv -eq 0 ]
+	then
+		rm ${cdir}/node-bm.js >& /dev/null
+	fi
 	exit
 fi
 
@@ -3538,6 +3742,10 @@ then
 	getMyFiles 1
 	getAllChoice
 	rm -rf ${cdir}/bm.txt >& /dev/null
+	if [ $debugv -eq 0 ]
+	then
+		rm ${cdir}/node-bm.js >& /dev/null
+	fi
 	exit
 fi
 
