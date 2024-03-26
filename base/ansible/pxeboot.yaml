@@ -67,6 +67,7 @@
        loop:
          - rocky
          - debian
+         - fedora
 
      - name: Make Media directories
        become: yes
@@ -81,7 +82,18 @@
          - isos
          - rocky
          - debian
+         - fedora
 
+     - name: Stat Isos
+       stat:
+         path: "/mnt/isos/{{ item }}"
+       register: "{{ item }}_stat"
+       loop:
+         - Rocky-9.2-x86_64-minimal.iso
+         - debian-12.2.0-amd64-netinst.iso
+         - Fedora-Workstation-Live-x86_64-39-1.5.iso
+
+     # need a smarter download here
      - name: Get Isos
        get_url:
          url: '{{ item }}'
@@ -91,6 +103,8 @@
        loop:
          - https://download.rockylinux.org/pub/rocky/9/isos/x86_64/Rocky-9.2-x86_64-minimal.iso
          - https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.2.0-amd64-netinst.iso
+         - https://download.fedoraproject.org/pub/fedora/linux/releases/39/Workstation/x86_64/iso/Fedora-Workstation-Live-x86_64-39-1.5.iso
+       ignore_errors: yes
 
      - name: Mount Isos
        become: yes
@@ -100,6 +114,7 @@
        loop:
          - { name: Rocky-9.2-x86_64-minimal.iso, mnt: rocky }
          - { name: debian-12.2.0-amd64-netinst.iso, mnt: debian }
+         - { name: Fedora-Workstation-Live-x86_64-39-1.5.iso, mnt: fedora }
 
      - name: Iso Image Directory
        become: yes
@@ -113,6 +128,7 @@
        loop:
          - { name: rocky, version: 9 }
          - { name: debian, version: 11 }
+         - { name: fedora, version: 39 }
 
      - name: rc.local file permissions
        become: yes
@@ -149,6 +165,7 @@
        loop:
          - { name: rocky, dir: images/pxeboot, version: 9, arch: x86_64 }
          - { name: debian, dir: install.amd, version: 11, arch: amd64 }
+         - { name: fedora, dir: images/pxeboot, version: 39, arch: x86_64 }
 
      - name: Make PXEBoot Menu Beginning
        become: yes
@@ -183,6 +200,7 @@
        loop:
          - { name: rocky, version: 9, arch: x86_64 }
          - { name: debian, version: 11, arch: amd64 }
+         - { name: fedora, version: 39, arch: x86_64 }
 
      - name: Make PXEBoot Graphics Conf
        become: yes
