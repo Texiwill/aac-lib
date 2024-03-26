@@ -6,7 +6,7 @@
   tasks:
      - name: Reset SELinux after installs
        become: yes
-       command: restorecon -R -v /dev
+       command: restorecon -R -v /
        when: (ansible_distribution != "MacOSX") and
              (ansible_os_family != "VMware Photon OS") and
              (ansible_os_family != "Alpine")
