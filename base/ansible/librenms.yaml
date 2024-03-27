@@ -1,0 +1,715 @@
+---
+# version: 1.0.0
+# designed to work with Rocky Linux, not tested on any other Linux distro
+
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: SNMP
+  import_playbook: aac-base-snmp.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- name: MariaDB
+  import_playbook: aac-base-sql.yaml
+
+- name: TLS
+  import_playbook: aac-base-tls.yaml
+
+- name: NGINX
+  import_playbook: aac-base-nginx.yaml
+
+- hosts: localhost
+  tasks:
+     - name: debug
+       debug:
+         var: ansible_facts
+
+     - name: Import Latest Remi GPG Key
+       become: yes
+       rpm_key:
+         key: https://rpms.remirepo.net/enterprise/{{ ansible_distribution_major_version }}/RPM-GPG-KEY-remi
+         state: present
+
+     - name: install remi repo
+       become: yes
+       dnf:
+         name: https://rpms.remirepo.net/enterprise/remi-release-{{ ansible_distribution_major_version }}.rpm
+         state: present
+
+     - name: install CRB
+       become: yes
+       shell: "{{ item }}"
+       loop:
+         - "crb enable"
+         - "dnf module reset php -y"
+         - "dnf module enable php:remi-8.2 -y"
+       when: ansible_distribution == "Rocky"
+
+     - name: install dependencies
+       become: yes
+       package:
+         name:
+           - php
+           - bash-completion
+           - cronie
+           - fping
+           - git
+           - ImageMagick
+           - memcached
+           - mtr
+           - net-tools
+           - net-snmp
+           - net-snmp-utils
+           - nmap
+           - php-fpm
+           - php-cli
+           - php-common
+           - php-curl
+           - php-gd
+           - php-json
+           - php-mbstring
+           - php-process
+           - php-snmp
+           - php-xml
+           - php-zip
+           - php-mysqlnd
+           - python3-PyMySQL
+           - python3-memcached
+           - python3-pip
+           - rrdtool
+           - unzip
+         state: latest
+
+     - name: Set Timezone PHP RedHat
+       become: yes
+       lineinfile:
+         path: /etc/php.ini
+         regexp: "date.timezone"
+         line: "date.timezone = {{ aac_base_tz }}"
+
+     - name: Create mysql databases
+       become: yes
+       community.mysql.mysql_db:
+         login_unix_socket: /var/lib/mysql/mysql.sock
+         name: "{{ item.name }}"
+         state: present
+         encoding: "{{ item.encoding }}"
+         collation: "{{ item.collation }}"
+       loop: 
+         - { name: librenms, encoding: utf8mb4, collation: utf8mb4_unicode_ci }
+
+     - name: mysql non-root users
+       become: yes
+       community.mysql.mysql_user:
+         login_unix_socket: /var/lib/mysql/mysql.sock
+         user: "{{ item.name }}"
+         password: "{{ librenms_pwd }}"
+         host: "{{ item.host }}"
+         priv: "{{ item.priv }}"
+         state: present
+       loop: 
+         - { name: librenms, host: "%", priv: "librenms.*:ALL" }
+       no_log: true
+
+     - name: Restart mariadb service
+       become: yes
+       service:
+         name: mariadb
+         state: restarted
+
+     - name: Copy www.conf to librenms.conf
+       become: yes
+       copy:
+         src: /etc/php-fpm.d/www.conf
+         dest: /etc/php-fpm.d/librenms.conf
+
+     - name: Change PHP-FPM www to librenms
+       become: yes
+       lineinfile:
+         path: /etc/php-fpm.d/librenms.conf
+         regex: '\[www\]'
+         line: "[librenms]"
+
+     - name: Update PHP-FPM user to librenms
+       become: yes
+       lineinfile:
+         path: /etc/php-fpm.d/librenms.conf
+         regex: '^user\ ='
+         line: "user = librenms"
+
+     - name: Update PHP-FPM group to librenms
+       become: yes
+       lineinfile:
+         path: /etc/php-fpm.d/librenms.conf
+         regex: '^group\ ='
+         line: "group = librenms"
+
+     - name: Update listen to a unique name
+       become: yes
+       lineinfile:
+         path: /etc/php-fpm.d/librenms.conf
+         regex: '^listen\ ='
+         line: "listen = /run/php-fpm-librenms.sock"
+
+     - name: Create rrdcached service script
+       become: yes
+       copy:
+         dest: /etc/systemd/system/rrdcached.service
+         force: yes
+         content: |
+           [Unit]
+           Description=Data caching daemon for rrdtool
+           After=network.service
+           {{ '' }}
+           [Service]
+           Type=forking
+           PIDFile=/run/rrdcached.pid
+           ExecStart=/usr/bin/rrdcached -w 1800 -z 1800 -f 3600 -s librenms -U librenms -G librenms -B -R -j /var/tmp -l unix:/run/rrdcached.sock -t 4 -F -b /opt/librenms/rrd/
+           {{ '' }}
+           [Install]
+           WantedBy=default.target
+
+     - name: Set Firewall Service Rules
+       become: yes
+       command: firewall-cmd --zone=public --add-service={{ item }} --permanent
+       loop:
+         - http
+         - https
+
+     - name: Enable Firewall Rules
+       become: yes
+       command: firewall-cmd --reload
+
+     - name: Get latest librenms release
+       uri:
+         url: https://api.github.com/repos/librenms/librenms/releases/latest
+         return_content: true
+       register: json_response
+       become: false
+       run_once: true
+
+     - name: Check if Librenms repository exists
+       become: yes
+       stat:
+         path: /opt/librenms/README.md
+       register: stat_result
+
+     - name: Clone Librenms Repository
+       become: yes
+       git:
+         repo: https://github.com/librenms/librenms.git
+         dest: /opt/librenms
+         clone: true
+         # version: "{{ json_response.json.tag_name }}"
+         force: true
+       when: not stat_result.stat.exists
+
+     - name: Add Librenms service account
+       become: yes
+       user:
+         name: librenms
+         comment: librenms service account
+         create_home: true
+         home: /opt/librenms
+         shell: /bin/bash
+
+     - name: Chown librenms /opt/librenms
+       become: yes
+       file:
+         path: /opt/librenms
+         owner: librenms
+         group: librenms
+         recurse: true
+
+     - name: set librenms my.cnf
+       copy:
+         dest: ~/.my.cnf
+         mode: "0600"
+         content: |
+           [client]
+           user=librenms
+           password={{ librenms_pwd }}
+       no_log: true
+
+
+     - name: Add Nginx user to librenms group
+       become: yes
+       user:
+         name: nginx
+         groups:
+           - librenms
+         append: true
+
+     - name: Add another bin dir to system-wide $PATH.
+       become: yes
+       copy:
+         dest: /etc/profile.d/custom-path.sh
+         content: "PATH=$PATH:/usr/local/bin"
+
+     - name: Install PHP composer as librenms user
+       become: yes
+       become_user: librenms
+       vars:
+         ansible_command_timeout: 3600
+       shell: ./scripts/composer_wrapper.php install --no-dev
+       args:
+         chdir: /opt/librenms
+
+     - name: Enable lnms command completion - link
+       become: yes
+       become_user: root
+       file:
+         src: /opt/librenms/lnms
+         dest: /usr/local/bin/lnms
+         state: link
+
+     - name: Enable lnms command completion - copy file
+       become: yes
+       copy:
+         src: /opt/librenms/misc/lnms-completion.bash
+         dest: /etc/bash_completion.d/
+
+     - name: Copy snmpd.conf
+       become: yes
+       copy:
+         src: /opt/librenms/snmpd.conf.example
+         dest: /etc/snmp/snmpd.conf
+
+     - name: Set SNMP String
+       become: yes
+       lineinfile:
+         path: /etc/snmp/snmpd.conf
+         regex: "RANDOMSTRINGGOESHERE"
+         line: "com2sec readonly  default         public"
+
+     - name: Download SNMP Distro
+       become: yes
+       get_url:
+         url: https://raw.githubusercontent.com/librenms/librenms-agent/master/snmp/distro
+         dest: /usr/bin/distro
+
+     - name: Set permissions on snmp distro
+       become: yes
+       file:
+         path: /usr/bin/distro
+         mode: u+x,g+x,o+x
+
+     - name: Enable and restart snmpd
+       become: yes
+       service:
+         name: snmpd
+         state: restarted
+         enabled: true
+
+     - name: Copy Cron Job
+       become: yes
+       copy:
+         src: /opt/librenms/dist/librenms.cron
+         dest: /etc/cron.d/librenms
+
+     - name: Copy LibreNMS Scheduler Service
+       become: yes
+       copy:
+         src: /opt/librenms/dist/librenms-scheduler.service
+         dest: /etc/systemd/system/
+
+     - name: Copy LibreNMS Scheduler Timer
+       become: yes
+       copy:
+         src: /opt/librenms/dist/librenms-scheduler.timer
+         dest: /etc/systemd/system/
+
+     - name: Copy logrotate config
+       become: yes
+       copy:
+         src: /opt/librenms/misc/librenms.logrotate
+         dest: /etc/logrotate.d/librenms
+
+     - name: Enable SNMP Scans at 11pm Nightly
+       become: yes
+       lineinfile:
+         path: /etc/cron.d/librenms
+         insertbefore: EOF
+         line: "0 23 * * * librenms /opt/librenms/snmp-scan.py >> /opt/librenms/logs/snmp-scan.log"
+
+     - name: Update Database settings in /opt/librenms/.env
+       become: yes
+       lineinfile:
+         path: /opt/librenms/.env
+         regex: "{{ item.old_line }}"
+         line: "{{ item.new_line }}"
+       with_items:
+         - old_line: "^#DB_HOST="
+           new_line: "DB_HOST=localhost"
+         - old_line: "^#DB_DATABASE="
+           new_line: "DB_DATABASE=librenms"
+         - old_line: "^#DB_USERNAME="
+           new_line: "DB_USERNAME=librenms"
+         - old_line: "^#DB_PASSWORD="
+           new_line: "DB_PASSWORD='{{ librenms_pwd }}'"
+       no_log: true
+
+     - name: Append SESSION_SECURE_COOKIE
+       become: yes
+       lineinfile:
+         path: /opt/librenms/.env
+         line: "SESSION_SECURE_COOKIE=true"
+
+     - name: Update RRDCached Config Debian
+       become: yes
+       lineinfile:
+         path: /etc/default/rrdcached
+         regex: "{{ item.old_line }}"
+         line: "{{ item.new_line }}"
+       with_items: 
+         - old_line: "DAEMON"
+           new_line: "DAEMON=/usr/bin/rrdcached"
+         - old_line: "WRITE_TIMEOUT"
+           new_line: "WRITE_TIMEOUT=1800"
+         - old_line: "WRITE_JITTER"
+           new_line: "WRITE_JITTER=1800"
+         - old_line: "WRITE_THREADS"
+           new_line: "WRITE_THREADS=4"
+         - old_line: "BASE_PATH"
+           new_line: "BASE_PATH=/opt/librenms/rrd"
+         - old_line: "JOURNAL_PATH"
+           new_line: "JOURNAL_PATH=/var/lib/rrdcached/journal/"
+         - old_line: "PID_FILE"
+           new_line: "PID_FILE=/var/run/rrdcached.pid"
+         - old_line: "SOCKFILE"
+           new_line: "SOCKFILE=/run/rrdcached.sock"
+         - old_line: "SOCKGROUP"
+           new_line: "SOCKGROUP=librenms"
+         - old_line: "DAEMONGROUP"
+           new_line: "DAEMON_GROUP=librenms"
+         - old_line: "DAEMON_USER"
+           new_line: "DAEMON_USER=librenms"
+         - old_line: "BASE_OPTIONS"
+           new_line: 'BASE_OPTIONS="-B -F -R"'
+         - old_line: "NETWORK_OPTIONS"
+           new_line: 'NETWORK_OPTIONS="-l unix:/run/rrdcached.sock"'
+       when: ansible_os_family == 'Debian'
+
+     - name: Copy config.php.default
+       become: yes
+       copy:
+         src: /opt/librenms/config.php.default
+         dest: /opt/librenms/config.php
+
+     - name: Update config.php
+       become: yes
+       blockinfile:
+         path: /opt/librenms/config.php
+         block: |
+           $config['user'] = 'librenms';
+           $config['force_ip_to_sysname']=true;
+           $config['base_url'] = '/';
+           $config['rrdcached'] = 'unix:/run/rrdcached.sock';
+           $config['snmp']['timeout'] = 1; # seconds
+           $config['snmp']['retries'] = 5; # retry count
+           $config['snmp']['transports'] = array('udp', 'tcp'); # Transports
+       when: ansible_os_family == 'Debian'
+
+     - name: Update config.php
+       become: yes
+       blockinfile:
+         path: /opt/librenms/config.php
+         block: |
+           $config['user'] = 'librenms';
+           $config['force_ip_to_sysname']=true;
+           $config['base_url'] = '/';
+           $config['rrdcached'] = 'unix:/run/rrdcached.sock';
+           $config['snmp']['timeout'] = 1; # seconds
+           $config['snmp']['retries'] = 5; # retry count
+           $config['snmp']['transports'] = array('udp', 'tcp'); # Transports
+           $config['snmp']['version'] = ['v1', 'v2c', 'v3']; # versions to use
+           $config['snmp']['port'] = 161; # Default port
+           $config['snmp']['exec_timeout'] = 1200; # time limit in seconds
+           $config['snmp']['community'] = array('public');
+           $config['auth_mechanism'] = 'mysql';
+           $config['nets'][] = "10.0.0.0/8";
+           $config['nets'][] = "172.16.0.0/12";
+           $config['nets'][] = "192.168.0.0/16";
+           $config['autodiscovery']['xdp'] = true;
+           $config['rrd_purge'] = 0;
+           $config['enable_billing'] = 0;
+           $config['show_services'] = 1;
+           $config["enable_syslog"] = 1;
+           $config['syslog_purge'] = 30;
+           $config['eventlog_purge'] = 30;
+           $config['authlog_purge'] = 30;
+           $config['device_perf_purge'] = 7;
+           $config['ports_purge'] = true;// Set to false by default
+
+     - name: Set 775 on RRD folder
+       become: yes
+       file:
+         path: /opt/librenms/rrd
+         mode: "0775"
+
+     - name: Set 775 on HTML Folder Debian
+       become: yes
+       file:
+         path: /opt/librenms/html
+         mode: "0775"
+         recurse: true
+       when: ansible_os_family == 'Debian'
+
+     - name: Disable default NGINX
+       become: yes
+       copy:
+         dest: /etc/nginx/nginx.conf
+         force: yes
+         content: |
+           # Extremely basic for Librenms
+           user nginx;
+           worker_processes auto;
+           error_log /var/log/nginx/error.log;
+           pid /run/nginx.pid;
+           include /usr/share/nginx/modules/*.conf;
+           events {{ '{' }}
+               worker_connections 1024;
+           {{ '}' }}
+           http {{ '{' }}
+               log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                                 '$status $body_bytes_sent "$http_referer" '
+                                 '"$http_user_agent" "$http_x_forwarded_for"';
+               access_log  /var/log/nginx/access.log  main;
+               sendfile            on;
+               tcp_nopush          on;
+               tcp_nodelay         on;
+               keepalive_timeout   65;
+               types_hash_max_size 4096;
+               include             /etc/nginx/mime.types;
+               default_type        application/octet-stream;
+               include /etc/nginx/conf.d/*.conf;
+           {{ '}' }}
+
+     # This overrides the default 00-tls.conf created by aac-base-nginx
+     - name: Enable librenms TLS in Nginx
+       become: yes
+       copy:
+         dest: /etc/nginx/conf.d/00-tls.conf
+         force: yes
+         content: |
+           server {{ '{' }}
+             listen       443 ssl http2;
+             listen       [::]:443 ssl http2;
+             server_name  {{ ansible_fqdn }};
+             root         /opt/librenms/html;
+             ssl_certificate "/etc/pki/tls/certs/{{ ansible_fqdn }}.crt";
+             ssl_certificate_key "/etc/pki/tls/private/{{ ansible_fqdn }}.key";
+             ssl_session_cache shared:SSL:1m;
+             ssl_session_timeout  10m;
+             ssl_ciphers PROFILE=SYSTEM;
+             ssl_prefer_server_ciphers on;
+             # Load configuration files for the default server block.
+             include /etc/nginx/default.d/*.conf;
+             error_page 404 /404.html;
+                 location = /40x.html {{ '{' }}
+             {{ '}' }}
+             error_page 500 502 503 504 /50x.html;
+                 location = /50x.html {{ '{' }}
+             {{ '}' }}
+           {{ '}' }}
+
+     - name: Create librenms Nginx server config file
+       become: yes
+       copy:
+         dest: /etc/nginx/default.d/librenms.conf
+         force: yes
+         content: |
+           index index.php;
+           charset utf-8;
+           gzip on;
+           gzip_types text/css application/javascript text/javascript application/x-javascript image/svg+xml text/plain text/xsd text/xsl text/xml image/x-icon;
+           location / {{ '{' }}
+               try_files $uri $uri/ /index.php?$query_string;
+           {{ '}' }}
+           location ~ [^/]\.php(/|$) {{ '{' }}
+               fastcgi_pass unix:/run/php-fpm-librenms.sock;
+               fastcgi_split_path_info ^(.+\.php)(/.+)$;
+               include fastcgi.conf;
+           {{ '}' }}
+           location ~ /\.(?!well-known).* {{ '{' }}
+               deny all;
+           {{ '}' }}
+
+     - name: Create http_fping TE
+       copy:
+         dest: /tmp/http_fping.tt
+         content: |
+           module http_fping 1.0;
+           require {{ '{' }}
+             type httpd_t;
+             class capability net_raw;
+             class rawip_socket {{ '{' }} getopt create setopt write read {{ '}' }};
+           {{ '}' }}
+           #============= httpd_t ==============
+           allow httpd_t self:capability net_raw;
+           allow httpd_t self:rawip_socket { getopt create setopt write read };
+
+     - name: Create rrdcached_librenms TE
+       copy:
+         dest: /tmp/rrdcached_librenms.te
+         content: |
+           module rrdcached_librenms 1.0;
+           require {{ '{' }}
+             type var_run_t;
+             type tmp_t;
+             type httpd_t;
+             type rrdcached_t;
+             type httpd_sys_rw_content_t;
+             class dir {{ '{' }} add_name getattr remove_name rmdir search write {{ '}' }};
+             class file {{ '{' }} create getattr open read rename setattr unlink write {{ '}' }};
+             class sock_file {{ '{' }} create setattr unlink write {{ '}' }};
+             class capability {{ '{' }} fsetid sys_resource {{ '}' }};
+           {{ '}' }}
+           #============= rrdcached_t ==============
+           allow rrdcached_t httpd_sys_rw_content_t:dir {{ '{' }} add_name getattr remove_name search write {{ '}' }};
+           allow rrdcached_t httpd_sys_rw_content_t:file {{ '{' }} create getattr open read rename setattr unlink write {{ '}' }};
+           allow rrdcached_t self:capability fsetid;
+           allow rrdcached_t var_run_t:sock_file {{ '{' }} create setattr unlink {{ '}' }};
+
+     - name: Force systemd to re-execute itself
+       become: yes
+       ansible.builtin.systemd:
+         daemon_reexec: yes
+
+     - name: Chown librenms /opt/librenms
+       become: yes
+       file:
+         path: /opt/librenms
+         owner: librenms
+         group: librenms
+         recurse: true
+
+     - name: Grant librenms ACL permissions to rrd/logs/bootstrap
+       become: yes
+       ansible.posix.acl:
+         path: "{{ item }}"
+         entity: "librenms"
+         etype: group
+         permissions: rwx
+         default: true
+         recursive: true
+         state: present
+       with_items:
+         - /opt/librenms/rrd/
+         - /opt/librenms/logs/
+         - /opt/librenms/bootstrap/cache/
+         - /opt/librenms/storage/
+
+     - name: Commands to fix SELinux for Librenms
+       become: yes
+       command: '{{ item }}'
+       ignore_errors: true
+       loop:
+         - semanage fcontext -a -t httpd_sys_content_t '/opt/librenms/html(/.*)?'
+         - semanage fcontext -a -t httpd_sys_rw_content_t '/opt/librenms/(rrd|storage)(/.*)?'
+         - semanage fcontext -a -t httpd_log_t "/opt/librenms/logs(/.*)?"
+         - semanage fcontext -a -t bin_t '/opt/librenms/librenms-service.py'
+         - semanage boolean -m --on httpd_can_sendmail
+         - semanage boolean -m --on httpd_can_execmem
+         - semanage fcontext -a -t httpd_sys_rw_content_t /opt/librenms/.env
+         - checkmodule -M -m -o /tmp/http_fping.mod /tmp/http_fping.tt
+         - semodule_package -o /tmp/http_fping.pp -m /tmp/http_fping.mod
+         - semodule -i /tmp/http_fping.pp
+         - checkmodule -M -m -o /tmp/rrdcached_librenms.mod /tmp/rrdcached_librenms.te
+         - semodule_package -o /tmp/rrdcached_librenms.pp -m /tmp/rrdcached_librenms.mod
+         - semodule -i /tmp/rrdcached_librenms.pp
+         - setcap cap_net_raw+ep /usr/sbin/fping
+         - restorecon -RFvv /opt/librenms
+
+     - name: Enable Scheduler Timer
+       become: yes
+       service:
+         name: librenms-scheduler.timer
+         enabled: yes
+         state: started
+
+     - name: Start Nginx and PHP services
+       become: yes
+       service:
+         name: "{{ item }}"
+         state: restarted
+         enabled: true
+       with_items:
+         - memcached
+         - nginx
+         - php-fpm
+         - rrdcached
+         - librenms-scheduler.timer
+
+     - name: reset the connection
+       meta: reset_connection
+
+     - name: Wait 10 Seconds
+       wait_for_connection:
+         delay: 10
+
+     - name: Reboot if debian
+       become: yes
+       reboot:
+       register: reboot
+       when: ansible_os_family == 'Debian'
+
+     - name: Wait for reboot
+       wait_for:
+         timeout: 120
+       when: reboot.changed
+
+     - name: Check for lnms command run
+       become: yes
+       become_user: librenms
+       command: /usr/local/bin/lnms schedule:list
+       register: schedule_result
+       ignore_errors: true
+  
+     - name: Commands for Librenms setup
+       become: yes
+       become_user: librenms
+       shell: "/usr/local/bin/lnms config:cache; /usr/local/bin/lnms migrate -n --force --seed"
+       when: schedule_result.rc == 1
+
+     - name: Alter Database Collation
+       community.mysql.mysql_query:
+         login_unix_socket: /var/lib/mysql/mysql.sock
+         query: ALTER DATABASE librenms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+     - name: Commands for Librenms setup
+       become: yes
+       become_user: librenms
+       command:  "{{ item }}"
+       loop:
+         - /usr/local/bin/lnms user:add -n --role=admin -p {{ librenms_pwd }} admin
+         - /usr/local/bin/lnms device:add -n localhost --v2c -c public
+         - /usr/local/bin/lnms migrate -n --force --seed
+         - /opt/librenms/scripts/github-remove -s
+       when: schedule_result.rc == 1
+
+     - name: Validate installation
+       become: yes
+       become_user: librenms
+       command: "/opt/librenms/validate.php"
+       register: validate_results
+
+     - name: Print results
+       debug:
+         var: validate_results.stdout_lines
+
+     #- name: Chown librenms /opt/librenms
+     #  become: yes
+     #  file:
+     #    path: /opt/librenms
+     #    mode: "0771"
+
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...
