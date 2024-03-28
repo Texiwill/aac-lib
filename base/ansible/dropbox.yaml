@@ -1,5 +1,6 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
+# Tested against Fedora, updates for post Fedora 35
 
 - hosts: localhost
   gather_facts: true
@@ -13,12 +14,11 @@
 
 - hosts: localhost
   tasks:
+     # Docker Pre Fedora 36
      - name: Enable Extras
        become: yes
        command: yum-config-manager --enable extras
-       when: (ansible_distribution == "Fedora") or 
-             (ansible_distribution == "RedHat") or
-             (ansible_distribution == "CentOS")
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36",'<'))
 
      - name: install the dropbox in docker dependencies RHEL
        become: yes
@@ -27,40 +27,33 @@
            - docker
            - cockpit-docker 
          state: latest
-       when: (ansible_distribution == "Fedora") or 
-             (ansible_distribution == "RedHat") or
-             (ansible_distribution == "CentOS")
-
-     - name: install the dropbox in docker dependencies Debian
-       become: yes
-       package:
-         name:
-           - docker
-         state: latest
-       when: (ansible_distribution == "Debian") or 
-             (ansible_distribution == "Ubuntu")
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36",'<'))
 
      - name: Remove Janeczku Docker Dropbox directory
        file:
          path: /tmp/docker-dropbox-master
          state: absent
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36",'<'))
 
      - name: Download the latest version of Janeczku Docker Dropbox
        git:
          repo: https://github.com/janeczku/docker-dropbox.git
          dest: /tmp/docker-dropbox-master
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36",'<'))
 
      - name: Fix Code1
        lineinfile:
          path: /tmp/docker-dropbox-master/Dockerfile
          regexp: 'pgp.mit.edu'
          line: '       && apt-key adv --keyserver hkp://pool.sks-keyservers.net:80 --recv-keys 1C61A2656FB57B7E4DE0F4C1FC918B335044912E \'
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36",'<'))
 
      - name: Fix Code2
        lineinfile:
          path: /tmp/docker-dropbox-master/Dockerfile
          regexp: 'install ca-certificates'
          line: '       && apt-get -qqy install ca-certificates curl python-gpgme libc6 libglapi-mesa libxdamage1 libxfixes3 libxcb-glx0 libxcb-dri2-0 libxcb-dri3-0 libxcb-present0 libxcb-sync1 libxshmfence1 libxxf86vm1 dropbox \'
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36",'<'))
 
      - name: Fix Code3
        lineinfile:
@@ -68,6 +61,7 @@
          insertafter: 'chmod g-w /tmp \\'
          line: '       && chmod 755 /opt/dropbox/dropbox-lnx.*/libdropbox_apex.so \'
          state: present
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36",'<'))
 
      - name: Fix Code4
        lineinfile:
@@ -75,23 +69,27 @@
          insertbefore: '^echo "Starting dropboxd'
          line: 'chmod 755 /opt/dropbox/libdropbox_apex.so'
          state: present
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36",'<'))
 
      - name: add docker to wheel users
        become: yes
        shell: "groupadd docker; chgrp docker /var/run/docker.sock; for x in `lid -g wheel -n`; do usermod -a -G docker $x; done"
        args:
          executable: /bin/bash
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36",'<'))
 
      - name: start Docker
        become: yes
        service:
          name: docker
          state: started
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36",'<'))
 
      - name: build docker image
        shell: "sg - docker -c 'docker build -t dropbox:latest .'"
        args:
          chdir: /tmp/docker-dropbox-master
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36",'<'))
 
      - name: create profile.d dropbox.sh
        become: yes
@@ -109,6 +107,27 @@
            fi
          mode: 0755
          create: yes
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36",'<'))
+
+     - name: Add Dropbox Repo
+       become: yes
+       yum_repository:
+         name: dropbox
+         description: "Dropbox"
+         baseurl: "https://linux.dropbox.com/fedora/$releasever/"
+         gpgcheck: yes
+         gpgkey: "https://linux.dropbox.com/fedora/rpm-public-key.asc"
+         enabled: yes
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("35",'>'))
+
+     - name: Install Dropbox
+       become: yes
+       package:
+         name: 
+           - nautilus-dropbox
+         state: present
+         disable_gpg_check: true
+       when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("35",'>'))
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml
