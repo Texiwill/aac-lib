@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.8.8"
+VERSIONID="6.8.9"
 
 # args: stmt error
 function colorecho() {
@@ -118,14 +118,24 @@ function handlecredstore ()
 			then
 				echo -n "Enter $credname Username: "
 				read username
+				userd=$username
+				if [ Z"$credname" = Z"vExpert" ]
+				then
+					userd=(`$python -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$username" 2>/dev/null`)
+				fi
 			fi
 			if [ Z"$password" = Z"" ]
 			then
 				echo -n "Enter $credname Password: "
 				read -s password
+				passd=$password
+				if [ Z"$credname" = Z"vExpert" ]
+				then
+					passd=(`$python -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$password" 2>/dev/null`)
+				fi
 			fi
 		
-			auth=`echo -n "${username}:${password}" |base64`
+			auth=`echo -n "${userd}:${passd}" |base64`
 			if [ $nostore -eq 0 ]
 			then
 				# handle storing 'Basic Auth' for reuse
@@ -151,6 +161,7 @@ function handlecredstore ()
 		fi
 	fi
 }
+
 
 progressfilt ()
 {
@@ -529,8 +540,9 @@ function vexpert_login() {
 		rm -f $cdir/vcookies.txt $cdir/vacookies.txt >& /dev/null
 
 		csrf_token=`wget -O - $_PROGRESS_OPT --no-check-certificate --save-headers --cookies=on --save-cookies $cdir/vcookies.txt --keep-session-cookies --header='Cookie: JSESSIONID=' --header="User-Agent: $oaua" $vex_login 2>&1 | grep csrf_token | cut -d\" -f6`
-		vex_auth=`echo $vauth | base64 --decode`
-		rd=(`$python -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$vex_auth" 2>/dev/null|sed 's/%3A/ /'`)
+		vex_auth=`echo "$vauth" | base64 --ignore-garbage --decode`
+		#rd=(`$python -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$vex_auth" 2>/dev/null|sed 's/%3A/ /'`)
+		rd=(`echo $vex_auth 2>/dev/null|sed 's/:/ /'`)
 		vd="csrf_token="$csrf_token"&login_email=${rd[0]}&login_password=${rd[1]}"
 		wget -O $cdir/vex_auth.html $_PROGRESS_OPT --no-check-certificate --post-data="$vd" --save-headers --cookies=on --load-cookies $cdir/vcookies.txt --save-cookies $cdir/vacookies.txt --keep-session-cookies --header="User-Agent: $oaua" --header="Referer: $vex_login" $vex_login >& /dev/null #| grep AUTH-ERR >& /dev/null
 		# either could be a fail
