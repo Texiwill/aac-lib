@@ -28,6 +28,18 @@
              (ansible_distribution == "CentOS") or
              (ansible_distribution == "Fedora")
 
+     - name: install the latest version of dnscrypt dependencies for Rocky
+       become: yes
+       package:
+         name:
+           - dnsmasq
+           - haveged
+           - bind-utils
+           - lsof
+           - libtool-ltdl
+         state: latest
+       when: (ansible_distribution == "Rocky")
+
      - name: install the latest version of dnscrypt dependencies for Debian
        become: yes
        package:
@@ -55,7 +67,7 @@
 
      - name: Get Latest version Info for DNS Proxy
        become: no
-       shell: 'wget -O - https://github.com/jedisct1/dnscrypt-proxy/releases/latest | grep linux_x86_64 | head -1 |cut -d\" -f 2'
+       shell: 'wget -O - https://api.github.com/repos/DNSCrypt/dnscrypt-proxy/releases/latest |grep linux_x86 |grep browser_download_url|cut -d\" -f 4|head -1'
        args:
          executable: /bin/bash
        register: dnsproxy_output
@@ -68,7 +80,7 @@
      - name: Download the latest version of DNS Proxy
        become: no
        get_url:
-         url: "https://github.com/{{dnsp_latest}}"
+         url: "{{dnsp_latest}}"
          dest: "/tmp/{{dnsp_basename}}"
 
      - name: create DNS Proxy Directory
@@ -88,7 +100,7 @@
      - name: Download the latest public-resolvers
        become: yes
        get_url:
-         url: http://download.dnscrypt.info/resolvers-list/v2/public-resolvers.md
+         url: http://download.dnscrypt.info/resolvers-list/v3/public-resolvers.md
          dest: /opt/dnscrypt-proxy
 
      - name: dnscypt-proxy.toml create
@@ -138,17 +150,24 @@
          name: dnsmasq
          state: stopped
 
+     - name: Check if dnscrypt-proxy service exists
+       stat:
+         path: /etc/systemd/system/dnscrypt-proxy.service
+       register: srv_result
+
      - name: Install dnsproxy systemd
        become: yes
        shell: /opt/dnscrypt-proxy/dnscrypt-proxy -service install
        args:
          executable: /bin/bash
+       when: not srv_result.stat.exists
 
      - name: Start dnsproxy
        become: yes
        service:
          name: dnscrypt-proxy
          state: started
+         enabled: true
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml
