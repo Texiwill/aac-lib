@@ -9,6 +9,9 @@
 - name: TZ
   import_playbook: aac-base-tz.yaml
 
+- name: SNMP
+  import_playbook: aac-base-snmp.yaml
+
 - name: TLS
   import_playbook: aac-base-tls.yaml
 
@@ -27,6 +30,8 @@
            - net-tools
          state: latest
        when: ansible_distribution != "MacOSX"
+
+     #- name: Install Cloudflared
 
      # python3.11-selinux missing from Rocky
      # Will fix with SELinux setup
@@ -124,6 +129,74 @@
        file:
          path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
          owner: lighttpd
+
+     - name: Get Cloudflared
+       get_url:
+         url: https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-x86_64.rpm
+         dest: '/tmp/cloudflared-linux-x86_64.rpm'
+
+     - name: Install Cloudflared
+       become: yes
+       package:
+         name:
+           - /tmp/cloudflared-linux-x86_64.rpm
+
+     - name: Create Cloudflared User
+       become: yes
+       user:
+         name: cloudflared
+         shell: /usr/sbin/nologin
+
+     - name: Create Cloudflared Defaults
+       become: yes
+       copy:
+         dest: /etc/default/cloudflared
+         mode: 0640
+         owner: cloudflared
+         group: cloudflared
+         content: |
+           CLOUDFLARED_OPTS=--port 5053 --upstream https://1.1.1.1/dns-query --upstream https://1.0.0.1/dns-query
+
+     - name: Permission cloudflared
+       become: yes
+       file:
+         name: /usr/local/bin/cloudflared
+         owner: cloudflared
+         group: cloudflared
+
+     - name: Create Cloudflared systemd
+       become: yes
+       copy:
+         dest: /etc/systemd/system/cloudflared.service
+         mode: 0644
+         owner: root
+         group: root
+         content: |
+           [Unit]
+           Description=cloudflared DNS over HTTPS proxy
+           After=syslog.target network-online.target
+           {{ }}
+           [Service]
+           Type=simple
+           User=cloudflared
+           EnvironmentFile=/etc/default/cloudflared
+           ExecStart=/usr/local/bin/cloudflared proxy-dns $CLOUDFLARED_OPTS
+           Restart=on-failure
+           RestartSec=10
+           KillMode=process
+           {{ }}
+           [Install]
+           WantedBy=multi-user.target
+
+     - name: Enable and start cloudflared
+       become: yes
+       service:
+         name: cloudflared
+         enabled: yes
+         state: started
+
+     # need to configure Pihole to use cloudflared
+     # Need to write cloudflared update script and put in cron
 
      # Need to fix SELinux for Pihole eventually
      - name: Get SELinux Pihole TE
