@@ -13,7 +13,7 @@
 # wget python python-urllib3 libxml2 ncurses bc nodejs Xvfb
 #
 
-VERSIONID="6.8.9"
+VERSIONID="6.9.0"
 
 # args: stmt error
 function colorecho() {
@@ -1765,6 +1765,11 @@ outTime=0
 mycolumns=`tput cols`
 
 xu=`id -un`
+if [ -e /tmp/updatevsm ]
+then
+	colorecho "Update Running, VSM cannot start" RED
+	exit
+fi
 
 if [ Z"$xu" = Z"root" ]
 then

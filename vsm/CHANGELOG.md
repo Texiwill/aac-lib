@@ -11,6 +11,8 @@ Email elh at astroarch dot com for assistance or if you want to add
 for more items.
 
 ### Changelog
+6.9.0 - ensured vsm.sh cannot run if update.sh is running, as well as ensured update.sh only updates when there is a new version
+
 6.8.9 - updated how very long passwords are encoded and decoded.
 
 6.8.8 - updated license retrieval with an output file location. Specify -o filename. Also fixed an issue with the use of multiple usernames and passwords where Customer Connect differs from vExpert

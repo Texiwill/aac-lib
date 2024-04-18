@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) AstroArch Consulting, Inc.  2017-2023
+# Copyright (c) AstroArch Consulting, Inc.  2017-2024
 # All rights reserved
 # vim: tabstop=4 shiftwidth=4
 #
@@ -11,7 +11,7 @@
 # Requires:
 # wget 
 #
-VERSIONID="2.0.0"
+VERSIONID="2.0.1"
 
 ###
 docolor=1
@@ -115,24 +115,36 @@ cd aac-base
 wget -O aac-base.install https://raw.githubusercontent.com/Texiwill/aac-lib/master/base/aac-base.install
 chmod +x aac-base.install
 
+echo "oVer=\`grep VERSIONID  /usr/local/bin/vsm.sh | head -1 | sed 's/\.//g'| sed 's/VERSIONID=//'|sed 's/\"//g'\`" > update.sh
+echo "nVer=\`wget -O - https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh 2>/dev/null|grep VERSIONID | head -1 | sed 's/\.//g'| sed 's/VERSIONID=//'|sed 's/\"//g'\`" >> update.sh
+cat >> update.sh << EOF
+if [ \$nVer -gt \$oVer ]
+then
+	touch /tmp/updatevsm
+	cd $HOME/aac-base
+EOF
 if [ Z"$tz" = Z"" ]
 then
 	./aac-base.install -u
 	./aac-base.install -i LinuxVSM
-	cat > update.sh << EOF
-cd $HOME/aac-base
-./aac-base.install -u
-./aac-base.install -i LinuxVSM
+	cat >> update.sh << EOF
+	./aac-base.install -u
+	./aac-base.install -i LinuxVSM
 EOF
 else
 	./aac-base.install -u $tz
 	./aac-base.install -i LinuxVSM $tz
-	cat > update.sh << EOF
-cd $HOME/aac-base
-./aac-base.install -u $tz
-./aac-base.install -i LinuxVSM $tz
+	cat >> update.sh << EOF
+	./aac-base.install -u $tz
+	./aac-base.install -i LinuxVSM $tz
 EOF
 fi
+cat >> update.sh << EOF
+	rm -f /tmp/updatevsm
+else
+	echo "Nothing to update"
+fi
+EOF
 chmod +x update.sh
 
 colorecho "VSM is now in /usr/local/bin/vsm.sh"
