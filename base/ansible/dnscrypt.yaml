@@ -169,6 +169,16 @@
          state: started
          enabled: true
 
+     - name: Set Firewall Rules
+       become: yes
+       command: firewall-cmd --zone=public --add-service={{ item }} --permanent
+       loop:
+         - dns
+
+     - name: Enable Firewall Rules
+       become: yes
+       command: firewall-cmd --reload
+
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml
 ...
