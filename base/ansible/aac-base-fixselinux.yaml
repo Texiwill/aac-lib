@@ -1,9 +1,38 @@
 ---
-# version: 1.0.3
+# version: 1.0.4
 
 - hosts: localhost
   become_user: root
   tasks:
+     - name: Check if ssh reset already completed
+       stat:
+         path: /etc/ssh/.resetdone
+       register: stat_result
+       when: ansible_os_family == "RedHat"
+
+     - name: reset SSH Keys/UUID of VM
+       become: yes
+       command: '{{ item }}'
+       loop:
+         - rm -f /etc/machine-id /etc/ssh/ssh_host_*
+         - /usr/bin/systemd-machine-id-setup
+       when: (not stat_result.stat.exists) and (ansible_os_family == "RedHat")
+
+     - name: mark ssh reset done
+       become: yes
+       file:
+         path: /etc/ssh/.resetdone
+         state: touch
+         mode: "0644"
+       when: (not stat_result.stat.exists) and (ansible_os_family == "RedHat")
+       
+     - name: restart sshd
+       become: yes
+       service:
+         name: sshd
+         state: restarted
+       when: ansible_os_family == "RedHat"
+
      - name: Reset SELinux after installs
        become: yes
        command: restorecon -R -v /
