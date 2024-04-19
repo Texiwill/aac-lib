@@ -10,12 +10,35 @@
        register: stat_result
        when: ansible_os_family == "RedHat"
 
+     - name: remove IDs
+       become: yes
+       file:
+         path: /etc/machine-id
+         state: absent
+       when: (not stat_result.stat.exists) and (ansible_os_family == "RedHat")
+
+     - name: find ssh_host files
+       become: yes
+       find:
+         paths: /etc/ssh
+         patterns: 'ssh_host_*'
+         use_regex: yes
+       register: find_result
+       when: (not stat_result.stat.exists) and (ansible_os_family == "RedHat")
+
+     - name: remove host keys
+       become: yes
+       file:
+         path: "{{ item.path }}"
+         state: absent
+       with_items: "{{ find_result.files }}"
+       when: (not stat_result.stat.exists) and (ansible_os_family == "RedHat")
+
      - name: reset SSH Keys/UUID of VM
        become: yes
        command: '{{ item }}'
        loop:
-         - rm -f /etc/machine-id /etc/ssh/ssh_host_*
-         - /usr/bin/systemd-machine-id-setup
+         - "/usr/bin/systemd-machine-id-setup"
        when: (not stat_result.stat.exists) and (ansible_os_family == "RedHat")
 
      - name: mark ssh reset done
