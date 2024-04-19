@@ -1,5 +1,5 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 
 - hosts: localhost
   gather_facts: true
@@ -115,7 +115,7 @@
        lineinfile:
          path: /opt/dnscrypt-proxy/dnscrypt-proxy.toml
          insertbefore: "^# server_names"
-         line: "server_names = ['cloudflare', 'cloudflare-ipv6']" 
+         line: "server_names = ['cloudflare', 'google']" 
        when: not stat_result.stat.exists
 
      - name: update listen_addresses
@@ -126,13 +126,13 @@
          line: "listen_addresses = ['0.0.0.0:53']"
        when: not stat_result.stat.exists
 
-     - name: update fallback_resolver
-       become: yes
-       lineinfile:
-         path: /opt/dnscrypt-proxy/dnscrypt-proxy.toml
-         regex: "^fallback_resolvers"
-         line: "fallback_resolver = '1.0.0.1:53'"
-       when: not stat_result.stat.exists
+       #- name: update fallback_resolver
+       #become: yes
+       #lineinfile:
+       #  path: /opt/dnscrypt-proxy/dnscrypt-proxy.toml
+       #  regex: "^fallback_resolvers"
+       #  line: "fallback_resolver = '1.0.0.1:53'"
+       #when: not stat_result.stat.exists
 
      - name: Create resolv.conf
        become: yes
