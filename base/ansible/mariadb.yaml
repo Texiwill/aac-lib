@@ -1,0 +1,43 @@
+---
+# version: 1.0.1
+
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- name: SQL
+  import_playbook: aac-base-sql.yaml
+
+- hosts: localhost
+  tasks:
+     - name: update bind_addresses
+       become: yes
+       lineinfile:
+         path: /etc/my.cnf.d/mariadb-server.cnf
+         regex: "^bind-addres=0.0.0.0"
+         insertafter: "^pid-file="
+         line: "bind-address=0.0.0.0"
+         state: present
+
+     - name: restart mariadb
+       become: yes
+       service:
+         name: "mariadb"
+         state: restarted
+         enabled: true
+
+     - name: Set Firewall Rules
+       become: yes
+       command: firewall-cmd --zone=public --add-service={{ item }} --permanent
+       loop:
+         - mysql
+
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...
