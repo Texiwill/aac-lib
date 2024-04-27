@@ -149,6 +149,9 @@ Linux pihole server setup including TLS and SELinux support. Tested only on Rock
 #### mariadb - 1.0.0
 Linux Mariadb network server. Tested only on Rocky 9
 
+#### librenms - 1.0.0
+Linux librenms NMS server. Tested only on Rocky 9
+
 ### Support
 Email elh at astroarch dot com for assistance or if you want to add
 more items.
