@@ -8,7 +8,6 @@
        stat:
          path: /etc/ssh/.resetdone
        register: stat_result
-       when: ansible_os_family == "RedHat"
 
      - name: remove IDs
        become: yes
