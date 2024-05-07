@@ -7,7 +7,7 @@ AAC Library of Tools
 Linux Version of VMware Software Manager
 
 ### NOTICE
-__As of v6.7.7, Patch Download Support was added for VC and ESXi only. Use --clean to enable this functionality__
+__As of May 5th, 2024, LinuxVSM does not work. Work on an update is continuing but waiting on the Broadcom site to stabilize before work finishes.__
 
 ### Description
 A slightly more intelligent version of VSM for Linux. It ignores
@@ -398,8 +398,8 @@ No, as of version 6.7.6 you can use the following for common commands:
 
 ##### On What operating systems will LinuxVSM run?
 
-  * RHEL 6/7/8, Centos 6/7/8, Fedora
-  * Debian 9/10, Ubuntu 18.04/20.04/22.04
+  * RHEL 6/7/8/9, CentOS 6/7/8, Rocky 9, AlmaLinux 9, Fedora
+  * Debian 9/10, Ubuntu 18.04/20.04/22.04/23.10/24.04
   * Microsoft WSL2 (NOT WSL1)
   * MacOSX
   * Alpine Linux 3.15
