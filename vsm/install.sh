@@ -11,7 +11,7 @@
 # Requires:
 # wget 
 #
-VERSIONID="2.0.1"
+VERSIONID="2.0.2"
 
 ###
 docolor=1
@@ -19,6 +19,12 @@ docolor=1
 RED=`tput setaf 1`
 PURPLE=`tput setaf 5`
 NC=`tput sgr0`
+machine=`uname -m`
+if [ Z"$machine" = Z"arm64" ]
+then
+	PATH=$PATH:/opt/homebrew/bin
+	export PATH
+fi
 function colorecho() {
 	COLOR=$PURPLE
 	if [ Z"$2" = Z"1" ]
@@ -32,28 +38,46 @@ function colorecho() {
 		echo ${1}
 	fi
 }
+
 function findos() {
 	if [ -e /etc/os-release ]
 	then
 		. /etc/os-release
 		theos=`echo $ID | tr [:upper:] [:lower:]`
-		ver=`echo $VERSION_ID | awk -F. '{print $1'}`
+		if [ Z"$theos" = Z"linuxmint" ]
+        	then
+            		theos=`echo $ID_LIKE | tr [:upper:] [:lower:]`
+        	fi
+		VERSION_ID=`echo $VERSION_ID | awk -F. '{print $1}'`
 	elif [ -e /etc/centos-release ]
 	then
 		theos=`cut -d' ' -f1 < /etc/centos-release | tr [:upper:] [:lower:]`
+		VERSION_ID=`awk '{print $3}' /etc/centos-release | awk -F. '{print $1}'`
 	elif [ -e /etc/redhat-release ]
 	then
 		theos=`cut -d' ' -f1 < /etc/redhat-release | tr [:upper:] [:lower:]`
+		VERSION_ID=`awk '{print $3}' /etc/redhat-release | awk -F. '{print $1}'`
 	elif [ -e /etc/fedora-release ]
 	then
 		theos=`cut -d' ' -f1 < /etc/fedora-release | tr [:upper:] [:lower:]`
+		VERSION_ID=`awk '{print $3}' /etc/fedora-release | awk -F. '{print $1}'`
 	elif [ -e /etc/debian-release ]
 	then
 		theos=`cut -d' ' -f1 < /etc/debian-release | tr [:upper:] [:lower:]`
+		VERSION_ID=`awk '{print $3}' /etc/debian-release | awk -F. '{print $1}'`
 	else
-		colorecho "Do not know this operating system. LinuxVSM may not work." 1
-		theos="unknown"
+		# Mac OS
+		uname -a | grep Darwin  >& /dev/null
+		if [ $? -eq 0 ]
+		then
+			theos="macos"
+			VERSION_ID=`sw_vers | grep ProductVersion | cut -d'	' -f2`
+		else
+			colorecho "Do not know this operating system. LinuxVSM may not work." 1
+			theos="unknown"
+		fi
 	fi
+	export VERSION_ID
 }
 
 function usage()
@@ -100,13 +124,21 @@ then
 	then
 		if [ $ver -lt 8 ]
 		then
-        	sudo yum -y install wget
+        		sudo yum -y install wget
 		else
-        	sudo dnf -y install wget
+        		sudo dnf -y install wget
 		fi
 	elif [ Z"$theos" = Z"debian" ] || [ Z"$theos" = Z"ubuntu" ]
 	then
         	sudo apt-get install -y wget
+	elif [ Z"$theos" = Z"macos" ]
+	then
+		which brew >& /dev/null
+		if [ $? -eq 1 ]
+		then
+			/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+		fi
+		/opt/homebrew/bin/brew install wget
 	fi
 fi
 
