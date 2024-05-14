@@ -1,5 +1,5 @@
 ---
-# version: 1.1.4
+# version: 1.2.0
 
 - hosts: localhost
   gather_facts: true
@@ -56,7 +56,8 @@
            - make
            - openssl
          state: latest
-       when: (ansible_os_family != "VMware Photon OS")
+       when: (ansible_os_family != "VMware Photon OS") and
+             (ansible_distribution != "MacOSX")
 
      # separate as may cause conflicts
      - name: install additional dependencies
@@ -64,7 +65,8 @@
        package:
          name:
            - npm
-       when: (ansible_os_family != "VMware Photon OS")
+       when: (ansible_os_family != "VMware Photon OS") and
+             (ansible_distribution != "MacOSX")
 
      - name: install the other required dependencies
        become: yes
@@ -74,7 +76,8 @@
        with_items:
          - "{{ ansible_python.executable|basename }}-urllib3"
        when: (ansible_os_family != "Alpine") and
-             (ansible_os_family != "VMware Photon OS")
+             (ansible_os_family != "VMware Photon OS") and
+             (ansible_distribution != "MacOSX")
 
      - name: install RedHat Family dependencies
        become: yes
@@ -245,70 +248,39 @@
        shell: "xcode-select --install"
        when: ansible_distribution == "MacOSX"
 
+     # Only for ARM hardware
+     # should really migrate all in /usr/local/bin to /opt/homebrew/bin first
+     # This is required for homebrew to work in ansible on arm64
+     - name: Symlink /usr/local/bin on MacOSX
+       become: yes
+       file:
+         src: /opt/homebrew/bin   
+         dest: /usr/local/bin
+         state: link
+       when: (ansible_distribution == "MacOSX" and ansible_machine == "arm64")
+
      - name: Install Dependencies for MacOSX
        homebrew:
          name:
            - gnu-sed
-           - wget
            - jq
            - node
          state: latest
        when: ansible_distribution == "MacOSX"
 
      - name: Install Cask Dependencies for MacOSX
-       ignore_errors: yes
        homebrew_cask:
-         name: xquartz
+         name:
+           - xquartz
+         state: latest
        when: ansible_distribution == "MacOSX"
-
-     - name: MacOSX create bin directory
-       file:
-         path: "{{ansible_user_dir}}/bin"
-         state: directory
-       when: ansible_distribution == "MacOSX"
-
-     - name: Set MacOSX Facts
-       set_fact:
-         path_two: 
-           - "{{ansible_user_dir}}/perl5/bin"
-           - "{{ansible_user_dir}}/bin"
-       when: ansible_distribution == "MacOSX"
-
-     - name: Merge the LinuxVSM MacOSX Paths
-       set_fact:
-         vsmpath: "{{(mypath + path_two)|unique}}"
-       when: ansible_distribution == "MacOSX"
-
-     - name: Update .zshrc on MacOSX
-       lineinfile:
-         path: "{{ansible_user_dir}}/.zshrc"
-         regexp: 'PATH='
-         line: "export PATH=$PATH{{vsmpath|join(':')}}"
-         create: yes
-       when: ansible_distribution == "MacOSX"
-
-     - name: Update .bash_profile on MacOSX
-       lineinfile:
-         path: "{{ansible_user_dir}}/.bash_profile"
-         regexp: 'PATH='
-         line: "export PATH=$PATH{{vsmpath|join(':')}}"
-         create: yes
-       when: ansible_distribution == "MacOSX"
-
+       
      - name: Download the latest version of LinuxVSM
        become: yes
        get_url:
          url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
          dest: /usr/local/bin
          mode: 0755
-       when: ansible_distribution != "MacOSX"
-
-     - name: Download the latest version of LinuxVSM MacOSX
-       get_url:
-         url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
-         dest: "{{ansible_user_dir}}/bin"
-         mode: 0755
-       when: ansible_distribution == "MacOSX"
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

@@ -38,7 +38,8 @@
            - ntp
          state: latest
        ignore_errors: yes
-       when: ansible_os_family != "VMware Photon OS"
+       when: (ansible_os_family != "VMware Photon OS") and
+             (ansible_distribution != "MacOSX")
 
      - name: install the latest ntpd (ignore if not there)
        become: yes
@@ -47,7 +48,8 @@
            - ntpd
          state: latest
        ignore_errors: yes
-       when: ansible_os_family != "VMware Photon OS"
+       when: (ansible_os_family != "VMware Photon OS") and
+             (ansible_distribution != "MacOSX")
 
      - name: install the latest chrony (ignore if not there)
        become: yes
@@ -56,7 +58,8 @@
            - chrony
          state: latest
        ignore_errors: yes
-       when: ansible_os_family != "VMware Photon OS"
+       when: (ansible_os_family != "VMware Photon OS") and
+             (ansible_distribution != "MacOSX")
 
      - name: install the required dependencies for Photon
        become: yes
@@ -93,7 +96,8 @@
          - git
          - gzip
        when: (ansible_os_family != "Alpine") and
-             (ansible_os_family != "VMware Photon OS")
+             (ansible_os_family != "VMware Photon OS") and
+             (ansible_distribution != "MacOSX")
 
      #- name: install the other required dependencies Rocky
      #  become: yes
@@ -151,7 +155,6 @@
        pip:
          name: 
            - pexpect
-           - rpm
        when: ansible_distribution == "MacOSX"
 
      - name: Package Facts
@@ -175,14 +178,10 @@
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) and
              ("microsoft" not in ansible_kernel)
 
-     - name: Package Facts MacOSX
-       package_facts:
-         manager: "rpm"
-       when: ansible_distribution == "MacOSX"
-
      - name: Package Facts Photon
        become: yes
        shell: tdnf list | cut -d\. -f1
+       register: packages_facts
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Change umask for Photon
@@ -196,53 +195,12 @@
      - name: Register Photon Packages
        set_fact:
          ansible_facts: "{{ ansible_facts | combine({'packages': packages_facts.stdout_lines}) }}"
-       when: ansible_os_family == "VMware Photon OS"
+       when: (ansible_os_family == "VMware Photon OS")
 
-     - name: Homebrew fact MacOSX
-       stat:
-         path: "/usr/local/bin/brew"
-       register: brew_result
-
-     - name: Install Homebrew for MacOSX
-       shell: 'ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
-       when: ansible_distribution == "MacOSX" and not brew_result.stat.exists
-
-     - name: MacOSX PATH
-       become: no
-       shell: "grep PATH $HOME/.zshrc 2>/dev/null| sed 's/export //'|sed 's/PATH=//' | sed 's/$PATH://g'|tr '\n' ':' | sed 's/:$//'"
-       args:
-         executable: /bin/bash
-       register: path_local
-       when: ansible_distribution == "MacOSX"
-
-     - name: Set MacOSX Facts
+     - name: Register MacOSX Packages
        set_fact:
-         path_one: "{{path_local.stdout.split(':')}}"
-         path_two: 
-           - "{{ansible_user_dir}}/Library/Python/2.7/bin"
-           - "{{ansible_user_dir}}/bin"
-       when: ansible_distribution == "MacOSX"
-
-     - name: Merge the Paths
-       set_fact:
-         mypath: "{{(path_one + path_two)|unique}}"
-       when: ansible_distribution == "MacOSX"
-
-     - name: Update .zshrc
-       lineinfile:
-         path: "{{ansible_user_dir}}/.zshrc"
-         regexp: 'PATH='
-         line: "export PATH=$PATH{{mypath|join(':')}}"
-         create: yes
-       when: ansible_distribution == "MacOSX"
-
-     - name: Update .bash_profile
-       lineinfile:
-         path: "{{ansible_user_dir}}/.bash_profile"
-         regexp: 'PATH='
-         line: "export PATH=$PATH{{mypath|join(':')}}"
-         create: yes
-       when: ansible_distribution == "MacOSX"
+         ansible_facts: "{{ ansible_facts | combine({'packages': []}) }}"
+       when: (ansible_distribution == "MacOSX")
 
      - name: Set Facts
        set_fact:
