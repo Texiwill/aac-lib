@@ -1,0 +1,19 @@
+---
+# version: 1.0.0
+
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: SNMP
+  import_playbook: aac-base-snmp.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...

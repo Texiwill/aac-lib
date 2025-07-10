@@ -93,6 +93,8 @@
        with_items:
          - "{{ ansible_python.executable|basename }}-pip"
          - "{{ ansible_python.executable|basename }}-setuptools"
+         - "{{ ansible_python.executable|basename }}-passlib"
+         - "{{ ansible_python.executable|basename }}-firewall"
          - git
          - gzip
        when: (ansible_os_family != "Alpine") and

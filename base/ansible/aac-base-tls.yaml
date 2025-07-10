@@ -13,6 +13,14 @@
        become: yes
        file:
          path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
+
+     - name: Update OpenSSL cnf
+       become: yes
+       lineinfile:
+         path: /etc/pki/tls/openssl.cnf
+         insertafter: "^. v3_ca ."
+         line: "subjectAltName = IP: {{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
+         state: present
      
      - name: TLS Certificate
        become: yes
@@ -20,8 +28,5 @@
          path: "/etc/pki/tls/certs/{{ ansible_fqdn }}.crt"
          privatekey_path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
          provider: selfsigned
-         #subject_alt_name:
-           #- IP:{{ ansible_default_ipv4.address }}
-           #- DNS:{{ ansible_hostname }}
      
 ...

@@ -1,13 +1,13 @@
 #!/bin/bash
 #
-# Copyright (c) 2016-2024 AstroArch Consulting, Inc. All rights reserved
+# Copyright (c) 2016-2025 AstroArch Consulting, Inc. All rights reserved
 #
 # Create a Base Install to use Ansible for further installs
 #
 # Target: CentOS/RHEL/Rocky/Fedora/Debian/Ubuntu/MacOS/Alpine
 #
 ###
-VERSIONID="2.3.0"
+VERSIONID="2.4.0"
 
 #####
 cRun=$0
@@ -244,7 +244,7 @@ function call_playbook() {
 		echo ""
 		extraargs="$adebug aac_base_tz=$TZ mariadb_pwd=$mariadb_pwd librenms_pwd=$librenms_pwd"
 		askpass="-K"
-	elif [ Z"$choice" = Z"mariadb" ]
+	elif [ Z"$choice" = Z"mariadb" ] || [ Z"$choice" = Z"owncloud" ]
 	then
 		# Get mariadb/librenms passwords
 		echo -n "Enter mariadb root Password: "
@@ -272,6 +272,14 @@ function call_playbook() {
 		read -s pihole_pwd
 		echo ""
 		extraargs="$adebug aac_base_tz=$TZ pihole_pwd=$pihole_pwd"
+		askpass="-K"
+	elif [ Z"$choice" = Z"erk" ] 
+	then
+		# Get Kibana Admin password
+		echo -n "Enter Kibana Admin Password: "
+		read -s kibana_pwd
+		echo ""
+		extraargs="$adebug aac_base_tz=$TZ kibana_pwd=$kibana_pwd"
 		askpass="-K"
 	else
 		if [ Z"TZ" != Z"" ]
