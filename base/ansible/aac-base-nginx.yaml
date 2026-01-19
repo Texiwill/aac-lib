@@ -1,6 +1,8 @@
 ---
 # version: 1.0.0
 # designed to work with Rocky Linux, not tested on any other Linux distro
+- name: TLS
+  import_playbook: aac-base-tls.yaml
 
 - hosts: localhost
   tasks:
@@ -46,7 +48,7 @@
            server {{ '{' }}
              listen       443 ssl http2;
              listen       [::]:443 ssl http2;
-             server_name  _;
+             server_name  {{ ansible_hostname }};
              root         /usr/share/nginx/html;
              ssl_certificate "/etc/pki/tls/certs/{{ ansible_fqdn }}.crt";
              ssl_certificate_key "/etc/pki/tls/private/{{ ansible_fqdn }}.key";
