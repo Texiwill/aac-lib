@@ -1,0 +1,526 @@
+---
+# version: 1.0.0
+# if not using ipv6, it is best to disable it in sysctl
+# at least 500GBs of storage for /var/lib/elasticsearch
+# this is rsyslog-elasticsearch-logstash-kibana 9.x
+
+- hosts: localhost
+  gather_facts: true
+  become_user: root
+
+- name: IPV6
+  import_playbook: aac-base-noipv6.yaml
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: TLS
+  import_playbook: aac-base-tls.yaml
+
+- name: Nginx
+  import_playbook: aac-base-nginx.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- hosts: localhost
+  tasks:
+     - name: Disable SELinux
+       become: yes
+       ansible.posix.selinux:
+         policy: targeted
+         state: permissive
+
+     - name: Write REPO
+       become: yes
+       blockinfile:
+         path: /etc/yum.repos.d/elasticsearch.repo
+         block: |
+           [elasticsearch]
+           name=Elasticsearch repository for 9.x packages
+           baseurl=https://artifacts.elastic.co/packages/9.x/yum
+           gpgcheck=1
+           gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+           enabled=1
+           autorefresh=1
+           type=rpm-md
+         mode: 0644
+         create: yes
+
+     - name: Install packages
+       become: yes
+       package:
+         name:
+           - java-1.8.0-openjdk
+           - elasticsearch
+           - kibana
+           - httpd-tools
+           - logstash
+           - metricbeat
+         state: latest
+
+     - name: Is Kibana configured
+       become: yes
+       lineinfile: 
+         path: /etc/kibana/kibana.yml
+         regex: "^elasticsearch.serviceAccountToken:"
+         state: absent
+       changed_when: false
+       check_mode: true
+       register: kibana_stat
+
+     - name: Update Elasticsearch setting
+       become: yes
+       lineinfile:
+         path: /etc/elasticsearch/elasticsearch.yml
+         regex: "{{ item.old_line }}"
+         line: "{{ item.new_line }}"
+       with_items:
+         - old_line: "^#cluster.name:"
+           new_line: "cluster.name: monitor"
+         - old_line: "^#bootstrap.memory_lock:"
+           new_line: "bootstrap.memory_lock: true"
+         - old_line: "^#network.host:"
+           new_line: "network.host: localhost"
+         - old_line: "^#http.port:"
+           new_line: "http.port: 9200"
+       when: kibana_stat.found != 1
+
+     - name: Update Systemd with MEMLOCK
+       become: yes
+       lineinfile:
+         path: /usr/lib/systemd/system/elasticsearch.service
+         insertafter: "^StandardError=inherit"
+         line: "LimitMEMLOCK=infinity"
+         state: present
+       when: kibana_stat.found != 1
+
+     - name: Update elasticsearch with unlimited memory
+       become: yes
+       lineinfile:
+         path: /etc/sysconfig/elasticsearch
+         insertafter: "^#RESTART_ON_UPGRADE=true"
+         line: "MAX_LOCKED_MEMORY=unlimited"
+         state: present
+       when: kibana_stat.found != 1
+
+     - name: Update Kibana settings
+       become: yes
+       lineinfile:
+         path: /etc/kibana/kibana.yml
+         regex: "{{ item.old_line }}"
+         line: "{{ item.new_line }}"
+       with_items:
+         - old_line: "^#server.port:"
+           new_line: "server.port: 5601"
+         - old_line: "^#server.host:"
+           new_line: "server.host: \"0.0.0.0\""
+         - old_line: "^#elasticsearch.hosts:"
+           new_line: "elasticsearch.hosts: [\"http://localhost:9200\"]"
+       when: kibana_stat.found != 1
+
+     #- name: Kibana Admin Password
+     #  become: yes
+     #  community.general.htpasswd:
+     #    path: /etc/nginx/.kibana-user
+     #    name: Admin
+     #    password: "{{ kibana_pwd }}"
+     #    mode: 0644
+
+           #auth_basic "Restricted Access";
+           #auth_basic_user_file /etc/nginx/.kibana-user;
+     - name: Setup Nginx Proxy For Kibana
+       become: yes
+       copy:
+         dest: /etc/nginx/default.d/10-kibana.conf
+         content: |
+           location / {{ '{' }}
+               proxy_redirect off;
+               proxy_set_header X-Real-IP $remote_addr;
+               proxy_set_header X-Forwarded_For $proxy_add_x_forwarded_for;
+               proxy_set_header Host $http_host;
+               proxy_pass http://localhost:5601;
+           {{ '}' }}
+       when: kibana_stat.found != 1
+
+     - name: remove ipv6 nginx port 80
+       become: yes
+       lineinfile:
+         path: /etc/nginx/nginx.conf
+         regex: "listen       .::.:80;"
+         line: "        #listen       [::]:80;"
+       when: kibana_stat.found != 1
+
+     - name: remove ipv6 nginx port 443
+       become: yes
+       lineinfile:
+         path: /etc/nginx/conf.d/00-tls.conf
+         regex: "listen       .::.:443 ssl http2;"
+         line: "  #listen       [::]:443 ssl http2;"
+       when: kibana_stat.found != 1
+
+     - name: Enable large messages in rsyslog
+       become: yes
+       lineinfile:
+         path: /etc/rsyslog.conf
+         insertbefore: "#### MODULES"
+         line: "{{ item }}"
+         state: present
+       with_items:
+         - "$MaxMessageSize 65k"
+       when: kibana_stat.found != 1
+
+     - name: Update rsyslog setting
+       become: yes
+       lineinfile:
+         path: /etc/rsyslog.conf
+         regex: "{{ item.old_line }}"
+         line: "{{ item.new_line }}"
+       with_items:
+         - old_line: "^#module.load=.imudp"
+           new_line: "module(load=\"imudp\")"
+         - old_line: "^#input.type=.imudp"
+           new_line: "input(type=\"imudp\" port=\"514\")"
+         - old_line: "^#module.load=.imtcp"
+           new_line: "module(load=\"imtcp\")"
+         - old_line: "^#input.type=.imtcp"
+           new_line: "input(type=\"imtcp\" port=\"514\")"
+       when: kibana_stat.found != 1
+
+     - name: Protect syslog stage 1
+       become: yes
+       lineinfile:
+         path: /etc/rsyslog.conf
+         insertafter: "^#### RULES ####"
+         line: "if $hostname == \"localhost\" then {{ '{' }}"
+         state: present
+       when: kibana_stat.found != 1
+
+     - name: Protect syslog stage 2
+       become: yes
+       lineinfile:
+         path: /etc/rsyslog.conf
+         insertafter: EOF
+         line: "{{ '}' }}"
+         state: present
+       when: kibana_stat.found != 1
+
+     - name: Write journald.conf for rsyslog
+       become: yes
+       blockinfile:
+         path: /etc/systemd/journald.conf
+         block: |
+           Storage=volatile
+           Compress=no
+           RateLimitInterval=0
+           MaxRetentionSec=5s
+         mode: 0644
+         create: yes
+       when: kibana_stat.found != 1
+
+     - name: Create Logstash Certificate Directory
+       become: yes
+       file:
+         path: /etc/logstash/certs
+         state: directory
+         mode: 0750
+         owner: root
+         group: logstash
+
+     - name: Copy Elasticsearch CA certificate
+       become: yes
+       shell: "cp /etc/elasticsearch/certs/http_ca.crt /etc/logstash/certs/http_ca.crt"
+
+     - name: Change permissions
+       become: yes
+       file:
+         path: /etc/logstash/certs/http_ca.crt
+         owner: root
+         group: logstash
+
+     - name: Setup Rsyslog for Elasticsearch
+       become: yes
+       blockinfile:
+         dest: /etc/rsyslog.d/01-json-template.conf
+         block: |
+           template(name="json-template" type="list") {{ '{' }}
+               constant(value="{{ '{' }}")
+                 constant(value="\"@timestamp\":\"")     property(name="timereported" dateFormat="rfc3339")
+                 constant(value="\",\"@version\":\"1")
+                 constant(value="\",\"message\":\"")     property(name="msg" format="json")
+                 constant(value="\",\"sysloghost\":\"")  property(name="hostname")
+                 constant(value="\",\"severity\":\"")    property(name="syslogseverity-text")
+                 constant(value="\",\"facility\":\"")    property(name="syslogfacility-text")
+                 constant(value="\",\"programname\":\"") property(name="programname")
+                 constant(value="\",\"procid\":\"")      property(name="procid")
+               constant(value="\"{{ '}' }}\n")
+           {{ '}' }}
+         mode: 0644
+         create: yes
+
+     - name: rsyslogd output to localhost
+       become: yes
+       blockinfile:
+         path: /etc/rsyslog.d/60-output.conf
+         block: |
+           *.*		@localhost:10514;json-template
+         mode: 0644
+         create: yes
+
+     - name: sysclt for rsyslog
+       become: yes
+       ansible.posix.sysctl: 
+         name: "{{ item }}"
+         value: "0"
+         sysctl_set: true
+         state: present
+         reload: true
+       loop:
+         - net.ipv4.conf.all.rp_filter
+         - net.ipv4.conf.default.rp_filter
+       when: kibana_stat.found != 1
+
+     # need to rotate logstash logs
+
+     - name: Set Firewall Rules Services
+       become: yes
+       ansible.posix.firewalld:
+         zone: public
+         service: https
+         state: enabled
+         permanent: true
+
+     - name: Set Firewall Rules Ports
+       become: yes
+       ansible.posix.firewalld:
+         zone: public
+         port: "{{ item }}"
+         state: enabled
+         permanent: true
+       loop:
+         - 514/udp
+         - 514/tcp
+
+     - name: reload daemon sets
+       become: yes
+       ansible.builtin.systemd_service:
+         daemon_reload: true
+
+     - name: enable elasticsearch
+       become: yes
+       ansible.builtin.systemd_service:
+         name: elasticsearch
+         enabled: true
+         masked: no
+
+     - name: stop elasticsearch
+       become: yes
+       ansible.builtin.systemd_service:
+         name: elasticsearch
+         state: stopped
+
+     - name: start elasticsearch
+       become: yes
+       ansible.builtin.systemd_service:
+         name: elasticsearch
+         state: started
+
+     - name: enable kibana
+       become: yes
+       ansible.builtin.systemd_service:
+         name: kibana
+         enabled: true
+         masked: no
+
+     - name: stop kibana
+       become: yes
+       ansible.builtin.systemd_service:
+         name: kibana
+         state: stopped
+
+     - name: start kibana
+       become: yes
+       ansible.builtin.systemd_service:
+         name: kibana
+         state: started
+
+     - name: Enrollment Token
+       become: yes
+       shell: "/usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -s kibana"
+       register: enroll_token
+       when: kibana_stat.found != 1
+
+     - name: Headless Kibana Setup
+       become: yes
+       shell: "/usr/share/kibana/bin/kibana-setup --enrollment-token {{ enroll_token.stdout }}"
+       when: kibana_stat.found != 1
+
+     - name: Kibana Encryption Keys
+       become: yes
+       shell: "/usr/share/kibana/bin/kibana-encryption-keys generate -q"
+       register: kibana_keys
+       when: kibana_stat.found != 1
+
+     - name: Write Encryption Keys and Disable Telemetry
+       become: yes
+       blockinfile:
+         path: /etc/kibana/kibana.yml
+         block: |
+           telemetry.enabled: false
+           telemetry.allowChangingOptInStatus: false
+           telemetry.optIn: false
+           {{ kibana_keys.stdout }}
+       when: kibana_stat.found != 1
+
+     - name: stop elasticsearch after setup
+       become: yes
+       ansible.builtin.systemd_service:
+         name: elasticsearch
+         state: stopped
+
+     - name: start elasticsearch after setup
+       become: yes
+       ansible.builtin.systemd_service:
+         name: elasticsearch
+         state: started
+
+     - name: stop kibana after setup
+       become: yes
+       ansible.builtin.systemd_service:
+         name: kibana
+         state: stopped
+
+     - name: start kibana after setup
+       become: yes
+       ansible.builtin.systemd_service:
+         name: kibana
+         state: started
+
+     - name: stop nginx after setup
+       become: yes
+       ansible.builtin.systemd_service:
+         name: nginx
+         state: stopped
+
+     - name: start nginx after setup
+       become: yes
+       ansible.builtin.systemd_service:
+         name: nginx
+         state: started
+
+     - name: reset default password
+       become: yes
+       ansible.builtin.expect:
+         command: "/usr/share/elasticsearch/bin/elasticsearch-reset-password -u elastic -i -b -s"
+         responses:
+             "Enter password for .elastic.:":
+                 - "{{ kibana_pwd }}"
+             "Re-enter password for .elastic.:":
+                 - "{{ kibana_pwd }}"
+       no_log: true
+
+     - name: Create Logstash Api Key
+       become: yes
+       register: logstash_token
+       shell: "curl -X POST https://localhost:9200/_security/api_key -k -u elastic:{{ kibana_pwd }} -H 'Content-Type: application/json' -d \"{{ '{' }} \\\"name\\\": \\\"logstash_api_key\\\", \\\"role_descriptors\\\": {{ '{' }} \\\"logstash_role\\\": {{ '{' }} \\\"cluster\\\": [\\\"manage_index_templates\\\",\\\"monitor\\\"], \\\"indices\\\": [ {{ '{' }} \\\"names\\\": [\\\"logs-*\\\"], \\\"privileges\\\": [\\\"create\\\", \\\"create_index\\\",\\\"write\\\", \\\"read\\\", \\\"manage\\\"] {{ '}' }} ] {{ '}' }} {{ '}' }} {{ '}' }}\""
+       no_log: true
+
+     - name: Write Logstash Configuration
+       become: yes
+       blockinfile:
+         path: /etc/logstash/conf.d/logstash.conf
+         block: |
+           input {{ '{' }}
+             udp {{ '{' }}
+               host => "127.0.0.1"
+               port => 10514
+               codec => "json"
+               type => "rsyslog"
+             {{ '}' }}
+           {{ '}' }}
+           # The Filter pipeline stays empty here, no formatting is done.
+           filter {{ '{ ' }}{{ '}' }}
+           # Every single log will be forwarded to ElasticSearch. If you are using another port, you should specify it here.
+           output {{ '{' }}
+             if [type] == "rsyslog" {{ '{' }}
+               elasticsearch {{ '{' }}
+                 hosts => [ "https://127.0.0.1:9200" ]
+                 index => "logs-%{{ '{' }}+YYYY.MM.dd{{ '}' }}"
+                 manage_template => true
+                 data_stream => false
+                 ssl_enabled => true
+                 ssl_certificate_authorities => "/etc/logstash/certs/http_ca.crt"
+                 api_key => "{{ (logstash_token.stdout|from_json).id }}:{{ (logstash_token.stdout|from_json).api_key }}"
+               {{ '}' }}
+             {{ '}' }}
+           {{ '}' }}
+         mode: 0644
+         create: yes
+       when: kibana_stat.found != 1
+
+     - name: Create Admin User
+       become: yes
+       shell: "curl -X POST https://localhost:9200/_security/user/admin -k -u elastic:{{ kibana_pwd }} -H 'Content-Type: application/json' -d \"{{ '{' }} \\\"password\\\": \\\"{{ kibana_pwd }}\\\", \\\"roles\\\": [ \\\"superuser\\\" ], \\\"full_name\\\": \\\"Administrator\\\" {{ '}' }}\""
+       no_log: true
+
+     - name: Disable Usage Collection
+       shell: "curl -X PUT https://localhost:9200/_cluster/settings -k -u elastic:{{ kibana_pwd }} -H 'Content-Type: application/json' -d \"{{ '{' }} \\\"persistent\\\": {{ '{' }} \\\"xpack.monitoring.collection.enabled\\\": \\\"false\\\" {{ '}' }} {{ '}' }}\""
+       no_log: true
+
+     #- name: reset kibana password
+     #  become: yes
+     #  ansible.builtin.expect:
+     #    command: "/usr/share/elasticsearch/bin/elasticsearch-reset-password -u kibana -i -b -s"
+     #    responses:
+     #        "Enter password for [kibana]: ":
+     #            - "{{ kibana_pwd }}"
+     #        "Re-enter password for [kibana]: ":
+     #            - "{{ kibana_pwd }}"
+
+     - name: enable logstash
+       become: yes
+       ansible.builtin.systemd_service:
+         name: logstash
+         enabled: true
+         masked: no
+
+     - name: stop logstash
+       become: yes
+       ansible.builtin.systemd_service:
+         name: logstash
+         state: stopped
+
+     - name: start logstash
+       become: yes
+       ansible.builtin.systemd_service:
+         name: logstash
+         state: started
+
+     - name: enable rsyslog
+       become: yes
+       ansible.builtin.systemd_service:
+         name: rsyslog
+         enabled: true
+         masked: no
+
+     - name: stop rsyslog
+       become: yes
+       ansible.builtin.systemd_service:
+         name: rsyslog
+         state: stopped
+
+     - name: start rsyslog
+       become: yes
+       ansible.builtin.systemd_service:
+         name: rsyslog
+         state: started
+
+     - name: Reload Firewalld
+       become: yes
+       ansible.builtin.service:
+         name: firewalld
+         state: reloaded
+
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...
