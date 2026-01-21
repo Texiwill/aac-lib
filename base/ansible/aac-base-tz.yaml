@@ -1,5 +1,5 @@
 ---
-# version: 1.1.6
+# version: 1.1.7
 
 - hosts: localhost
   gather_facts: true
@@ -95,8 +95,10 @@
          - "{{ ansible_python.executable|basename }}-setuptools"
          - "{{ ansible_python.executable|basename }}-passlib"
          - "{{ ansible_python.executable|basename }}-firewall"
+         - "{{ ansible_python.executable|basename }}-pexpect"
          - git
          - gzip
+         - expect
        when: (ansible_os_family != "Alpine") and
              (ansible_os_family != "VMware Photon OS") and
              (ansible_distribution != "MacOSX")
