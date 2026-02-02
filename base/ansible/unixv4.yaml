@@ -1,0 +1,173 @@
+---
+# version: 1.0.0
+# Designed for Rocky 10 using Fedora 43 image of simh
+# Unique system for a user that makes unixv4 the running environment
+# instead of the local image for shell usage. So use a Unique user.
+# To install and use run: /usr/local/bin/unixv4
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- name: Install UNIX V4
+  hosts: localhost
+  gather_facts: true
+  become_user: root
+  tasks:
+     - name: Install packages
+       become: true
+       ansible.builtin.package:
+          disable_gpg_check: true
+          name:
+             - https://dl.fedoraproject.org/pub/fedora/linux/releases/43/Everything/x86_64/os/Packages/s/simh-3.12.5-5.fc43.x86_64.rpm
+
+     - name: Create Opt dir
+       become: true
+       ansible.builtin.file: 
+          path: /opt/unixv4
+          state: directory
+          owner: root
+          group: root
+          mode: '0755'
+
+     - name: Get UNIX v4
+       become: true
+       ansible.builtin.get_url:
+          url: "http://squoze.net/UNIX/v4/{{ item }}"
+          dest: "/opt/unixv4/"
+       with_items:
+          - README
+          - unix_v4.tap
+          - bootstrap
+          - disk.rk
+          - unix_v4.tar
+          - install.ini
+          - boot.ini
+          - sys.tp
+          - aap.tp
+          - nroff.tp
+          - man.tap
+
+     - name: Write Start Script
+       become: true
+       ansible.builtin.blockinfile:
+          path: /usr/local/bin/unixv4
+          create: true
+          state: present
+          block: |
+            #!/bin/bash
+            # Do this only once, else overwrite disks
+            if [ ! -d  $HOME/unixv4 ]
+            then
+                    mkdir $HOME/unixv4
+                    cp -r /opt/unixv4/* $HOME/unixv4
+            fi
+            # Go to unixv4 home
+            cd $HOME/unixv4
+            # Did we install already
+            if [ ! -f $HOME/unixv4/.installed ]
+            then
+                    expect install.exp
+                    echo "/usr/local/bin/unixv4" >> $HOME/.bashrc
+                    touch $HOME/unixv4/.installed
+            fi
+            # Start unixv4 - Interact at login
+            expect boot.exp
+
+     - name: unixv4 permissions
+       become: true
+       ansible.builtin.file: 
+          path: /usr/local/bin/unixv4
+          owner: root
+          group: root
+          mode: '0755'
+
+     - name: Write Install Expect Script
+       become: true
+       ansible.builtin.blockinfile:
+          path: /opt/unixv4/install.exp
+          create: true
+          state: present
+          block: |
+            spawn simh-pdp11 install.ini
+            expect "="
+            send "list\r"
+            expect {{ '{' }}
+                    "=" {{ '{' }}
+                            send "mcopy\r"
+                            exp_continue
+                    {{ '}' }}
+                    "'p' for rp; 'k' for rk" {{ '{' }}
+                            send "k"
+                            exp_continue
+                    {{ '}' }}
+                    "disk offset" {{ '{' }}
+                            send "0\r"
+                            exp_continue
+                    {{ '}' }}
+                    "tape offset" {{ '{' }}
+                            send "75\r"
+                            exp_continue
+                    {{ '}' }}
+                    "count" {{ '{' }}
+                            send "4000\r"
+                            expect {{ '{' }}
+                                    "=" {{ '{' }}
+                                            send "uboot\r"
+                                    {{ '}' }}
+                            {{ '}' }}
+                            exp_continue
+                    {{ '}' }}
+            {{ '}' }}
+            send "k"
+            send "unix\r"
+            expect {{ '{' }}
+                    "login:" {{ '{' }}
+                            send "root\r"
+                            exp_continue
+                    {{ '}' }}
+                    "#" {{ '{' }}
+                            send "ls\r"
+                            expect {{ '{' }}
+                                    "#" {{ '{' }}
+                                            send "sync\r"
+                                            expect {{ '{' }}
+                                                    "#" {{ '{' }}
+                                                            send "^E"
+                                                    {{ '}' }}
+                                            {{ '}' }}
+                                    {{ '}' }}
+                            {{ '}' }}
+                            exp_continue
+                    {{ '}' }}
+            {{ '}' }}
+            send "quit\r"
+ 
+     - name: Write Boot Expect Script
+       become: true
+       ansible.builtin.blockinfile:
+          create: true
+          state: present
+          path: /opt/unixv4/boot.exp
+          block: |
+            spawn simh-pdp11 boot.ini
+            expect {{ '{' }}
+                    "Disabling XQ\r" {{ '{' }}
+                            sleep 1
+                            send "k"
+                            exp_continue
+                     {{ '}' }}
+                    "k\r" {{ '{' }}
+                            send "unix\r"
+                            exp_continue
+                    {{ '}' }}
+                    "login:" {{ '{' }}
+                            interact
+                    {{ '}' }}
+            {{ '}' }}
+ 
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...
