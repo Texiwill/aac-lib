@@ -16,6 +16,11 @@
   gather_facts: true
   become_user: root
   tasks:
+     - name: No Debian Family Support Output
+       ansible.builtin.debug:
+          msg: "Playbook only supports RedHat-like 10 OS"
+       when: ansible_os_family != "RedHat" or (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("10", '<'))
+
      - name: Install packages
        become: true
        ansible.builtin.package:
@@ -25,7 +30,7 @@
 
      - name: Create Opt dir
        become: true
-       ansible.builtin.file: 
+       ansible.builtin.file:
           path: /opt/unixv4
           state: directory
           owner: root
@@ -37,6 +42,7 @@
        ansible.builtin.get_url:
           url: "http://squoze.net/UNIX/v4/{{ item }}"
           dest: "/opt/unixv4/"
+          mode: '0644'
        with_items:
           - README
           - unix_v4.tap
@@ -56,6 +62,7 @@
           path: /usr/local/bin/unixv4
           create: true
           state: present
+          mode: '0755'
           block: |
             #!/bin/bash
             # Do this only once, else overwrite disks
@@ -76,9 +83,9 @@
             # Start unixv4 - Interact at login
             expect boot.exp
 
-     - name: unixv4 permissions
+     - name: Unixv4 permissions
        become: true
-       ansible.builtin.file: 
+       ansible.builtin.file:
           path: /usr/local/bin/unixv4
           owner: root
           group: root
@@ -90,6 +97,7 @@
           path: /opt/unixv4/install.exp
           create: true
           state: present
+          mode: '0644'
           block: |
             spawn simh-pdp11 install.ini
             expect "="
@@ -144,12 +152,13 @@
                     {{ '}' }}
             {{ '}' }}
             send "quit\r"
- 
+
      - name: Write Boot Expect Script
        become: true
        ansible.builtin.blockinfile:
           create: true
           state: present
+          mode: '0644'
           path: /opt/unixv4/boot.exp
           block: |
             spawn simh-pdp11 boot.ini
@@ -167,7 +176,7 @@
                             interact
                     {{ '}' }}
             {{ '}' }}
- 
+
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml
 ...
