@@ -1,66 +1,58 @@
 ---
-# version: 1.0.1
-- hosts: localhost
+# version: 1.0.2
+- name: Setup MariaDB
+  hosts: localhost
   tasks:
-     - name: install dependencies
-       become: yes
-       package:
-         name:
-           - mariadb
-           - mariadb-server
-           - mariadb-server-utils
-           - "{{ ansible_python.executable|basename }}-PyMySQL"
-         state: latest
+     - name: Install dependencies
+       become: true
+       ansible.builtin.package:
+          name:
+             - mariadb
+             - mariadb-server
+             - mariadb-server-utils
+             - "{{ ansible_python.executable | basename }}-PyMySQL"
        when: ansible_distribution != "MacOSX"
 
-     - name: start mariadb
-       become: yes
-       service:
-         name: mariadb
-         enabled: true
-         state: started
+     - name: Start mariadb
+       become: true
+       ansible.builtin.service:
+          name: mariadb
+          enabled: true
+          state: started
 
-     - name: set my.cnf
-       become: yes
-       copy:
-         dest: ~/.my.cnf
-         mode: "0600"
-         content: |
-           [client]
-           user=root
-           password={{ mariadb_pwd }}
+     - name: Set my.cnf
+       become: true
+       ansible.builtin.copy:
+          dest: ~/.my.cnf
+          mode: "0600"
+          content: |
+            [client]
+            user=root
+            password={{ mariadb_pwd }}
        no_log: true
 
-     # Not needed for Mriadb 10.5 uses system root password
-     #- name: mysql_root_password
-     #  become: yes
-     #  community.mysql.mysql_user:
-     #    user: root
-     #    check_implicit_admin: true
-     #    password: "{{ mariadb_pwd }}"
-     #    host: localhost
-     #  become: true
-     
      - name: Remove MySQL test database
-       become: yes
-       mysql_db:
-         login_unix_socket: /var/lib/mysql/mysql.sock
-         name: test
-         state: absent
+       become: true
+       community.mysql.mysql_db:
+          login_unix_socket: /var/lib/mysql/mysql.sock
+          name: test
+          state: absent
        no_log: true
-     
+
      - name: Adjust mariadb bind address
-       become: yes
+       become: true
        ansible.builtin.lineinfile:
-         path: /etc/mysql/mariadb.conf.d/50-server.cnf
-         regex: '^bind-address.*\= '
-         line: "bind-address = {{ mariadb_bind_address }}"
+          path: /etc/mysql/mariadb.conf.d/50-server.cnf
+          regex: '^bind-address.*\= '
+          line: "bind-address = {{ mariadb_bind_address }}"
        when: ansible_os_family == 'Debian'
 
-     - name: start mariadb
-       become: yes
-       service:
-         name: mariadb
-         enabled: true
-         state: restarted
+     - name: Start mariadb
+       become: true
+       ansible.builtin.service:
+          name: mariadb
+          enabled: true
+          state: restarted
        when: ansible_os_family == 'Debian'
+
+...

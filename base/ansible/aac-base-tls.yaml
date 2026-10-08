@@ -1,32 +1,33 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 # designed to work with Rocky Linux, not tested on any other Linux distro
 
-- hosts: localhost
+- name: Setup TLS
+  hosts: localhost
   tasks:
      - name: TLS Private Key
-       become: yes
+       become: true
        community.crypto.openssl_privatekey:
-         path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
-     
+          path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
+
      - name: TLS Private Key Permissions
-       become: yes
-       file:
-         path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
+       become: true
+       ansible.builtin.file:
+          path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
 
      - name: Update OpenSSL cnf
-       become: yes
-       lineinfile:
-         path: /etc/pki/tls/openssl.cnf
-         insertafter: "^. v3_ca ."
-         line: "subjectAltName = IP: {{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
-         state: present
-     
+       become: true
+       ansible.builtin.lineinfile:
+          path: /etc/pki/tls/openssl.cnf
+          insertafter: "^. v3_ca ."
+          line: "subjectAltName = IP: {{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }}"
+          state: present
+
      - name: TLS Certificate
-       become: yes
+       become: true
        community.crypto.x509_certificate:
-         path: "/etc/pki/tls/certs/{{ ansible_fqdn }}.crt"
-         privatekey_path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
-         provider: selfsigned
-     
+          path: "/etc/pki/tls/certs/{{ ansible_fqdn }}.crt"
+          privatekey_path: "/etc/pki/tls/private/{{ ansible_fqdn }}.key"
+          provider: selfsigned
+
 ...

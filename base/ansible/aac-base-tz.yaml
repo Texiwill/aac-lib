@@ -1,269 +1,256 @@
 ---
-# version: 1.1.7
+# version: 1.1.8
 
-- hosts: localhost
+- name: Setup Timezone
+  hosts: localhost
   gather_facts: true
   become_user: root
 
   tasks:
-     - name: debug
-       debug:
-         var: ansible_facts
+     - name: Debug
+       ansible.builtin.debug:
+          var: ansible_facts
        when: (aac_base_debug is defined)
 
-     - name: debug
-       debug:
-         var: ansible_play_name
+     - name: Debug
+       ansible.builtin.debug:
+          var: ansible_play_name
        when: (aac_base_debug is defined)
 
-     - name: install system updates for redhat systems
-       become: yes
-       yum: name=* state=latest update_cache=yes
-       when: ansible_os_family == "RedHat"
+     #- name: Install system updates for redhat systems
+     #  become: true
+     #  ansible.builtin.package:
+     #     name: '*'
+     #     update_cache: true
+     #  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
-     - name: install system updates for ubuntu systems
-       become: yes
-       apt: upgrade=dist update_cache=yes
-       when: ansible_os_family == "Debian"
+     #- name: Install system updates for Photon
+     #  become: true
+     #  ansible.builtin.command: "tdnf -y update"
+     #  when: ansible_os_family == "VMware Photon OS"
 
-     - name: install system updates for Photon
-       become: yes
-       command: "tdnf -y update"
-       when: ansible_os_family == "VMware Photon OS"
-
-     - name: install the latest ntp (ignore if not there)
-       become: yes
-       package:
-         name:
-           - ntp
-         state: latest
-       ignore_errors: yes
+     - name: Install the latest ntp (ignore if not there)
+       become: true
+       ansible.builtin.package:
+          name:
+             - ntp
+       ignore_errors: true
        when: (ansible_os_family != "VMware Photon OS") and
              (ansible_distribution != "MacOSX")
 
-     - name: install the latest ntpd (ignore if not there)
-       become: yes
-       package:
-         name:
-           - ntpd
-         state: latest
-       ignore_errors: yes
+     - name: Install the latest ntpd (ignore if not there)
+       become: true
+       ansible.builtin.package:
+          name:
+             - ntpd
+       ignore_errors: true
        when: (ansible_os_family != "VMware Photon OS") and
              (ansible_distribution != "MacOSX")
 
-     - name: install the latest chrony (ignore if not there)
-       become: yes
-       package:
-         name:
-           - chrony
-         state: latest
-       ignore_errors: yes
+     - name: Install the latest chrony (ignore if not there)
+       become: true
+       ansible.builtin.package:
+          name:
+             - chrony
+       ignore_errors: true
        when: (ansible_os_family != "VMware Photon OS") and
              (ansible_distribution != "MacOSX")
 
-     - name: install the required dependencies for Photon
-       become: yes
-       command: "tdnf -y install {{ item }}"
+     - name: Install the required dependencies for Photon
+       become: true
+       ansible.builtin.command: "tdnf -y install {{ item }}"
        with_items:
-         - ntp
-         - git
-         - python-pip
-         - python3-pip
-         - python-pexpect
-         - expect
-         - gzip
+          - ntp
+          - git
+          - python-pip
+          - python3-pip
+          - python-pexpect
+          - expect
+          - gzip
        when: ansible_os_family == "VMware Photon OS"
 
-     - name: install the required dependencies for Alpine
-       become: yes
-       package:
-         name:
-           - git
-           - py3-pip
-           - py3-pexpect
-           - expect
-           - gzip
+     - name: Install the required dependencies for Alpine
+       become: true
+       ansible.builtin.package:
+          name:
+             - git
+             - py3-pip
+             - py3-pexpect
+             - expect
+             - gzip
        when: ansible_os_family == "Alpine"
 
-     - name: install the other required dependencies
-       become: yes
-       package:
-         name: "{{ item }}"
-         state: latest
+     - name: Install the other required dependencies
+       become: true
+       ansible.builtin.package:
+          name: "{{ item }}"
        with_items:
-         - "{{ ansible_python.executable|basename }}-pip"
-         - "{{ ansible_python.executable|basename }}-setuptools"
-         - "{{ ansible_python.executable|basename }}-passlib"
-         - "{{ ansible_python.executable|basename }}-firewall"
-         - "{{ ansible_python.executable|basename }}-pexpect"
-         - git
-         - gzip
-         - expect
+          - "{{ ansible_python.executable | basename }}-pip"
+          - "{{ ansible_python.executable | basename }}-setuptools"
+          - "{{ ansible_python.executable | basename }}-passlib"
+          - "{{ ansible_python.executable | basename }}-firewall"
+          - "{{ ansible_python.executable | basename }}-pexpect"
+          - git
+          - gzip
+          - expect
        when: (ansible_os_family != "Alpine") and
              (ansible_os_family != "VMware Photon OS") and
              (ansible_distribution != "MacOSX")
 
-     #- name: install the other required dependencies Rocky
-     #  become: yes
-     #  package:
-     #    name: "{{ item }}"
-     #    state: latest
-     #  with_items:
-     #      - "{{ ansible_python.executable|basename }}-wheel"
-     #  when: (ansible_distribution == "Rocky")
-
      - name: Upgrade PIP
-       become: yes
-       pip:
-         name: pip
-         state: latest
+       become: true
+       ansible.builtin.pip:
+          name: pip
        when: (ansible_distribution != "MacOSX") and
              (ansible_os_family != "VMware Photon OS") and
              (ansible_os_family != "RedHat") and
              (ansible_distribution != "Ubuntu")
 
      - name: Upgrade PIP (Ubuntu)
-       become: yes
-       pip:
-         name: pip
-         state: latest
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("23",'<'))
+       become: true
+       ansible.builtin.pip:
+          name: pip
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("23", '<'))
 
      - name: Upgrade PIP el7
-       become: yes
-       pip:
-         name: pip<21.0
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<'))
+       become: true
+       ansible.builtin.pip:
+          name: pip<21.0
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", '<'))
 
      - name: Install pexpect
-       become: yes
-       pip:
-         name: pexpect
+       become: true
+       ansible.builtin.pip:
+          name: pexpect
        when: (ansible_distribution != "MacOSX") and
              (ansible_distribution != "Ubuntu")
 
      - name: Install pexepect (Ubuntu)
-       become: yes
-       pip:
-         name: pexpect
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("23",'<'))
+       become: true
+       ansible.builtin.pip:
+          name: pexpect
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("23", '<'))
 
-     - name: install the required dependencies for Ubuntu23.10
-       become: yes
-       package:
-         name:
-           - python3-pexpect
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("22",'>'))
+     - name: Install the required dependencies for Ubuntu23.10
+       become: true
+       ansible.builtin.package:
+          name:
+             - python3-pexpect
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("22", '>'))
 
      - name: Install pexpect MacOSX
-       pip:
-         name: 
-           - pexpect
+       ansible.builtin.pip:
+          name:
+             - pexpect
        when: ansible_distribution == "MacOSX"
 
      - name: Package Facts
-       package_facts:
-         manager: "auto"
+       ansible.builtin.package_facts:
+          manager: "auto"
        when: (ansible_distribution != "MacOSX") and
              (ansible_os_family != "VMware Photon OS")
 
-# Switch back to 'service_facts:' after Ansible is fixed for Ubuntu 20, 
+# Switch back to 'service_facts:' after Ansible is fixed for Ubuntu 20,
 # for now do our own.
      - name: Raw Service Data
-       shell: systemctl list-unit-files |grep -v "unit files listed" |egrep -v '^$'
+       ansible.builtin.shell: |
+         set -o pipefail
+         systemctl list-unit-files |grep -v "unit files listed" |egrep -v '^$'
        register: systemd_facts
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) and
-             ("microsoft" not in ansible_kernel)
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19", '>')) and ("microsoft" not in ansible_kernel)
 
      - name: Service Facts
-       set_fact: 
-          service_facts: "{{ service_facts|default({}) | combine( {item.split()[0]: {'name': item.split()[0],'status': item.split()[1]}} ) }}"
+       ansible.builtin.set_fact:
+          service_facts: "{{ service_facts | default({}) | combine({item.split()[0]: {'name': item.split()[0], 'status': item.split()[1]}}) }}"
        with_items: "{{ systemd_facts.stdout.split('\n') }}"
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) and
-             ("microsoft" not in ansible_kernel)
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19", '>')) and ("microsoft" not in ansible_kernel)
 
      - name: Package Facts Photon
-       become: yes
-       shell: tdnf list | cut -d\. -f1
+       become: true
+       ansible.builtin.shell: |
+         set -o pipefail
+         tdnf list | cut -d\. -f1
        register: packages_facts
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Change umask for Photon
-       become: yes
-       lineinfile:
-         path: /etc/profile
-         regexp: umask 027
-         line: umask 022
+       become: true
+       ansible.builtin.lineinfile:
+          path: /etc/profile
+          regexp: umask 027
+          line: umask 022
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Register Photon Packages
-       set_fact:
-         ansible_facts: "{{ ansible_facts | combine({'packages': packages_facts.stdout_lines}) }}"
+       ansible.builtin.set_fact:
+          ansible_facts: "{{ ansible_facts | combine({'packages': packages_facts.stdout_lines}) }}"
        when: (ansible_os_family == "VMware Photon OS")
 
      - name: Register MacOSX Packages
-       set_fact:
-         ansible_facts: "{{ ansible_facts | combine({'packages': []}) }}"
+       ansible.builtin.set_fact:
+          ansible_facts: "{{ ansible_facts | combine({'packages': []}) }}"
        when: (ansible_distribution == "MacOSX")
 
      - name: Set Facts
-       set_fact:
-         set_time: ntp
+       ansible.builtin.set_fact:
+          set_time: ntp
        when: ansible_os_family == "Debian"
 
      - name: Set Facts
-       set_fact:
-         set_time: ntpd
+       ansible.builtin.set_fact:
+          set_time: ntpd
        when: (ansible_os_family == "RedHat") or
              (ansible_os_family == "VMware Photon OS")
 
      - name: Set Facts
-       set_fact:
-         set_time: chronyd
+       ansible.builtin.set_fact:
+          set_time: chronyd
        when: ('"chrony" in ansible_facts.packages') and
              (ansible_os_family != "VMware Photon OS")
-     
+
      - name: Set Facts
-       set_fact:
-         set_time: chrony
-       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",'>')) and
+       ansible.builtin.set_fact:
+          set_time: chrony
+       when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19", '>')) and
              ("microsoft" not in ansible_kernel) and
              (service_facts["chronyd.service"] is defined) and
              (service_facts["chronyd.service"].status == "alias") and
              (service_facts["chrony.service"] is defined)
 
      - name: Set Facts
-       set_fact:
-         set_time: ntp
-       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<')) or
-             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20",'<'))
+       ansible.builtin.set_fact:
+          set_time: ntp
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10", '<')) or
+             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("20", '<'))
 
      - name: Stop Time Daemon
-       become: yes
-       service:
-         name: "{{set_time}}"
-         state: stopped
+       become: true
+       ansible.builtin.service:
+          name: "{{ set_time }}"
+          state: stopped
        when: aac_base_tz is defined and ansible_distribution != "MacOSX" and ("microsoft" not in ansible_kernel)
 
      - name: Set timezone
-       become: yes
-       timezone:
-         name: "{{ item }}"
+       become: true
+       community.general.timezone:
+          name: "{{ item }}"
        with_items:
-         - "{{ aac_base_tz }}"
+          - "{{ aac_base_tz }}"
        when: aac_base_tz is defined and ansible_distribution != "MacOSX"
 
      - name: Enable Time Daemon
-       become: yes
-       service:
-         name: "{{set_time}}"
-         enabled: yes
-       when: (aac_base_tz is defined) and 
+       become: true
+       ansible.builtin.service:
+          name: "{{ set_time }}"
+          enabled: true
+       when: (aac_base_tz is defined) and
              (ansible_distribution != "MacOSX" and "microsoft" not in ansible_kernel)
 
      - name: Stop postfix
-       become: yes
-       service:
-         name: postfix
-         state: stopped
+       become: true
+       ansible.builtin.service:
+          name: postfix
+          state: stopped
        when: ("postfix" in ansible_facts.packages) and ("microsoft" not in ansible_kernel)
+
+...

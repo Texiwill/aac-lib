@@ -1,43 +1,48 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 # designed to work with Rocky Linux, not tested on any other Linux distro
 
-- hosts: localhost
+- name: Install SNMP
+  hosts: localhost
   tasks:
-     - name: install dependencies
-       become: yes
-       package:
-         name:
-           - net-tools
-           - net-snmp
-           - net-snmp-utils
-         state: latest
+     - name: Install dependencies
+       become: true
+       ansible.builtin.package:
+          name:
+             - net-tools
+             - net-snmp
+             - net-snmp-utils
 
      # simplest config
      - name: Create SNMPd Config
-       become: yes
-       copy:
-         dest: /etc/snmp/snmpd.conf
-         force: yes
-         content: |
-           com2sec readonly  default         public
-           group MyROGroup v2c        readonly
-           view all    included  .1                               80
-           access MyROGroup ""      any       noauth    exact  all    none   none
-           syslocation Rack, Room, Building, City, Country [Lat, Lon]
-           syscontact Your Name <your@email.address>
+       become: true
+       ansible.builtin.copy:
+          dest: /etc/snmp/snmpd.conf
+          force: true
+          mode: '0600'
+          owner: root
+          group: root
+          content: |
+            com2sec readonly  default         public
+            group MyROGroup v2c        readonly
+            view all    included  .1                               80
+            access MyROGroup ""      any       noauth    exact  all    none   none
+            syslocation Rack, Room, Building, City, Country [Lat, Lon]
+            syscontact Your Name <your@email.address>
 
      - name: Enable and restart snmpd
-       become: yes
-       service:
-         name: snmpd
-         state: restarted
-         enabled: true
+       become: true
+       ansible.builtin.service:
+          name: snmpd
+          state: restarted
+          enabled: true
 
      - name: Set Firewall snmp Rules
-       become: yes
-       command: firewall-cmd --zone=public --add-service=snmp --permanent
+       become: true
+       ansible.builtin.command: firewall-cmd --zone=public --add-service=snmp --permanent
 
      - name: Enable Firewall Rules
-       become: yes
-       command: firewall-cmd --reload
+       become: true
+       ansible.builtin.command: firewall-cmd --reload
+
+...

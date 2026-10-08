@@ -1,33 +1,45 @@
 ---
-# version: 1.0.2
+# version: 1.0.3
 #
-- hosts: localhost
+- name: Install SELinux
+  hosts: localhost
   become_user: root
   tasks:
-     - name: install the latest for selinux - RHEL < 8
-       become: yes
-       package:
-         name:
-           - policycoreutils-python
-           - setroubleshoot-server
-         state: latest
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')
+     - name: Install the latest for selinux - RHEL < 8
+       become: true
+       ansible.builtin.package:
+          name:
+             - policycoreutils-python
+             - setroubleshoot-server
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", '<')
 
-     - name: install the latest for selinux - RHEL >= 8
-       become: yes
-       package:
-         name:
-           - python3-policycoreutils
-           - setroubleshoot-server
-         state: latest
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>')
 
-     - name: install the latest for selinux - Debian
-       become: yes
-       package:
-         name:
-           - policycoreutils
-           - selinux-utils
-         state: latest
+     - name: Install the latest for selinux - RHEL = 8
+       become: true
+       ansible.builtin.package:
+          name:
+             - python3-policycoreutils
+             - setroubleshoot-server
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", '=')
+
+     - name: Install the latest for selinux - RHEL > 8
+       become: true
+       ansible.builtin.package:
+          name:
+             - policycoreutils-python-utils
+             - policycoreutils-newrole
+             - policycoreutils-restorecond
+             - policycoreutils-sandbox
+             - python3-policycoreutils
+             - setroubleshoot-server
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", '>')
+
+     - name: Install the latest for selinux - Debian
+       become: true
+       ansible.builtin.package:
+          name:
+             - policycoreutils
+             - selinux-utils
        when: ansible_os_family == "Debian"
+
 ...
