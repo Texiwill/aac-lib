@@ -1,6 +1,7 @@
 ---
 # version: 1.0.0
 # designed to work with Rocky Linux, not tested on any other Linux distro
+# working on debian, ubuntu, fedora
 
 - hosts: localhost
   gather_facts: true
@@ -59,15 +60,39 @@
          state: started
          enabled: yes
 
+     - name: Set facts for Rocky
+       set_fact: 
+          _distro: "rocky"
+          _distro_baseurl: "https://download.rockylinux.org/pub/rocky"
+          _distro_surl: "isos/x86_64"
+          _distro_subver: "-latest"
+          _distro_arch: "x86_64"
+          _distro_type: "minimal"
+          _distro_boot: "images/pxeboot"
+       when: _distro_name == "Rocky"
+
+     - name: Set facts for Debian
+       set_fact: 
+          _distro: "devian"
+          _distro_baseurl: "https://cdimage.debian.org/debian-cd"
+          #_distro_surl: "isos/x86_64"
+          #_distro_subver: "-latest"
+          _distro_arch: "amd64"
+          _distro_type: "netinst"
+       when: _distro_name == "Debian"
+
+     #- name: Determine Debian Facts from URL
+       # need to go to cdimage/release for latest version 
+       # - match major and extract subver
+       # If no match go to cdimage/archive get list and find
+       
      - name: Unmount Isos
        become: yes
        ansible.posix.mount:
          path: "/mnt/{{ item }}"
          state: unmounted
        loop:
-         - rocky
-         - debian
-         - fedora
+         - "{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}"
 
      - name: Make Media directories
        become: yes
@@ -80,55 +105,45 @@
          mode: 0775
        loop:
          - isos
-         - rocky
-         - debian
-         - fedora
+         - "{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}"
 
      - name: Stat Isos
        stat:
-         path: "/mnt/isos/{{ item }}"
-       register: "{{ item }}_stat"
-       loop:
-         - Rocky-9.2-x86_64-minimal.iso
-         - debian-12.2.0-amd64-netinst.iso
-         - Fedora-Workstation-Live-x86_64-39-1.5.iso
+         path: "/mnt/isos/{{ _distro_name }}-{{ _distro_ver }}{{ _distro_subver }}-{{ _distro_arch }}-{{ _distro_type }}.iso"
+       register: stat_result
+
+     - name: Debug
+       ansible.builtin.debug:
+          msg: "{{ _distro_baseurl }}/{{ _distro_ver }}/{{ _distro_surl }}/{{ _distro_name }}-{{ _distro_ver }}{{ _distro_subver }}-{{ _distro_arch }}-{{ _distro_type }}.iso"
 
      # need a smarter download here
      - name: Get Isos
        get_url:
-         url: '{{ item }}'
-         dest: '/mnt/isos/{{ item|basename }}'
+         url: "{{ item }}"
+         dest: "/mnt/isos/{{ item|basename }}"
+         mode: '0644'
        async: 1800
        poll: 10
        loop:
-         - https://download.rockylinux.org/pub/rocky/9/isos/x86_64/Rocky-9.2-x86_64-minimal.iso
-         - https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.2.0-amd64-netinst.iso
-         - https://download.fedoraproject.org/pub/fedora/linux/releases/39/Workstation/x86_64/iso/Fedora-Workstation-Live-x86_64-39-1.5.iso
-       ignore_errors: yes
+         - "{{ _distro_baseurl }}/{{ _distro_ver }}/{{ _distro_surl }}/{{ _distro_name }}-{{ _distro_ver }}{{ _distro_subver }}-{{ _distro_arch }}-{{ _distro_type }}.iso"
+       #when: not stat_result.stat.exists
 
+     # Why in /etc/rc.d/rc.local and not /etc/fstab?
      - name: Mount Isos
        become: yes
        lineinfile:
          path: '/etc/rc.d/rc.local'
-         line: mount -t iso9660 -o ro /mnt/isos/{{ item.name }} /mnt/{{ item.mnt }}
-       loop:
-         - { name: Rocky-9.2-x86_64-minimal.iso, mnt: rocky }
-         - { name: debian-12.2.0-amd64-netinst.iso, mnt: debian }
-         - { name: Fedora-Workstation-Live-x86_64-39-1.5.iso, mnt: fedora }
+         line: mount -t iso9660 -o ro /mnt/isos/{{ _distro_name }}-{{ _distro_ver }}{{ _distro_subver }}-{{ _distro_arch }}-{{ _distro_type }}.iso /mnt/{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}
 
      - name: Iso Image Directory
        become: yes
        file:
-         path: '/tftpboot/images/{{ item.name }}/{{ item.version}}'
+         path: '/tftpboot/images/{{ _distro }}/{{ _distro_ver }}{{ _distro_subver }}'
          state: directory
          recurse: yes
          owner: root
          group: wheel
          mode: '0755'
-       loop:
-         - { name: rocky, version: 9 }
-         - { name: debian, version: 11 }
-         - { name: fedora, version: 39 }
 
      - name: rc.local file permissions
        become: yes
@@ -157,15 +172,11 @@
      - name: Iso Image Pxeboot Copy
        become: yes
        copy:
-         src: '/mnt/{{ item.name }}/{{ item.dir }}/'
-         dest: '/tftpboot/images/{{ item.name }}/{{ item.version}}/{{ item.arch }}/'
+         src: '/mnt/{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}/{{ _distro_boot }}/'
+         dest: '/tftpboot/images/{{ _distro }}/{{ _distro_ver }}{{ _distro_subver }}/{{ _distro_arch }}/'
          mode: '0755'
          owner: root
          group: wheel
-       loop:
-         - { name: rocky, dir: images/pxeboot, version: 9, arch: x86_64 }
-         - { name: debian, dir: install.amd, version: 11, arch: amd64 }
-         - { name: fedora, dir: images/pxeboot, version: 39, arch: x86_64 }
 
      - name: Make PXEBoot Menu Beginning
        become: yes
@@ -192,15 +203,11 @@
        become: yes
        blockinfile:
          path: '/tftpboot/pxelinux.cfg/default'
-         marker: ''
+         marker: "ANSIBLE {{ _distro_name }}-{{ _distro_ver }}"
          block: |
-           LABEL {{ item.name }} {{ item.version }} {{ item.arch }}
-             MENU LABEL {{ item.name }} {{ item.version }} {{ item.arch }}
-             KERNEL images/{{ item.name }}/{{ item.version }}/{{ item.arch }}/vmlinuz
-       loop:
-         - { name: rocky, version: 9, arch: x86_64 }
-         - { name: debian, version: 11, arch: amd64 }
-         - { name: fedora, version: 39, arch: x86_64 }
+           LABEL {{ _distro_name }} {{ _distro_ver }} {{ _distro_arch }}
+             MENU LABEL {{ _distro_name }} {{ _distro_ver }} {{ _distro_arch }}
+             KERNEL images/{{ _distro }}/{{ _distro_ver }}{{ _distro_subver }}/{{ _distro_arch }}/vmlinuz
 
      - name: Make PXEBoot Graphics Conf
        become: yes
@@ -234,12 +241,9 @@
      - name: Symlink to Repo locations
        become: yes
        file:
-         src: '/mnt/{{ item }}'
-         dest: '/usr/share/nginx/html/{{ item }}'
+         src: '/mnt/{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}'
+         dest: '/usr/share/nginx/html/{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}'
          state: link
-       loop:
-         - rocky
-         - debian
 
      - name: Restart nginx
        become: yes
