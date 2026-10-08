@@ -1,9 +1,5 @@
 ---
-# version: 1.0.1
-
-- hosts: localhost
-  gather_facts: true
-  become_user: root
+# version: 1.0.2
 
 - name: TZ
   import_playbook: aac-base-tz.yaml
@@ -11,63 +7,67 @@
 - name: SELinux
   import_playbook: aac-base-selinux.yaml
 
-- hosts: localhost
+- name: Install ISOLIB
+  hosts: localhost
+  gather_facts: true
+  become_user: root
   tasks:
      - name: No Debian Family Support Output
-       debug:
-         msg: "No Debian Family Support for Isolib, use RedHat-like OS"
+       ansible.builtin.debug:
+          msg: "No Debian Family Support for Isolib, use RedHat-like OS"
        when: ansible_os_family == "Debian"
 
      - name: No Debian Family Support
-       meta: end_host
+       ansible.builtin.meta: end_host
        when: ansible_os_family == "Debian"
 
-     - name: add Negativo17 GPG Keys
-       become: yes
-       rpm_key:
-         state: present
-         key: https://negativo17.org/repos/RPM-GPG-KEY-slaanesh
+     - name: Add Negativo17 GPG Keys
+       become: true
+       ansible.builtin.rpm_key:
+          state: present
+          key: https://negativo17.org/repos/RPM-GPG-KEY-slaanesh
        when: ansible_os_family == "RedHat"
 
-     - name: install Schilling Fedora Repo
-       become: yes
-       get_url:
-         url: https://negativo17.org/repos/fedora-cdrtools.repo
-         dest: /etc/yum.repos.d
+     - name: Install Schilling Fedora Repo
+       become: true
+       ansible.builtin.get_url:
+          url: https://negativo17.org/repos/fedora-cdrtools.repo
+          dest: /etc/yum.repos.d
+          mode: '0644'
        when: ansible_distribution == "Fedora"
 
-     - name: install Schilling EPEL Repo
-       become: yes
-       get_url:
-         url: https://negativo17.org/repos/epel-cdrtools.repo
-         dest: /etc/yum.repos.d
+     - name: Install Schilling EPEL Repo
+       become: true
+       ansible.builtin.get_url:
+          url: https://negativo17.org/repos/epel-cdrtools.repo
+          dest: /etc/yum.repos.d
+          mode: '0644'
        when: ansible_os_family == "RedHat" and ansible_distribution != "Fedora"
 
-     - name: install dependencies
-       become: yes
-       package:
-         name:
-           - dvd+rw-tools
-           - udftools
-           - cdrecord
-           - mkisofs
-           - cdda2wav
-         state: latest
+     - name: Install dependencies
+       become: true
+       ansible.builtin.package:
+          name:
+             - dvd+rw-tools
+             - udftools
+             - cdrecord
+             - mkisofs
+             - cdda2wav
        when: ansible_os_family == "RedHat"
 
      - name: Create Bin Directory
-       file:
-         path: "{{ansible_user_dir}}/bin"
-         mode: 0755
-         state: directory
-       ignore_errors: yes
+       ansible.builtin.file:
+          path: "{{ ansible_user_dir }}/bin"
+          mode: '0755'
+          state: directory
+       ignore_errors: true
        when: ansible_os_family == "RedHat"
 
      - name: Download the latest version of isolib.sh
-       get_url:
-         url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/isolib/isolib.sh
-         dest: "{{ansible_user_dir}}/bin"
-         mode: 0755
+       ansible.builtin.get_url:
+          url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/isolib/isolib.sh
+          dest: "{{ ansible_user_dir }}/bin"
+          mode: '0755'
        when: ansible_os_family == "RedHat"
 
 - name: Fix SELinux

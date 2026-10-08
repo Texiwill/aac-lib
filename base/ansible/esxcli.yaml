@@ -1,49 +1,50 @@
 ---
-# version: 1.0.0
-
-- hosts: localhost
-  become_user: root
+# version: 1.0.1
+# TODO: Upgrade vsm.sh
 
 - name: VSM
   import_playbook: LinuxVSM.yaml
 
-- hosts: localhost
+- name: Install vCLI
+  hosts: localhost
   tasks:
      - name: Check if Credential exists
-       stat:
-         path: "/tmp/vsm.{{ ansible_env.USER }}/.credstore"
+       ansible.builtin.stat:
+          path: "/tmp/vsm.{{ ansible_env.USER }}/.credstore"
        register: stat_result
 
      - name: Download the latest version of vCLI
-       become: no
-       shell: "/usr/local/bin/vsm.sh -y -f --dlg 'esxcli.*.tgz' | grep Local"
+       ansible.builtin.shell: |
+          set -o pipefail
+          /usr/local/bin/vsm.sh -y -f --dlg 'esxcli.*.tgz' | grep Local
        args:
-         executable: /bin/bash
+          executable: /bin/bash
        register: vsm_local
 
      - name: Get Local Filename
-       set_fact:
-         file_local: "{{ vsm_local.stdout | regex_replace('^Local:(..)','\\1') }}"
-     - name: create tmp directory
-       file:
-         path: /tmp/esxcli
-         state: directory
+       ansible.builtin.set_fact:
+          file_local: "{{ vsm_local.stdout | regex_replace('^Local:(..)', '\\1') }}"
+     - name: Create tmp directory
+       ansible.builtin.file:
+          path: /tmp/esxcli
+          state: directory
+          mode: '0755'
 
      - name: Uncompress Local Filename
-       unarchive:
-         src: "{{file_local}}"
-         dest: /tmp/esxcli
+       ansible.builtin.unarchive:
+          src: "{{ file_local }}"
+          dest: /tmp/esxcli
 
      # only install when OS > version 7 as does not work on RHEL 7
-     - name: install esxcli
-       pip:
-         name: /tmp/esxcli
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>')) or (ansible_os_family == "Debian")
+     - name: Install esxcli
+       ansible.builtin.pip:
+          name: /tmp/esxcli
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>')) or (ansible_os_family == "Debian")
 
      - name: Remove esxcli Installer
-       file: 
-         path: /tmp/esxcli
-         state: absent
+       ansible.builtin.file:
+          path: /tmp/esxcli
+          state: absent
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

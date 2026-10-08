@@ -1,59 +1,55 @@
 ---
-# version: 1.0.4
-- hosts: localhost
-  gather_facts: true
-  become_user: root
-
+# version: 1.0.5
 - name: TZ
   import_playbook: aac-base-tz.yaml
 
 - name: SELinux
   import_playbook: aac-base-selinux.yaml
 
-- hosts: localhost
+- name: Install DCLI
+  hosts: localhost
+  gather_facts: true
+  become_user: root
   tasks:
      - name: Install Debian < 10 dependency
-       become: yes
-       package:
-         name: python-pyasn1
-         state: latest
-       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'<'))
+       become: true
+       ansible.builtin.package:
+          name: python-pyasn1
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10", '<'))
 
      - name: Install RedHat 7 dependencies
-       become: yes
-       package: 
-         name: python-devel
-         state: latest
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<'))
+       become: true
+       ansible.builtin.package:
+          name: python-devel
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", '<'))
 
      - name: Updrade Pip
-       become: yes
-       command: python -m pip install pip==9.0.3
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<'))
+       become: true
+       ansible.builtin.command: python -m pip install pip==9.0.3
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", '<'))
 
      - name: Install RedHat 7 dependencies
-       become: yes
-       pip:
-         name: 
-           - pyasn1
-         state: latest
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<'))
+       become: true
+       ansible.builtin.pip:
+          name:
+             - pyasn1
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", '<'))
 
-     - name: install dcli
-       become: yes
-       pip:
-         name: dcli
+     - name: Install dcli
+       become: true
+       ansible.builtin.pip:
+          name: dcli
        when: ansible_distribution != "MacOSX"
 
-     - name: install dcli
-       become: yes
-       pip:
-         name: markupsafe=2.0.1
-       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",'>'))
+     - name: Install dcli
+       become: true
+       ansible.builtin.pip:
+          name: markupsafe=2.0.1
+       when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10", '>'))
 
-     - name: install dcli
-       pip:
-         name: dcli
+     - name: Install dcli
+       ansible.builtin.pip:
+          name: dcli
        when: ansible_distribution == "MacOSX"
 
 - name: Fix SELinux
