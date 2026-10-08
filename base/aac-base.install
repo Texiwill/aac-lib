@@ -1,13 +1,13 @@
 #!/bin/bash
 #
-# Copyright (c) 2016-2025 AstroArch Consulting, Inc. All rights reserved
+# Copyright (c) 2016-2026 AstroArch Consulting, Inc. All rights reserved
 #
 # Create a Base Install to use Ansible for further installs
 #
 # Target: CentOS/RHEL/Rocky/Fedora/Debian/Ubuntu/MacOS/Alpine
 #
 ###
-VERSIONID="2.4.0"
+VERSIONID="2.4.2"
 
 #####
 cRun=$0
@@ -280,6 +280,48 @@ function call_playbook() {
 		read -s kibana_pwd
 		echo ""
 		extraargs="$adebug aac_base_tz=$TZ kibana_pwd=$kibana_pwd"
+		askpass="-K"
+	elif [ Z"$choice" = Z"ntfy" ] 
+	then
+		# Get Ntfy passwords
+		echo -n "Enter Ntfy Admin Password: "
+		read -s ntfy_admin_pwd
+		echo ""
+		echo -n "Enter Ntfy User: "
+		read ntfy_user
+		echo ""
+		echo -n "Enter Ntfy User Password: "
+		read -s ntfy_user_pwd
+		echo ""
+		echo -n "Enter Ntfy Topic: "
+		read ntfy_topic
+		echo ""
+		extraargs="$adebug aac_base_tz=$TZ ntfy_admin_pwd=$ntfy_admin_pwd ntfy_user=$ntfy_user ntfy_user_pwd=$ntfy_user_pwd ntfy_topic=$ntfy_topic"
+		askpass="-K"
+	elif [ Z"$choice" = Z"okd" ]
+	then
+		# Get mariadb/librenms passwords
+		#echo -n "Enter vSphere User: "
+		#read vsphere_user 
+		#echo ""
+		#echo -n "Enter vSphere User Password: "
+		#read -s vsphere_pwd
+		#echo ""
+		echo -n "Enter Harbor Admin Password: "
+		read -s harbor_pwd
+		echo ""
+		echo -n "Enter Release Version: "
+		read rel_ver
+		echo ""
+		extraargs="$adebug aac_base_tz=$TZ _release_version=$rel_ver harbor_pwd=$harbor_pwd"
+		askpass="-K"
+	elif [ Z"$choice" = Z"pxeboot" ]
+	then
+		echo -n "Enter Distro Name (Rocky, Debian, Fedora): "
+		read distro_name 
+		echo -n "Enter Major Release Version: "
+		read distro_ver
+		extraargs="$adebug aac_base_tz=$TZ _distro_name=$distro_name _distro_ver=$distro_ver"
 		askpass="-K"
 	else
 		if [ Z"TZ" != Z"" ]
