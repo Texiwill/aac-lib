@@ -1,412 +1,414 @@
 ---
-# version: 1.0.4
-
-- hosts: localhost
-  become_user: root
+# version: 1.0.5
 
 - name: VSM
   import_playbook: LinuxVSM.yaml
 
-- hosts: localhost
+- name: Install vCLI
+  hosts: localhost
   tasks:
-     - name: install yum-utils
-       become: yes
-       package:
-         name:
-           - yum-utils
-         state: latest
+     - name: Install yum-utils
+       become: true
+       ansible.builtin.package:
+          name:
+             - yum-utils
        when: ansible_os_family == "RedHat"
 
-     - name: enable Devel Repo
-       become: yes
-       command: dnf config-manager --set-enabled devel
+     - name: Enable Devel Repo
+       become: true
+       ansible.builtin.command: dnf config-manager --set-enabled devel
        when: ansible_distribution == "Rocky"
 
-     - name: install RHEL development tools
-       become: yes
-       package:
-         name:
-           - gcc
-           - cpp
-           - libmpc
-           - mpfr
-           - perl-YAML
-           - libuuid-devel
-           - perl-Module-Build
-           - perl-CPAN
-           - e2fsprogs-devel
-         state: latest
+     - name: Install RHEL development tools
+       become: true
+       ansible.builtin.package:
+          name:
+             - gcc
+             - cpp
+             - libmpc
+             - mpfr
+             - perl-YAML
+             - libuuid-devel
+             - perl-Module-Build
+             - perl-CPAN
+             - e2fsprogs-devel
        when: ansible_os_family == "RedHat"
 
-     - name: install DEBIAN development tools
-       become: yes
-       package:
-         name:
-           - gcc
-           - cpp
-           - libmpc-dev
-           - libmpfr-dev
-           - libyaml-perl
-           - libuuid-perl
-           - libmodule-build-perl
-         state: latest
+     - name: Install DEBIAN development tools
+       become: true
+       ansible.builtin.package:
+          name:
+             - gcc
+             - cpp
+             - libmpc-dev
+             - libmpfr-dev
+             - libyaml-perl
+             - libuuid-perl
+             - libmodule-build-perl
        when: ansible_os_family == "Debian"
 
-     - name: install the latest version of vCLI dependencies for RedHat
-       become: yes
-       package:
-         name:
-           - openssl-devel
-           - perl-Archive-Zip
-           - perl-Class-Data-Inheritable
-           - perl-Class-MethodMaker
-           - perl-Compress-Raw-Zlib
-           - perl-Compress-Zlib
-           - perl-Convert-ASN1
-           - perl-Crypt-OpenSSL-RSA
-           - perl-Crypt-SSLeay
-           - perl-Crypt-OpenSSL-X509
-           - perl-Data-Dump
-           - perl-Data-Dumper
-           - perl-HTML-Parser
-           - perl-IO-Compress
-           - perl-IO-Compress
-           - perl-URI
-           - uuid-perl
-           - perl-XML-NamespaceSupport
-           - perl-XML-LibXML
-           - perl-Socket6
-           - perl-Text-Template
-           - perl-Time-Piece
-           - perl-Path-Class
-           - perl-LWP-Protocol-https
-           - perl-IO-Socket-INET6
-           - perl-Net-INET6Glue
-           - perl-Try-Tiny
-           - expect
-         state: latest
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')
+     - name: Install the latest version of vCLI dependencies for RedHat
+       become: true
+       ansible.builtin.package:
+          name:
+             - openssl-devel
+             - perl-Archive-Zip
+             - perl-Class-Data-Inheritable
+             - perl-Class-MethodMaker
+             - perl-Compress-Raw-Zlib
+             - perl-Compress-Zlib
+             - perl-Convert-ASN1
+             - perl-Crypt-OpenSSL-RSA
+             - perl-Crypt-SSLeay
+             - perl-Crypt-OpenSSL-X509
+             - perl-Data-Dump
+             - perl-Data-Dumper
+             - perl-HTML-Parser
+             - perl-IO-Compress
+             - perl-IO-Compress
+             - perl-URI
+             - uuid-perl
+             - perl-XML-NamespaceSupport
+             - perl-XML-LibXML
+             - perl-Socket6
+             - perl-Text-Template
+             - perl-Time-Piece
+             - perl-Path-Class
+             - perl-LWP-Protocol-https
+             - perl-IO-Socket-INET6
+             - perl-Net-INET6Glue
+             - perl-Try-Tiny
+             - expect
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", '<')
 
-     - name: install the latest version of vCLI dependencies for RHEL 8
-       become: yes
-       package:
-         name:
-           - openssl-devel
-           - perl-Archive-Zip
-           - perl-Class-Data-Inheritable
-           - perl-Class-MethodMaker
-           - perl-Compress-Raw-Zlib
-           - perl-Compress-Zlib
-           - perl-Crypt-SSLeay
-           - perl-Crypt-OpenSSL-RSA
-           - perl-Crypt-OpenSSL-X509
-           - perl-Data-Dump
-           - perl-Data-Dumper
-           - perl-HTML-Parser
-           - perl-IO-Compress
-           - perl-IO-Compress
-           - perl-URI
-           - perl-Net-SSLeay
-           - perl-XML-NamespaceSupport
-           - perl-XML-LibXML
-           - perl-Socket6
-           - perl-Text-Template
-           - perl-Time-Piece
-           - perl-Path-Class
-           - perl-LWP-Protocol-https
-           - perl-IO-Socket-INET6
-           - perl-Try-Tiny
-           - expect
-         state: latest
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>')
+     - name: Install the latest version of vCLI dependencies for RHEL 8
+       become: true
+       ansible.builtin.package:
+          name:
+             - openssl-devel
+             - perl-Archive-Zip
+             - perl-Class-Data-Inheritable
+             - perl-Class-MethodMaker
+             - perl-Compress-Raw-Zlib
+             - perl-Compress-Zlib
+             - perl-Crypt-SSLeay
+             - perl-Crypt-OpenSSL-RSA
+             - perl-Crypt-OpenSSL-X509
+             - perl-Data-Dump
+             - perl-Data-Dumper
+             - perl-HTML-Parser
+             - perl-IO-Compress
+             - perl-IO-Compress
+             - perl-URI
+             - perl-Net-SSLeay
+             - perl-XML-NamespaceSupport
+             - perl-XML-LibXML
+             - perl-Socket6
+             - perl-Text-Template
+             - perl-Time-Piece
+             - perl-Path-Class
+             - perl-LWP-Protocol-https
+             - perl-IO-Socket-INET6
+             - perl-Try-Tiny
+             - expect
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>')
 
-     - name: install the more CLI dependencies for Fedora
-       become: yes
-       package:
-         name:
-           - perl-Net-INET6Glue
+     - name: Install the more CLI dependencies for Fedora
+       become: true
+       ansible.builtin.package:
+          name:
+             - perl-Net-INET6Glue
        when: ansible_distribution == "Fedora"
 
-     - name: install the more CLI dependencies for Rocky and Fedora
-       become: yes
-       package:
-         name:
-           - uuid-perl
+     - name: Install the more CLI dependencies for Rocky and Fedora
+       become: true
+       ansible.builtin.package:
+          name:
+             - uuid-perl
        when: (ansible_distribution == "Fedora") or
              (ansible_distribution == "Rocky")
 
      - name: Set Facts
-       set_fact:
-         get_uuid: no
+       ansible.builtin.set_fact:
+          get_uuid: false
        when: ('"uuid-perl" in ansible_facts.packages')
 
      - name: Get uuid-perl for later versions of RedHat Family
-       become: yes
-       get_url:
-         url: "https://dl.rockylinux.org/pub/rocky/9/devel/x86_64/os/Packages/u/uuid-perl-1.6.2-55.el9.x86_64.rpm"
-         dest: /tmp/uuid-perl.rpm
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("9",'==')) and (get_uuid is undefined)
+       become: true
+       ansible.builtin.get_url:
+          url: "https://dl.rockylinux.org/pub/rocky/9/devel/x86_64/os/Packages/u/uuid-perl-1.6.2-55.el9.x86_64.rpm"
+          dest: /tmp/uuid-perl.rpm
+          mode: '0644'
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("9", '==')) and (get_uuid is undefined)
 
-     - name: Get uuid-perl for later versions of RedHat Family
-       become: yes
-       get_url:
-         url: "https://dl.rockylinux.org/pub/rocky/8/Devel/x86_64/os/Packages/u/uuid-perl-1.6.2-43.el8.x86_64.rpm"
-         dest: /tmp/uuid-perl.rpm
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'==')) and (get_uuid is undefined)
+     - name: Get uuid-perl for later versions of RedHat Family v8
+       become: true
+       ansible.builtin.get_url:
+          url: "https://dl.rockylinux.org/pub/rocky/8/Devel/x86_64/os/Packages/u/uuid-perl-1.6.2-43.el8.x86_64.rpm"
+          dest: /tmp/uuid-perl.rpm
+          mode: '0644'
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", '==')) and (get_uuid is undefined)
 
      - name: Install uuid-perl for later versions of RedHat Family
-       become: yes
-       command: yum -y install /tmp/uuid-perl.rpm
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>') and (get_uuid is undefined)
+       become: true
+       ansible.builtin.command: rpm -ivh /tmp/uuid-perl.rpm # noqa: command-instead-of-module
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>') and (get_uuid is undefined)
 
-     - name: install the latest version of vCLI dependencies for Debian
-       become: yes
-       package:
-         name:
-           - libssl-dev
-           - libarchive-zip-perl
-           - libclass-data-inheritable-perl
-           - libclass-methodmaker-perl
-           - libcompress-raw-zlib-perl
-           - libperl-dev
-           - libconvert-asn1-perl
-           - libcrypt-openssl-rsa-perl
-           - libcrypt-openssl-x509-perl
-           - libdata-dump-perl
-           - libhtml-parser-perl
-           - liburi-perl
-           - libuuid-perl
-           - libxml-namespacesupport-perl
-           - libxml-libxml-perl
-           - libsocket6-perl
-           - libcrypt-ssleay-perl
-           - expect
+     - name: Install the latest version of vCLI dependencies for Debian
+       become: true
+       ansible.builtin.package:
+          name:
+             - libssl-dev
+             - libarchive-zip-perl
+             - libclass-data-inheritable-perl
+             - libclass-methodmaker-perl
+             - libcompress-raw-zlib-perl
+             - libperl-dev
+             - libconvert-asn1-perl
+             - libcrypt-openssl-rsa-perl
+             - libcrypt-openssl-x509-perl
+             - libdata-dump-perl
+             - libhtml-parser-perl
+             - liburi-perl
+             - libuuid-perl
+             - libxml-namespacesupport-perl
+             - libxml-libxml-perl
+             - libsocket6-perl
+             - libcrypt-ssleay-perl
+             - expect
        when: ansible_os_family == "Debian"
 
-     - name: install the required dependencies for Photon
-       become: yes
-       command: "tdnf -y install {{ item }}"
+     - name: Install the required dependencies for Photon
+       become: true
+       ansible.builtin.command: "tdnf -y install {{ item }}"
        with_items:
-         - openssl-devel
-         - perl
-         - perl-Module-Build
-         - perl-Try-Tiny
-         - libxml2-devel
-         - util-linux-devel
-         - expect
+          - openssl-devel
+          - perl
+          - perl-Module-Build
+          - perl-Try-Tiny
+          - libxml2-devel
+          - util-linux-devel
+          - expect
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Check if Credential exists
-       stat:
-         path: "/tmp/vsm.{{ ansible_env.USER }}/.credstore"
+       ansible.builtin.stat:
+          path: "/tmp/vsm.{{ ansible_env.USER }}/.credstore"
        register: stat_result
 
      - name: Check if vCLI exists
-       stat:
-         path: "/usr/bin/vmware-uninstall-vSphere-CLI.pl"
+       ansible.builtin.stat:
+          path: "/usr/bin/vmware-uninstall-vSphere-CLI.pl"
        register: stat_cli_result
 
      - name: Download the latest version of vCLI
-       become: no
-       shell: "/usr/local/bin/vsm.sh -y -f --dlg 'SDK-7.*.x86_64.tar.gz' | grep Local"
+       become: false
+       ansible.builtin.command: "/usr/local/bin/vsm.sh -y -f --dlg 'SDK-7.*.x86_64.tar.gz' | grep Local"
        args:
-         executable: /bin/bash
+          executable: /bin/bash
        register: vsm_local
 
      - name: Get Local Filename
-       set_fact:
-         file_local: "{{ vsm_local.stdout | regex_replace('^Local:(..)','\\1') }}"
+       ansible.builtin.set_fact:
+          file_local: "{{ vsm_local.stdout | regex_replace('^Local:(..)', '\\1') }}"
 
      - name: Debug
-       debug:
-         msg: "Installing {{file_local}}"
+       ansible.builtin.debug:
+          msg: "Installing {{ file_local }}"
 
      - name: Unbundle
-       unarchive:
-         src: "{{ file_local }}"
-         dest: /tmp
+       ansible.builtin.unarchive:
+          src: "{{ file_local }}"
+          dest: /tmp
 
      - name: Uninstall older vCLI
-       become: yes
-       shell: "/usr/bin/vmware-uninstall-vSphere-CLI.pl"
+       become: true
+       ansible.builtin.command: "/usr/bin/vmware-uninstall-vSphere-CLI.pl"
        args:
-         executable: /bin/bash
+          executable: /bin/bash
        when: stat_cli_result.stat.exists
 
      - name: Update installed_ssl_version in vmware_install.pl for Debian/Ubuntu/RHEL8
-       lineinfile:
-         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         regexp: 'my .installed_ssl_version =' 
-         line: "   my $installed_ssl_version = '1.0.0';"
+       ansible.builtin.lineinfile:
+          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+          regexp: 'my .installed_ssl_version ='
+          line: "   my $installed_ssl_version = '1.0.0';"
        when: (ansible_os_family == "Debian") or
-             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>'))
 
      - name: Update to remove Crypt::SSLeay module
-       replace:
-         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         regexp: "{'module' => 'Crypt::SSLeay'"
-         replace: "#{'module' => 'Crypt::SSLeay'"
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+       ansible.builtin.replace:
+          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+          regexp: "{'module' => 'Crypt::SSLeay'"
+          replace: "#{'module' => 'Crypt::SSLeay'"
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>'))
 
      - name: Update to remove UUID module
-       replace:
-         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         regexp: "{'module' => 'UUID'"
-         replace: "#{'module' => 'UUID'"
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+       ansible.builtin.replace:
+          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+          regexp: "{'module' => 'UUID'"
+          replace: "#{'module' => 'UUID'"
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>'))
 
      - name: Update to remove Net::INET6Glue module
-       replace:
-         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         regexp: "{'module' => 'Net::INET6Glue'"
-         replace: "#{'module' => 'Net::INET6Glue'"
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+       ansible.builtin.replace:
+          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+          regexp: "{'module' => 'Net::INET6Glue'"
+          replace: "#{'module' => 'Net::INET6Glue'"
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>'))
 
      - name: Update ssleay_installed in vmware_install.pl
-       lineinfile:
-         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         regexp: 'my .ssleay_installed = 0'
-         line: '   my $ssleay_installed = 1;'
+       ansible.builtin.lineinfile:
+          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+          regexp: 'my .ssleay_installed = 0'
+          line: '   my $ssleay_installed = 1;'
        when: (ansible_os_family == "Debian") or
-             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>'))
 
      - name: Update OpenSSL_installed in vmware_install.pl for Debian/Ubuntu
-       lineinfile:
-         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         regexp: 'my .OpenSSL_installed = 0'
-         line: '   my $OpenSSL_installed = 1;'
+       ansible.builtin.lineinfile:
+          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+          regexp: 'my .OpenSSL_installed = 0'
+          line: '   my $OpenSSL_installed = 1;'
        when: ansible_os_family == "Debian"
 
      - name: Update LibXML2_installed in vmware_install.pl
-       lineinfile:
-         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         regexp: 'my .LibXML2_installed = 0'
-         line: '   my $LibXML2_installed = 1;'
+       ansible.builtin.lineinfile:
+          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+          regexp: 'my .LibXML2_installed = 0'
+          line: '   my $LibXML2_installed = 1;'
        when: (ansible_os_family == "Debian") or
-             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>'))
 
-     - name: Update LibXML2_installed #2 in vmware_install.pl
-       lineinfile:
-         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         regexp: '$LibXML2_installed = 0;'
-         line: ' #$LibXML2_installed = 0;'
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+     - name: Update LibXML2_installed 2 in vmware_install.pl
+       ansible.builtin.lineinfile:
+          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+          regexp: '$LibXML2_installed = 0;'
+          line: ' #$LibXML2_installed = 0;'
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>'))
 
      - name: Update OpenSSL_dev_installed in vmware_install.pl for Debian/Ubuntu
-       lineinfile:
-         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         regexp: 'my .OpenSSL_dev_installed = 0'
-         line: '   my $OpenSSL_dev_installed = 1;'
+       ansible.builtin.lineinfile:
+          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+          regexp: 'my .OpenSSL_dev_installed = 0'
+          line: '   my $OpenSSL_dev_installed = 1;'
        when: ansible_os_family == "Debian"
 
      - name: Update e2fsprogs_installed in vmware_install.pl for Debian/Ubuntu
-       lineinfile:
-         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         regexp: 'my .e2fsprogs_installed = 0'
-         line: '   my $e2fsprogs_installed = 1;'
+       ansible.builtin.lineinfile:
+          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+          regexp: 'my .e2fsprogs_installed = 0'
+          line: '   my $e2fsprogs_installed = 1;'
        when: ansible_os_family == "Debian"
 
      - name: Update e2fsprogs_version in vmware_install.pl for Debian/Ubuntu
-       lineinfile:
-         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         regexp: "my .e2fsprogs_version = '0'"
-         line: "   my $e2fsprogs_version = '1.42';"
+       ansible.builtin.lineinfile:
+          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+          regexp: "my .e2fsprogs_version = '0'"
+          line: "   my $e2fsprogs_version = '1.42';"
        when: ansible_os_family == "Debian"
 
      - name: Update install_rhel55_local in vmware_install.pl for Debian/Ubuntu/RHEL8
-       lineinfile:
-         path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-         regexp: 'my .install_rhel55_local = 0'
-         line: '   my $install_rhel55_local = 1;'
+       ansible.builtin.lineinfile:
+          path: /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+          regexp: 'my .install_rhel55_local = 0'
+          line: '   my $install_rhel55_local = 1;'
        when: (ansible_os_family == "Debian") or
-             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>'))
 
      - name: Create etcdir for vCLI
-       become: yes
-       file: path=/etc/vmware-vcli state=directory
+       become: true
+       ansible.builtin.file:
+          path: /etc/vmware-vcli
+          state: directory
+          mode: '0755'
 
      - name: Remove vCLI Locations
-       become: yes
-       file: 
-         path: /etc/vmware-vcli/locations
-         state: absent
+       become: true
+       ansible.builtin.file:
+          path: /etc/vmware-vcli/locations
+          state: absent
 
      - name: Re/create vCLI locations
-       become: yes
-       blockinfile:
-         path: "/etc/vmware-vcli/locations"
-         marker: ""
-         marker_begin: ""
-         marker_end: ""
-         block: |
-           directory /etc/vmware-vcli
-           file /etc/vmware-vcli/locations
-           answer BINDIR /usr/bin
-           answer EULA_AGREED yes
-           answer INSTALL_CYLE yes
-         mode: 0644
-         create: yes
+       become: true
+       ansible.builtin.blockinfile:
+          path: "/etc/vmware-vcli/locations"
+          marker: ""
+          marker_begin: ""
+          marker_end: ""
+          block: |
+            directory /etc/vmware-vcli
+            file /etc/vmware-vcli/locations
+             answer BINDIR /usr/bin
+            answer EULA_AGREED yes
+            answer INSTALL_CYLE yes
+          mode: '0644'
+          create: true
 
-     #- name: Copy vCLI file1
-     #  become: yes
-     #  copy:
-     #    src: /tmp/vmware-vsphere-cli-distrib/bin/vmware-uninstall-vSphere-CLI.pl
-     #    dest: /usr/bin/vmware-uninstall-vSphere-CLI.pl
-     #    mode: 0755   
-     #    force: no
+     # - name: Copy vCLI file1
+     #   become: true
+     #   ansible.builtin.copy:
+     #     src: /tmp/vmware-vsphere-cli-distrib/bin/vmware-uninstall-vSphere-CLI.pl
+     #     dest: /usr/bin/vmware-uninstall-vSphere-CLI.pl
+     #     mode: 0755
+     #     force: no
 
      - name: Copy vCLI file2
-       become: yes
-       copy:
-         src: /tmp/vmware-vsphere-cli-distrib/etc/installer.sh
-         dest: /etc/vmware-vcli/installer.sh
-         mode: 0755   
-         force: no
+       become: true
+       ansible.builtin.copy:
+          src: /tmp/vmware-vsphere-cli-distrib/etc/installer.sh
+          dest: /etc/vmware-vcli/installer.sh
+          mode: '0755'
+          force: false
 
      - name: Remove Expect script
-       become: yes
-       file: path=/tmp/vmware-vsphere-cli-distrib/expinstall state=absent
+       become: true
+       ansible.builtin.file:
+          path: /tmp/vmware-vsphere-cli-distrib/expinstall
+          state: absent
 
      - name: Write Expect Script
-       become: yes
-       blockinfile:
-         path: /tmp/vmware-vsphere-cli-distrib/expinstall
-         marker: ""
-         marker_begin: ""
-         marker_end: ""
-         block: |
-           set timeout 1800
-           spawn /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
-           expect {
-                "\\\[yes]" {
-                     send "yes\r"
-                     exp_continue
-                }
-                "Do you want to continue? (yes/no)" {
-                     send "yes\r"
-                     exp_continue
-                }
-                "\\\[/usr/bin]" {
-                     send "\r"
-                     exp_continue
-                }
-           }
-         mode: 0755
-         create: yes
+       become: true
+       ansible.builtin.blockinfile:
+          path: /tmp/vmware-vsphere-cli-distrib/expinstall
+          marker: ""
+          marker_begin: ""
+          marker_end: ""
+          block: |
+            set timeout 1800
+            spawn /tmp/vmware-vsphere-cli-distrib/vmware-install.pl
+            expect {
+                 "\\\[yes]" {
+                      send "yes\r"
+                      exp_continue
+                 }
+                 "Do you want to continue? (yes/no)" {
+                      send "yes\r"
+                      exp_continue
+                 }
+                 "\\\[/usr/bin]" {
+                      send "\r"
+                      exp_continue
+                 }
+            }
+          mode: '0755'
+          create: true
 
      - name: Install vCLI
-       become: yes
-       command: "/usr/bin/expect /tmp/vmware-vsphere-cli-distrib/expinstall"
+       become: true
+       ansible.builtin.command: "/usr/bin/expect /tmp/vmware-vsphere-cli-distrib/expinstall"
 
      - name: Remove vCLI Installer
-       become: yes
-       file: path=/tmp/vmware-vsphere-cli-distrib state=absent
+       become: true
+       ansible.builtin.file:
+          path: /tmp/vmware-vsphere-cli-distrib
+          state: absent
 
      - name: Remove uuid-perl rpm
-       become: yes
-       file: 
-         path: /tmp/uuid-perl.rpm
-         state: absent
+       become: true
+       ansible.builtin.file:
+          path: /tmp/uuid-perl.rpm
+          state: absent
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

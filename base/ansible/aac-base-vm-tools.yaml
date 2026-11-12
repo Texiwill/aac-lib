@@ -1,10 +1,9 @@
 ---
-# version: 1.0.2
+# version: 1.0.3
 
 - name: Install Open VM Tools
   hosts: localhost
   gather_facts: true
-  become_user: root
 
   tasks:
      - name: Install the latest open-vm-tools for RHEL

@@ -1,5 +1,5 @@
 ---
-# version: 1.0.2
+# version: 1.0.3
 - name: Setup MariaDB
   hosts: localhost
   tasks:
@@ -47,7 +47,7 @@
           line: "bind-address = {{ mariadb_bind_address }}"
        when: ansible_os_family == 'Debian'
 
-     - name: Start mariadb
+     - name: Restart mariadb
        become: true
        ansible.builtin.service:
           name: mariadb

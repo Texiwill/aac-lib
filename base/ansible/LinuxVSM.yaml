@@ -1,9 +1,5 @@
 ---
-# version: 1.2.0
-
-- hosts: localhost
-  gather_facts: true
-  become_user: root
+# version: 1.2.2
 
 - name: TZ
   import_playbook: aac-base-tz.yaml
@@ -11,276 +7,256 @@
 - name: SELinux
   import_playbook: aac-base-selinux.yaml
 
-- hosts: localhost
+- name: Install vsm.sh
+  hosts: localhost
+  gather_facts: true
   tasks:
-     #- name: Get Deb NodeJS
-     #  get_url:
-     #    url: https://deb.nodesource.com/setup_14.x
-     #    dest: /tmp
-     #    mode: 0750
-     #  when: ansible_os_family == "Debian"
-
-     #- name: Register NodeJS Repo
-     #  become: yes
-     #  shell: "/tmp/setup_14.x"
-     #  args:
-     #    executable: /bin/bash
-     #  when: (ansible_os_family == "Debian")
-
      - name: Need Yum Utils
-       become: yes
-       package:
-         name: yum-utils
+       become: true
+       ansible.builtin.package:
+          name: yum-utils
        when: ansible_os_family == "RedHat"
 
      - name: Need Power Tools for RHEL 8
-       become: yes
-       shell: "yum-config-manager --enable powertools"
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("9","<")
+       become: true
+       ansible.builtin.command: "yum-config-manager --enable powertools"
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("9", '<')
 
      - name: Need Power Tools for RHEL 9
-       become: yes
-       command: "dnf config-manager --set-enabled crb"
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version ("8",">")) and
+       become: true
+       ansible.builtin.command: "dnf config-manager --set-enabled crb"
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", '>')) and
              (ansible_distribution != "Fedora")
 
-     - name: install general dependencies
-       become: yes
-       package:
-         name:
-           - binutils
-           - bc
-           - jq
-           - sharutils
-           - nodejs
-           - make
-           - openssl
-         state: latest
+     - name: Install general dependencies
+       become: true
+       ansible.builtin.package:
+          name:
+             - binutils
+             - bc
+             - jq
+             - sharutils
+             - nodejs
+             - make
+             - openssl
        when: (ansible_os_family != "VMware Photon OS") and
              (ansible_distribution != "MacOSX")
 
      # separate as may cause conflicts
-     - name: install additional dependencies
-       become: yes
-       package:
-         name:
-           - npm
+     - name: Install additional dependencies
+       become: true
+       ansible.builtin.package:
+          name:
+             - npm
        when: (ansible_os_family != "VMware Photon OS") and
              (ansible_distribution != "MacOSX")
 
-     - name: install the other required dependencies
-       become: yes
-       package:
-         name: "{{ item }}"
-         state: latest
+     - name: Install the other required dependencies
+       become: true
+       ansible.builtin.package:
+          name: "{{ item }}"
        with_items:
-         - "{{ ansible_python.executable|basename }}-urllib3"
+          - "{{ ansible_python.executable | basename }}-urllib3"
        when: (ansible_os_family != "Alpine") and
              (ansible_os_family != "VMware Photon OS") and
              (ansible_distribution != "MacOSX")
 
-     - name: install RedHat Family dependencies
-       become: yes
-       package:
-         name:
-           - libxml2
-           - ncurses
-           - xorg-x11-server-Xvfb
-           - libXScrnSaver
-           - at-spi2-atk
-           - gcc
-           - gcc-c++
-           - nss
-           - gtk3
-           - mesa-libgbm
-           - alsa-lib
-         state: latest
+     - name: Install RedHat Family dependencies
+       become: true
+       ansible.builtin.package:
+          name:
+             - libxml2
+             - ncurses
+             - xorg-x11-server-Xvfb
+             - libXScrnSaver
+             - at-spi2-atk
+             - gcc
+             - gcc-c++
+             - nss
+             - gtk3
+             - mesa-libgbm
+             - alsa-lib
        when: ansible_os_family == "RedHat"
 
-     - name: install Alpine dependencies
-       become: yes
-       package:
-         name:
-           - libxml2
-           - ncurses
-           - py3-urllib3
-           - xvfb
-           - libxscrnsaver
-           - at-spi2-atk
-           - gcc
-           - g++
-           - openssl
-           - chromium-chromedriver
-           - gtk+3.0
-           - alsa-lib
-         state: latest
+     - name: Install Alpine dependencies
+       become: true
+       ansible.builtin.package:
+          name:
+             - libxml2
+             - ncurses
+             - py3-urllib3
+             - xvfb
+             - libxscrnsaver
+             - at-spi2-atk
+             - gcc
+             - g++
+             - openssl
+             - chromium-chromedriver
+             - gtk+3.0
+             - alsa-lib
        when: ansible_os_family == "Alpine"
 
-     - name: install the Debian dependencies for LinuxVSM
-       become: yes
-       package:
-         name:
-           - libxml2
-           - libxml2-utils
-           - ncurses-base
-           - xvfb
-           - libnss3
-           - libgtk-3-0
-           - libgbm1
-           - libasound2
-           - libxss1
-           - g++
-         state: latest
+     - name: Install the Debian dependencies for LinuxVSM
+       become: true
+       ansible.builtin.package:
+          name:
+             - libxml2
+             - libxml2-utils
+             - ncurses-base
+             - xvfb
+             - libnss3
+             - libgtk-3-0
+             - libgbm1
+             - libasound2
+             - libxss1
+             - g++
        when: (ansible_os_family == "Debian")
 
 # Photon is missing several critical packages
      - name: Remove Vivace YUM file for Photon
-       become: yes
-       file:
-         path: /etc/yum.repos.d/vivace.repo
-         state: absent
+       become: true
+       ansible.builtin.file:
+          path: /etc/yum.repos.d/vivace.repo
+          state: absent
        when: ansible_os_family == "VMware Photon OS"
 
-     - name: set jq name
-       set_fact:
-         jqname: jq-1.5-4.ph3.src.rpm
-         jqbname: jq-1.5-4.x86_64.rpm
+     - name: Set jq name
+       ansible.builtin.set_fact:
+          jqname: jq-1.5-4.ph3.src.rpm
+          jqbname: jq-1.5-4.x86_64.rpm
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Re/create Vivace YUM repos for Photon
-       become: yes
-       blockinfile:
-         path: /etc/yum.repos.d/vivace.repo
-         block: |
-           [vivace]
-           name=VMware Vivace 3.0(x86_64)
-           baseurl=https://dl.bintray.com/vmware/vivace_$releasever_$basearch
-           gpgkey=file:///etc/pki/rpm-gpg/VMWARE-RPM-GPG-KEY
-           gpgcheck=1
-           enabled=1
-           skip_if_unavailable=True
-
-           [xrpms]
-           name=VMware X-RPMS (x86_64)
-           baseurl=https://packages.vmware.com/photon/photon_publish_x_rpms
-           gpgkey=file:///etc/pki/rpm-gpg/VMWARE-RPM-GPG-KEY
-           gpgcheck=0
-           enabled=1
-           skip_if_unavailable=True
-         mode: 0644
-         create: yes
+       become: true
+       ansible.builtin.blockinfile:
+          path: /etc/yum.repos.d/vivace.repo
+          block: |
+            [vivace]
+            name=VMware Vivace 3.0(x86_64)
+            baseurl=https://dl.bintray.com/vmware/vivace_$releasever_$basearch
+             gpgkey=file:///etc/pki/rpm-gpg/VMWARE-RPM-GPG-KEY
+            gpgcheck=1
+            enabled=1
+            skip_if_unavailable=True
+            [xrpms]
+            name=VMware X-RPMS (x86_64)
+            baseurl=https://packages.vmware.com/photon/photon_publish_x_rpms
+            gpgkey=file:///etc/pki/rpm-gpg/VMWARE-RPM-GPG-KEY
+             gpgcheck=0
+            enabled=1
+            skip_if_unavailable=True
+          mode: '0644'
+          create: true
        when: ansible_os_family == "VMware Photon OS"
 
-     - name: install the required dependencies for LinuxVSM on Photon
-       become: yes
-       command: "tdnf -y install {{ item }}"
+     - name: Install the required dependencies for LinuxVSM on Photon
+       become: true
+       ansible.builtin.command: "tdnf -y install {{ item }}"
        with_items:
-         - libxml2
-         - nodejs
-         - make
-         - gcc
-         - glibc-devel
-         - tar
-         - patch
-         - rpm-build
-         - binutils
-         - valgrind
-         - linux-api-headers
-         - python-urllib3
-         - bc
-         - oniguruma
-         - oniguruma-devel
-         - ncurses
-         - xorg-server
-         - xorg-applications
-         - at-spi2-atk
-         - libXcomposite
-         - libXrandr
-         - libXScrnSaver
-         - alsa-lib
-         - cups
-         - gtk3
+          - libxml2
+          - nodejs
+          - make
+          - gcc
+          - glibc-devel
+          - tar
+          - patch
+          - rpm-build
+          - binutils
+          - valgrind
+          - linux-api-headers
+          - python-urllib3
+          - bc
+          - oniguruma
+          - oniguruma-devel
+          - ncurses
+          - xorg-server
+          - xorg-applications
+          - at-spi2-atk
+          - libXcomposite
+          - libXrandr
+          - libXScrnSaver
+          - alsa-lib
+          - cups
+          - gtk3
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Photon Get JQ Source
-       get_url:
-         url: "https://packages.vmware.com/photon/3.0/photon_srpms_3.0_x86_64/{{jqname}}"
-         dest: "{{ansible_user_dir}}"
-         mode: 0644
+       ansible.builtin.get_url:
+          url: "https://packages.vmware.com/photon/3.0/photon_srpms_3.0_x86_64/{{ jqname }}"
+          dest: "{{ ansible_user_dir }}"
+          mode: '0644'
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Photon Re/create .rpmmacros
-       become: yes
-       blockinfile:
-         path: "{{ansible_user_dir}}/.rpmmacros"
-         block: |
-            %_topdir %(echo $HOME)/rpmbuild
-            %with_check 1
-         mode: 0644
-         create: yes
+       become: true
+       ansible.builtin.blockinfile:
+          path: "{{ ansible_user_dir }}/.rpmmacros"
+          block: |
+             %_topdir %(echo $HOME)/rpmbuild
+             %with_check 1
+          mode: '0644'
+          create: true
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Photon Build rpmbuild directories
-       file:
-         path: "{{item}}"
-         state: directory
-         mode: 0755
+       ansible.builtin.file:
+          path: "{{ item }}"
+          state: directory
+          mode: '0755'
        loop:
-         - "{{ansible_user_dir}}/rpmbuild"
-         - "{{ansible_user_dir}}/rpmbuild/BUILD"
-         - "{{ansible_user_dir}}/rpmbuild/SOURCES"
-         - "{{ansible_user_dir}}/rpmbuild/RPMS"
-         - "{{ansible_user_dir}}/rpmbuild/SPECS"
-         - "{{ansible_user_dir}}/rpmbuild/SRPMS"
+          - "{{ ansible_user_dir }}/rpmbuild"
+          - "{{ ansible_user_dir }}/rpmbuild/BUILD"
+          - "{{ ansible_user_dir }}/rpmbuild/SOURCES"
+          - "{{ ansible_user_dir }}/rpmbuild/RPMS"
+          - "{{ ansible_user_dir }}/rpmbuild/SPECS"
+          - "{{ ansible_user_dir }}/rpmbuild/SRPMS"
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Photon Rebuild JQ
-       command: "rpmbuild --rebuild --nocheck {{ansible_user_dir}}/{{jqname}}"
+       ansible.builtin.command: "rpmbuild --rebuild --nocheck {{ ansible_user_dir }}/{{ jqname }}"
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Photon Install JQ
-       become: yes
-       command: "rpm -ivh --force {{ansible_user_dir}}/rpmbuild/RPMS/x86_64/{{jqbname}}"
+       become: true
+       ansible.builtin.command: "rpm -ivh --force {{ ansible_user_dir }}/rpmbuild/RPMS/x86_64/{{ jqbname }}" # noqa: command-instead-of-module
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Install Xcode CLI for MacOSX
-       ignore_errors: yes
-       shell: "xcode-select --install"
+       failed_when: false
+       ansible.builtin.command: "xcode-select --install"
        when: ansible_distribution == "MacOSX"
 
      # Only for ARM hardware
      # should really migrate all in /usr/local/bin to /opt/homebrew/bin first
      # This is required for homebrew to work in ansible on arm64
      - name: Symlink /usr/local/bin on MacOSX
-       become: yes
-       file:
-         src: /opt/homebrew/bin   
-         dest: /usr/local/bin
-         state: link
+       become: true
+       ansible.builtin.file:
+          src: /opt/homebrew/bin
+          dest: /usr/local/bin
+          state: link
        when: (ansible_distribution == "MacOSX" and ansible_machine == "arm64")
 
      - name: Install Dependencies for MacOSX
-       homebrew:
-         name:
-           - gnu-sed
-           - jq
-           - node
-         state: latest
+       community.general.homebrew:
+          name:
+             - gnu-sed
+             - jq
+             - node
        when: ansible_distribution == "MacOSX"
 
      - name: Install Cask Dependencies for MacOSX
-       homebrew_cask:
-         name:
-           - xquartz
-         state: latest
+       community.general.homebrew_cask:
+          name:
+             - xquartz
        when: ansible_distribution == "MacOSX"
-       
+
      - name: Download the latest version of LinuxVSM
-       become: yes
-       get_url:
-         url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
-         dest: /usr/local/bin
-         mode: 0755
+       become: true
+       ansible.builtin.get_url:
+          url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/vsm/vsm.sh
+          dest: /usr/local/bin
+          mode: '0755'
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

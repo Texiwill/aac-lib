@@ -1,137 +1,134 @@
 ---
-# version: 1.0.5
-
-- hosts: localhost
-  become_user: root
+# version: 1.0.6
 
 - name: VSM
   import_playbook: LinuxVSM.yaml
 
-- hosts: localhost
+- name: Install ovftool
+  hosts: localhost
   tasks:
 
-     - name: install the latest version of ovftool dependencies
-       become: yes
-       package:
-         name:
-           - fuseiso
-           - hiera
-         state: latest
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<')) or
-             (ansible_os_family == "Debian")
+     - name: Install the latest version of ovftool dependencies
+       become: true
+       ansible.builtin.package:
+          name:
+             - fuseiso
+             - hiera
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", '<')) or (ansible_os_family == "Debian")
 
-     - name: install the latest version of ovftool dependencies for RHEL > 7
-       become: yes
-       package:
-         name:
-           - hiera
-         state: latest
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>') or
-             ansible_distribution == "Fedora"
+     - name: Install the latest version of ovftool dependencies for RHEL > 7
+       become: true
+       ansible.builtin.package:
+          name:
+             - hiera
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>') or ansible_distribution == "Fedora"
 
      - name: Set Facts
-       set_fact:
-         get_fuse: no
+       ansible.builtin.set_fact:
+          get_fuse: false
        when: ('"fuseiso" in ansible_facts.packages')
 
      - name: Get fuseiso for later versions of RedHat Family
-       become: yes
-       get_url:
-         url: 'http://vault.centos.org/7.7.1908/os/x86_64/Packages/fuseiso-20070708-15.el7.x86_64.rpm'
-         dest: /tmp/fuseiso.rpm
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>')) and (get_fuse is undefined)
+       become: true
+       ansible.builtin.get_url:
+          url: 'http://vault.centos.org/7.7.1908/os/x86_64/Packages/fuseiso-20070708-15.el7.x86_64.rpm'
+          dest: /tmp/fuseiso.rpm
+          mode: '0644'
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>')) and (get_fuse is undefined)
 
      # This is very old and unsupported package
      - name: Install fuseiso for later versions of RedHat Family
-       become: yes
-       command: rpm -Uvh /tmp/fuseiso.rpm
-       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>') and (get_fuse is undefined)
+       become: true
+       ansible.builtin.dnf:
+          name: /tmp/fuseiso.rpm
+          state: present
+       when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>') and (get_fuse is undefined)
 
-     - name: install the required dependencies for Photon
-       become: yes
-       command: "tdnf -y install {{ item }}"
+     - name: Install the required dependencies for Photon
+       become: true
+       ansible.builtin.command: "tdnf -y install {{ item }}"
        with_items:
-         - ruby
-         - fuse
+          - ruby
+          - fuse
        when: ansible_os_family == "VMware Photon OS"
 
-     - name: install the hiera dependencies for Photon
-       become: yes
-       command: gem install hiera
+     - name: Install the hiera dependencies for Photon
+       become: true
+       ansible.builtin.command: gem install hiera
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Update File Permissions Photon
-       become: yes
-       file: path=/usr/bin/hiera mode=0755
+       become: true
+       ansible.builtin.file:
+          path: /usr/bin/hiera
+          mode: '0755'
        when: ansible_os_family == "VMware Photon OS"
 
      - name: Download the latest version of ov-import.sh
-       become: yes
-       get_url:
-         url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/ovfimport/ov-import.sh
-         dest: /usr/local/bin
-         mode: 0755
+       become: true
+       ansible.builtin.get_url:
+          url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/ovfimport/ov-import.sh
+          dest: /usr/local/bin
+          mode: '0755'
 
      - name: Download the latest version of ov-defaults
-       get_url:
-         url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/ovfimport/ov-defaults
-         dest: "{{ansible_user_dir}}/.ov-defaults"
-         mode: 0600
+       ansible.builtin.get_url:
+          url: https://raw.githubusercontent.com/Texiwill/aac-lib/master/ovfimport/ov-defaults
+          dest: "{{ ansible_user_dir }}/.ov-defaults"
+          mode: '0600'
 
-     #- name: Check if Credential exists
-     # stat:
-     #   path: "/tmp/vsm.{{ ansible_env.USER }}/.credstore"
-     # register: stat_result
+     # - name: Check if Credential exists
+     #  stat:
+     #    path: "/tmp/vsm.{{ ansible_env.USER }}/.credstore"
+     #  register: stat_result
 
      - name: Download the latest version of ovftool
-       become: no
-       shell: "/usr/local/bin/vsm.sh -y -f --dlg ovftool-4.6.*.x86_64.bundle | grep Local"
+       become: false
+       ansible.builtin.command: "/usr/local/bin/vsm.sh -y -f --dlg ovftool-4.6.*.x86_64.bundle | grep Local"
        args:
-         executable: /bin/bash
+          executable: /bin/bash
        register: vsm_local
      # when: stat_result.stat.exists
 
      - name: Get Local Filename
-       set_fact:
-         file_local: "{{ vsm_local.stdout | regex_replace('^Local:(..)','\\1') }}"
+       ansible.builtin.set_fact:
+          file_local: "{{ vsm_local.stdout | regex_replace('^Local:(..)', '\\1') }}"
      - name: Get Local gunzip name
-       set_fact:
-         gzip_local: "{{ file_local | regex_replace('^(.*).gz$','\\1') }}"
+       ansible.builtin.set_fact:
+          gzip_local: "{{ file_local | regex_replace('^(.*).gz$', '\\1') }}"
 
-     - name: Uncompress Local Filename
-       shell: "gunzip -kf {{ file_local }}"
-       when: (gzip_local != file_local) and
-             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",'>'))
+     - name: Uncompress Local Redhat Filename
+       ansible.builtin.command: "gunzip -kf {{ file_local }}"
+       when: (gzip_local != file_local) and (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", '>'))
 
-     - name: Uncompress Local Filename
-       shell: "gunzip -kf {{ file_local }}"
+     - name: Uncompress Local Debian Filename
+       ansible.builtin.command: "gunzip -kf {{ file_local }}"
        when: (gzip_local != file_local) and
              (ansible_os_family == "Debian")
 
-     - name: Uncompress Local Filename
-       shell: "gunzip -f {{ file_local }}"
-       when: (gzip_local != file_local) and
-             (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8",'<'))
+     - name: Uncompress Local RedHat < 8 Filename
+       ansible.builtin.command: "gunzip -f {{ file_local }}"
+       when: (gzip_local != file_local) and (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", '<'))
 
      - name: Debug
-       debug:
-         msg: "Installing {{gzip_local}}"
+       ansible.builtin.debug:
+          msg: "Installing {{ gzip_local }}"
 
      - name: Permission ovftool
-       file:
-         path: "{{gzip_local}}"
-         mode: 0755
+       ansible.builtin.file:
+          path: "{{ gzip_local }}"
+          mode: '0755'
 
      - name: Installing ovftool
-       become: yes
-       shell: "{{gzip_local}} --eulas-agreed --required -s vmware-installer initdir /etc/rc.d/init.d"
+       become: true
+       ansible.builtin.command: "{{ gzip_local }} --eulas-agreed --required -s vmware-installer initdir /etc/rc.d/init.d"
        args:
-         executable: /bin/bash
+          executable: /bin/bash
 
-    #- name: Compress Local Filename
-    #  become: no
-    #  shell: "gzip {{ file_local }}"
-    #  when: "{{gzip_local}}" != "{{file_local}}"
+    # - name: Compress Local Filename
+    #   become: no
+    #   shell: "gzip {{ file_local }}"
+    #   when: "{{gzip_local}}" != "{{file_local}}"
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

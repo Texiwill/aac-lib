@@ -1,9 +1,9 @@
 ---
 # version: 1.0.0
 
-- hosts: localhost
+- name: Prepare System
+  hosts: localhost
   gather_facts: true
-  become_user: root
 
 - name: TZ
   import_playbook: aac-base-tz.yaml

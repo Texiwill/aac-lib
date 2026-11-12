@@ -1,10 +1,9 @@
 ---
-# version: 1.0.1
+# version: 1.0.2
 
 - name: Setup lighttpd
   hosts: localhost
   gather_facts: true
-  become_user: root
   tasks:
     - name: Httpd remove
       become: true

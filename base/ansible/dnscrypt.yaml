@@ -1,5 +1,5 @@
 ---
-# version: 1.0.1
+# version: 1.0.2
 
 - name: TZ
   import_playbook: aac-base-tz.yaml
@@ -10,7 +10,6 @@
 - name: Install DNSCRYPT
   hosts: localhost
   gather_facts: true
-  become_user: root
   tasks:
      - name: Install the latest version of dnscrypt dependencies for RedHat
        become: true

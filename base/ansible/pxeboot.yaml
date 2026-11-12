@@ -1,11 +1,8 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 # designed to work with Rocky Linux, not tested on any other Linux distro
 # working on debian, ubuntu, fedora
 
-- hosts: localhost
-  gather_facts: true
-  become_user: root
 
 - name: TZ
   import_playbook: aac-base-tz.yaml
@@ -19,49 +16,43 @@
 - name: SELinux
   import_playbook: aac-base-selinux.yaml
 
-- name: NGINX 
+- name: NGINX
   import_playbook: aac-base-nginx.yaml
 
-- hosts: localhost
+- name: Setup Pxeboot
+  hosts: localhost
+  gather_facts: true
   tasks:
-     - name: install dependencies
-       become: yes
-       package:
-         name:
-           - tftp-server
-           - syslinux-tftpboot
-         state: latest
+     - name: Install dependencies
+       become: true
+       ansible.builtin.package:
+          name:
+             - tftp-server
+             - syslinux-tftpboot
        when: ansible_distribution != "MacOSX"
 
-     - name: service stop
-       become: yes
-       service:
-         name: tftp
-         state: stopped
-
-     - name: service stop
-       become: yes
-       systemd:
-         name: tftp
-         state: stopped
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("9",'>='))
+     - name: Tftp Service stop
+       become: true
+       ansible.builtin.service:
+          name: tftp
+          state: stopped
 
      - name: Change tftpboot directory
-       become: yes
-       lineinfile:
-         path: /usr/lib/systemd/system/tftp.service
-         regexp: 'ExecStart=/usr/sbin/in.tftpd -s /var/lib/tftpboot'
-         line: 'ExecStart=/usr/sbin/in.tftpd -s /tftpboot'
+       become: true
+       ansible.builtin.lineinfile:
+          path: /usr/lib/systemd/system/tftp.service
+          regexp: 'ExecStart=/usr/sbin/in.tftpd -s /var/lib/tftpboot'
+          line: 'ExecStart=/usr/sbin/in.tftpd -s /tftpboot'
 
-     - name: service start
-       become: yes
-       service:
-         name: tftp.socket
-         state: started
-         enabled: yes
+     - name: Tftp service start
+       become: true
+       ansible.builtin.service:
+          name: tftp.socket
+          state: started
+          enabled: true
 
      - name: Set facts for Rocky
-       set_fact: 
+       ansible.builtin.set_fact:
           _distro: "rocky"
           _distro_baseurl: "https://download.rockylinux.org/pub/rocky"
           _distro_surl: "isos/x86_64"
@@ -72,44 +63,44 @@
        when: _distro_name == "Rocky"
 
      - name: Set facts for Debian
-       set_fact: 
-          _distro: "devian"
+       ansible.builtin.set_fact:
+          _distro: "debian"
           _distro_baseurl: "https://cdimage.debian.org/debian-cd"
-          #_distro_surl: "isos/x86_64"
-          #_distro_subver: "-latest"
+          # _distro_surl: "isos/x86_64"
+          # _distro_subver: "-latest"
           _distro_arch: "amd64"
           _distro_type: "netinst"
        when: _distro_name == "Debian"
 
-     #- name: Determine Debian Facts from URL
-       # need to go to cdimage/release for latest version 
+       # - name: Determine Debian Facts from URL
+       # need to go to cdimage/release for latest version
        # - match major and extract subver
        # If no match go to cdimage/archive get list and find
-       
+
      - name: Unmount Isos
-       become: yes
+       become: true
        ansible.posix.mount:
-         path: "/mnt/{{ item }}"
-         state: unmounted
+          path: "/mnt/{{ item }}"
+          state: unmounted
        loop:
-         - "{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}"
+          - "{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}"
 
      - name: Make Media directories
-       become: yes
-       file:
-         path: '/mnt/{{ item }}'
-         state: directory
-         recurse: yes
-         owner: root
-         group: wheel
-         mode: 0775
+       become: true
+       ansible.builtin.file:
+          path: '/mnt/{{ item }}'
+          state: directory
+          recurse: true
+          owner: root
+          group: wheel
+          mode: '0775'
        loop:
-         - isos
-         - "{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}"
+          - isos
+          - "{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}"
 
      - name: Stat Isos
-       stat:
-         path: "/mnt/isos/{{ _distro_name }}-{{ _distro_ver }}{{ _distro_subver }}-{{ _distro_arch }}-{{ _distro_type }}.iso"
+       ansible.builtin.stat:
+          path: "/mnt/isos/{{ _distro_name }}-{{ _distro_ver }}{{ _distro_subver }}-{{ _distro_arch }}-{{ _distro_type }}.iso"
        register: stat_result
 
      - name: Debug
@@ -118,150 +109,151 @@
 
      # need a smarter download here
      - name: Get Isos
-       get_url:
-         url: "{{ item }}"
-         dest: "/mnt/isos/{{ item|basename }}"
-         mode: '0644'
+       ansible.builtin.get_url:
+          url: "{{ item }}"
+          dest: "/mnt/isos/{{ item | basename }}"
+          mode: '0644'
        async: 1800
        poll: 10
        loop:
-         - "{{ _distro_baseurl }}/{{ _distro_ver }}/{{ _distro_surl }}/{{ _distro_name }}-{{ _distro_ver }}{{ _distro_subver }}-{{ _distro_arch }}-{{ _distro_type }}.iso"
-       #when: not stat_result.stat.exists
+          - "{{ _distro_baseurl }}/{{ _distro_ver }}/{{ _distro_surl }}/{{ _distro_name }}-{{ _distro_ver }}{{ _distro_subver }}-{{ _distro_arch }}-{{ _distro_type }}.iso"
+       # when: not stat_result.stat.exists
 
      # Why in /etc/rc.d/rc.local and not /etc/fstab?
      - name: Mount Isos
-       become: yes
-       lineinfile:
-         path: '/etc/rc.d/rc.local'
-         line: mount -t iso9660 -o ro /mnt/isos/{{ _distro_name }}-{{ _distro_ver }}{{ _distro_subver }}-{{ _distro_arch }}-{{ _distro_type }}.iso /mnt/{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}
+       become: true
+       ansible.builtin.lineinfile:
+          path: '/etc/rc.d/rc.local'
+          line: mount -t iso9660 -o ro /mnt/isos/{{ _distro_name }}-{{ _distro_ver }}{{ _distro_subver }}-{{ _distro_arch }}-{{ _distro_type }}.iso /mnt/{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}
 
      - name: Iso Image Directory
-       become: yes
-       file:
-         path: '/tftpboot/images/{{ _distro }}/{{ _distro_ver }}{{ _distro_subver }}'
-         state: directory
-         recurse: yes
-         owner: root
-         group: wheel
-         mode: '0755'
+       become: true
+       ansible.builtin.file:
+          path: '/tftpboot/images/{{ _distro }}/{{ _distro_ver }}{{ _distro_subver }}'
+          state: directory
+          recurse: true
+          owner: root
+          group: wheel
+          mode: '0755'
 
-     - name: rc.local file permissions
-       become: yes
-       file:
-         path: /etc/rc.d/rc.local
-         mode: '0755'
+     - name: Set rc.local file permissions
+       become: true
+       ansible.builtin.file:
+          path: /etc/rc.d/rc.local
+          mode: '0755'
 
      - name: Enable rc-local
-       become: yes
-       service:
-         name: rc-local
-         state: restarted
-         enabled: yes
+       become: true
+       ansible.builtin.service:
+          name: rc-local
+          state: restarted
+          enabled: true
 
-
-     - name:  PXE Menu Directory
-       become: yes
-       file:
-         path: '/tftpboot/pxelinux.cfg'
-         state: directory
-         recurse: yes
-         owner: root
-         group: wheel
-         mode: '0755'
+     - name: PXE Menu Directory
+       become: true
+       ansible.builtin.file:
+          path: '/tftpboot/pxelinux.cfg'
+          state: directory
+          recurse: true
+          owner: root
+          group: wheel
+          mode: '0755'
 
      - name: Iso Image Pxeboot Copy
-       become: yes
-       copy:
-         src: '/mnt/{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}/{{ _distro_boot }}/'
-         dest: '/tftpboot/images/{{ _distro }}/{{ _distro_ver }}{{ _distro_subver }}/{{ _distro_arch }}/'
-         mode: '0755'
-         owner: root
-         group: wheel
+       become: true
+       ansible.builtin.copy:
+          src: '/mnt/{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}/{{ _distro_boot }}/'
+          dest: '/tftpboot/images/{{ _distro }}/{{ _distro_ver }}{{ _distro_subver }}/{{ _distro_arch }}/'
+          mode: '0755'
+          owner: root
+          group: wheel
 
      - name: Make PXEBoot Menu Beginning
-       become: yes
-       copy:
-         dest: /tftpboot/pxelinux.cfg/default
-         content: |
-           default vesamenu.c32
-           prompt 0
-           {{ '' }}
-           MENU TITLE PXE Boot Menu
-           MENU INCLUDE pxelinux.cfg/graphics.conf
-           MENU AUTOBOOT Starting Local System in # seconds
-           {{ '' }}
-           LABEL bootlocal
-             MENU LABEL ^Boot from local drive
-             MENU DEFAULT
-             LOCALBOOT 0
-           TIMEOUT 300
-           TOTALTIMEOUT 9000
-           {{ '' }}
-           {{ '' }}
+       become: true
+       ansible.builtin.copy:
+          dest: /tftpboot/pxelinux.cfg/default
+          mode: '0644'
+          content: |
+            default vesamenu.c32
+            prompt 0
+            {{ ' ' }}
+            MENU TITLE PXE Boot Menu
+            MENU INCLUDE pxelinux.cfg/graphics.conf
+            MENU AUTOBOOT Starting Local System in # seconds
+            {{ ' ' }}
+            LABEL bootlocal
+              MENU LABEL ^Boot from local drive
+              MENU DEFAULT
+              LOCALBOOT 0
+            TIMEOUT 300
+            TOTALTIMEOUT 9000
+            {{ ' ' }}
+            {{ ' ' }}
 
      - name: Make PXEBoot Menu Block
-       become: yes
-       blockinfile:
-         path: '/tftpboot/pxelinux.cfg/default'
-         marker: "ANSIBLE {{ _distro_name }}-{{ _distro_ver }}"
-         block: |
-           LABEL {{ _distro_name }} {{ _distro_ver }} {{ _distro_arch }}
-             MENU LABEL {{ _distro_name }} {{ _distro_ver }} {{ _distro_arch }}
-             KERNEL images/{{ _distro }}/{{ _distro_ver }}{{ _distro_subver }}/{{ _distro_arch }}/vmlinuz
+       become: true
+       ansible.builtin.blockinfile:
+          path: '/tftpboot/pxelinux.cfg/default'
+          marker: "ANSIBLE {{ _distro_name }}-{{ _distro_ver }}"
+          block: |
+            LABEL {{ _distro_name }} {{ _distro_ver }} {{ _distro_arch }}
+              MENU LABEL {{ _distro_name }} {{ _distro_ver }} {{ _distro_arch }}
+              KERNEL images/{{ _distro }}/{{ _distro_ver }}{{ _distro_subver }}/{{ _distro_arch }}/vmlinuz
 
      - name: Make PXEBoot Graphics Conf
-       become: yes
-       copy:
-         dest: /tftpboot/pxelinux.cfg/graphics.conf
-         content: |
-           MENU COLOR TABMSG    37;40      #80ffffff #00000000
-           MENU COLOR HOTSEL    30;47      #40000000 #20ffffff
-           MENU COLOR SEL       30;47      #40000000 #20ffffff
-           MENU COLOR SCROLLBAR 30;47      #40000000 #20ffffff
-           MENU WIDTH 80
-           MENU MARGIN 22
-           MENU PASSWORDMARGIN 26
-           MENU ROWS 6
-           MENU TABMSGROW 15
-           MENU CMDLINEROW 15
-           MENU ENDROW 24
-           MENU PASSWORDROW 12
-           MENU TIMEOUTROW 13
-           MENU VSHIFT 6
-           MENU PASSPROMPT Enter Password:
-           NOESCAPE 1
-           ALLOWOPTIONS 1
+       become: true
+       ansible.builtin.copy:
+          dest: /tftpboot/pxelinux.cfg/graphics.conf
+          mode: '0644'
+          content: |
+            MENU COLOR TABMSG    37;40      #80ffffff #00000000
+            MENU COLOR HOTSEL    30;47      #40000000 #20ffffff
+            MENU COLOR SEL       30;47      #40000000 #20ffffff
+            MENU COLOR SCROLLBAR 30;47      #40000000 #20ffffff
+            MENU WIDTH 80
+            MENU MARGIN 22
+            MENU PASSWORDMARGIN 26
+            MENU ROWS 6
+            MENU TABMSGROW 15
+            MENU CMDLINEROW 15
+            MENU ENDROW 24
+            MENU PASSWORDROW 12
+            MENU TIMEOUTROW 13
+            MENU VSHIFT 6
+            MENU PASSPROMPT Enter Password:
+            NOESCAPE 1
+            ALLOWOPTIONS 1
 
      - name: Stop nginx
-       become: yes
-       service:
-         name: nginx
-         state: stopped
+       become: true
+       ansible.builtin.service:
+          name: nginx
+          state: stopped
 
      - name: Symlink to Repo locations
-       become: yes
-       file:
-         src: '/mnt/{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}'
-         dest: '/usr/share/nginx/html/{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}'
-         state: link
+       become: true
+       ansible.builtin.file:
+          src: '/mnt/{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}'
+          dest: '/usr/share/nginx/html/{{ _distro }}-{{ _distro_ver }}{{ _distro_subver }}'
+          state: link
 
      - name: Restart nginx
-       become: yes
-       service:
-         name: nginx
-         state: started
+       become: true
+       ansible.builtin.service:
+          name: nginx
+          state: started
 
      - name: Set Firewall Rules
-       become: yes
-       command: firewall-cmd --zone=public --add-service={{ item }} --permanent
+       become: true
+       ansible.builtin.command: firewall-cmd --zone=public --add-service={{ item }} --permanent
        loop:
-         - https
-         - http
-         - tftp
+          - https
+          - http
+          - tftp
 
      - name: Enable Firewall Rules
-       become: yes
-       command: firewall-cmd --reload
+       become: true
+       ansible.builtin.command: firewall-cmd --reload
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

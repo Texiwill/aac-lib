@@ -1,40 +1,39 @@
 ---
-# version: 1.1.8
+# version: 1.1.9
 
 - name: Setup Timezone
   hosts: localhost
   gather_facts: true
-  become_user: root
 
   tasks:
-     - name: Debug
+     - name: Debug Facts
        ansible.builtin.debug:
           var: ansible_facts
        when: (aac_base_debug is defined)
 
-     - name: Debug
+     - name: Debug Name
        ansible.builtin.debug:
           var: ansible_play_name
        when: (aac_base_debug is defined)
 
-     #- name: Install system updates for redhat systems
-     #  become: true
-     #  ansible.builtin.package:
-     #     name: '*'
-     #     update_cache: true
-     #  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
+     # - name: Install system updates for redhat systems
+     #   become: true
+     #   ansible.builtin.package:
+     #      name: '*'
+     #      update_cache: true
+     #   when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
-     #- name: Install system updates for Photon
-     #  become: true
-     #  ansible.builtin.command: "tdnf -y update"
-     #  when: ansible_os_family == "VMware Photon OS"
+     # - name: Install system updates for Photon
+     #   become: true
+     #   ansible.builtin.command: "tdnf -y update"
+     #   when: ansible_os_family == "VMware Photon OS"
 
      - name: Install the latest ntp (ignore if not there)
        become: true
        ansible.builtin.package:
           name:
              - ntp
-       ignore_errors: true
+       failed_when: false
        when: (ansible_os_family != "VMware Photon OS") and
              (ansible_distribution != "MacOSX")
 
@@ -43,7 +42,7 @@
        ansible.builtin.package:
           name:
              - ntpd
-       ignore_errors: true
+       failed_when: false
        when: (ansible_os_family != "VMware Photon OS") and
              (ansible_distribution != "MacOSX")
 
@@ -52,13 +51,13 @@
        ansible.builtin.package:
           name:
              - chrony
-       ignore_errors: true
+       failed_when: false
        when: (ansible_os_family != "VMware Photon OS") and
              (ansible_distribution != "MacOSX")
 
      - name: Install the required dependencies for Photon
        become: true
-       ansible.builtin.command: "tdnf -y install {{ item }}"
+       ansible.builtin.command: "tdnf -y install {{ item }}" # noqa: no-changed-when
        with_items:
           - ntp
           - git
@@ -167,7 +166,7 @@
 
      - name: Package Facts Photon
        become: true
-       ansible.builtin.shell: |
+       ansible.builtin.shell: | # noqa: no-changed-when
          set -o pipefail
          tdnf list | cut -d\. -f1
        register: packages_facts
@@ -191,24 +190,24 @@
           ansible_facts: "{{ ansible_facts | combine({'packages': []}) }}"
        when: (ansible_distribution == "MacOSX")
 
-     - name: Set Facts
+     - name: Set NTP Facts
        ansible.builtin.set_fact:
           set_time: ntp
        when: ansible_os_family == "Debian"
 
-     - name: Set Facts
+     - name: Set NTPD Facts
        ansible.builtin.set_fact:
           set_time: ntpd
        when: (ansible_os_family == "RedHat") or
              (ansible_os_family == "VMware Photon OS")
 
-     - name: Set Facts
+     - name: Set Chronyd Facts
        ansible.builtin.set_fact:
           set_time: chronyd
        when: ('"chrony" in ansible_facts.packages') and
              (ansible_os_family != "VMware Photon OS")
 
-     - name: Set Facts
+     - name: Set Chrony Facts
        ansible.builtin.set_fact:
           set_time: chrony
        when: (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19", '>')) and
@@ -217,7 +216,7 @@
              (service_facts["chronyd.service"].status == "alias") and
              (service_facts["chrony.service"] is defined)
 
-     - name: Set Facts
+     - name: Set NTP Facts For Debian
        ansible.builtin.set_fact:
           set_time: ntp
        when: (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10", '<')) or

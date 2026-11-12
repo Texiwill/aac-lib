@@ -1,5 +1,5 @@
 ---
-# version: 1.0.2
+# version: 1.0.3
 # Tested against Fedora, updates for post Fedora 35
 
 - name: TZ
@@ -11,7 +11,6 @@
 - name: Install Dropbox
   hosts: localhost
   gather_facts: true
-  become_user: root
   tasks:
      # Docker Pre Fedora 36
      - name: Enable Extras
@@ -50,7 +49,7 @@
        ansible.builtin.lineinfile:
           path: /tmp/docker-dropbox-master/Dockerfile
           regexp: 'install ca-certificates'
-          line: '       && apt-get -qqy install ca-certificates curl python-gpgme libc6 libglapi-mesa libxdamage1 libxfixes3 libxcb-glx0 libxcb-dri2-0 libxcb-dri3-0 libxcb-present0 libxcb-sync1 libxshmfence1 libxxf86vm1 dropbox \'
+          line: '&& apt-get -qqy install ca-certificates curl python-gpgme libc6 libglapi-mesa libxdamage1 libxfixes3 libxcb-glx0 libxcb-dri2-0 libxcb-dri3-0 libxcb-present0 libxcb-sync1 libxshmfence1 libxxf86vm1 dropbox \'
        when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36", '<'))
 
      - name: Fix Code3
@@ -84,7 +83,7 @@
        when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36", '<'))
 
      - name: Build docker image
-       ansible.builtin.shell: "sg - docker -c 'docker build -t dropbox:latest .'"
+       ansible.builtin.command: "sg - docker -c 'docker build -t dropbox:latest .'"
        args:
           chdir: /tmp/docker-dropbox-master
        when: (ansible_distribution == "Fedora" and ansible_distribution_major_version is version("36", '<'))
@@ -96,11 +95,16 @@
           block: |
             if [ "$PS1" ]; then
                     alias dropbox="docker exec -it dropbox dropbox"
-                    alias dropbox-start="docker run -d --restart=always --name=dropbox -v $HOME/Dropbox:/dbox/Dropbox:z -v $HOME/.dropbox:/dbox/.dropbox:z -e DBOX_UID=`id -u` -e DBOX_GID=`id -g` janeczku/dropbox"
+                    alias dropbox-start="docker run -d --restart=always --name=dropbox \
+                                         -v $HOME/Dropbox:/dbox/Dropbox:z -v $HOME/.dropbox:/dbox/.dropbox:z \
+                                         -e DBOX_UID=`id -u` -e DBOX_GID=`id -g` janeczku/dropbox"
                     docker ps |grep dropbox >& /dev/null
                     if [ $? -eq 1 ] && [ `id -u` != 0 ]
                     then
-                           docker run -d --restart=always --name=dropbox -v $HOME/Dropbox:/dbox/Dropbox:z -v $HOME/.dropbox:/dbox/.dropbox:z -e DBOX_UID=`id -u` -e DBOX_GID=`id -g` janeczku/dropbox
+                           docker run -d --restart=always --name=dropbox \
+                           -v $HOME/Dropbox:/dbox/Dropbox:z \
+                           -v $HOME/.dropbox:/dbox/.dropbox:z \
+                           -e DBOX_UID=`id -u` -e DBOX_GID=`id -g` janeczku/dropbox
                     fi
             fi
           mode: '0755'

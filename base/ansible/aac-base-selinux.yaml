@@ -1,9 +1,8 @@
 ---
-# version: 1.0.3
+# version: 1.0.4
 #
 - name: Install SELinux
   hosts: localhost
-  become_user: root
   tasks:
      - name: Install the latest for selinux - RHEL < 8
        become: true

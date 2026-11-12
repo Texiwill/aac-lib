@@ -1,5 +1,5 @@
 ---
-# version: 1.0.2
+# version: 1.0.3
 
 - name: TZ
   import_playbook: aac-base-tz.yaml
@@ -10,7 +10,6 @@
 - name: Install ISOLIB
   hosts: localhost
   gather_facts: true
-  become_user: root
   tasks:
      - name: No Debian Family Support Output
        ansible.builtin.debug:
@@ -60,7 +59,7 @@
           path: "{{ ansible_user_dir }}/bin"
           mode: '0755'
           state: directory
-       ignore_errors: true
+       failed_when: false
        when: ansible_os_family == "RedHat"
 
      - name: Download the latest version of isolib.sh

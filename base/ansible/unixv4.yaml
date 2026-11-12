@@ -1,5 +1,5 @@
 ---
-# version: 1.0.0
+# version: 1.0.1
 # Designed for Rocky 10 using Fedora 43 image of simh
 # Unique system for a user that makes unixv4 the running environment
 # instead of the local image for shell usage. So use a Unique user.
@@ -14,7 +14,6 @@
 - name: Install UNIX V4
   hosts: localhost
   gather_facts: true
-  become_user: root
   tasks:
      - name: No Debian Family Support Output
        ansible.builtin.debug:

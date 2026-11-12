@@ -14,198 +14,196 @@
 - hosts: localhost
   tasks:
      - name: Set Facts RHEL < 8
-       set_fact: 
+       ansible.builtin.set_fact: 
           myos: "rhel"
           prod: "rpm"
-          vers: "{{ansible_distribution_major_version}}"
+          vers: "{{ ansible_distribution_major_version }}"
        when: ansible_os_family == "RedHat"
 
      - name: Set Facts Fedora
-       set_fact: 
+       ansible.builtin.set_fact: 
           myos: "rhel"
           prod: "rpm"
           vers: "9"
        when: ansible_distribution == "Fedora"
 
      - name: Set Facts Debian
-       set_fact: 
+       ansible.builtin.set_fact: 
           myos: "{{ansible_distribution | lower}}"
           vers: "{{ansible_distribution_version}}"
           prod: "deb"
        when: ansible_os_family == "Debian"
 
      - name: Download the latest PowerShell Repo
-       become: yes
-       get_url:
-         url: "https://packages.microsoft.com/config/{{myos}}/{{vers}}/packages-microsoft-prod.{{prod}}"
-         dest: "/tmp"
-         mode: 0644
+       become: true
+       ansible.builtin.get_url:
+          url: "https://packages.microsoft.com/config/{{ myos }}/{{ vers }}/packages-microsoft-prod.{{ prod }}"
+          dest: "/tmp"
+          mode: '0644'
 
      - name: Install PowerShell Repo RedHat
-       become: yes
-       command: "rpm -Uvh /tmp/packages-microsoft-prod.{{prod}}"
-       ignore_errors: yes
+       become: true
+       ansible.builtin.command: "rpm -Uvh /tmp/packages-microsoft-prod.{{ prod }}" # noqa: command-instead-of-module
+       ignore_errors: true
        when: (ansible_os_family == "RedHat")
 
      - name: Install PowerShell Repo Debian
-       become: yes
-       shell: "dpkg -i /tmp/packages-microsoft-prod.{{prod}}; apt-get update"
+       become: true
+       ansible.builtin.shell: "dpkg -i /tmp/packages-microsoft-prod.{{prod}}; apt-get update"
        when: (ansible_os_family == "Debian")
 
      - name: Install powershell Debian/Ubuntu 18/RHEL
-       become: yes
-       package:
-         name: 
-           - powershell
-         state: latest
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7",">")) or
-             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19",">")) or
-             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10",">")) 
+       become: true
+       ansible.builtin.package:
+          name: 
+             - powershell
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("7", ">")) or
+             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19", ">")) or
+             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("10", ">")) 
 
      - name: Install powershell RedHat < 8
-       become: yes
-       package:
-         name: 
-           - powershell-lts
-         state: latest
-       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8","<")) or
-             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19","<")) or
-             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("11","<"))
+       become: true
+       ansible.builtin.package:
+          name: 
+             - powershell-lts
+       when: (ansible_os_family == "RedHat" and ansible_distribution_major_version is version("8", "<")) or
+             (ansible_distribution == "Ubuntu" and ansible_distribution_major_version is version("19", "<")) or
+             (ansible_distribution == "Debian" and ansible_distribution_major_version is version("11", "<"))
 
      - name: install the required dependencies for PowerCLI on Photon
-       become: yes
-       command: "tdnf -y install {{ item }}"
+       become: true
+       ansible.builtin.command: "tdnf -y install {{ item }}"
        with_items:
-         - powershell
+          - powershell
        when: (ansible_os_family == "VMware Photon OS")
 
      - name: Get Powershell Version
        become: no
-       shell: "ls -1 /opt/microsoft/powershell | tail -1"
+       ansible.builtin.shell: "ls -1 /opt/microsoft/powershell | tail -1"
        args:
-         executable: /bin/bash
+          executable: /bin/bash
        register: pwsh_local
        when: (ansible_os_family != "VMware Photon OS")
 
      - name: Set PowerShell Version Fact
-       set_fact:
-         pwsh_path: "/opt/microsoft/powershell/{{pwsh_local.stdout}}"
-         pwsh_cmd: "/usr/bin/pwsh"
+       ansible.builtin.set_fact:
+          pwsh_path: "/opt/microsoft/powershell/{{pwsh_local.stdout}}"
+          pwsh_cmd: "/usr/bin/pwsh"
        when: (ansible_os_family != "VMware Photon OS")
 
      - name: Set PowerShell Version Fact Photon
-       set_fact:
-         pwsh_path: "/usr/lib/powershell"
-         pwsh_cmd: "/usr/bin/pwsh"
+       ansible.builtin.set_fact:
+          pwsh_path: "/usr/lib/powershell"
+          pwsh_cmd: "/usr/bin/pwsh"
        when: (ansible_os_family == "VMware Photon OS")
 
      - name: Set profile.d BASH settings
-       become: yes
-       lineinfile: 
-         path: /etc/profile.d/powershell.sh
-         line: "export PSModulePath={{pwsh_path}}/Modules:/usr/local/share/powershell/Modules"
-         mode: 0644
-         create: yes
+       become: true
+       ansible.builtin.lineinfile: 
+          path: /etc/profile.d/powershell.sh
+          line: "export PSModulePath={{pwsh_path}}/Modules:/usr/local/share/powershell/Modules"
+          mode: '0644'
+          create: true
 
      - name: Set profile.d CSH settings
-       become: yes
-       lineinfile: 
-         path: /etc/profile.d/powershell.csh
-         line: "setenv PSModulePath={{pwsh_path}}/Modules:/usr/local/share/powershell/Modules"
-         mode: 0644
-         create: yes
+       become: true
+       ansible.builtin.lineinfile: 
+          path: /etc/profile.d/powershell.csh
+          line: "setenv PSModulePath={{pwsh_path}}/Modules:/usr/local/share/powershell/Modules"
+          mode: '0644'
+          create: true
 
      - name: Remove Older PowerCLI/PowerNSX/PowerVRA
-       become: yes
-       file:
-         path: /usr/local/share/powershell
-         state: absent
+       become: true
+       ansible.builtin.file:
+          path: /usr/local/share/powershell
+          state: absent
 
      - name: Install PowerCLI
-       become: yes
-       shell: '{{pwsh_cmd}} -c "Install-Module -Name VMware.PowerCLI -Scope AllUsers -Force"'
+       become: true
+       ansible.builtin.shell: '{{pwsh_cmd}} -c "Install-Module -Name VMware.PowerCLI -Scope AllUsers -Force"'
 
      - name: Install PowerNSX
-       become: yes
-       shell: '{{pwsh_cmd}} -c "Install-Module -Name PowerNSX -Scope AllUsers -Force"'
+       become: true
+       ansible.builtin.shell: '{{pwsh_cmd}} -c "Install-Module -Name PowerNSX -Scope AllUsers -Force"'
 
      - name: Install PowerVRA
-       become: yes
-       shell: '{{pwsh_cmd}} -c "Install-Module -Name PowerVRA -Scope AllUsers -Force"'
+       become: true
+       ansible.builtin.shell: '{{pwsh_cmd}} -c "Install-Module -Name PowerVRA -Scope AllUsers -Force"'
 
      - name: Create Start-PowerCLI.ps1
-       become: yes
-       blockinfile:
-         path: /usr/local/share/powershell/Start-PowerCLI.ps1
-         block: |
-           $a = (Get-Host).PrivateData
-           $b = get-psreadlineoption | select ErrorBackgroundColor
-           $clear = $b.ErrorBackgroundColor
-           $black= 'black'
-           if ($clear -eq 'black') { 
-                   $black='white' 
-                   set-psreadlineoption -Colors @{ 
-                   'Command' =  [ConsoleColor]::white
-                   'Number' = [ConsoleColor]::white
-                   'String' = [ConsoleColor]::white
-                   'Operator' = [ConsoleColor]::white
-                   'Member' = [ConsoleColor]::white
-                   'Parameter' = [ConsoleColor]::white
-                   'Type' = [ConsoleColor]::white
-                   'Variable' = [ConsoleColor]::white
-                   'Keyword' = [ConsoleColor]::white
-                   }
-           } else {
-                   set-psreadlineoption -Colors @{ 
-                   'Command' =  [ConsoleColor]::black
-                   'Number' = [ConsoleColor]::black
-                   'String' = [ConsoleColor]::black
-                   'Operator' = [ConsoleColor]::black
-                   'Member' = [ConsoleColor]::black
-                   'Parameter' = [ConsoleColor]::black
-                   'Type' = [ConsoleColor]::black
-                   'Variable' = [ConsoleColor]::black
-                   'Keyword' = [ConsoleColor]::black
-                   }
-           }
-           $a.WarningForegroundColor = $black
-           Get-module -ListAvailable VMware* | ForEach-Object {try { Import-module $_ } catch { }}
-           $productName = 'vSphere PowerCLI'
-           $productShortName = 'PowerCLI'
-           $CustomInitScriptName = 'Initialize-PowerCLIEnvironment_Custom.ps1'
-           $currentDir = Split-Path $MyInvocation.MyCommand.Path
-           $CustomInitScript = Join-Path $currentDir $CustomInitScriptName
-           # Update PowerCLI version after snap-in load
-           $version = (Get-Module -Name 'VMware.VimAutomation.Cis.Core').Version
+       become: true
+       ansible.builtin.blockinfile:
+          path: /usr/local/share/powershell/Start-PowerCLI.ps1
+          block: |
+            $a = (Get-Host).PrivateData
+            $b = get-psreadlineoption | select ErrorBackgroundColor
+            $clear = $b.ErrorBackgroundColor
+            $black= 'black'
+            if ($clear -eq 'black') {{ '{' }} 
+                    $black='white' 
+                    set-psreadlineoption -Colors @{{ '{' }}
+                    'Command' =  [ConsoleColor]::white
+                    'Number' = [ConsoleColor]::white
+                    'String' = [ConsoleColor]::white
+                    'Operator' = [ConsoleColor]::white
+                    'Member' = [ConsoleColor]::white
+                    'Parameter' = [ConsoleColor]::white
+                    'Type' = [ConsoleColor]::white
+                    'Variable' = [ConsoleColor]::white
+                    'Keyword' = [ConsoleColor]::white
+                    {{ '}' }}
+            {{ '}' }} else {{ '{' }}
+                    set-psreadlineoption -Colors @{{ '{' }}
+                    'Command' =  [ConsoleColor]::black
+                    'Number' = [ConsoleColor]::black
+                    'String' = [ConsoleColor]::black
+                    'Operator' = [ConsoleColor]::black
+                    'Member' = [ConsoleColor]::black
+                    'Parameter' = [ConsoleColor]::black
+                    'Type' = [ConsoleColor]::black
+                    'Variable' = [ConsoleColor]::black
+                    'Keyword' = [ConsoleColor]::black
+                    {{ '}' }}
+            {{ '}' }}
+            $a.WarningForegroundColor = $black
+            Get-module -ListAvailable VMware* | ForEach-Object {{ '{' }}try {{ '{' }} Import-module $_ {{ '}' }} catch {{ '{' }} {{ '}' }}{{ '}' }}
+            $productName = 'vSphere PowerCLI'
+            $productShortName = 'PowerCLI'
+            $CustomInitScriptName = 'Initialize-PowerCLIEnvironment_Custom.ps1'
+            $currentDir = Split-Path $MyInvocation.MyCommand.Path
+            $CustomInitScript = Join-Path $currentDir $CustomInitScriptName
+            # Update PowerCLI version after snap-in load
+            $version = (Get-Module -Name 'VMware.VimAutomation.Cis.Core').Version
            $windowTitle = "VMware $productName {0}.{1}.{2} Build {3} " -f $version.Major, $version.Minor, $version.Build, $version.Revision
-           $host.ui.RawUI.WindowTitle = "$windowTitle"
-           # Launch text
-           write-host ''
-           write-host "          Welcome to VMware $productName!"
-           write-host ''
-           write-host 'Log in to a vCenter Server or ESX host:              ' -NoNewLine
-           write-host 'Connect-VIServer' -foregroundcolor $black
-           write-host 'To find out what commands are available, type:       ' -NoNewLine
-           write-host 'Get-VICommand' -foregroundcolor $black
-           write-host "Once you've connected, display all virtual machines: " -NoNewLine
-           write-host 'Get-VM' -foregroundcolor $black
-           write-host ''
-           write-host '       Copyright (C) VMware, Inc. All rights reserved.'
-           write-host ''
-           write-host ''
-         mode: 0644
-         create: yes
+            $host.ui.RawUI.WindowTitle = "$windowTitle"
+            # Launch text
+            write-host ''
+            write-host "          Welcome to VMware $productName!"
+            write-host ''
+            write-host 'Log in to a vCenter Server or ESX host:              ' -NoNewLine
+            write-host 'Connect-VIServer' -foregroundcolor $black
+            write-host 'To find out what commands are available, type:       ' -NoNewLine
+            write-host 'Get-VICommand' -foregroundcolor $black
+            write-host "Once you've connected, display all virtual machines: " -NoNewLine
+            write-host 'Get-VM' -foregroundcolor $black
+            write-host ''
+            write-host '       Copyright (C) VMware, Inc. All rights reserved.'
+            write-host ''
+            write-host ''
+          mode: '0644'
+          create: true
 
      - name: Create Powercli
-       become: yes
-       blockinfile:
-         path: /usr/local/bin/powercli
-         block: |
-           #!/bin/sh
-           . /etc/profile.d/powershell.sh
-           {{pwsh_cmd}} -NoExit -Command /usr/local/share/powershell/Start-PowerCLI.ps1
-         mode: 0755
-         create: yes
+       become: true
+       ansible.builtin.blockinfile:
+          path: /usr/local/bin/powercli
+          block: |
+            #!/bin/sh
+            . /etc/profile.d/powershell.sh
+            {{ pwsh_cmd }} -NoExit -Command /usr/local/share/powershell/Start-PowerCLI.ps1
+         mode: '0755'
+         create: true
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

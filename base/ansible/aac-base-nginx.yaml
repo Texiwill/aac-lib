@@ -1,5 +1,5 @@
 ---
-# version: 1.0.1
+# version: 1.0.2
 # designed to work with Rocky Linux, not tested on any other Linux distro
 - name: TLS
   import_playbook: aac-base-tls.yaml
