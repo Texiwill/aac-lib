@@ -244,7 +244,7 @@ function call_playbook() {
 		echo ""
 		extraargs="$adebug aac_base_tz=$TZ mariadb_pwd=$mariadb_pwd librenms_pwd=$librenms_pwd"
 		askpass="-K"
-	elif [ Z"$choice" = Z"mariadb" ] || [ Z"$choice" = Z"owncloud" ]
+	elif [ Z"$choice" = Z"mariadb" ] || [ Z"$choice" = Z"owncloud" ] 
 	then
 		# Get mariadb/librenms passwords
 		echo -n "Enter mariadb root Password: "
