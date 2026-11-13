@@ -243,17 +243,23 @@
           name: nginx
           state: started
 
-     - name: Set Firewall Rules
-       become: true
-       ansible.builtin.command: firewall-cmd --zone=public --add-service={{ item }} --permanent
-       loop:
-          - https
-          - http
-          - tftp
+    - name: Set Firewall Rules Ports
+      become: true
+      ansible.posix.firewalld:
+        zone: public
+        service: "{{ item }}"
+        state: enabled
+        permanent: true
+        immediate: true
+      loop:
+        - https
+        - http
+        - tftp
 
-     - name: Enable Firewall Rules
+     - name: Reload daemon sets
        become: true
-       ansible.builtin.command: firewall-cmd --reload
+       ansible.builtin.systemd_service:
+          daemon_reload: true
 
 - name: Fix SELinux
   import_playbook: aac-base-fixselinux.yaml

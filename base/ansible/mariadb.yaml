@@ -30,9 +30,14 @@
           state: restarted
           enabled: true
 
-     - name: Set Firewall Rules
+     - name: Set Firewall Rules Ports
        become: true
-       ansible.builtin.command: firewall-cmd --zone=public --add-service={{ item }} --permanent
+       ansible.posix.firewalld:
+          zone: public
+          service: "{{ item }}"
+          state: enabled
+          permanent: true
+          immediate: true
        loop:
           - mysql
 

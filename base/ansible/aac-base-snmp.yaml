@@ -37,12 +37,14 @@
           state: restarted
           enabled: true
 
-     - name: Set Firewall snmp Rules
+     - name: Set Firewall Rules Ports
        become: true
-       ansible.builtin.command: firewall-cmd --zone=public --add-service=snmp --permanent
-
-     - name: Enable Firewall Rules
-       become: true
-       ansible.builtin.command: firewall-cmd --reload
-
+       ansible.posix.firewalld:
+          zone: public
+          service: "{{ item }}"
+          state: enabled
+          permanent: true
+          immediate: true
+       loop:
+          - snmp
 ...

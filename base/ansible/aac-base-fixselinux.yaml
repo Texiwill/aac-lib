@@ -55,7 +55,7 @@
 
      - name: Reset SELinux after installs
        become: true
-       ansible.builtin.command: restorecon -R -v /
+       ansible.builtin.command: restorecon -R -e /run/docker/netns -v /
        when: (ansible_distribution != "MacOSX") and
              (ansible_os_family != "VMware Photon OS") and
              (ansible_os_family != "Alpine")
