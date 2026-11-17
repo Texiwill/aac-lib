@@ -1,0 +1,292 @@
+---
+# version: 1.0.0
+# Owncloud 11/Docker CE
+# designed to work with Rocky Linux, not tested on any other Linux distro
+
+- name: TZ
+  import_playbook: aac-base-tz.yaml
+
+- name: SNMP
+  import_playbook: aac-base-snmp.yaml
+
+- name: SELinux
+  import_playbook: aac-base-selinux.yaml
+
+- name: TLS
+  import_playbook: aac-base-tls.yaml
+
+- name: NGINX
+  import_playbook: aac-base-nginx.yaml
+
+- name: Start of Owncloud Install
+  hosts: localhost
+  gather_facts: true
+  vars:
+    owncloud_user: "{{ lookup('env', 'USER') }}"
+    owncloud_docker_dir: "/home/{{ owncloud_user }}/owncloud-server-docker"
+    owncloud_data_dir: "/opt/owncloud/data"
+    owncloud_mysql_dir: "/opt/owncloud/mysql"
+
+  tasks:
+    - name: Install DNF Dependencies
+      become: true
+      ansible.builtin.package:
+        name:
+          - dnf-plugins-core
+
+    - name: Install Docker-CE Repo
+      become: true
+      ansible.builtin.yum_repository:
+        name: docker-ce
+        description: Docker CE Stable - $basearch
+        baseurl: https://download.docker.com/linux/rhel/$releasever/$basearch/stable
+        enabled: 1
+        gpgcheck: 1
+        gpgkey: https://download.docker.com/linux/rhel/gpg
+
+    - name: Install DockerCE
+      become: true
+      ansible.builtin.package:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+
+    - name: Start Docker Daemon
+      become: true
+      ansible.builtin.service:
+        name: docker
+        state: started
+
+    # nothing privileged for Docker now
+    - name: Rootless Docker for install user
+      become: true
+      ansible.builtin.user:
+        name: "{{ owncloud_user }}"
+        groups: docker
+        append: true
+
+    - name: Create Data Directory
+      become: true
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ owncloud_user }}"
+        group: "{{ owncloud_user }}"
+        mode: '0770'
+      loop:
+        - "{{ owncloud_data_dir }}"
+        - "{{ owncloud_mysql_dir }}"
+
+    - name: Create Place for Docker Files
+      ansible.builtin.file:
+        path: "{{ owncloud_docker_dir }}"
+        state: directory
+        mode: '0700'
+
+    - name: Setup SELinux for Owncloud Data Directory
+      become: true
+      community.general.sefcontext:
+        target: "{{ owncloud_docker_dir }}(/.*)?"
+        setype: httpd_sys_rw_content_t
+        state: present
+
+    - name: Recursively set SELinux contenxt for Owncloud Data Directory
+      become: true
+      ansible.builtin.command: "restorecon -R -v {{ owncloud_docker_dir }}"
+      # community.general.serestorecon:
+      #   path: "{{ owncloud_docker_dir }}"
+      #   recurse: true
+
+    - name: Create Docker Compose File
+      ansible.builtin.copy:
+        dest: "{{ owncloud_docker_dir }}/docker-compose.yml"
+        content: |
+          x-owncloud: &oc-common
+              image: owncloud/server:11.1.0
+              restart: always
+              depends_on:
+                - mariadb
+                - redis
+              environment:
+                - OWNCLOUD_DOMAIN=localhost
+                - OWNCLOUD_TRUSTED_DOMAINS=localhost,{{ ansible_default_ipv4_address | default(ansible_all_ipv4_addresses[0]) }},{{ ansible_fqdn }}
+                - OWNCLOUD_OVERWRITE_CLI_URL=http://localhost
+                - OWNCLOUD_DB_TYPE=mysql
+                - OWNCLOUD_DB_NAME=owncloud
+                - OWNCLOUD_DB_USERNAME=owncloud
+                - OWNCLOUD_DB_PASSWORD={{ mariadb_pwd }}
+                - OWNCLOUD_DB_HOST=mariadb
+                - OWNCLOUD_ADMIN_USERNAME=admin
+                - OWNCLOUD_ADMIN_PASSWORD={{ mariadb_pwd }}
+                - OWNCLOUD_MYSQL_UTF8MB4=true
+                - OWNCLOUD_REDIS_ENABLED=true
+                - OWNCLOUD_REDIS_HOST=redis
+              volumes:
+                - type: volume
+                  source: oc_files
+                  target: {{ owncloud_data_dir }}
+              networks:
+                - oc_network
+          services:
+            owncloud:
+              # Start the main ownCloud instance
+              <<: *oc-common
+              container_name: owncloud_server
+              ports:
+                - "8080:8080"
+            mariadb:
+              image: mariadb:11.8
+              container_name: owncloud_mariadb
+              restart: always
+              ports:
+                - "3306:3306"
+              environment:
+                - MYSQL_ROOT_PASSWORD={{ mariadb_pwd }}
+                - MYSQL_USER=owncloud
+                - MYSQL_PASSWORD={{ mariadb_pwd }}
+                - MYSQL_DATABASE=owncloud
+                - MARIADB_AUTO_UPGRADE=1
+              command: ["--max-allowed-packet=128M", "--innodb-log-file-size=64M", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_bin"]
+              healthcheck:
+                test: ["CMD", "mysqladmin", "ping", "-u", "root", "--password={{ mariadb_pwd }}"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+              volumes:
+                - mysql:/var/lib/mysql
+              networks:
+                - oc_network
+            redis:
+              image: redis:7
+              container_name: owncloud_redis
+              restart: always
+              ports:
+                - "6379:6379"
+              command: ["--databases", "1"]
+              healthcheck:
+                test: ["CMD", "redis-cli", "ping"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+              volumes:
+                - redis:/data
+              networks:
+                - oc_network
+          volumes:
+            oc_files:
+              driver: local
+              driver_opts:
+                type: none
+                o: bind
+                device: {{ owncloud_data_dir }}
+            mysql:
+              driver: local
+              driver_opts:
+                type: none
+                o: bind
+                device: {{ owncloud_mysql_dir }}
+            redis:
+              driver: local
+          networks:
+            oc_network:
+        mode: '0600'
+
+    # Now we run: sg docker command
+    - name: Run Docker Compose
+      ansible.builtin.command: sg docker "cd {{ owncloud_docker_dir }}; docker compose up -d"
+
+    - name: Wait For Owncloud to be ready
+      ansible.builtin.wait_for:
+        port: 8080
+        delay: 30
+
+    - name: Install Owncloud Apps
+      ansible.builtin.command: sg docker "cd {{ owncloud_docker_dir }}; docker compose exec owncloud occ market:install {{ item }}"
+      loop:
+        - calendar
+        - contacts
+
+    - name: Enable Owncloud Apps
+      ansible.builtin.command: sg docker "cd {{ owncloud_docker_dir }}; docker compose exec owncloud occ app:enable {{ item }}"
+      loop:
+        - calendar
+        - contacts
+        - files_sharing
+        - files_antivirus
+        - user_ldap
+        - customgroups
+
+    # if migrating, old db contains what is needed for user_ldap, if not
+    # migrating could add commands to create ldap connection or do this step
+    # manually.
+
+    - name: Add Nginx frontend
+      become: true
+      ansible.builtin.copy:
+        dest: /etc/nginx/default.d/10-owncloud.conf
+        mode: '0644'
+        content: |
+          add_header Strict-Transport-Security "max-age=15552000; includeSubDomains; preload" always;
+          add_header Referrer-Policy "no-referrer" always;
+          add_header X-Content-Type-Options "nosniff" always;
+          add_header X-Frame-Options "SAMEORIGIN" always;
+          add_header X-XSS-Protection "0" always;
+          add_header X-Robots-Tag "none" always;
+          add_header Download-Options "noopen" always;
+          add_header Permitted-Cross-Domain-Policies "none" always;
+          add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+          client_max_body_size 0;
+          client_body_buffer_size 128k;
+          location = /.well-known/carddav {{ '{' }} return 301 $scheme://$host/remote.php/dav; {{ '}' }}
+          location = /.well-known/caldav  {{ '{' }} return 301 $scheme://$host/remote.php/dav; {{ '}' }}
+          set $dest $http_destination;
+          if ($http_destination ~* "^https://(.+)$") {{ '{' }}
+              set $dest "http://$1";
+          {{ '}' }}
+          proxy_set_header Destrination $dest;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded_For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_connect_timeout 3600s;
+          proxy_send_timeout 3600s;
+          proxy_read_timeout 3600s;
+          proxy_buffering off;
+          proxy_request_buffering off;
+          location / {{ '{' }}
+              proxy_pass http://localhost:8080;
+              proxy_redirect off;
+          {{ '}' }}
+
+    - name: Set Firewall Rules Ports
+      become: true
+      ansible.posix.firewalld:
+        zone: public
+        service: "{{ item }}"
+        state: enabled
+        permanent: true
+        immediate: true
+      loop:
+        - https
+
+    - name: Reload daemon sets
+      become: true
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+
+    - name: Restart Nginx Daemon
+      become: true
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+
+    - name: Fix SELinux Boolean
+      become: true
+      ansible.builtin.command: setsebool -P httpd_can_network_connect 1
+
+- name: Fix SELinux
+  import_playbook: aac-base-fixselinux.yaml
+...
